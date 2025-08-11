@@ -39,11 +39,12 @@
 
     // 🧼 Nur einmal initialisieren
     if (!mapInstance) {
-      console.log("🗺️ Initialisiere Leaflet-Karte");
+      console.log("🗺️ Initialisiere Leaflet-Karte mit Esri-Satellitenbildern");
       mapInstance = L.map(container).setView([51.1657, 10.4515], 6);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "© OpenStreetMap contributors"
+      // 🛰️ Esri World Imagery als Hintergrundkarte
+      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community'
       }).addTo(mapInstance);
 
       // ⏳ Leaflet zwingen, Größe neu zu berechnen
