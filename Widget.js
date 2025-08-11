@@ -20,48 +20,48 @@
 
   const initMap = () => {
     const container = document.getElementById(mapContainerId);
-
-    // 🧼 Container prüfen
     if (!container) {
-      console.warn("Map container not found.");
+      console.warn("❌ Container nicht gefunden");
       return;
     }
 
-    // 🧱 Feste Höhe setzen, falls nicht vorhanden
-    if (!container.style.height) {
-      container.style.height = "400px";
-    }
+    // Feste Höhe setzen
+    container.style.height = "400px";
+    container.style.width = "100%";
+    container.style.border = "1px solid #ccc";
 
-    // 🗺️ Karte initialisieren
+    // Nur einmal initialisieren
     if (!mapInstance) {
+      console.log("🗺️ Initialisiere Leaflet-Karte");
       mapInstance = L.map(container).setView([51.1657, 10.4515], 6);
 
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: "© OpenStreetMap contributors"
       }).addTo(mapInstance);
 
-      // 🧽 Leaflet zwingen, die Größe neu zu berechnen
+      // Resize-Observer für dynamisches Layout
+      const resizeObserver = new ResizeObserver(() => {
+        console.log("🔄 Containergröße geändert – Leaflet neu berechnen");
+        mapInstance.invalidateSize();
+      });
+      resizeObserver.observe(container);
+
+      // Zusätzlicher Timeout-Fix
       setTimeout(() => {
         mapInstance.invalidateSize();
-      }, 0);
+      }, 500);
     }
   };
 
-  // 📦 Widget-Initialisierung
   sap.ui.define(["sap/designstudio/sdk/component"], function (Component) {
     return Component.extend("custom.leafletwidget.LeafletWidget", {
       initDesignStudio: function () {
-        // 🧱 Container erzeugen
         if (!document.getElementById(mapContainerId)) {
           const container = document.createElement("div");
           container.id = mapContainerId;
-          container.style.width = "100%";
-          container.style.height = "400px"; // 🧱 Feste Höhe
-          container.style.border = "1px solid #ccc";
           this.$().append(container);
         }
 
-        // 🚀 Leaflet laden
         loadLeaflet();
       }
     });
