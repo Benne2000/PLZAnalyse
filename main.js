@@ -83,7 +83,7 @@
       // 🔄 Erst PLZ-Werte laden, dann GeoJSON
       Promise.all([
         fetch('https://benne2000.github.io/PLZAnalyse/plzWerte.json').then(res => res.json()),
-        fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/PLZ.geojson').then(res => res.json())
+        fetch('https://benne2000.github.io/PLZAnalyse/PLZ.geojson').then(res => res.json())
       ]).then(([plzWerte, geoData]) => {
         const layer = L.geoJSON(geoData, {
           style: feature => {
@@ -137,4 +137,5 @@ if (!customElements.get('geo-map-widget')) {
   customElements.define('geo-map-widget', GeoMapWidget);
 }
 })();
+
 
