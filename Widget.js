@@ -1,86 +1,69 @@
-if (!customElements.get("geo-map-widget")) {
-  class GeoMapWidget extends HTMLElement {
-    constructor() {
-      super();
-      this._shadowRoot = this.attachShadow({ mode: "open" });
-      this._container = document.createElement("div");
-      this._container.style.width = "100%";
-      this._container.style.height = "100%";
-      this._shadowRoot.appendChild(this._container);
+(function () {
+  let mapInstance = null;
+  let mapContainerId = "leaflet-map-container";
 
-      this._map = null;
+  const loadLeaflet = () => {
+    if (!window.L) {
+      const leafletCSS = document.createElement("link");
+      leafletCSS.rel = "stylesheet";
+      leafletCSS.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(leafletCSS);
+
+      const leafletJS = document.createElement("script");
+      leafletJS.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+      leafletJS.onload = initMap;
+      document.head.appendChild(leafletJS);
+    } else {
+      initMap();
+    }
+  };
+
+  const initMap = () => {
+    const container = document.getElementById(mapContainerId);
+
+    // 🧼 Container prüfen
+    if (!container) {
+      console.warn("Map container not found.");
+      return;
     }
 
-    async onCustomWidgetAfterUpdate() {
-      await this.render();
+    // 🧱 Feste Höhe setzen, falls nicht vorhanden
+    if (!container.style.height) {
+      container.style.height = "400px";
     }
 
-    async render() {
-      // Nur einmal initialisieren
-      if (!this._mapContainer) {
-        this._mapContainer = document.createElement("div");
-        this._mapContainer.id = "map";
-        this._mapContainer.style.width = "100%";
-        this._mapContainer.style.height = "100%";
-        this._container.innerHTML = `<h3>PLZ-Karte</h3>`;
-        this._container.appendChild(this._mapContainer);
+    // 🗺️ Karte initialisieren
+    if (!mapInstance) {
+      mapInstance = L.map(container).setView([51.1657, 10.4515], 6);
+
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution: "© OpenStreetMap contributors"
+      }).addTo(mapInstance);
+
+      // 🧽 Leaflet zwingen, die Größe neu zu berechnen
+      setTimeout(() => {
+        mapInstance.invalidateSize();
+      }, 0);
+    }
+  };
+
+  // 📦 Widget-Initialisierung
+  sap.ui.define(["sap/designstudio/sdk/component"], function (Component) {
+    return Component.extend("custom.leafletwidget.LeafletWidget", {
+      initDesignStudio: function () {
+        // 🧱 Container erzeugen
+        if (!document.getElementById(mapContainerId)) {
+          const container = document.createElement("div");
+          container.id = mapContainerId;
+          container.style.width = "100%";
+          container.style.height = "400px"; // 🧱 Feste Höhe
+          container.style.border = "1px solid #ccc";
+          this.$().append(container);
+        }
+
+        // 🚀 Leaflet laden
+        loadLeaflet();
       }
-
-      await this.loadLeaflet();
-
-      // Nur einmal die Karte erzeugen
-      if (!this._map) {
-        this._map = L.map(this._mapContainer).setView([51.1657, 10.4515], 6);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "© OpenStreetMap contributors"
-        }).addTo(this._map);
-      }
-
-      // Optional: vorherige Layer entfernen
-      if (this._geoLayer) {
-        this._map.removeLayer(this._geoLayer);
-      }
-
-      // GeoJSON laden
-      const geojsonUrl = "https://benne2000.github.io/PLZAnalyse/PLZ.geojson";
-      try {
-        const response = await fetch(geojsonUrl);
-        const geojson = await response.json();
-        this._geoLayer = L.geoJSON(geojson, {
-          style: () => ({ color: "#3388ff", weight: 1, fillOpacity: 0.4 })
-        }).addTo(this._map);
-      } catch (e) {
-        console.warn("GeoJSON konnte nicht geladen werden:", e);
-      }
-    }
-
-    async loadLeaflet() {
-      if (window.L) return;
-      await Promise.all([
-        this.loadScript("https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"),
-        this.loadStyle("https://unpkg.com/leaflet@1.9.4/dist/leaflet.css")
-      ]);
-    }
-
-    loadScript(src) {
-      return new Promise(resolve => {
-        const script = document.createElement("script");
-        script.src = src;
-        script.onload = resolve;
-        document.head.appendChild(script);
-      });
-    }
-
-    loadStyle(href) {
-      return new Promise(resolve => {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = href;
-        link.onload = resolve;
-        document.head.appendChild(link);
-      });
-    }
-  }
-
-  customElements.define("geo-map-widget", GeoMapWidget);
-}
+    });
+  });
+})();
