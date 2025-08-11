@@ -27,7 +27,7 @@ if (!customElements.get("geo-map-widget")) {
       }
 
       // 🔗 Feste GeoJSON-URL
-      const geojsonUrl = "https://example.com/plz.geojson";
+      const geojsonUrl = "https://benne2000.github.io/PLZAnalyse/PLZ.geojson";
       try {
         const response = await fetch(geojsonUrl);
         const geojson = await response.json();
@@ -92,3 +92,4 @@ if (!customElements.get("geo-map-widget")) {
 
   customElements.define("geo-map-widget", GeoMapWidget);
 }
+
