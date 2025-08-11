@@ -19,30 +19,6 @@
     }
   };
 
-  // 🔁 Wiederholte Größenprüfung
-  const ensureMapReady = () => {
-    let attempts = 0;
-    const maxAttempts = 10;
-
-    const checkAndFix = () => {
-      if (mapInstance && mapInstance._size && mapInstance._size.x > 0 && mapInstance._size.y > 0) {
-        console.log("✅ Leaflet-Größe korrekt:", mapInstance._size);
-        mapInstance.invalidateSize();
-      } else {
-        console.warn("⏳ Leaflet-Größe noch nicht korrekt, versuche erneut...");
-        mapInstance.invalidateSize();
-        attempts++;
-        if (attempts < maxAttempts) {
-          setTimeout(checkAndFix, 300);
-        } else {
-          console.error("❌ Leaflet konnte nicht korrekt initialisiert werden.");
-        }
-      }
-    };
-
-    checkAndFix();
-  };
-
   // 🗺️ Karte initialisieren
   const initMap = () => {
     const container = document.getElementById(mapContainerId);
@@ -70,9 +46,10 @@
         attribution: "© OpenStreetMap contributors"
       }).addTo(mapInstance);
 
-      // 🔁 Wiederholte Größenprüfung
+      // ⏳ Leaflet zwingen, Größe neu zu berechnen
       setTimeout(() => {
-        ensureMapReady();
+        mapInstance.invalidateSize();
+        console.log("✅ Karte bereit");
       }, 500);
     }
   };
