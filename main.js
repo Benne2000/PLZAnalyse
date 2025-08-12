@@ -104,68 +104,68 @@
       this.render();
     }
 
-    async render() {
-      if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-        return;
-      }
+async render() {
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+    return;
+  }
 
-      const data = this._myDataSource.data;
-      if (!data) return;
+  const data = this._myDataSource.data;
+  if (!data) return;
 
-      const plzWerte = {};
-      data.forEach((row, index) => {
-        const hasValidDimensions = Array.isArray(row.dimensions) && row.dimensions.length > 0;
-        const hasValidMeasures = Array.isArray(row.measures) && row.measures.length > 0;
+  const plzWerte = {};
+  data.forEach((row, index) => {
+    const dim = row["dimensions_0"];
+    const meas = row["measures_0"];
 
-        if (!hasValidDimensions) {
-          console.error(`❌ Fehlerhafte dimensions in Zeile ${index}:`, row);
-        }
-        if (!hasValidMeasures) {
-          console.error(`❌ Fehlerhafte measures in Zeile ${index}:`, row);
-        }
+    if (!dim || !dim.id) {
+      console.error(`❌ Fehlerhafte dimensions in Zeile ${index}:`, row);
+    }
+    if (!meas || meas.rawValue === undefined) {
+      console.error(`❌ Fehlerhafte measures in Zeile ${index}:`, row);
+    }
 
-        const plz = hasValidDimensions ? row.dimensions[0].id?.trim() : null;
-        const wert = hasValidMeasures ? row.measures[0].rawValue : 0;
+    const plz = dim?.id?.trim();
+    const wert = meas?.rawValue || 0;
 
-        if (plz) {
-          plzWerte[plz] = wert;
-        } else {
-          console.warn("⚠️ Ungültiger Eintrag übersprungen:", row);
-        }
-      });
+    if (plz) {
+      plzWerte[plz] = wert;
+    } else {
+      console.warn("⚠️ Ungültiger Eintrag übersprungen:", row);
+    }
+  });
 
-      console.log("📊 Extrahierte PLZ-Werte:", plzWerte);
+  console.log("📊 Extrahierte PLZ-Werte:", plzWerte);
 
-      const geoData = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson')
-        .then(res => res.json());
+  const geoData = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson')
+    .then(res => res.json());
 
-      const getColor = value => {
-        return value > 10000 ? "#08306b" :
-               value > 5000  ? "#2171b5" :
-               value > 1000  ? "#6baed6" :
-               value > 100   ? "#c6dbef" :
-                               "#f7fbff";
+  const getColor = value => {
+    return value > 10000 ? "#08306b" :
+           value > 5000  ? "#2171b5" :
+           value > 1000  ? "#6baed6" :
+           value > 100   ? "#c6dbef" :
+                           "#f7fbff";
+  };
+
+  const layer = L.geoJSON(geoData, {
+    style: feature => {
+      const plz = (feature.properties.plz || "").trim();
+      const value = plzWerte[plz] || 0;
+      return {
+        fillColor: getColor(value),
+        color: "white",
+        weight: 1,
+        fillOpacity: 0.8
       };
+    },
+    onEachFeature: (feature, layer) => {
+      const plz = (feature.properties.plz || "").trim();
+      const value = plzWerte[plz] || "Keine Daten";
+      layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
+    }
+  }).addTo(this.map);
 
-      const layer = L.geoJSON(geoData, {
-        style: feature => {
-          const plz = (feature.properties.plz || "").trim();
-          const value = plzWerte[plz] || 0;
-          return {
-            fillColor: getColor(value),
-            color: "white",
-            weight: 1,
-            fillOpacity: 0.8
-          };
-        },
-        onEachFeature: (feature, layer) => {
-          const plz = (feature.properties.plz || "").trim();
-          const value = plzWerte[plz] || "Keine Daten";
-          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
-        }
-      }).addTo(this.map);
-
-      this.map.fitBounds(layer.getBounds());
+  this.map.fitBounds(layer.getBounds());
     }
   }
 
@@ -173,3 +173,4 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
