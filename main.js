@@ -129,7 +129,7 @@ async render() {
  
 
     const plz = dim?.id?.trim();
-    const wert = meas?.rawValue || 0;
+
 
     if (plz) {
       plzWerte[plz] = wert;
@@ -177,5 +177,6 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
