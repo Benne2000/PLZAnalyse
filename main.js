@@ -116,13 +116,17 @@ async render() {
   data.forEach((row, index) => {
     const dim = row["dimensions_0"];
     const meas = row["measures_0"];
+    const wert = typeof meas?.raw === "number" ? meas.raw : 0;
+
+    if (typeof meas?.raw !== "number") {
+        console.error(`❌ Fehlerhafte measures in Zeile ${index}:`, row);
+    }
+
 
     if (!dim || !dim.id) {
       console.error(`❌ Fehlerhafte dimensions in Zeile ${index}:`, row);
     }
-    if (!meas || meas.rawValue === undefined) {
-      console.error(`❌ Fehlerhafte measures in Zeile ${index}:`, row);
-    }
+ 
 
     const plz = dim?.id?.trim();
     const wert = meas?.rawValue || 0;
@@ -173,4 +177,5 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
