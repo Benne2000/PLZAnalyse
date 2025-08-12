@@ -110,6 +110,7 @@
       }
 
       const data = this._myDataSource.data;
+      console.log("Data:", data);
       if (!data) return;
 
       const plzWerte = {};
@@ -160,3 +161,4 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
