@@ -85,13 +85,25 @@
     }
 
     setData(dataBinding) {
-      const data = dataBinding.myDataSource?.data;
-      if (!Array.isArray(data)) return;
+      if (!dataBinding || !dataBinding.myDataSource) return;
+
+      this._myDataSource = dataBinding.myDataSource;
+
+      const dimensionFeed = this._myDataSource.metadata.feeds.dimensions;
+      const measureFeed = this._myDataSource.metadata.feeds.measures;
+
+      if (!dimensionFeed?.values?.length || !measureFeed?.values?.length) {
+        console.warn("Keine gültigen Feeds gefunden.");
+        return;
+      }
+
+      const dimensionId = dimensionFeed.values[0]; // z. B. "PLZ"
+      const measureId = measureFeed.values[0];     // z. B. "Wert"
 
       const plzWerte = {};
-      data.forEach(row => {
-        const plz = row["dimensions"]?.id;
-        const value = Number(row["measures"]?.raw);
+      this._myDataSource.data.forEach(row => {
+        const plz = row[dimensionId]?.id || row[dimensionId];
+        const value = Number(row[measureId]?.raw || row[measureId]);
         if (plz) plzWerte[plz] = value;
       });
 
@@ -150,4 +162,3 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
