@@ -110,15 +110,27 @@
       }
 
       const data = this._myDataSource.data;
-      console.log("Data:", data);
       if (!data) return;
 
       const plzWerte = {};
-      data.forEach(row => {
-        const plz = row.dimensions[0]?.id?.trim();
-        const wert = row.measures[0]?.rawValue || 0;
+      data.forEach((row, index) => {
+        const hasValidDimensions = Array.isArray(row.dimensions) && row.dimensions.length > 0;
+        const hasValidMeasures = Array.isArray(row.measures) && row.measures.length > 0;
+
+        if (!hasValidDimensions) {
+          console.error(`❌ Fehlerhafte dimensions in Zeile ${index}:`, row);
+        }
+        if (!hasValidMeasures) {
+          console.error(`❌ Fehlerhafte measures in Zeile ${index}:`, row);
+        }
+
+        const plz = hasValidDimensions ? row.dimensions[0].id?.trim() : null;
+        const wert = hasValidMeasures ? row.measures[0].rawValue : 0;
+
         if (plz) {
           plzWerte[plz] = wert;
+        } else {
+          console.warn("⚠️ Ungültiger Eintrag übersprungen:", row);
         }
       });
 
@@ -161,4 +173,3 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
