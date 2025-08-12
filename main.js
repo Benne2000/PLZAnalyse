@@ -1,5 +1,5 @@
 (function () {
-  let template = document.createElement('template');
+  const template = document.createElement('template');
   template.innerHTML = `
     <style>
       #map {
@@ -35,7 +35,14 @@
       }
     </style>
     <div id="map"></div>
-    <div class="legend" id="legend"></div>
+    <div class="legend" id="legend">
+      <strong>Wert (PLZ)</strong><br>
+      <i style="background:#08306b"></i> > 10.000<br>
+      <i style="background:#2171b5"></i> > 5.000<br>
+      <i style="background:#6baed6"></i> > 1.000<br>
+      <i style="background:#c6dbef"></i> > 100<br>
+      <i style="background:#f7fbff"></i> ≤ 100
+    </div>
   `;
 
   class GeoMapWidget extends HTMLElement {
@@ -45,6 +52,10 @@
       this._shadowRoot.appendChild(template.content.cloneNode(true));
       this.map = null;
       this._myDataSource = null;
+      this._geoData = null;
+      this._geoLayer = null;
+      this._resizeObserver = null;
+      this._renderTimeout = null;
     }
 
     connectedCallback() {
@@ -81,95 +92,93 @@
       }).addTo(this.map);
       marker.bindPopup("BAUHAUS Heidelberg");
 
-      const legendContainer = this._shadowRoot.getElementById('legend');
-      legendContainer.innerHTML = `
-        <strong>Wert (PLZ)</strong><br>
-        <i style="background:#08306b"></i> > 10.000<br>
-        <i style="background:#2171b5"></i> > 5.000<br>
-        <i style="background:#6baed6"></i> > 1.000<br>
-        <i style="background:#c6dbef"></i> > 100<br>
-        <i style="background:#f7fbff"></i> ≤ 100
-      `;
-
-      const resizeObserver = new ResizeObserver(() => {
-        if (this.map) {
-          this.map.invalidateSize();
-        }
-      });
-      resizeObserver.observe(this._shadowRoot.host);
+      if (!this._resizeObserver) {
+        this._resizeObserver = new ResizeObserver(() => {
+          if (this.map) {
+            this.map.invalidateSize();
+          }
+        });
+        this._resizeObserver.observe(this._shadowRoot.host);
+      }
     }
 
     set myDataSource(dataBinding) {
       this._myDataSource = dataBinding;
-      this.render();
+      clearTimeout(this._renderTimeout);
+      this._renderTimeout = setTimeout(() => this.render(), 100);
     }
 
-async render() {
-  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-    return;
-  }
+    async render() {
+      if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
 
-  const data = this._myDataSource.data;
-  if (!data) return;
+      const data = this._myDataSource.data;
+      if (!data) return;
 
-  const plzWerte = {};
-  data.forEach((row, index) => {
-    const dim = row["dimensions_0"];
-    const meas = row["measures_0"];
-    const wert = typeof meas?.raw === "number" ? meas.raw : 0;
+      const plzWerte = {};
+      data.forEach((row, index) => {
+        const dim = row["dimensions_0"];
+        const meas = row["measures_0"];
+        const wert = typeof meas?.raw === "number" ? meas.raw : 0;
 
-    if (typeof meas?.raw !== "number") {
-        console.error(`❌ Fehlerhafte measures in Zeile ${index}:`, row);
-    }
+        if (typeof meas?.raw !== "number") {
+          console.error(`❌ Fehlerhafte measures in Zeile ${index}:`, row);
+        }
 
+        if (!dim || !dim.id) {
+          console.error(`❌ Fehlerhafte dimensions in Zeile ${index}:`, row);
+        }
 
-    if (!dim || !dim.id) {
-      console.error(`❌ Fehlerhafte dimensions in Zeile ${index}:`, row);
-    }
- 
+        const plz = dim?.id?.trim();
+        if (plz) {
+          plzWerte[plz] = wert;
+        } else {
+          console.warn("⚠️ Ungültiger Eintrag übersprungen:", row);
+        }
+      });
 
-    const plz = dim?.id?.trim();
+      console.log("📊 Extrahierte PLZ-Werte:", plzWerte);
 
+      if (!this._geoData) {
+        try {
+          this._geoData = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson')
+            .then(res => res.json());
+        } catch (err) {
+          console.error("❌ Fehler beim Laden der GeoJSON-Daten:", err);
+          return;
+        }
+      }
 
-    if (plz) {
-      plzWerte[plz] = wert;
-    } else {
-      console.warn("⚠️ Ungültiger Eintrag übersprungen:", row);
-    }
-  });
-
-  console.log("📊 Extrahierte PLZ-Werte:", plzWerte);
-
-  const geoData = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson')
-    .then(res => res.json());
-
-  const getColor = value => {
-    return value > 10000 ? "#08306b" :
-           value > 5000  ? "#2171b5" :
-           value > 1000  ? "#6baed6" :
-           value > 100   ? "#c6dbef" :
-                           "#f7fbff";
-  };
-
-  const layer = L.geoJSON(geoData, {
-    style: feature => {
-      const plz = (feature.properties.plz || "").trim();
-      const value = plzWerte[plz] || 0;
-      return {
-        fillColor: getColor(value),
-        color: "white",
-        weight: 1,
-        fillOpacity: 0.8
+      const getColor = value => {
+        return value > 10000 ? "#08306b" :
+               value > 5000  ? "#2171b5" :
+               value > 1000  ? "#6baed6" :
+               value > 100   ? "#c6dbef" :
+                               "#f7fbff";
       };
-    },
-    onEachFeature: (feature, layer) => {
-      const plz = (feature.properties.plz || "").trim();
-      const value = plzWerte[plz] || "Keine Daten";
-      layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
-    }
-  }).addTo(this.map);
 
-  this.map.fitBounds(layer.getBounds());
+      if (this._geoLayer) {
+        this.map.removeLayer(this._geoLayer);
+      }
+
+      this._geoLayer = L.geoJSON(this._geoData, {
+        style: feature => {
+          const plz = (feature.properties.plz || "").trim();
+          const value = plzWerte[plz] || 0;
+          return {
+            fillColor: getColor(value),
+            color: "white",
+            weight: 1,
+            fillOpacity: 0.8
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          const plz = (feature.properties.plz || "").trim();
+          const value = plzWerte[plz] || "Keine Daten";
+          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
+        }
+      }).addTo(this.map);
+
+      this.map.fitBounds(this._geoLayer.getBounds());
     }
   }
 
@@ -177,6 +186,3 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
