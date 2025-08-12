@@ -84,32 +84,18 @@
       resizeObserver.observe(this._shadowRoot.host);
     }
 
-    setData(dataBinding) {
-      if (!dataBinding || !dataBinding.myDataSource) return;
+setData() {
+  // Manuelle Testdaten
+  this._plzWerte = {
+    "68159": 14,
+    "69115": 500,
+    "70173": 12000
+  };
 
-      this._myDataSource = dataBinding.myDataSource;
+  console.log("Manuelle Testdaten gesetzt:", this._plzWerte);
+  this.updateMapWithSACData();
+}
 
-      const dimensionFeed = this._myDataSource.metadata.feeds.dimensions;
-      const measureFeed = this._myDataSource.metadata.feeds.measures;
-
-      if (!dimensionFeed?.values?.length || !measureFeed?.values?.length) {
-        console.warn("Keine gültigen Feeds gefunden.");
-        return;
-      }
-
-      const dimensionId = dimensionFeed.values[0]; // z. B. "PLZ"
-      const measureId = measureFeed.values[0];     // z. B. "Wert"
-
-      const plzWerte = {};
-      this._myDataSource.data.forEach(row => {
-        const plz = row[dimensionId]?.id || row[dimensionId];
-        const value = Number(row[measureId]?.raw || row[measureId]);
-        if (plz) plzWerte[plz] = value;
-      });
-
-      this._plzWerte = plzWerte;
-      this.updateMapWithSACData();
-    }
 
     updateMapWithSACData() {
       if (!this.map || !this._plzWerte) return;
@@ -162,3 +148,4 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
