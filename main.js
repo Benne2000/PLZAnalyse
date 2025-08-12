@@ -44,11 +44,11 @@
       this._shadowRoot = this.attachShadow({ mode: 'open' });
       this._shadowRoot.appendChild(template.content.cloneNode(true));
       this.map = null;
+      this._myDataSource = null;
     }
 
     connectedCallback() {
       if (!window.L) {
-        console.log("Test");
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
@@ -99,16 +99,22 @@
       resizeObserver.observe(this._shadowRoot.host);
     }
 
-    setData(dataBinding) {
-      const data = dataBinding.myDataSource;
-      if (!data || !data.data) return;
+    set myDataSource(dataBinding) {
+      this._myDataSource = dataBinding;
+      this.render();
+    }
 
-      console.log("📦 Empfangene SAC-Daten:", data);
+    async render() {
+      if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+        return;
+      }
+
+      const data = this._myDataSource.data;
+      if (!data) return;
 
       const plzWerte = {};
-
-      data.data.forEach(row => {
-        const plz = row.dimensions[0]?.id?.trim(); // oder .label je nach SAC-Konfiguration
+      data.forEach(row => {
+        const plz = row.dimensions[0]?.id?.trim();
         const wert = row.measures[0]?.rawValue || 0;
         if (plz) {
           plzWerte[plz] = wert;
@@ -117,41 +123,36 @@
 
       console.log("📊 Extrahierte PLZ-Werte:", plzWerte);
 
-      this.updateMapWithData(plzWerte);
-    }
+      const geoData = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson')
+        .then(res => res.json());
 
-    updateMapWithData(plzWerte) {
-      fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson')
-        .then(res => res.json())
-        .then(geoData => {
-          const getColor = value => {
-            return value > 10000 ? "#08306b" :
-                   value > 5000  ? "#2171b5" :
-                   value > 1000  ? "#6baed6" :
-                   value > 100   ? "#c6dbef" :
-                                   "#f7fbff";
+      const getColor = value => {
+        return value > 10000 ? "#08306b" :
+               value > 5000  ? "#2171b5" :
+               value > 1000  ? "#6baed6" :
+               value > 100   ? "#c6dbef" :
+                               "#f7fbff";
+      };
+
+      const layer = L.geoJSON(geoData, {
+        style: feature => {
+          const plz = (feature.properties.plz || "").trim();
+          const value = plzWerte[plz] || 0;
+          return {
+            fillColor: getColor(value),
+            color: "white",
+            weight: 1,
+            fillOpacity: 0.8
           };
+        },
+        onEachFeature: (feature, layer) => {
+          const plz = (feature.properties.plz || "").trim();
+          const value = plzWerte[plz] || "Keine Daten";
+          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
+        }
+      }).addTo(this.map);
 
-          const layer = L.geoJSON(geoData, {
-            style: feature => {
-              const plz = (feature.properties.plz || "").trim();
-              const value = plzWerte[plz] || 0;
-              return {
-                fillColor: getColor(value),
-                color: "white",
-                weight: 1,
-                fillOpacity: 0.8
-              };
-            },
-            onEachFeature: (feature, layer) => {
-              const plz = (feature.properties.plz || "").trim();
-              const value = plzWerte[plz] || "Keine Daten";
-              layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
-            }
-          }).addTo(this.map);
-
-          this.map.fitBounds(layer.getBounds());
-        });
+      this.map.fitBounds(layer.getBounds());
     }
   }
 
@@ -159,4 +160,3 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
