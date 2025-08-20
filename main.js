@@ -65,6 +65,8 @@
     <button id="showNotesButton">Notizen anzeigen</button>
   `;
 
+ 
+
   class GeoMapWidget extends HTMLElement {
     constructor() {
       super();
@@ -77,6 +79,7 @@
       this._myDataSource = null;
       this._resizeObserver = null;
       this._renderTimeout = null;
+      this._geoLayerVisible = false;
     }
 
     connectedCallback() {
@@ -100,6 +103,22 @@
     initializeMapBase() {
       const mapContainer = this._shadowRoot.getElementById('map');
       this.map = L.map(mapContainer).setView([49.4, 8.7], 10);
+
+      this.map.on('zoomend', () => {
+        const zoom = this.map.getZoom();
+        if (zoom >= 12 && !this._geoLayerVisible) {
+          this.render();
+        } else if (this._geoLayer) {
+          if (zoom >= 12) {
+            this.map.addLayer(this._geoLayer);
+            this._geoLayerVisible = true;
+          } else {
+            this.map.removeLayer(this._geoLayer);
+            this._geoLayerVisible = false;
+          }
+        }
+      });
+
       if (!this._resizeObserver) {
         this._resizeObserver = new ResizeObserver(() => {
           if (this.map) {
@@ -136,7 +155,11 @@
     set myDataSource(dataBinding) {
       this._myDataSource = dataBinding;
       clearTimeout(this._renderTimeout);
-      this._renderTimeout = setTimeout(() => this.render(), 100);
+      this._renderTimeout = setTimeout(() => {
+        if (this.map.getZoom() >= 12) {
+          this.render();
+        }
+      }, 100);
     }
 
     async render() {
@@ -145,7 +168,7 @@
       if (!data) return;
 
       const plzWerte = {};
-      data.forEach((row, index) => {
+      data.forEach(row => {
         const dim = row["dimensions_0"];
         const meas = row["measures_0"];
         const wert = typeof meas?.raw === "number" ? meas.raw : 0;
@@ -193,13 +216,21 @@
           const note = feature.properties.note || "Keine Beschreibung";
           layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}<br>Note: ${note}`);
         }
-      }).addTo(this.map);
+      });
 
-      this.map.fitBounds(this._geoLayer.getBounds());
+      if (this.map.getZoom() >= 12) {
+        this._geoLayer.addTo(this.map);
+        this._geoLayerVisible = true;
+        this.map.fitBounds(this._geoLayer.getBounds());
+      }
     }
 
     showNotesOnMap() {
-      if (!this._geoLayer) return;
+      if (!this._geoLayer || this.map.getZoom() < 13) {
+        console.warn("🔍 Notizen werden erst ab Zoom-Level 13 angezeigt.");
+        return;
+      }
+
       this._geoLayer.eachLayer(layer => {
         const note = layer.feature?.properties?.note;
         if (note) {
