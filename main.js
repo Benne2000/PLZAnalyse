@@ -164,7 +164,8 @@
         return value > 10000 ? "#08306b" :
                value > 5000  ? "#2171b5" :
                value > 1000  ? "#6baed6" :
-               value > 100   ? "#c6dbef";
+               value > 100   ? "#c6dbef" :
+                         "";
       };
 
       if (this._geoLayer) {
@@ -197,4 +198,5 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
