@@ -139,12 +139,26 @@
       marker.bindPopup("BAUHAUS Heidelberg");
     }
 
-    set myDataSource(dataBinding) {
-      this._myDataSource = dataBinding;
-      if (this.map.getZoom() >= 12) {
-        this.render();
+set myDataSource(dataBinding) {
+  this._myDataSource = dataBinding;
+
+  if (!this.map) {
+    // Delay rendering until map is initialized
+    const waitForMap = setInterval(() => {
+      if (this.map) {
+        clearInterval(waitForMap);
+        if (this.map.getZoom() >= 12) {
+          this.render();
+        }
       }
-    }
+    }, 100);
+    return;
+  }
+
+  if (this.map.getZoom() >= 12) {
+    this.render();
+  }
+}
 
     async render() {
       if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
@@ -224,3 +238,4 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
