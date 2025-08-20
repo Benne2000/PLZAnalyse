@@ -164,9 +164,9 @@
       const hzFlags = {};
 
       data.forEach(row => {
-        const plz = row["dimensions_0"]?.id?.trim();
-        const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
-        const hzFlag = row["dimensions_1"]?.id?.trim(); // HZFlag
+        const plz = row["dimension_plz"]?.id?.trim();
+        const hzFlag = row["dimension_hzflag"]?.id?.trim();
+        const wert = typeof row["measure_value"]?.raw === "number" ? row["measure_value"].raw : 0;
 
         if (plz) {
           plzWerte[plz] = wert;
@@ -204,22 +204,21 @@
 
       this._geoLayer = L.geoJSON(this._geoData, {
         style: feature => {
-          const plz = feature.properties.plz?.trim();
+          const plz = feature.properties?.plz;
           const value = plzWerte[plz] || 0;
           const isHZ = hzFlags[plz] || false;
           return {
             fillColor: getColor(value, isHZ),
-            color: "#a4a8ad",
             weight: 1,
-            fillOpacity: 0.4
+            opacity: 1,
+            color: 'white',
+            fillOpacity: 0.7
           };
         },
         onEachFeature: (feature, layer) => {
-          const plz = feature.properties.plz?.trim();
-          const value = plzWerte[plz] || "Keine Daten";
-          const note = feature.properties.note || "Keine Beschreibung";
-          const hzFlag = hzFlags[plz] ? "X" : "–";
-          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}<br>HZFlag: ${hzFlag}<br>Note: ${note}`);
+          const plz = feature.properties?.plz;
+          const value = plzWerte[plz] || 0;
+          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
         }
       });
 
