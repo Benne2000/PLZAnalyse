@@ -31,19 +31,6 @@
         margin-right: 8px;
         opacity: 0.8;
       }
-      #showNotesButton {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        z-index: 1001;
-        padding: 6px 12px;
-        font-size: 12px;
-        background: #2171b5;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-      }
       .note-label {
         background: rgba(255, 255, 255, 0.8);
         border: 1px solid #999;
@@ -62,7 +49,6 @@
       <i style="background:#c6dbef"></i> > 100<br>
       <i style="background:#f7fbff"></i> ≤ 100
     </div>
-    <button id="showNotesButton">Notizen anzeigen</button>
   `;
 
   class GeoMapWidget extends HTMLElement {
@@ -92,9 +78,6 @@
       } else {
         this.initializeMapBase();
       }
-
-      this._shadowRoot.getElementById('showNotesButton')
-        .addEventListener('click', () => this.showNotesOnMap());
     }
 
     initializeMapBase() {
@@ -113,7 +96,7 @@
         this._resizeObserver.observe(this._shadowRoot.host);
       }
 
-      this.initializeMapTiles();
+      // initializeMapTiles() wird NICHT automatisch aufgerufen
       this.render(); // Polygone direkt laden
     }
 
@@ -238,4 +221,5 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
