@@ -161,10 +161,17 @@
 
       const data = this._myDataSource.data;
       const plzWerte = {};
+      const hzFlags = {};
+
       data.forEach(row => {
         const plz = row["dimensions_0"]?.id?.trim();
         const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
-        if (plz) plzWerte[plz] = wert;
+        const hzFlag = row["dimensions_1"]?.id?.trim(); // HZFlag
+
+        if (plz) {
+          plzWerte[plz] = wert;
+          hzFlags[plz] = hzFlag === "X";
+        }
       });
 
       if (!this._geoData) {
@@ -177,11 +184,18 @@
         }
       }
 
-      const getColor = value => {
-        return value > 10000 ? "#08306b" :
-               value > 5000 ? "#2171b5" :
-               value > 1000 ? "#6baed6" :
-               value > 100 ? "#c6dbef" : "f2f4f7";
+      const getColor = (value, isHZ) => {
+        if (isHZ) {
+          return value > 10000 ? "#00441b" :
+                 value > 5000 ? "#238b45" :
+                 value > 1000 ? "#66c2a4" :
+                 value > 100 ? "#ccece6" : "#f7fcfd";
+        } else {
+          return value > 10000 ? "#08306b" :
+                 value > 5000 ? "#2171b5" :
+                 value > 1000 ? "#6baed6" :
+                 value > 100 ? "#c6dbef" : "#f7fbff";
+        }
       };
 
       if (this._geoLayer) {
@@ -192,8 +206,9 @@
         style: feature => {
           const plz = feature.properties.plz?.trim();
           const value = plzWerte[plz] || 0;
+          const isHZ = hzFlags[plz] || false;
           return {
-            fillColor: getColor(value),
+            fillColor: getColor(value, isHZ),
             color: "#a4a8ad",
             weight: 1,
             fillOpacity: 0.4
@@ -203,53 +218,48 @@
           const plz = feature.properties.plz?.trim();
           const value = plzWerte[plz] || "Keine Daten";
           const note = feature.properties.note || "Keine Beschreibung";
-          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}<br>Note: ${note}`);
+          const hzFlag = hzFlags[plz] ? "X" : "–";
+          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}<br>HZFlag: ${hzFlag}<br>Note: ${note}`);
         }
       });
 
       this._geoLayer.addTo(this.map);
       this._geoLayerVisible = true;
 
-      // 🧭 Karte auf GeoJSON zentrieren
       const geoBounds = this._geoLayer.getBounds();
       this.map.fitBounds(geoBounds);
     }
 
-showNotesOnMap() {
-  if (!this._geoLayer) return;
+    showNotesOnMap() {
+      if (!this._geoLayer) return;
 
-  const zoomLevel = this.map.getZoom();
-  const bounds = this.map.getBounds();
+      const zoomLevel = this.map.getZoom();
+      const bounds = this.map.getBounds();
 
-  this._geoLayer.eachLayer(layer => {
-    const note = layer.feature?.properties?.note;
-    const center = layer.getBounds?.().getCenter?.();
+      this._geoLayer.eachLayer(layer => {
+        const note = layer.feature?.properties?.note;
+        const center = layer.getBounds?.().getCenter?.();
 
-    if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
-      // Tooltip neu binden, falls nicht vorhanden oder geschlossen
-      if (!layer.getTooltip()) {
-        layer.bindTooltip(note, {
-          permanent: true,
-          direction: 'center',
-          className: 'note-label'
-        }).openTooltip();
-      } else {
-        layer.openTooltip(); // sicherstellen, dass er sichtbar ist
-      }
-    } else {
-      if (layer.getTooltip()) {
-        layer.closeTooltip();
-      }
+        if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
+          if (!layer.getTooltip()) {
+            layer.bindTooltip(note, {
+              permanent: true,
+              direction: 'center',
+              className: 'note-label'
+            }).openTooltip();
+          } else {
+            layer.openTooltip();
+          }
+        } else {
+          if (layer.getTooltip()) {
+            layer.closeTooltip();
+          }
+        }
+      });
     }
-  });
-}
-
   }
 
   if (!customElements.get('geo-map-widget')) {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
