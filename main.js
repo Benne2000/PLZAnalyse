@@ -82,7 +82,7 @@
 
     initializeMapBase() {
       const mapContainer = this._shadowRoot.getElementById('map');
-      this.map = L.map(mapContainer).setView([49.4, 8.7], 10);
+      this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
       this.map.on('zoomend', () => this.showNotesOnMap());
       this.map.on('moveend', () => this.showNotesOnMap());
@@ -195,31 +195,37 @@
       this._geoLayerVisible = true;
     }
 
-    showNotesOnMap() {
-      if (!this._geoLayer || this.map.getZoom() < 13) {
-        console.warn("🔍 Notizen werden erst ab Zoom-Level 13 angezeigt.");
-        return;
+showNotesOnMap() {
+  if (!this._geoLayer) return;
+
+  const zoomLevel = this.map.getZoom();
+  const bounds = this.map.getBounds();
+
+  this._geoLayer.eachLayer(layer => {
+    const note = layer.feature?.properties?.note;
+    const center = layer.getBounds?.().getCenter?.();
+
+    if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
+      layer.bindTooltip(note, {
+        permanent: true,
+        direction: 'center',
+        className: 'note-label'
+      }).openTooltip();
+    } else {
+      // Entferne Tooltip, falls vorhanden
+      if (layer.getTooltip()) {
+        layer.unbindTooltip();
       }
-
-      const bounds = this.map.getBounds();
-
-      this._geoLayer.eachLayer(layer => {
-        const note = layer.feature?.properties?.note;
-        const center = layer.getBounds?.().getCenter?.();
-        if (note && center && bounds.contains(center)) {
-          layer.bindTooltip(note, {
-            permanent: true,
-            direction: 'center',
-            className: 'note-label'
-          }).openTooltip();
-        }
-      });
     }
+  });
+}
+
   }
 
   if (!customElements.get('geo-map-widget')) {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
