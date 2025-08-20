@@ -180,7 +180,7 @@
             fillColor: getColor(value),
             color: "white",
             weight: 1,
-            fillOpacity: 0.8
+            fillOpacity: 0.4
           };
         },
         onEachFeature: (feature, layer) => {
@@ -198,5 +198,6 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
