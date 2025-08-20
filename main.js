@@ -65,8 +65,6 @@
     <button id="showNotesButton">Notizen anzeigen</button>
   `;
 
- 
-
   class GeoMapWidget extends HTMLElement {
     constructor() {
       super();
@@ -78,7 +76,6 @@
       this._geoData = null;
       this._myDataSource = null;
       this._resizeObserver = null;
-      this._renderTimeout = null;
       this._geoLayerVisible = false;
     }
 
@@ -106,16 +103,11 @@
 
       this.map.on('zoomend', () => {
         const zoom = this.map.getZoom();
-        if (zoom >= 12 && !this._geoLayerVisible) {
+        if (zoom >= 12) {
           this.render();
         } else if (this._geoLayer) {
-          if (zoom >= 12) {
-            this.map.addLayer(this._geoLayer);
-            this._geoLayerVisible = true;
-          } else {
-            this.map.removeLayer(this._geoLayer);
-            this._geoLayerVisible = false;
-          }
+          this.map.removeLayer(this._geoLayer);
+          this._geoLayerVisible = false;
         }
       });
 
@@ -127,6 +119,8 @@
         });
         this._resizeObserver.observe(this._shadowRoot.host);
       }
+
+      this.initializeMapTiles();
     }
 
     initializeMapTiles() {
@@ -145,43 +139,28 @@
       marker.bindPopup("BAUHAUS Heidelberg");
     }
 
-    removeMapTiles() {
-      if (this.map && this._tileLayer) {
-        this.map.removeLayer(this._tileLayer);
-        this._tileLayer = null;
-      }
-    }
-
     set myDataSource(dataBinding) {
       this._myDataSource = dataBinding;
-      clearTimeout(this._renderTimeout);
-      this._renderTimeout = setTimeout(() => {
-        if (this.map.getZoom() >= 12) {
-          this.render();
-        }
-      }, 100);
+      if (this.map.getZoom() >= 12) {
+        this.render();
+      }
     }
 
     async render() {
       if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
-      const data = this._myDataSource.data;
-      if (!data) return;
 
+      const data = this._myDataSource.data;
       const plzWerte = {};
       data.forEach(row => {
-        const dim = row["dimensions_0"];
-        const meas = row["measures_0"];
-        const wert = typeof meas?.raw === "number" ? meas.raw : 0;
-        const plz = dim?.id?.trim();
-        if (plz) {
-          plzWerte[plz] = wert;
-        }
+        const plz = row["dimensions_0"]?.id?.trim();
+        const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
+        if (plz) plzWerte[plz] = wert;
       });
 
       if (!this._geoData) {
         try {
-          this._geoData = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson')
-            .then(res => res.json());
+          const res = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
+          this._geoData = await res.json();
         } catch (err) {
           console.error("❌ Fehler beim Laden der GeoJSON-Daten:", err);
           return;
@@ -201,7 +180,7 @@
 
       this._geoLayer = L.geoJSON(this._geoData, {
         style: feature => {
-          const plz = (feature.properties.plz || "").trim();
+          const plz = feature.properties.plz?.trim();
           const value = plzWerte[plz] || 0;
           return {
             fillColor: getColor(value),
@@ -211,18 +190,15 @@
           };
         },
         onEachFeature: (feature, layer) => {
-          const plz = (feature.properties.plz || "").trim();
+          const plz = feature.properties.plz?.trim();
           const value = plzWerte[plz] || "Keine Daten";
           const note = feature.properties.note || "Keine Beschreibung";
           layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}<br>Note: ${note}`);
         }
       });
 
-      if (this.map.getZoom() >= 12) {
-        this._geoLayer.addTo(this.map);
-        this._geoLayerVisible = true;
-        this.map.fitBounds(this._geoLayer.getBounds());
-      }
+      this._geoLayer.addTo(this.map);
+      this._geoLayerVisible = true;
     }
 
     showNotesOnMap() {
