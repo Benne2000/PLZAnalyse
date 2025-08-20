@@ -193,12 +193,12 @@ const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw 
           return value > 10000 ? "#00441b" :
                  value > 5000 ? "#238b45" :
                  value > 1000 ? "#66c2a4" :
-                 value > 100 ? "#ccece6" : "#f7fcfd";
+                 value > 100 ? "#ccece6" : "#cfd4da";
         } else {
           return value > 10000 ? "#08306b" :
                  value > 5000 ? "#2171b5" :
                  value > 1000 ? "#6baed6" :
-                 value > 100 ? "#c6dbef" : "#f7fbff";
+                 value > 100 ? "#c6dbef" : "#cfd4da;
         }
       };
 
@@ -266,6 +266,7 @@ const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw 
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
