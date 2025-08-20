@@ -63,6 +63,7 @@
       this._myDataSource = null;
       this._resizeObserver = null;
       this._geoLayerVisible = false;
+      this._tilesVisible = false; // Toggle-Zustand
     }
 
     connectedCallback() {
@@ -96,7 +97,6 @@
         this._resizeObserver.observe(this._shadowRoot.host);
       }
 
-      // initializeMapTiles() wird NICHT automatisch aufgerufen
       this.render(); // Polygone direkt laden
     }
 
@@ -115,14 +115,29 @@
       }).addTo(this.map);
       marker.bindPopup("BAUHAUS Heidelberg");
     }
-    
+
     removeMapTiles() {
       if (this.map && this._tileLayer) {
         this.map.removeLayer(this._tileLayer);
         this._tileLayer = null;
       }
     }
-    
+
+    toggleMapTiles() {
+      if (this._tilesVisible) {
+        this.removeMapTiles();
+        this._tilesVisible = false;
+      } else {
+        this.initializeMapTiles();
+        this._tilesVisible = true;
+      }
+    }
+
+    onCustomWidgetEvent(event) {
+      if (event.name === "toggleTiles") {
+        this.toggleMapTiles();
+      }
+    }
 
     set myDataSource(dataBinding) {
       this._myDataSource = dataBinding;
@@ -195,40 +210,34 @@
       this._geoLayerVisible = true;
     }
 
-showNotesOnMap() {
-  if (!this._geoLayer) return;
+    showNotesOnMap() {
+      if (!this._geoLayer) return;
 
-  const zoomLevel = this.map.getZoom();
-  const bounds = this.map.getBounds();
+      const zoomLevel = this.map.getZoom();
+      const bounds = this.map.getBounds();
 
-  this._geoLayer.eachLayer(layer => {
-    const note = layer.feature?.properties?.note;
-    const center = layer.getBounds?.().getCenter?.();
+      this._geoLayer.eachLayer(layer => {
+        const note = layer.feature?.properties?.note;
+        const center = layer.getBounds?.().getCenter?.();
 
-    if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
-      if (!layer.getTooltip()) {
-        layer.bindTooltip(note, {
-          permanent: true,
-          direction: 'center',
-          className: 'note-label'
-        }).openTooltip();
-      }
-    } else {
-      if (layer.getTooltip()) {
-        layer.closeTooltip(); // 👈 This hides the tooltip
-      }
+        if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
+          if (!layer.getTooltip()) {
+            layer.bindTooltip(note, {
+              permanent: true,
+              direction: 'center',
+              className: 'note-label'
+            }).openTooltip();
+          }
+        } else {
+          if (layer.getTooltip()) {
+            layer.closeTooltip();
+          }
+        }
+      });
     }
-  });
-}
-
-
   }
 
   if (!customElements.get('geo-map-widget')) {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
-
