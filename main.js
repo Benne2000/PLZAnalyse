@@ -164,9 +164,9 @@
       const hzFlags = {};
 
       data.forEach(row => {
-        const plz = row["dimension_plz"]?.id?.trim();
-        const hzFlag = row["dimension_hzflag"]?.id?.trim();
-        const wert = typeof row["measure_value"]?.raw === "number" ? row["measure_value"].raw : 0;
+        const plz = row["dimensions_0"]?.id?.trim();
+        const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
+        const hzFlag = row["dimensions_1"]?.id?.trim(); // HZFlag
 
         if (plz) {
           plzWerte[plz] = wert;
