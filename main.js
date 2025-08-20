@@ -162,8 +162,10 @@
       const data = this._myDataSource.data;
       const plzWerte = {};
       const hzFlags = {};
-
+console.log("🔎 Zeile:", data);
       data.forEach(row => {
+        console.log("🔎 Zeile:", row);
+
         const plz = row["dimension_plz"]?.id?.trim();
         const hzFlag = row["dimension_hzflag"]?.id?.trim();
         const wert = typeof row["measure_value"]?.raw === "number" ? row["measure_value"].raw : 0;
@@ -266,4 +268,5 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
