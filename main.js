@@ -10,6 +10,7 @@
         bottom: 0;
         left: 0;
         right: 0;
+        background: white;
       }
       .legend {
         position: absolute;
@@ -193,7 +194,7 @@
           const value = plzWerte[plz] || 0;
           return {
             fillColor: getColor(value),
-            color: "white",
+            color: "#a4a8ad",
             weight: 1,
             fillOpacity: 0.4
           };
@@ -241,3 +242,4 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
