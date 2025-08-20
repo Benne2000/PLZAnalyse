@@ -260,4 +260,6 @@
   }
 
   if (!customElements.get('geo-map-widget')) {
-    customElements.define('geo-map-widget', GeoMapWidget
+    customElements.define('geo-map-widget', GeoMapWidget);
+  }
+})();
