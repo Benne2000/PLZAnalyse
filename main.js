@@ -64,7 +64,7 @@
       this._myDataSource = null;
       this._resizeObserver = null;
       this._geoLayerVisible = false;
-      this._tilesVisible = false; // Toggle-Zustand
+      this._tilesVisible = false;
     }
 
     connectedCallback() {
@@ -98,7 +98,7 @@
         this._resizeObserver.observe(this._shadowRoot.host);
       }
 
-      this.render(); // Polygone direkt laden
+      this.render();
     }
 
     initializeMapTiles() {
@@ -209,6 +209,10 @@
 
       this._geoLayer.addTo(this.map);
       this._geoLayerVisible = true;
+
+      // 🧭 Karte auf GeoJSON zentrieren
+      const geoBounds = this._geoLayer.getBounds();
+      this.map.fitBounds(geoBounds);
     }
 
     showNotesOnMap() {
@@ -242,4 +246,3 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
