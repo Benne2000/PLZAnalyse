@@ -167,6 +167,10 @@
         const plz = row["dimension_plz"]?.id?.trim();
         const hzFlag = row["dimension_hzflag"]?.id?.trim();
         const wert = typeof row["measure_value"]?.raw === "number" ? row["measure_value"].raw : 0;
+              console.log(`📦 Datenzeile:
+              PLZ: ${plz}
+            HZFlag: ${hzFlag}
+              Wert: ${wert}`);
 
         if (plz) {
           plzWerte[plz] = wert;
@@ -262,3 +266,4 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
