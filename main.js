@@ -206,19 +206,21 @@ showNotesOnMap() {
     const center = layer.getBounds?.().getCenter?.();
 
     if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
-      layer.bindTooltip(note, {
-        permanent: true,
-        direction: 'center',
-        className: 'note-label'
-      }).openTooltip();
+      if (!layer.getTooltip()) {
+        layer.bindTooltip(note, {
+          permanent: true,
+          direction: 'center',
+          className: 'note-label'
+        }).openTooltip();
+      }
     } else {
-      // Entferne Tooltip, falls vorhanden
       if (layer.getTooltip()) {
-        layer.unbindTooltip();
+        layer.closeTooltip(); // 👈 This hides the tooltip
       }
     }
   });
 }
+
 
   }
 
@@ -226,6 +228,7 @@ showNotesOnMap() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
