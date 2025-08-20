@@ -166,13 +166,15 @@ console.log("🔎 Zeile:", data);
       data.forEach(row => {
         console.log("🔎 Zeile:", row);
 
-        const plz = row["dimension_plz"]?.id?.trim();
-        const hzFlag = row["dimension_hzflag"]?.id?.trim();
-        const wert = typeof row["measure_value"]?.raw === "number" ? row["measure_value"].raw : 0;
-              console.log(`📦 Datenzeile:
-              PLZ: ${plz}
-            HZFlag: ${hzFlag}
-              Wert: ${wert}`);
+const plz = row["dimensions_0"]?.id?.trim();
+const hzFlag = row["dimensions_1_0"]?.id?.trim();
+const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
+
+console.log(`📦 Datenzeile:
+  PLZ: ${plz}
+  HZFlag: ${hzFlag}
+  Wert: ${wert}`);
+
 
         if (plz) {
           plzWerte[plz] = wert;
@@ -268,5 +270,6 @@ console.log("🔎 Zeile:", data);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
