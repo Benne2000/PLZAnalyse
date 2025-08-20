@@ -170,7 +170,7 @@ const plz = row["dimensions_0"]?.id?.trim();
 const hzFlag = row["dimensions_1_0"]?.id?.trim();
 const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
 
-console.log(`📦 Datenzeile:
+console.log(`📦 Datenzeile 2:
   PLZ: ${plz}
   HZFlag: ${hzFlag}
   Wert: ${wert}`);
@@ -270,6 +270,7 @@ console.log(`📦 Datenzeile:
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
