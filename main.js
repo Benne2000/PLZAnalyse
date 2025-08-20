@@ -132,6 +132,14 @@
       }).addTo(this.map);
       marker.bindPopup("BAUHAUS Heidelberg");
     }
+    
+    removeMapTiles() {
+      if (this.map && this._tileLayer) {
+        this.map.removeLayer(this._tileLayer);
+        this._tileLayer = null;
+      }
+    }
+    
 
     set myDataSource(dataBinding) {
       this._myDataSource = dataBinding;
@@ -230,3 +238,4 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
