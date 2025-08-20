@@ -66,18 +66,31 @@
 
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-        script.onload = () => this.initializeMap();
+        script.onload = () => this.initializeMapBase();
 
         this._shadowRoot.appendChild(link);
         this._shadowRoot.appendChild(script);
       } else {
-        this.initializeMap();
+        this.initializeMapBase();
       }
     }
 
-    initializeMap() {
+    initializeMapBase() {
       const mapContainer = this._shadowRoot.getElementById('map');
       this.map = L.map(mapContainer).setView([49.4, 8.7], 10);
+
+      if (!this._resizeObserver) {
+        this._resizeObserver = new ResizeObserver(() => {
+          if (this.map) {
+            this.map.invalidateSize();
+          }
+        });
+        this._resizeObserver.observe(this._shadowRoot.host);
+      }
+    }
+
+    initializeMapTiles() {
+      if (!this.map) return;
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
@@ -91,15 +104,6 @@
         fillOpacity: 0.9
       }).addTo(this.map);
       marker.bindPopup("BAUHAUS Heidelberg");
-
-      if (!this._resizeObserver) {
-        this._resizeObserver = new ResizeObserver(() => {
-          if (this.map) {
-            this.map.invalidateSize();
-          }
-        });
-        this._resizeObserver.observe(this._shadowRoot.host);
-      }
     }
 
     set myDataSource(dataBinding) {
