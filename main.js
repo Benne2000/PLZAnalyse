@@ -162,18 +162,14 @@
       const data = this._myDataSource.data;
       const plzWerte = {};
       const hzFlags = {};
-console.log("🔎 Zeile:", data);
+
       data.forEach(row => {
-        console.log("🔎 Zeile:", row);
+
 
 const plz = row["dimensions_0"]?.id?.trim();
 const hzFlag = row["dimensions_1_0"]?.id?.trim();
 const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
 
-console.log(`📦 Datenzeile 3:
-  PLZ: ${plz}
-  HZFlag: ${hzFlag}
-  Wert: ${wert}`);
 
 
         if (plz) {
@@ -215,7 +211,6 @@ console.log(`📦 Datenzeile 3:
           const plz = feature.properties?.plz;
           const value = plzWerte[plz] || 0;
           const isHZ = hzFlags[plz] || false;
-           console.log(`🎨 Styling PLZ ${plz}: Wert=${value}, HZ=${isHZ}, Farbe=${color}`);
           return {
             fillColor: getColor(value, isHZ),
             weight: 1,
@@ -271,6 +266,7 @@ console.log(`📦 Datenzeile 3:
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
