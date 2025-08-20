@@ -215,34 +215,39 @@
       this.map.fitBounds(geoBounds);
     }
 
-    showNotesOnMap() {
-      if (!this._geoLayer) return;
+showNotesOnMap() {
+  if (!this._geoLayer) return;
 
-      const zoomLevel = this.map.getZoom();
-      const bounds = this.map.getBounds();
+  const zoomLevel = this.map.getZoom();
+  const bounds = this.map.getBounds();
 
-      this._geoLayer.eachLayer(layer => {
-        const note = layer.feature?.properties?.note;
-        const center = layer.getBounds?.().getCenter?.();
+  this._geoLayer.eachLayer(layer => {
+    const note = layer.feature?.properties?.note;
+    const center = layer.getBounds?.().getCenter?.();
 
-        if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
-          if (!layer.getTooltip()) {
-            layer.bindTooltip(note, {
-              permanent: true,
-              direction: 'center',
-              className: 'note-label'
-            }).openTooltip();
-          }
-        } else {
-          if (layer.getTooltip()) {
-            layer.closeTooltip();
-          }
-        }
-      });
+    if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
+      // Tooltip neu binden, falls nicht vorhanden oder geschlossen
+      if (!layer.getTooltip()) {
+        layer.bindTooltip(note, {
+          permanent: true,
+          direction: 'center',
+          className: 'note-label'
+        }).openTooltip();
+      } else {
+        layer.openTooltip(); // sicherstellen, dass er sichtbar ist
+      }
+    } else {
+      if (layer.getTooltip()) {
+        layer.closeTooltip();
+      }
     }
+  });
+}
+
   }
 
   if (!customElements.get('geo-map-widget')) {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
