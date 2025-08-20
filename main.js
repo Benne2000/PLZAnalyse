@@ -51,9 +51,10 @@
       this._shadowRoot = this.attachShadow({ mode: 'open' });
       this._shadowRoot.appendChild(template.content.cloneNode(true));
       this.map = null;
-      this._myDataSource = null;
-      this._geoData = null;
+      this._tileLayer = null;
       this._geoLayer = null;
+      this._geoData = null;
+      this._myDataSource = null;
       this._resizeObserver = null;
       this._renderTimeout = null;
     }
@@ -92,7 +93,7 @@
     initializeMapTiles() {
       if (!this.map) return;
 
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      this._tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
         maxZoom: 19
       }).addTo(this.map);
@@ -104,6 +105,13 @@
         fillOpacity: 0.9
       }).addTo(this.map);
       marker.bindPopup("BAUHAUS Heidelberg");
+    }
+
+    removeMapTiles() {
+      if (this.map && this._tileLayer) {
+        this.map.removeLayer(this._tileLayer);
+        this._tileLayer = null;
+      }
     }
 
     set myDataSource(dataBinding) {
