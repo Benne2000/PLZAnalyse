@@ -11,7 +11,6 @@
         left: 0;
         right: 0;
       }
-
       .legend {
         position: absolute;
         bottom: 20px;
@@ -25,13 +24,33 @@
         line-height: 18px;
         color: #333;
       }
-
       .legend i {
         width: 18px;
         height: 18px;
         float: left;
         margin-right: 8px;
         opacity: 0.8;
+      }
+      #showNotesButton {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        z-index: 1001;
+        padding: 6px 12px;
+        font-size: 12px;
+        background: #2171b5;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .note-label {
+        background: rgba(255, 255, 255, 0.8);
+        border: 1px solid #999;
+        padding: 2px 6px;
+        font-size: 11px;
+        color: #333;
+        border-radius: 4px;
       }
     </style>
     <div id="map"></div>
@@ -43,6 +62,7 @@
       <i style="background:#c6dbef"></i> > 100<br>
       <i style="background:#f7fbff"></i> ≤ 100
     </div>
+    <button id="showNotesButton">Notizen anzeigen</button>
   `;
 
   class GeoMapWidget extends HTMLElement {
@@ -64,22 +84,22 @@
         const link = document.createElement('link');
         link.rel = 'stylesheet';
         link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-
         const script = document.createElement('script');
         script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
         script.onload = () => this.initializeMapBase();
-
         this._shadowRoot.appendChild(link);
         this._shadowRoot.appendChild(script);
       } else {
         this.initializeMapBase();
       }
+
+      this._shadowRoot.getElementById('showNotesButton')
+        .addEventListener('click', () => this.showNotesOnMap());
     }
 
     initializeMapBase() {
       const mapContainer = this._shadowRoot.getElementById('map');
       this.map = L.map(mapContainer).setView([49.4, 8.7], 10);
-
       if (!this._resizeObserver) {
         this._resizeObserver = new ResizeObserver(() => {
           if (this.map) {
@@ -92,7 +112,6 @@
 
     initializeMapTiles() {
       if (!this.map) return;
-
       this._tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap',
         maxZoom: 19
@@ -122,7 +141,6 @@
 
     async render() {
       if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
-
       const data = this._myDataSource.data;
       if (!data) return;
 
@@ -131,24 +149,11 @@
         const dim = row["dimensions_0"];
         const meas = row["measures_0"];
         const wert = typeof meas?.raw === "number" ? meas.raw : 0;
-
-        if (typeof meas?.raw !== "number") {
-          console.error(`❌ Fehlerhafte measures in Zeile ${index}:`, row);
-        }
-
-        if (!dim || !dim.id) {
-          console.error(`❌ Fehlerhafte dimensions in Zeile ${index}:`, row);
-        }
-
         const plz = dim?.id?.trim();
         if (plz) {
           plzWerte[plz] = wert;
-        } else {
-          console.warn("⚠️ Ungültiger Eintrag übersprungen:", row);
         }
       });
-
-      console.log("📊 Extrahierte PLZ-Werte:", plzWerte);
 
       if (!this._geoData) {
         try {
@@ -162,10 +167,9 @@
 
       const getColor = value => {
         return value > 10000 ? "#08306b" :
-               value > 5000  ? "#2171b5" :
-               value > 1000  ? "#6baed6" :
-               value > 100   ? "#c6dbef" :
-                         "";
+               value > 5000 ? "#2171b5" :
+               value > 1000 ? "#6baed6" :
+               value > 100 ? "#c6dbef" : "#f7fbff";
       };
 
       if (this._geoLayer) {
@@ -186,11 +190,26 @@
         onEachFeature: (feature, layer) => {
           const plz = (feature.properties.plz || "").trim();
           const value = plzWerte[plz] || "Keine Daten";
-          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
+          const note = feature.properties.note || "Keine Beschreibung";
+          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}<br>Note: ${note}`);
         }
       }).addTo(this.map);
 
       this.map.fitBounds(this._geoLayer.getBounds());
+    }
+
+    showNotesOnMap() {
+      if (!this._geoLayer) return;
+      this._geoLayer.eachLayer(layer => {
+        const note = layer.feature?.properties?.note;
+        if (note) {
+          layer.bindTooltip(note, {
+            permanent: true,
+            direction: 'center',
+            className: 'note-label'
+          }).openTooltip();
+        }
+      });
     }
   }
 
@@ -198,6 +217,3 @@
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
