@@ -202,26 +202,26 @@
         this.map.removeLayer(this._geoLayer);
       }
 
-this._geoLayer = L.geoJSON(this._geoData, {
-  style: feature => {
-    const plz = feature.properties?.plz;
-    const value = plzWerte[plz] || 0;
-    const isHZ = hzFlags[plz] || false;
-    return {
-      fillColor: getColor(value, isHZ),
-      weight: 1,
-      opacity: 1,
-      color: 'white',
-      fillOpacity: 0.7
-    };
-  },
-  onEachFeature: (feature, layer) => {
-    const plz = feature.properties?.plz;
-    const value = plzWerte[plz] || 0;
-    layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
-  }
-});
-
+      this._geoLayer = L.geoJSON(this._geoData, {
+        style: feature => {
+          const plz = feature.properties.plz?.trim();
+          const value = plzWerte[plz] || 0;
+          const isHZ = hzFlags[plz] || false;
+          return {
+            fillColor: getColor(value, isHZ),
+            color: "#a4a8ad",
+            weight: 1,
+            fillOpacity: 0.4
+          };
+        },
+        onEachFeature: (feature, layer) => {
+          const plz = feature.properties.plz?.trim();
+          const value = plzWerte[plz] || "Keine Daten";
+          const note = feature.properties.note || "Keine Beschreibung";
+          const hzFlag = hzFlags[plz] ? "X" : "–";
+          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}<br>HZFlag: ${hzFlag}<br>Note: ${note}`);
+        }
+      });
 
       this._geoLayer.addTo(this.map);
       this._geoLayerVisible = true;
@@ -263,5 +263,3 @@ this._geoLayer = L.geoJSON(this._geoData, {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
