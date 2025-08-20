@@ -222,15 +222,6 @@ this._geoLayer = L.geoJSON(this._geoData, {
   }
 });
 
-        },
-        onEachFeature: (feature, layer) => {
-          const plz = feature.properties.plz?.trim();
-          const value = plzWerte[plz] || "Keine Daten";
-          const note = feature.properties.note || "Keine Beschreibung";
-          const hzFlag = hzFlags[plz] ? "X" : "–";
-          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}<br>HZFlag: ${hzFlag}<br>Note: ${note}`);
-        }
-      });
 
       this._geoLayer.addTo(this.map);
       this._geoLayerVisible = true;
@@ -272,4 +263,5 @@ this._geoLayer = L.geoJSON(this._geoData, {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
