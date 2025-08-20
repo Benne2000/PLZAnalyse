@@ -101,15 +101,8 @@
       const mapContainer = this._shadowRoot.getElementById('map');
       this.map = L.map(mapContainer).setView([49.4, 8.7], 10);
 
-      this.map.on('zoomend', () => {
-        const zoom = this.map.getZoom();
-        if (zoom >= 12) {
-          this.render();
-        } else if (this._geoLayer) {
-          this.map.removeLayer(this._geoLayer);
-          this._geoLayerVisible = false;
-        }
-      });
+      this.map.on('zoomend', () => this.showNotesOnMap());
+      this.map.on('moveend', () => this.showNotesOnMap());
 
       if (!this._resizeObserver) {
         this._resizeObserver = new ResizeObserver(() => {
@@ -121,6 +114,7 @@
       }
 
       this.initializeMapTiles();
+      this.render(); // Polygone direkt laden
     }
 
     initializeMapTiles() {
@@ -139,26 +133,21 @@
       marker.bindPopup("BAUHAUS Heidelberg");
     }
 
-set myDataSource(dataBinding) {
-  this._myDataSource = dataBinding;
+    set myDataSource(dataBinding) {
+      this._myDataSource = dataBinding;
 
-  if (!this.map) {
-    // Delay rendering until map is initialized
-    const waitForMap = setInterval(() => {
-      if (this.map) {
-        clearInterval(waitForMap);
-        if (this.map.getZoom() >= 12) {
-          this.render();
-        }
+      if (!this.map) {
+        const waitForMap = setInterval(() => {
+          if (this.map) {
+            clearInterval(waitForMap);
+            this.render();
+          }
+        }, 100);
+        return;
       }
-    }, 100);
-    return;
-  }
 
-  if (this.map.getZoom() >= 12) {
-    this.render();
-  }
-}
+      this.render();
+    }
 
     async render() {
       if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
@@ -221,9 +210,12 @@ set myDataSource(dataBinding) {
         return;
       }
 
+      const bounds = this.map.getBounds();
+
       this._geoLayer.eachLayer(layer => {
         const note = layer.feature?.properties?.note;
-        if (note) {
+        const center = layer.getBounds?.().getCenter?.();
+        if (note && center && bounds.contains(center)) {
           layer.bindTooltip(note, {
             permanent: true,
             direction: 'center',
@@ -238,4 +230,3 @@ set myDataSource(dataBinding) {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
