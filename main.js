@@ -75,19 +75,6 @@
     </div>
   </div>
   <div id="side-popup"></div>
-  display: none;
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  width: 250px;
-  background: white;
-  border: 2px solid #b41821;
-  padding: 10px;
-  font-family: sans-serif;
-  color: #b41821;
-  z-index: 1001;
-"></div>
-
   `;
 
   class GeoMapWidget extends HTMLElement {
@@ -324,6 +311,7 @@ this._geoLayer = L.geoJSON(this._geoData, {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
