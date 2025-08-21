@@ -50,6 +50,20 @@
       <i style="background:#c6dbef"></i> > 100<br>
       <i style="background:#f7fbff"></i> ≤ 100
     </div>
+    <div id="side-popup" style="
+  display: none;
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 250px;
+  background: white;
+  border: 2px solid #b41821;
+  padding: 10px;
+  font-family: sans-serif;
+  color: #b41821;
+  z-index: 1001;
+"></div>
+
   `;
 
   class GeoMapWidget extends HTMLElement {
@@ -222,39 +236,38 @@ const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw 
         onEachFeature: (feature, layer) => {
           const plz = feature.properties?.plz;
           const value = plzWerte[plz] || 0;
+const sidePopup = this._shadowRoot.getElementById('side-popup');
 const note = feature.properties?.note || "Keine Notiz";
 const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
 
-const popupContent = `
-  <div style="font-family: sans-serif; border: 2px solid #b41821;">
-    <table style="border-collapse: collapse; width: 100%;">
-      <thead>
-        <tr>
-          <th colspan="2" style="background-color: #b41821; color: white; padding: 8px; text-align: left;">
-            ${note}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td colspan="2" style="border: 1px solid #b41821; color: #b41821; font-weight: bold; padding: 6px;">
-            Werte:
-          </td>
-        </tr>
-        <tr>
-          <td style="padding: 6px; font-weight: bold; color: #b41821;">Wert</td>
-          <td style="padding: 6px; color: #b41821;">${value}</td>
-        </tr>
-        <tr>
-          <td style="padding: 6px; font-weight: bold; color: #b41821;">Flag</td>
-          <td style="padding: 6px; color: #b41821;">${hzFlag}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+sidePopup.innerHTML = `
+  <table style="border-collapse: collapse; width: 100%;">
+    <thead>
+      <tr>
+        <th colspan="2" style="background-color: #b41821; color: white; padding: 8px; text-align: left;">
+          ${note}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td colspan="2" style="border: 1px solid #b41821; color: #b41821; font-weight: bold; padding: 6px;">
+          Werte:
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; font-weight: bold;">Wert</td>
+        <td style="padding: 6px;">${value}</td>
+      </tr>
+      <tr>
+        <td style="padding: 6px; font-weight: bold;">Flag</td>
+        <td style="padding: 6px;">${hzFlag}</td>
+      </tr>
+    </tbody>
+  </table>
 `;
 
-layer.bindPopup(popupContent);
+sidePopup.style.display = 'block';
 
 
 
@@ -301,6 +314,7 @@ layer.bindPopup(popupContent);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
