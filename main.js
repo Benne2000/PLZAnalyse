@@ -69,6 +69,36 @@
       transform: translateX(20px);
       transition: opacity 0.3s ease, transform 0.3s ease;
     }
+#side-popup table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1px solid #b41821;
+  margin-top: 10px;
+}
+
+#side-popup th {
+  background-color: #b41821;
+  color: white;
+  font-weight: bold;
+  padding: 6px;
+  text-align: left;
+  border: 1px solid #b41821;
+}
+
+#side-popup td {
+  border: 1px solid #b41821;
+  padding: 6px;
+}
+
+#side-popup td:first-child {
+  color: black;
+  font-weight: bold;
+  width: 40%;
+}
+
+#side-popup td:last-child {
+  font-weight: bold;
+}
 
     #side-popup.show {
       opacity: 1;
@@ -355,6 +385,7 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
