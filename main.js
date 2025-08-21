@@ -16,7 +16,7 @@
 
     #map {
       height: 100%;
-      width: 100%;
+      width: 80%;
       background: white;
     }
 
@@ -52,7 +52,7 @@
     }
 
     #side-popup {
-      width: 250px;
+      width: 20%;
       background: white;
       border: 2px solid #b41821;
       padding: 10px;
@@ -311,6 +311,7 @@ this._geoLayer = L.geoJSON(this._geoData, {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
