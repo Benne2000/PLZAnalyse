@@ -278,31 +278,38 @@ layer.on('click', () => {
   const value = plzWerte[plz] || "–";
   const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
 
-  const sidePopup = this._shadowRoot.getElementById('side-popup');
+const sidePopup = this._shadowRoot.getElementById('side-popup');
 
-  // ✨ Animation neu triggern
+// ✨ Animation zurücksetzen
+sidePopup.classList.remove('show');
+
+// 🛠️ Inhalt zuerst setzen
+sidePopup.innerHTML = `
+  <button class="close-btn">×</button>
+  <table>
+    <thead>
+      <tr><th colspan="2">${note}</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>PLZ</td><td>${plz}</td></tr>
+      <tr><td>Wert</td><td>${value}</td></tr>
+      <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
+    </tbody>
+  </table>
+`;
+
+// 🧠 Reflow erzwingen, um Animation neu zu starten
+void sidePopup.offsetWidth;
+
+// ✨ Klasse wieder hinzufügen
+sidePopup.classList.add('show');
+
+// 🧹 Event-Listener neu setzen
+const closeBtn = sidePopup.querySelector('.close-btn');
+closeBtn.addEventListener('click', () => {
   sidePopup.classList.remove('show');
-  void sidePopup.offsetWidth; // Reflow trick to restart animation
-  sidePopup.classList.add('show');
+});
 
-  sidePopup.innerHTML = `
-    <button class="close-btn">×</button>
-    <table>
-      <thead>
-        <tr><th colspan="2">${note}</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>PLZ</td><td>${plz}</td></tr>
-        <tr><td>Wert</td><td>${value}</td></tr>
-        <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
-      </tbody>
-    </table>
-  `;
-
-  const closeBtn = sidePopup.querySelector('.close-btn');
-  closeBtn.addEventListener('click', () => {
-    sidePopup.classList.remove('show');
-  });
 });
 
 }});
@@ -348,6 +355,7 @@ layer.on('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
