@@ -3,14 +3,20 @@
   template.innerHTML = `
   <style>
     :host {
-      display: flex;
+      display: block;
       height: 100%;
       width: 100%;
       box-sizing: border-box;
     }
 
+    .layout {
+      display: flex;
+      height: 100%;
+      width: 100%;
+    }
+
     .map-container {
-      flex: 1;
+      width: 80%;
       position: relative;
     }
 
@@ -51,54 +57,52 @@
       border-radius: 4px;
     }
 
-#side-popup {
-  width: 20%;
-  background: white;
-  border: 2px solid #b41821;
-  padding: 10px;
-  font-family: sans-serif;
-  color: #b41821;
-  display: none;
-  box-sizing: border-box;
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  position: relative;
-}
+    #side-popup {
+      width: 20%;
+      background: white;
+      border-left: 2px solid #b41821;
+      padding: 10px;
+      font-family: sans-serif;
+      color: #b41821;
+      box-sizing: border-box;
+      opacity: 0;
+      transform: translateX(20px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
 
-#side-popup.show {
-  display: block;
-  opacity: 1;
-  transform: translateX(0);
-}
+    #side-popup.show {
+      opacity: 1;
+      transform: translateX(0);
+    }
 
-#side-popup .close-btn {
-  position: absolute;
-  top: 5px;
-  right: 8px;
-  background: #b41821;
-  color: white;
-  border: none;
-  padding: 2px 6px;
-  font-size: 12px;
-  cursor: pointer;
-  border-radius: 3px;
-}
-
+    #side-popup .close-btn {
+      position: absolute;
+      top: 5px;
+      right: 8px;
+      background: #b41821;
+      color: white;
+      border: none;
+      padding: 2px 6px;
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
   </style>
 
-  <div class="map-container">
-    <div id="map"></div>
-    <div class="legend" id="legend">
-      <strong>Wert (PLZ)</strong><br>
-      <i style="background:#08306b"></i> > 10.000<br>
-      <i style="background:#2171b5"></i> > 5.000<br>
-      <i style="background:#6baed6"></i> > 1.000<br>
-      <i style="background:#c6dbef"></i> > 100<br>
-      <i style="background:#f7fbff"></i> ≤ 100
+  <div class="layout">
+    <div class="map-container">
+      <div id="map"></div>
+      <div class="legend" id="legend">
+        <strong>Wert (PLZ)</strong><br>
+        <i style="background:#08306b"></i> > 10.000<br>
+        <i style="background:#2171b5"></i> > 5.000<br>
+        <i style="background:#6baed6"></i> > 1.000<br>
+        <i style="background:#c6dbef"></i> > 100<br>
+        <i style="background:#f7fbff"></i> ≤ 100
+      </div>
     </div>
+    <div id="side-popup"></div>
   </div>
-  <div id="side-popup"></div>
   `;
 
   class GeoMapWidget extends HTMLElement {
@@ -218,7 +222,6 @@
 const plz = row["dimensions_0"]?.id?.trim();
 const hzFlag = row["dimensions_1_0"]?.id?.trim();
 const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
-
 
 
         if (plz) {
@@ -343,5 +346,6 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
