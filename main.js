@@ -272,37 +272,39 @@ this._geoLayer = L.geoJSON(this._geoData, {
     };
   },
   onEachFeature: (feature, layer) => {
-    layer.on('click', () => {
-      const plz = feature.properties.plz;
-      const note = feature.properties.note || "Keine Notiz";
-      const value = plzWerte[plz] || "–";
-      const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
+layer.on('click', () => {
+  const plz = feature.properties.plz;
+  const note = feature.properties.note || "Keine Notiz";
+  const value = plzWerte[plz] || "–";
+  const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
 
-const sidePopup = this._shadowRoot.getElementById('side-popup');
-sidePopup.innerHTML = `
-  <button class="close-btn">×</button>
-  <table>
-    <thead>
-      <tr><th colspan="2">${note}</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>PLZ</td><td>${plz}</td></tr>
-      <tr><td>Wert</td><td>${value}</td></tr>
-      <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
-    </tbody>
-  </table>
-`;
-sidePopup.classList.add('show');
+  const sidePopup = this._shadowRoot.getElementById('side-popup');
 
-// Close-Button Event Listener
-const closeBtn = sidePopup.querySelector('.close-btn');
-closeBtn.addEventListener('click', () => {
+  // ✨ Animation neu triggern
   sidePopup.classList.remove('show');
+  void sidePopup.offsetWidth; // Reflow trick to restart animation
+  sidePopup.classList.add('show');
+
+  sidePopup.innerHTML = `
+    <button class="close-btn">×</button>
+    <table>
+      <thead>
+        <tr><th colspan="2">${note}</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>PLZ</td><td>${plz}</td></tr>
+        <tr><td>Wert</td><td>${value}</td></tr>
+        <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
+      </tbody>
+    </table>
+  `;
+
+  const closeBtn = sidePopup.querySelector('.close-btn');
+  closeBtn.addEventListener('click', () => {
+    sidePopup.classList.remove('show');
+  });
 });
 
-
-}
-    )
 }});
 
 
@@ -346,6 +348,7 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
