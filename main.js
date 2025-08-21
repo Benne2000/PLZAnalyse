@@ -16,7 +16,7 @@
 
     #map {
       height: 100%;
-      width: 80%;
+      width: 100%;
       background: white;
     }
 
@@ -345,6 +345,7 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
