@@ -295,10 +295,8 @@ sidePopup.classList.add('show');
 const closeBtn = sidePopup.querySelector('.close-btn');
 closeBtn.addEventListener('click', () => {
   sidePopup.classList.remove('show');
-  setTimeout(() => {
-    sidePopup.style.display = 'none';
-  }, 300); // Wait for transition to finish
 });
+
 
 }
     )
@@ -345,4 +343,5 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
