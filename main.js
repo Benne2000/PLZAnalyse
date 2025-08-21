@@ -51,16 +51,40 @@
       border-radius: 4px;
     }
 
-    #side-popup {
-      width: 20%;
-      background: white;
-      border: 2px solid #b41821;
-      padding: 10px;
-      font-family: sans-serif;
-      color: #b41821;
-      display: none;
-      box-sizing: border-box;
-    }
+#side-popup {
+  width: 20%;
+  background: white;
+  border: 2px solid #b41821;
+  padding: 10px;
+  font-family: sans-serif;
+  color: #b41821;
+  display: none;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  position: relative;
+}
+
+#side-popup.show {
+  display: block;
+  opacity: 1;
+  transform: translateX(0);
+}
+
+#side-popup .close-btn {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  background: #b41821;
+  color: white;
+  border: none;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
   </style>
 
   <div class="map-container">
@@ -251,21 +275,31 @@ this._geoLayer = L.geoJSON(this._geoData, {
       const value = plzWerte[plz] || "–";
       const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
 
-      const sidePopup = this._shadowRoot.getElementById('side-popup');
-      sidePopup.innerHTML = `
-        <table>
-          <thead>
-            <tr><th colspan="2">${note}</th></tr>
-          </thead>
-          <tbody>
-            <tr><td>PLZ</td><td>${plz}</td></tr>
-            <tr><td>Wert</td><td>${value}</td></tr>
-            <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
-          </tbody>
-        </table>
-      `;
-      sidePopup.style.display = 'block';
-    });
+const sidePopup = this._shadowRoot.getElementById('side-popup');
+sidePopup.innerHTML = `
+  <button class="close-btn">×</button>
+  <table>
+    <thead>
+      <tr><th colspan="2">${note}</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>PLZ</td><td>${plz}</td></tr>
+      <tr><td>Wert</td><td>${value}</td></tr>
+      <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
+    </tbody>
+  </table>
+`;
+sidePopup.classList.add('show');
+
+// Close-Button Event Listener
+const closeBtn = sidePopup.querySelector('.close-btn');
+closeBtn.addEventListener('click', () => {
+  sidePopup.classList.remove('show');
+  setTimeout(() => {
+    sidePopup.style.display = 'none';
+  }, 300); // Wait for transition to finish
+});
+
   }
 });
 
@@ -311,6 +345,7 @@ this._geoLayer = L.geoJSON(this._geoData, {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
