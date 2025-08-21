@@ -1,46 +1,69 @@
 (function () {
   const template = document.createElement('template');
   template.innerHTML = `
-    <style>
-      #map {
-        height: 100%;
-        width: 100%;
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: white;
-      }
-      .legend {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        z-index: 1000;
-        background: white;
-        padding: 10px;
-        border: 1px solid #999;
-        font-family: sans-serif;
-        font-size: 12px;
-        line-height: 18px;
-        color: #333;
-      }
-      .legend i {
-        width: 18px;
-        height: 18px;
-        float: left;
-        margin-right: 8px;
-        opacity: 0.8;
-      }
-      .note-label {
-        background: rgba(255, 255, 255, 0.8);
-        border: 1px solid #999;
-        padding: 2px 6px;
-        font-size: 11px;
-        color: #333;
-        border-radius: 4px;
-      }
-    </style>
+  <style>
+    :host {
+      display: flex;
+      height: 100%;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .map-container {
+      flex: 1;
+      position: relative;
+    }
+
+    #map {
+      height: 100%;
+      width: 100%;
+      background: white;
+    }
+
+    .legend {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 1000;
+      background: white;
+      padding: 10px;
+      border: 1px solid #999;
+      font-family: sans-serif;
+      font-size: 12px;
+      line-height: 18px;
+      color: #333;
+    }
+
+    .legend i {
+      width: 18px;
+      height: 18px;
+      float: left;
+      margin-right: 8px;
+      opacity: 0.8;
+    }
+
+    .note-label {
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid #999;
+      padding: 2px 6px;
+      font-size: 11px;
+      color: #333;
+      border-radius: 4px;
+    }
+
+    #side-popup {
+      width: 250px;
+      background: white;
+      border: 2px solid #b41821;
+      padding: 10px;
+      font-family: sans-serif;
+      color: #b41821;
+      display: none;
+      box-sizing: border-box;
+    }
+  </style>
+
+  <div class="map-container">
     <div id="map"></div>
     <div class="legend" id="legend">
       <strong>Wert (PLZ)</strong><br>
@@ -50,7 +73,8 @@
       <i style="background:#c6dbef"></i> > 100<br>
       <i style="background:#f7fbff"></i> ≤ 100
     </div>
-    <div id="side-popup" style="
+  </div>
+  <div id="side-popup"></div>
   display: none;
   position: absolute;
   top: 20px;
@@ -300,6 +324,7 @@ this._geoLayer = L.geoJSON(this._geoData, {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
