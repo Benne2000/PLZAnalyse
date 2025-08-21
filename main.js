@@ -233,46 +233,30 @@ const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw 
             fillOpacity: 0.7
           };
         },
-        onEachFeature: (feature, layer) => {
-          const plz = feature.properties?.plz;
-          const value = plzWerte[plz] || 0;
-const sidePopup = this._shadowRoot.getElementById('side-popup');
-const note = feature.properties?.note || "Keine Notiz";
-const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
+function onEachFeature(feature, layer) {
+  layer.on('click', function () {
+    const plz = feature.properties.plz;
+    const note = feature.properties.note || "Keine Notiz";
+    const value = feature.properties.value || "–";
+    const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
 
-sidePopup.innerHTML = `
-  <table style="border-collapse: collapse; width: 100%;">
-    <thead>
-      <tr>
-        <th colspan="2" style="background-color: #b41821; color: white; padding: 8px; text-align: left;">
-          ${note}
-        </th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td colspan="2" style="border: 1px solid #b41821; color: #b41821; font-weight: bold; padding: 6px;">
-          Werte:
-        </td>
-      </tr>
-      <tr>
-        <td style="padding: 6px; font-weight: bold;">Wert</td>
-        <td style="padding: 6px;">${value}</td>
-      </tr>
-      <tr>
-        <td style="padding: 6px; font-weight: bold;">Flag</td>
-        <td style="padding: 6px;">${hzFlag}</td>
-      </tr>
-    </tbody>
-  </table>
-`;
+    const sidePopup = document.getElementById('side-popup');
+    sidePopup.innerHTML = `
+      <table>
+        <thead>
+          <tr><th colspan="2">${note}</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>PLZ</td><td>${plz}</td></tr>
+          <tr><td>Wert</td><td>${value}</td></tr>
+          <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
+        </tbody>
+      </table>
+    `;
+    sidePopup.style.display = 'block';
+  });
+}
 
-sidePopup.style.display = 'block';
-
-
-
-        }
-      });
 
       this._geoLayer.addTo(this.map);
       this._geoLayerVisible = true;
@@ -314,6 +298,7 @@ sidePopup.style.display = 'block';
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
