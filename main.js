@@ -226,7 +226,7 @@ const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw 
 const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
 
 const popupContent = `
-  <div style="border: 2px solid #BOREGPLA; padding: 8px; font-family: sans-serif;">
+  <div style="border: 2px solid b41821; padding: 8px; font-family: sans-serif;">
     <h4 style="margin-top: 0; margin-bottom: 8px;">${note}</h4>
     <table style="border-collapse: collapse; width: 100%;">
       <thead>
@@ -290,6 +290,7 @@ layer.bindPopup(popupContent);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
