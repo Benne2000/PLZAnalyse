@@ -300,9 +300,9 @@ closeBtn.addEventListener('click', () => {
   }, 300); // Wait for transition to finish
 });
 
-  }
-});
-
+}
+    )
+}});
 
 
       this._geoLayer.addTo(this.map);
@@ -345,23 +345,4 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
