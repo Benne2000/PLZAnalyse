@@ -220,42 +220,44 @@ const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw 
         this.map.removeLayer(this._geoLayer);
       }
 
-      this._geoLayer = L.geoJSON(this._geoData, {
-        style: feature => {
-          const plz = feature.properties?.plz;
-          const value = plzWerte[plz] || 0;
-          const isHZ = hzFlags[plz] || false;
-          return {
-            fillColor: getColor(value, isHZ),
-            weight: 1,
-            opacity: 1,
-            color: 'white',
-            fillOpacity: 0.7
-          };
-        },
-function onEachFeature(feature, layer) {
-  layer.on('click', function () {
-    const plz = feature.properties.plz;
-    const note = feature.properties.note || "Keine Notiz";
-    const value = feature.properties.value || "–";
-    const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
+this._geoLayer = L.geoJSON(this._geoData, {
+  style: feature => {
+    const plz = feature.properties?.plz;
+    const value = plzWerte[plz] || 0;
+    const isHZ = hzFlags[plz] || false;
+    return {
+      fillColor: getColor(value, isHZ),
+      weight: 1,
+      opacity: 1,
+      color: 'white',
+      fillOpacity: 0.7
+    };
+  },
+  onEachFeature: (feature, layer) => {
+    layer.on('click', () => {
+      const plz = feature.properties.plz;
+      const note = feature.properties.note || "Keine Notiz";
+      const value = plzWerte[plz] || "–";
+      const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
 
-    const sidePopup = document.getElementById('side-popup');
-    sidePopup.innerHTML = `
-      <table>
-        <thead>
-          <tr><th colspan="2">${note}</th></tr>
-        </thead>
-        <tbody>
-          <tr><td>PLZ</td><td>${plz}</td></tr>
-          <tr><td>Wert</td><td>${value}</td></tr>
-          <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
-        </tbody>
-      </table>
-    `;
-    sidePopup.style.display = 'block';
-  });
-}
+      const sidePopup = this._shadowRoot.getElementById('side-popup');
+      sidePopup.innerHTML = `
+        <table>
+          <thead>
+            <tr><th colspan="2">${note}</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>PLZ</td><td>${plz}</td></tr>
+            <tr><td>Wert</td><td>${value}</td></tr>
+            <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
+          </tbody>
+        </table>
+      `;
+      sidePopup.style.display = 'block';
+    });
+  }
+});
+
 
 
       this._geoLayer.addTo(this.map);
@@ -298,6 +300,7 @@ function onEachFeature(feature, layer) {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
