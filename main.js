@@ -222,7 +222,31 @@ const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw 
         onEachFeature: (feature, layer) => {
           const plz = feature.properties?.plz;
           const value = plzWerte[plz] || 0;
-          layer.bindPopup(`PLZ: ${plz}<br>Wert: ${value}`);
+          const note = feature.properties?.note || "Keine Notiz";
+const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
+
+const popupContent = `
+  <div style="border: 2px solid #BOREGPLA; padding: 8px; font-family: sans-serif;">
+    <h4 style="margin-top: 0; margin-bottom: 8px;">${note}</h4>
+    <table style="border-collapse: collapse; width: 100%;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 4px; border-bottom: 1px solid #ccc;">Wert</th>
+          <th style="text-align: left; padding: 4px; border-bottom: 1px solid #ccc;">Flag</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="padding: 4px;">${value}</td>
+          <td style="padding: 4px;">${hzFlag}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+`;
+
+layer.bindPopup(popupContent);
+
         }
       });
 
@@ -266,6 +290,7 @@ const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw 
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
