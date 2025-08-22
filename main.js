@@ -329,6 +329,7 @@ console.log("🧪 hzFlags[plz]:", hzFlags[plz]);
 
     console.log("📍 PLZ:", plz);
 console.log("📊 Kennwerte:", kennwerte[plz]);
+    console.log("📊 Kennwerte:", kennwerte[plz]);
     console.log(getColor(undefined, false)); // sollte "#cfd4da" sein
 console.log(getColor("abc", true));      // sollte "#cfd4da" sein
 console.log(getColor(84, false));        // sollte "#c6dbef" sein
@@ -474,6 +475,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
