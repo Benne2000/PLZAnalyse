@@ -246,16 +246,16 @@
       const plzWerte = {};
       const hzFlags = {};
 const kennzahlenIDs = [
-  "value_hr_n_umsatz",
-  "value_umsatz_p_hh",
-  "value_wk_in_percent",
-  "value_werbeverweigerer",
-  "value_haushalte",
-  "value_kaufkraft",
-  "value_ums_erhebung",
-  "value_kd_erhebung",
-  "value_bon_erhebung",
-  "value_auflage"
+  "value_hr_n_umsatz_0",
+  "value_umsatz_p_hh_0",
+  "value_wk_in_percent_0",
+  "value_werbeverweigerer_0",
+  "value_haushalte_0",
+  "value_kaufkraft_0",
+  "value_ums_erhebung_0",
+  "value_kd_erhebung_0",
+  "value_bon_erhebung_0",
+  "value_auflage_0"
 
 ];
 
@@ -411,6 +411,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
