@@ -462,7 +462,7 @@ onEachFeature: (feature, layer) => {
 
     // Neue Beschreibungen für die Kennzahlen
     const beschreibungen = {
-      value_hr_n_umsatz_0: "HR Netto-Umsatz (Jahr)",
+      value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
       value_umsatz_p_hh_0: "Umsatz p. HH",
       value_wk_in_percent_0: "Werbekosten (%)",
       value_werbeverweigerer_0: "HZ-Werbekosten",
@@ -603,4 +603,5 @@ sidePopup.insertAdjacentHTML('beforeend', extraTable);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
