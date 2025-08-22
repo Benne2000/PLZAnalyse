@@ -137,6 +137,11 @@
 #side-popup td:first-child {
   width: 40%;
 }
+/* Entfernt Rahmen für Kennzahlen-Zeilen */
+#side-popup tr.kennzahl-row td {
+  border: none;
+}
+
 
 
 #side-popup td:last-child {
@@ -410,15 +415,16 @@ onEachFeature: (feature, layer) => {
     const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
     const kennwerteArray = kennwerte[plz] || Array(10).fill("–");
 
-    let rows = `
-      <tr><td>PLZ</td><td>${plz}</td></tr>
-      <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
-    `;
+let rows = `
+  <tr><td>PLZ</td><td>${plz}</td></tr>
+  <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
+`;
 
-    kennwerteArray.forEach((wert, index) => {
-      const label = kennzahlenIDs[index].replace("value_", "").replace(/_/g, " ").toUpperCase();
-      rows += `<tr><td>${label}</td><td>${wert}</td></tr>`;
-    });
+kennwerteArray.forEach((wert, index) => {
+  const label = kennzahlenIDs[index].replace("value_", "").replace(/_/g, " ").toUpperCase();
+  rows += `<tr class="kennzahl-row"><td>${label}</td><td>${wert}</td></tr>`;
+});
+
 
     const sidePopup = this._shadowRoot.getElementById('side-popup');
 
@@ -498,6 +504,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
