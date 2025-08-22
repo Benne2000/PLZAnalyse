@@ -317,8 +317,8 @@ kennzahlenIDs.forEach(id => {
   console.log(`🔎 ${id}:`, row[id]);
 });
 
-  const plz = row["dimensions_0"]?.id?.trim();
-  const hzFlag = row["dimensions_1_0"]?.id?.trim();
+  const plz = row["dimension_plz_0"]?.id?.trim();
+  const hzFlag = row["dimension_hzflag_0"]?.id?.trim();
 
   if (plz) {
 kennwerte[plz] = kennzahlenIDs.map(id => {
@@ -463,6 +463,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
