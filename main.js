@@ -99,6 +99,7 @@ let hasTriggeredClick = false;
   border-collapse: collapse;
   border: 1px solid #b41821;
   margin-top: 30px;
+  table-layout: fixed;
 }
 
 #side-popup th {
@@ -177,11 +178,15 @@ let hasTriggeredClick = false;
 #side-popup .value-cell {
   width: 30%;
   text-align: right;
+  font-weight: normal;
 }
     /* Beschreibungszelle: 70% Breite */
 #side-popup .label-cell {
   width: 70%;
   text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
   </style>
 
@@ -553,6 +558,7 @@ kennwerteArray.forEach((wert, index) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
