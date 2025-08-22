@@ -10,6 +10,8 @@ let hasTriggeredClick = false;
       box-sizing: border-box;
     }
 
+  
+
     .layout {
       display: flex;
       height: 100%;
@@ -188,6 +190,28 @@ let hasTriggeredClick = false;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+#side-popup .extra-table {
+  width: 100%;
+  margin-top: 20px;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+#side-popup .extra-table th {
+  background-color: #eaeaea;
+  color: #333;
+  font-weight: bold;
+  padding: 6px;
+  text-align: left;
+}
+
+#side-popup .extra-table td {
+  border: 1px solid #ccc;
+  padding: 6px;
+  text-align: left;
+}
+
   </style>
 
 <div class="layout">
@@ -485,6 +509,22 @@ kennwerteArray.forEach((wert, index) => {
         </tbody>
       </table>
     `;
+// Bedingung: Kein HZ-Flag und Wert vorhanden
+if (!hzFlags[plz] && plzWerte[plz] > 0) {
+  const extraTable = `
+    <table class="extra-table">
+      <thead>
+        <tr><th colspan="2">Zusätzliche Daten</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>PLZ-Wert</td><td>${plzWerte[plz]}</td></tr>
+        <tr><td>Status</td><td>Kein HZ</td></tr>
+      </tbody>
+    </table>
+  `;
+
+  sidePopup.innerHTML += extraTable;
+}
 
     // Reflow für Animation
     void sidePopup.offsetWidth;
@@ -558,6 +598,7 @@ kennwerteArray.forEach((wert, index) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
