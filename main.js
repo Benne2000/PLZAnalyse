@@ -192,6 +192,8 @@ let hasTriggeredClick = false;
 }
 
 #side-popup .extra-table {
+  display: table;
+  visibility: visible;
   width: 100%;
   margin-top: 20px;
   border-collapse: collapse;
@@ -510,6 +512,8 @@ kennwerteArray.forEach((wert, index) => {
       </table>
     `;
 // Bedingung: Kein HZ-Flag und Wert vorhanden
+console.log("🔍 Prüfung für Extra-Tabelle:", plz, hzFlags[plz], plzWerte[plz]);
+
 if (!hzFlags[plz] && plzWerte[plz] > 0) {
   const extraTable = `
     <table class="extra-table">
@@ -523,7 +527,8 @@ if (!hzFlags[plz] && plzWerte[plz] > 0) {
     </table>
   `;
 
-  sidePopup.innerHTML += extraTable;
+sidePopup.insertAdjacentHTML('beforeend', extraTable);
+
 }
 
     // Reflow für Animation
@@ -598,38 +603,4 @@ if (!hzFlags[plz] && plzWerte[plz] > 0) {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
