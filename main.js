@@ -1,3 +1,4 @@
+let hasTriggeredClick = false;
 (function () {
   const template = document.createElement('template');
   template.innerHTML = `
@@ -318,7 +319,10 @@ hideSpinner() {
       this.render();
     }
 
+
+
     async render() {
+
       if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
 
       const data = this._myDataSource.data;
@@ -500,6 +504,18 @@ kennwerteArray.forEach((wert, index) => {
 
       const geoBounds = this._geoLayer.getBounds();
       this.map.fitBounds(geoBounds);
+        const mapContainer = document.getElementById('map');
+  if (mapContainer && !hasTriggeredClick) {
+    hasTriggeredClick = true;
+
+    setTimeout(() => {
+      mapContainer.dispatchEvent(new MouseEvent('click', {
+        bubbles: true,
+        cancelable: true,
+        view: window
+      }));
+    }, 300);
+  }
       this.hideSpinner();
 
     }
@@ -537,6 +553,7 @@ kennwerteArray.forEach((wert, index) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
