@@ -73,7 +73,7 @@
   width: 100%;
   border-collapse: collapse;
   border: 1px solid #b41821;
-  margin-top: 10px;
+  margin-top: 30px;
 }
 
 #side-popup th {
@@ -83,6 +83,9 @@
   padding: 6px;
   text-align: left;
   border: 1px solid #b41821;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #side-popup td {
@@ -351,9 +354,10 @@ onEachFeature: (feature, layer) => {
     sidePopup.innerHTML = `
       <button class="close-btn">×</button>
       <table>
-        <thead>
-          <tr><th colspan="2">${note}</th></tr>
-        </thead>
+<thead>
+  <tr><th colspan="2" title="${note}">${note}</th></tr>
+</thead>
+
         <tbody>
           ${rows}
         </tbody>
@@ -416,6 +420,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
