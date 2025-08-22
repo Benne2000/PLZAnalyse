@@ -330,7 +330,9 @@ sidePopup.innerHTML = `
 
 // 🧠 Reflow erzwingen, um Animation neu zu starten
 void sidePopup.offsetWidth;
-
+setTimeout(() => {
+  sidePopup.classList.add('show');
+}, 10); // 10ms reichen meist völlig aus
 // ✨ Klasse wieder hinzufügen
 sidePopup.classList.add('show');
 
@@ -385,6 +387,7 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
