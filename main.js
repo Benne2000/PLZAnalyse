@@ -415,16 +415,16 @@ onEachFeature: (feature, layer) => {
 
     // Neue Beschreibungen für die Kennzahlen
     const beschreibungen = {
-      value_umsatz: "Umsatz (in €)",
-      value_mitarbeiter: "Mitarbeiteranzahl",
-      value_wachstum: "Wachstumsrate (%)",
-      value_kundenzufriedenheit: "Kundenzufriedenheit (Score)",
-      value_marktanteil: "Marktanteil (%)",
-      value_kosten: "Gesamtkosten (in €)",
-      value_gewinn: "Gewinn (in €)",
-      value_liquidität: "Liquidität (%)",
-      value_rendite: "Rendite (%)",
-      value_investitionen: "Investitionen (in €)"
+      value_hr_n_umsatz_0: "HR Netto-Umsatz (Jahr)",
+      value_umsatz_p_hh_0: "Umsatz p. HH",
+      value_wk_in_percent_0: "Werbekosten (%)",
+      value_werbeverweigerer_0: "HZ-Werbekosten",
+      value_haushalte_0: "Haushalte)",
+      value_kaufkraft_0: "BM-Kaufkraft-Idx",
+      value_ums_erhebung_0: "Umsatz",
+      value_kd_erhebung_0: "Anzahl Kunden",
+      value_bon_erhebung_0: "Ø-Bon",
+      value_auflage_0: "Auflage"
     };
 
     let rows = "";
@@ -514,6 +514,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
