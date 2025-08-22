@@ -16,7 +16,7 @@
     }
 
     .map-container {
-      width: 80%;
+      width: 75%;
       position: relative;
     }
 
@@ -58,7 +58,7 @@
     }
 
     #side-popup {
-      width: 20%;
+      width: 25%;
       background: white;
       border-left: 2px solid #b41821;
       padding: 10px;
@@ -411,6 +411,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
