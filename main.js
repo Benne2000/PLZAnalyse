@@ -376,6 +376,7 @@ const kennzahlenIDs = [
   "value_hr_n_umsatz_0",
   "value_umsatz_p_hh_0",
   "value_wk_in_percent_0",
+  "value_wk_nachbar_0",
   "value_werbeverweigerer_0",
   "value_haushalte_0",
   "value_kaufkraft_0",
@@ -464,13 +465,14 @@ onEachFeature: (feature, layer) => {
   layer.on('click', () => {
     const plz = feature.properties.plz;
     const note = feature.properties.note || "Keine Notiz";
-    const kennwerteArray = kennwerte[plz] || Array(10).fill("–");
+    const kennwerteArray = kennwerte[plz] || Array(11).fill("–");
 
     // Neue Beschreibungen für die Kennzahlen
     const beschreibungen = {
       value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
       value_umsatz_p_hh_0: "Umsatz p. HH",
       value_wk_in_percent_0: "Werbekosten (%)",
+      value_wk_nachbar_0: "WK (%) incl. Nachb.",
       value_werbeverweigerer_0: "HZ-Werbekosten",
       value_haushalte_0: "Haushalte)",
       value_kaufkraft_0: "BM-Kaufkraft-Idx",
@@ -487,7 +489,7 @@ kennwerteArray.forEach((wert, index) => {
   const label = beschreibungen[id] || id.replace("value_", "").replace(/_/g, " ").toUpperCase();
 
   // Nach der 6. Kennzahl eine Titelzeile einfügen
-  if (index === 6) {
+  if (index === 7) {
     rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
   }
 
@@ -609,6 +611,7 @@ sidePopup.insertAdjacentHTML('beforeend', extraTable);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
