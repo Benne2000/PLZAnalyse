@@ -257,6 +257,8 @@ const kennzahlenIDs = [
   "value_bon_erhebung",
   "value_auflage"
 
+];
+
   console.log("🔍 Datenstruktur aus SAC:");
 console.log(data);
 
@@ -264,9 +266,7 @@ if (data.length > 0) {
   console.log("📦 Beispiel-Datensatz:");
   console.log(Object.keys(data[0]));
 }
-
-];
-
+      
 const kennwerte = {};
 
 data.forEach(row => {
@@ -411,6 +411,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
