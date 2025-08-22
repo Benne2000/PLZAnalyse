@@ -270,19 +270,21 @@ if (data.length > 0) {
 const kennwerte = {};
 
 data.forEach(row => {
+  // 👉 Hier einfügen:
+  console.log("🔍 Verfügbare Keys im Datensatz:", Object.keys(row));
+
   const plz = row["dimensions_0"]?.id?.trim();
   const hzFlag = row["dimensions_1_0"]?.id?.trim();
 
-
   if (plz) {
-kennwerte[plz] = kennzahlenIDs.map(id => {
-  const raw = row[`${id}_0`]?.raw;
-  return typeof raw === "number" ? raw : "–";
-});
-
+    kennwerte[plz] = kennzahlenIDs.map(id => {
+      const raw = row[`${id}_0`]?.raw; // 🔧 mit _0 ergänzt
+      return typeof raw === "number" ? raw : "–";
+    });
     hzFlags[plz] = hzFlag === "X";
   }
 });
+
 
       if (!this._geoData) {
         try {
@@ -413,6 +415,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
