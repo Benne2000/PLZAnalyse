@@ -327,6 +327,13 @@ kennwerte[plz] = kennzahlenIDs.map(id => {
 });
 
     hzFlags[plz] = hzFlag === "X";
+    plzWerte[plz] = row["value_hr_n_umsatz_0"]?.raw || 0;
+
+    console.log("📍 PLZ:", plz);
+console.log("📊 Kennwerte:", kennwerte[plz]);
+console.log("🎨 Farbe:", getColor(plzWerte[plz], hzFlags[plz]));
+
+
   }
 });
 
@@ -463,6 +470,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
