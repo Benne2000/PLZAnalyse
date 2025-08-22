@@ -329,6 +329,10 @@ console.log("🧪 hzFlags[plz]:", hzFlags[plz]);
 
     console.log("📍 PLZ:", plz);
 console.log("📊 Kennwerte:", kennwerte[plz]);
+    console.log(getColor(undefined, false)); // sollte "#cfd4da" sein
+console.log(getColor("abc", true));      // sollte "#cfd4da" sein
+console.log(getColor(84, false));        // sollte "#c6dbef" sein
+
 console.log("🎨 Farbe:", getColor(plzWerte[plz], hzFlags[plz]));
 
 
@@ -346,19 +350,21 @@ console.log("🎨 Farbe:", getColor(plzWerte[plz], hzFlags[plz]));
         }
       }
 
-      const getColor = (value, isHZ) => {
-        if (isHZ) {
-          return value > 10000 ? "#00441b" :
-                 value > 5000 ? "#238b45" :
-                 value > 1000 ? "#66c2a4" :
-                 value > 100 ? "#ccece6" : "#cfd4da";
-        } else {
-          return value > 10000 ? "#08306b" :
-                 value > 5000 ? "#2171b5" :
-                 value > 1000 ? "#6baed6" :
-                 value > 100 ? "#c6dbef" : "#cfd4da";
-        }
-      };
+const getColor = (value, isHZ) => {
+  const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
+
+  if (isHZ) {
+    return safeValue > 10000 ? "#00441b" :
+           safeValue > 5000  ? "#238b45" :
+           safeValue > 1000  ? "#66c2a4" :
+           safeValue > 100   ? "#ccece6" : "#cfd4da";
+  } else {
+    return safeValue > 10000 ? "#08306b" :
+           safeValue > 5000  ? "#2171b5" :
+           safeValue > 1000  ? "#6baed6" :
+           safeValue > 100   ? "#c6dbef" : "#cfd4da";
+  }
+};
 
       if (this._geoLayer) {
         this.map.removeLayer(this._geoLayer);
@@ -468,6 +474,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
