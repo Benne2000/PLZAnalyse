@@ -329,12 +329,7 @@ console.log("🧪 hzFlags[plz]:", hzFlags[plz]);
 
     console.log("📍 PLZ:", plz);
 console.log("📊 Kennwerte:", kennwerte[plz]);
-    console.log("📊 Kennwerte:", kennwerte[plz]);
-    console.log(getColor(undefined, false)); // sollte "#cfd4da" sein
-console.log(getColor("abc", true));      // sollte "#cfd4da" sein
-console.log(getColor(84, false));        // sollte "#c6dbef" sein
 
-console.log("🎨 Farbe:", getColor(plzWerte[plz], hzFlags[plz]));
 
 
   }
@@ -376,6 +371,12 @@ this._geoLayer = L.geoJSON(this._geoData, {
     const plz = feature.properties?.plz;
     const value = plzWerte[plz] || 0;
     const isHZ = hzFlags[plz] || false;
+        console.log("📊Value:", value);
+    console.log(getColor(undefined, false)); // sollte "#cfd4da" sein
+console.log(getColor("abc", true));      // sollte "#cfd4da" sein
+console.log(getColor(84, false));        // sollte "#c6dbef" sein
+
+console.log("🎨 Farbe:", getColor(plzWerte[plz], hzFlags[plz]));
     return {
       fillColor: getColor(value, isHZ),
       weight: 1,
@@ -475,6 +476,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
