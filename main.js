@@ -245,27 +245,33 @@
       const data = this._myDataSource.data;
       const plzWerte = {};
       const hzFlags = {};
-      console.log("🔍 Datenstruktur aus SAC:");
-      console.log(data);
+const kennzahlenIDs = [
+  "value_hr_n_umsatz",
+  "value_umsatz_p_hh",
+  "value_wk_in_percent",
+  "value_werbeverweigerer",
+  "value_haushalte",
+  "value_kaufkraft",
+  "value_ums_erhebung",
+  "value_kd_erhebung",
+  "value_bon_erhebung",
+  "value_auflage"
+];
 
-      if (data.length > 0) {
-  console.log("📦 Beispiel-Datensatz:");
-  console.log(Object.keys(data[0]));
-}
+const kennwerte = {};
 
-      data.forEach(row => {
+data.forEach(row => {
+  const plz = row["dimensions_0"]?.id?.trim();
+  const hzFlag = row["dimensions_1_0"]?.id?.trim();
 
-
-const plz = row["dimensions_0"]?.id?.trim();
-const hzFlag = row["dimensions_1_0"]?.id?.trim();
-const wert = typeof row["measures_0"]?.raw === "number" ? row["measures_0"].raw : 0;
-
-
-        if (plz) {
-          plzWerte[plz] = wert;
-          hzFlags[plz] = hzFlag === "X";
-        }
-      });
+  if (plz) {
+    kennwerte[plz] = kennzahlenIDs.map(id => {
+      const raw = row[id]?.raw;
+      return typeof raw === "number" ? raw : "–";
+    });
+    hzFlags[plz] = hzFlag === "X";
+  }
+});
 
       if (!this._geoData) {
         try {
@@ -308,50 +314,52 @@ this._geoLayer = L.geoJSON(this._geoData, {
       fillOpacity: 0.7
     };
   },
-  onEachFeature: (feature, layer) => {
-layer.on('click', () => {
-  const plz = feature.properties.plz;
-  const note = feature.properties.note || "Keine Notiz";
-  const value = plzWerte[plz] || "–";
-  const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
+onEachFeature: (feature, layer) => {
+  layer.on('click', () => {
+    const plz = feature.properties.plz;
+    const note = feature.properties.note || "Keine Notiz";
+    const value = plzWerte[plz] || "–";
+    const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
+    const kennwerteArray = kennwerte[plz] || Array(10).fill("–");
 
-const sidePopup = this._shadowRoot.getElementById('side-popup');
-
-// ✨ Animation zurücksetzen
-sidePopup.classList.remove('show');
-
-// 🛠️ Inhalt zuerst setzen
-sidePopup.innerHTML = `
-  <button class="close-btn">×</button>
-  <table>
-    <thead>
-      <tr><th colspan="2">${note}</th></tr>
-    </thead>
-    <tbody>
+    let rows = `
       <tr><td>PLZ</td><td>${plz}</td></tr>
-      <tr><td>Wert</td><td>${value}</td></tr>
       <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
-    </tbody>
-  </table>
-`;
+    `;
 
-// 🧠 Reflow erzwingen, um Animation neu zu starten
-void sidePopup.offsetWidth;
-setTimeout(() => {
-  sidePopup.classList.add('show');
-}, 10); // 10ms reichen meist völlig aus
-// ✨ Klasse wieder hinzufügen
-sidePopup.classList.add('show');
+    kennwerteArray.forEach((wert, index) => {
+      const label = kennzahlenIDs[index].replace("value_", "").replace(/_/g, " ").toUpperCase();
+      rows += `<tr><td>${label}</td><td>${wert}</td></tr>`;
+    });
 
-// 🧹 Event-Listener neu setzen
-const closeBtn = sidePopup.querySelector('.close-btn');
-closeBtn.addEventListener('click', () => {
-  sidePopup.classList.remove('show');
+    const sidePopup = this._shadowRoot.getElementById('side-popup'); // 🔧 Hier korrigiert
+
+    sidePopup.innerHTML = `
+      <button class="close-btn">×</button>
+      <table>
+        <thead>
+          <tr><th colspan="2">${note}</th></tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    `;
+
+    // 🧠 Reflow erzwingen, um Animation neu zu starten
+    void sidePopup.offsetWidth;
+    setTimeout(() => {
+      sidePopup.classList.add('show');
+    }, 10);
+
+    // 🧹 Event-Listener neu setzen
+    const closeBtn = sidePopup.querySelector('.close-btn');
+    closeBtn.addEventListener('click', () => {
+      sidePopup.classList.remove('show');
+    });
+  });
+}
 });
-
-});
-
-}});
 
 
       this._geoLayer.addTo(this.map);
@@ -394,6 +402,7 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
