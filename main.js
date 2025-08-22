@@ -101,7 +101,7 @@ let hasTriggeredClick = false;
   border-collapse: collapse;
   border: 1px solid #b41821;
   margin-top: 30px;
-  table-layout: fixed;
+
 }
 
 #side-popup th {
@@ -194,18 +194,23 @@ let hasTriggeredClick = false;
 #side-popup .extra-table {
   display: table;
   visibility: visible;
+  table-layout: fixed;
   width: 100%;
   margin-top: 20px;
   border-collapse: collapse;
+  border: 1px solid #b41821;
   font-size: 0.85rem;
 }
 
 #side-popup .extra-table th {
-  background-color: #eaeaea;
-  color: #333;
+  border: 1px solid #b41821;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  color: black;
   font-weight: bold;
-  padding: 6px;
-  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #side-popup .extra-table td {
@@ -511,7 +516,7 @@ if (!hzFlags[plz] && plzWerte[plz] > 0) {
   const extraTable = `
     <table class="extra-table">
       <thead>
-        <tr><th colspan="2">Zusätzliche Daten</th></tr>
+        <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
       </thead>
       <tbody>
         <tr><td>PLZ-Wert</td><td>${plzWerte[plz]}</td></tr>
@@ -596,6 +601,7 @@ sidePopup.insertAdjacentHTML('beforeend', extraTable);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
