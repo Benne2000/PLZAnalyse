@@ -246,10 +246,10 @@
       const plzWerte = {};
       const hzFlags = {};
 const kennzahlenIDs = [
-  "value_hr_n_umsatz",
-  "value_umsatz_p_hh",
-  "value_wk_in_percent",
-  "value_werbeverweigerer",
+  "measure_0",
+  "measure_1_0",
+  "measure_1",
+  "measure_2_0",
   "value_haushalte",
   "value_kaufkraft",
   "value_ums_erhebung",
@@ -259,7 +259,7 @@ const kennzahlenIDs = [
 
 ];
 
-  console.log("🔍 Datenstruktur aus SAC:");
+  console.log("🔍 Datenstruktur 2 aus SAC:");
 console.log(data);
 
 if (data.length > 0) {
@@ -277,10 +277,11 @@ data.forEach(row => {
   const hzFlag = row["dimensions_1_0"]?.id?.trim();
 
   if (plz) {
-    kennwerte[plz] = kennzahlenIDs.map(id => {
-      const raw = row[`${id}_0`]?.raw; // 🔧 mit _0 ergänzt
-      return typeof raw === "number" ? raw : "–";
-    });
+kennwerte[plz] = kennzahlenIDs.map(id => {
+  const raw = row[id]?.raw;
+  return typeof raw === "number" ? raw : "–";
+});
+
     hzFlags[plz] = hzFlag === "X";
   }
 });
@@ -415,6 +416,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
