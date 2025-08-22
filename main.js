@@ -373,13 +373,6 @@ const kennzahlenIDs = [
 ];
 
 
-  console.log("🔍 Datenstruktur 3 aus SAC:");
-console.log(data);
-
-if (data.length > 0) {
-  console.log("📦 Beispiel-Datensatz:");
-  console.log(Object.keys(data[0]));
-}
       
 const kennwerte = {};
 
@@ -603,5 +596,6 @@ sidePopup.insertAdjacentHTML('beforeend', extraTable);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
