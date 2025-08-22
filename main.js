@@ -312,10 +312,7 @@ const kennwerte = {};
 
 data.forEach(row => {
   // 👉 Hier einfügen:
-  console.log("🔍 Verfügbare Keys im Datensatz:", Object.keys(row));
-kennzahlenIDs.forEach(id => {
-  console.log(`🔎 ${id}:`, row[id]);
-});
+
 
   const plz = row["dimension_plz_0"]?.id?.trim();
   const hzFlag = row["dimension_hzflag_0"]?.id?.trim();
@@ -470,6 +467,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
