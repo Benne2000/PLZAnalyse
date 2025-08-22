@@ -245,6 +245,13 @@
       const data = this._myDataSource.data;
       const plzWerte = {};
       const hzFlags = {};
+      console.log("🔍 Datenstruktur aus SAC:");
+      console.log(data);
+
+      if (data.length > 0) {
+  console.log("📦 Beispiel-Datensatz:");
+  console.log(Object.keys(data[0]));
+}
 
       data.forEach(row => {
 
@@ -387,6 +394,7 @@ closeBtn.addEventListener('click', () => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
