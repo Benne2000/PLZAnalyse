@@ -146,9 +146,8 @@
   </style>
 
 <div class="layout">
-  <div id="loading-spinner" class="spinner"></div> <!-- Spinner hier einfügen -->
-
   <div class="map-container">
+    <div id="loading-spinner" class="spinner"></div> <!-- Spinner hier einfügen -->
     <div id="map"></div>
     <div class="legend" id="legend">
       <strong>Wert (PLZ)</strong><br>
@@ -469,6 +468,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
