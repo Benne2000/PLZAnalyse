@@ -25,6 +25,29 @@
       width: 100%;
       background: white;
     }
+    .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #b41821;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2000;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#loading-spinner.hidden {
+  display: none;
+}
+
 
     .legend {
       position: absolute;
@@ -122,20 +145,24 @@
     }
   </style>
 
-  <div class="layout">
-    <div class="map-container">
-      <div id="map"></div>
-      <div class="legend" id="legend">
-        <strong>Wert (PLZ)</strong><br>
-        <i style="background:#08306b"></i> > 10.000<br>
-        <i style="background:#2171b5"></i> > 5.000<br>
-        <i style="background:#6baed6"></i> > 1.000<br>
-        <i style="background:#c6dbef"></i> > 100<br>
-        <i style="background:#f7fbff"></i> ≤ 100
-      </div>
+<div class="layout">
+  <div id="loading-spinner" class="spinner"></div> <!-- Spinner hier einfügen -->
+
+  <div class="map-container">
+    <div id="map"></div>
+    <div class="legend" id="legend">
+      <strong>Wert (PLZ)</strong><br>
+      <i style="background:#08306b"></i> > 10.000<br>
+      <i style="background:#2171b5"></i> > 5.000<br>
+      <i style="background:#6baed6"></i> > 1.000<br>
+      <i style="background:#c6dbef"></i> > 100<br>
+      <i style="background:#f7fbff"></i> ≤ 100
     </div>
-    <div id="side-popup"></div>
   </div>
+
+  <div id="side-popup"></div>
+</div>
+
   `;
 
   class GeoMapWidget extends HTMLElement {
@@ -154,6 +181,8 @@
     }
 
     connectedCallback() {
+      this.showSpinner();
+
       if (!window.L) {
         const link = document.createElement('link');
         link.rel = 'stylesheet';
@@ -167,6 +196,15 @@
         this.initializeMapBase();
       }
     }
+showSpinner() {
+  const spinner = this._shadowRoot.getElementById('loading-spinner');
+  if (spinner) spinner.classList.remove('hidden');
+}
+
+hideSpinner() {
+  const spinner = this._shadowRoot.getElementById('loading-spinner');
+  if (spinner) spinner.classList.add('hidden');
+}
 
     initializeMapBase() {
       const mapContainer = this._shadowRoot.getElementById('map');
@@ -388,6 +426,8 @@ onEachFeature: (feature, layer) => {
 
       const geoBounds = this._geoLayer.getBounds();
       this.map.fitBounds(geoBounds);
+      this.hideSpinner();
+
     }
 
     showNotesOnMap() {
@@ -423,7 +463,6 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
