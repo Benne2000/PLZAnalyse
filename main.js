@@ -411,20 +411,29 @@ onEachFeature: (feature, layer) => {
   layer.on('click', () => {
     const plz = feature.properties.plz;
     const note = feature.properties.note || "Keine Notiz";
-    const value = plzWerte[plz] || "–";
-    const hzFlag = hzFlags[plz] ? "Ja" : "Nein";
     const kennwerteArray = kennwerte[plz] || Array(10).fill("–");
 
-let rows = `
-  <tr><td>PLZ</td><td>${plz}</td></tr>
-  <tr><td>HZ-Flag</td><td>${hzFlag}</td></tr>
-`;
+    // Neue Beschreibungen für die Kennzahlen
+    const beschreibungen = {
+      value_umsatz: "Umsatz (in €)",
+      value_mitarbeiter: "Mitarbeiteranzahl",
+      value_wachstum: "Wachstumsrate (%)",
+      value_kundenzufriedenheit: "Kundenzufriedenheit (Score)",
+      value_marktanteil: "Marktanteil (%)",
+      value_kosten: "Gesamtkosten (in €)",
+      value_gewinn: "Gewinn (in €)",
+      value_liquidität: "Liquidität (%)",
+      value_rendite: "Rendite (%)",
+      value_investitionen: "Investitionen (in €)"
+    };
 
-kennwerteArray.forEach((wert, index) => {
-  const label = kennzahlenIDs[index].replace("value_", "").replace(/_/g, " ").toUpperCase();
-  rows += `<tr class="kennzahl-row"><td>${label}</td><td>${wert}</td></tr>`;
-});
+    let rows = "";
 
+    kennwerteArray.forEach((wert, index) => {
+      const id = kennzahlenIDs[index];
+      const label = beschreibungen[id] || id.replace("value_", "").replace(/_/g, " ").toUpperCase();
+      rows += `<tr class="kennzahl-row"><td>${label}</td><td>${wert}</td></tr>`;
+    });
 
     const sidePopup = this._shadowRoot.getElementById('side-popup');
 
@@ -458,6 +467,7 @@ kennwerteArray.forEach((wert, index) => {
     });
   });
 }
+
 
 });
 
@@ -504,6 +514,7 @@ kennwerteArray.forEach((wert, index) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
