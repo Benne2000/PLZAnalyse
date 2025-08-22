@@ -126,7 +126,8 @@
 
 #side-popup td {
   border: 1px solid #b41821;
-  padding: 6px;
+  font-size: 0.85rem;
+  padding: 4px 8px;
   color: black;
   font-weight: bold;
   overflow: hidden;
@@ -142,7 +143,13 @@
   border: none;
 }
 
-
+#side-popup .section-title {
+  font-weight: bold;
+  background-color: #f0f0f0;
+  text-align: center;
+  padding: 6px;
+  font-size: 0.9rem;
+}
 
 #side-popup td:last-child {
   font-weight: bold;
@@ -165,6 +172,16 @@
       cursor: pointer;
       border-radius: 3px;
     }
+/* Werte rechtsbündig */
+#side-popup .value-cell {
+  width: 30%;
+  text-align: right;
+}
+    /* Beschreibungszelle: 70% Breite */
+#side-popup .label-cell {
+  width: 70%;
+  text-align: left;
+}
   </style>
 
 <div class="layout">
@@ -393,12 +410,7 @@ this._geoLayer = L.geoJSON(this._geoData, {
     const plz = feature.properties?.plz;
     const value = plzWerte[plz] || 0;
     const isHZ = hzFlags[plz] || false;
-        console.log("📊Value:", value);
-    console.log(getColor(undefined, false)); // sollte "#cfd4da" sein
-console.log(getColor("abc", true));      // sollte "#cfd4da" sein
-console.log(getColor(84, false));        // sollte "#c6dbef" sein
 
-console.log("🎨 Farbe:", getColor(plzWerte[plz], hzFlags[plz]));
     return {
       fillColor: getColor(value, isHZ),
       weight: 1,
@@ -427,13 +439,24 @@ onEachFeature: (feature, layer) => {
       value_auflage_0: "Auflage"
     };
 
-    let rows = "";
+let rows = "";
 
-    kennwerteArray.forEach((wert, index) => {
-      const id = kennzahlenIDs[index];
-      const label = beschreibungen[id] || id.replace("value_", "").replace(/_/g, " ").toUpperCase();
-      rows += `<tr class="kennzahl-row"><td>${label}</td><td>${wert}</td></tr>`;
-    });
+kennwerteArray.forEach((wert, index) => {
+  const id = kennzahlenIDs[index];
+  const label = beschreibungen[id] || id.replace("value_", "").replace(/_/g, " ").toUpperCase();
+
+  // Nach der 6. Kennzahl eine Titelzeile einfügen
+  if (index === 6) {
+    rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
+  }
+
+  rows += `
+    <tr class="kennzahl-row">
+      <td class="label-cell">${label}</td>
+      <td class="value-cell">${wert}</td>
+    </tr>
+  `;
+});
 
     const sidePopup = this._shadowRoot.getElementById('side-popup');
 
@@ -514,6 +537,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
