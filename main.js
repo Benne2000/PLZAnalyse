@@ -246,10 +246,10 @@
       const plzWerte = {};
       const hzFlags = {};
 const kennzahlenIDs = [
-  "measure_0",
-  "measure_1_0",
-  "measure_1",
-  "measure_2_0",
+  "measures_0",
+  "measures_1_0",
+  "measures_1",
+  "measures_2_0",
   "value_haushalte",
   "value_kaufkraft",
   "value_ums_erhebung",
@@ -259,7 +259,7 @@ const kennzahlenIDs = [
 
 ];
 
-  console.log("🔍 Datenstruktur 2 aus SAC:");
+  console.log("🔍 Datenstruktur 3 aus SAC:");
 console.log(data);
 
 if (data.length > 0) {
@@ -416,6 +416,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
