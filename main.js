@@ -198,26 +198,34 @@ let hasTriggeredClick = false;
   width: 100%;
   margin-top: 20px;
   border-collapse: collapse;
-  border: 1px solid #b41821;
+  border: 1px solid #b41821; /* Außenrahmen */
   font-size: 0.85rem;
 }
 
+/* Kopfzeile mit Rahmen */
 #side-popup .extra-table th {
+  background-color: #eaeaea;
+  color: #333;
+  font-weight: bold;
+  padding: 6px;
+  text-align: left;
   border: 1px solid #b41821;
-  font-size: 0.85rem;
-  padding: 4px 8px;
-  color: black;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Zellen ohne Innenrahmen */
+#side-popup .extra-table td {
+  padding: 6px;
+  text-align: left;
+  border: none; /* keine Zellrahmen */
   font-weight: bold;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-#side-popup .extra-table td {
-  border: 1px solid #ccc;
-  padding: 6px;
-  text-align: left;
-}
 
   </style>
 
@@ -601,6 +609,7 @@ sidePopup.insertAdjacentHTML('beforeend', extraTable);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
