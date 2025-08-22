@@ -322,9 +322,11 @@ kennwerte[plz] = kennzahlenIDs.map(id => {
   const raw = row[id]?.raw;
   return typeof raw === "number" ? raw : "–";
 });
-
+    
     hzFlags[plz] = hzFlag === "X";
     plzWerte[plz] = row["value_hr_n_umsatz_0"]?.raw || 0;
+    console.log("🧪 plzWerte[plz]:", plzWerte[plz]);
+console.log("🧪 hzFlags[plz]:", hzFlags[plz]);
 
     console.log("📍 PLZ:", plz);
 console.log("📊 Kennwerte:", kennwerte[plz]);
@@ -467,6 +469,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
