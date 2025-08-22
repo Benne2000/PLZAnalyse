@@ -94,6 +94,7 @@
     }
 #side-popup table {
   width: 100%;
+  table-layout: fixed; /* verhindert Breitenverschiebung */
   border-collapse: collapse;
   border: 1px solid #b41821;
   margin-top: 30px;
@@ -111,16 +112,32 @@
   white-space: nowrap;
 }
 
+#side-popup th.title-cell {
+  max-width: 100%;
+}
+
+#side-popup th.subtitle-cell {
+  background-color: #f3f3f3;
+  color: #333;
+  font-weight: bold;
+  padding: 6px;
+  text-align: left;
+}
+
 #side-popup td {
   border: 1px solid #b41821;
   padding: 6px;
+  color: black;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #side-popup td:first-child {
-  color: black;
-  font-weight: bold;
   width: 40%;
 }
+
 
 #side-popup td:last-child {
   font-weight: bold;
@@ -403,34 +420,39 @@ onEachFeature: (feature, layer) => {
       rows += `<tr><td>${label}</td><td>${wert}</td></tr>`;
     });
 
-    const sidePopup = this._shadowRoot.getElementById('side-popup'); // 🔧 Hier korrigiert
+    const sidePopup = this._shadowRoot.getElementById('side-popup');
 
     sidePopup.innerHTML = `
       <button class="close-btn">×</button>
       <table>
-<thead>
-  <tr><th colspan="2" title="${note}">${note}</th></tr>
-</thead>
-
+        <thead>
+          <tr>
+            <th colspan="2" class="title-cell" title="${note}">${note}</th>
+          </tr>
+          <tr>
+            <th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th>
+          </tr>
+        </thead>
         <tbody>
           ${rows}
         </tbody>
       </table>
     `;
 
-    // 🧠 Reflow erzwingen, um Animation neu zu starten
+    // Reflow für Animation
     void sidePopup.offsetWidth;
     setTimeout(() => {
       sidePopup.classList.add('show');
     }, 10);
 
-    // 🧹 Event-Listener neu setzen
+    // Close-Button aktivieren
     const closeBtn = sidePopup.querySelector('.close-btn');
     closeBtn.addEventListener('click', () => {
       sidePopup.classList.remove('show');
     });
   });
 }
+
 });
 
 
@@ -476,6 +498,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
