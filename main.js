@@ -287,18 +287,18 @@ hideSpinner() {
       const plzWerte = {};
       const hzFlags = {};
 const kennzahlenIDs = [
-  "measures_0",
-  "measures_1_0",
-  "measures_1",
-  "measures_2_0",
-  "value_haushalte",
-  "value_kaufkraft",
-  "value_ums_erhebung",
-  "value_kd_erhebung",
-  "value_bon_erhebung",
-  "value_auflage"
-
+  "value_hr_n_umsatz_0",
+  "value_umsatz_p_hh_0",
+  "value_wk_in_percent_0",
+  "value_werbeverweigerer_0",
+  "value_haushalte_0",
+  "value_kaufkraft_0",
+  "value_ums_erhebung_0",
+  "value_kd_erhebung_0",
+  "value_bon_erhebung_0",
+  "value_auflage_0"
 ];
+
 
   console.log("🔍 Datenstruktur 3 aus SAC:");
 console.log(data);
@@ -463,6 +463,7 @@ onEachFeature: (feature, layer) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
