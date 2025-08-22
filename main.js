@@ -315,13 +315,6 @@ hideSpinner() {
         maxZoom: 19
       }).addTo(this.map);
 
-      const marker = L.circleMarker([49.4067, 8.6585], {
-        radius: 6,
-        color: "red",
-        fillColor: "red",
-        fillOpacity: 0.9
-      }).addTo(this.map);
-      marker.bindPopup("BAUHAUS Heidelberg");
     }
 
     removeMapTiles() {
@@ -372,6 +365,12 @@ hideSpinner() {
       const data = this._myDataSource.data;
       const plzWerte = {};
       const hzFlags = {};
+      const Niederlassung = {};
+      const Erhebung = {};
+      const Datum = {};
+      const Lat = {};
+      const Lon = {};
+
 const kennzahlenIDs = [
   "value_hr_n_umsatz_0",
   "value_umsatz_p_hh_0",
@@ -396,6 +395,13 @@ data.forEach(row => {
 
   const plz = row["dimension_plz_0"]?.id?.trim();
   const hzFlag = row["dimension_hzflag_0"]?.id?.trim();
+  const nl = row["ddimension_niederlassung_0"]?.id?.trim();
+  const erheb = row["dimension_erhebung_0"]?.id?.trim();
+  const datum = row["dimension_Datum_0"]?.id?.trim();
+  const lat = row["dimension_Lat_0"]?.id?.trim();
+  const lon = row["dimension_lon_0"]?.id?.trim();
+
+
 
   if (plz) {
 kennwerte[plz] = kennzahlenIDs.map(id => {
@@ -404,6 +410,11 @@ kennwerte[plz] = kennzahlenIDs.map(id => {
 });
     
     hzFlags[plz] = hzFlag === "X";
+    Niederlassung[plz] = nl;
+    Erhebung[plz] = erheb;
+    Datum[plz] = datum;
+    Lat[plz] = lat;
+    Lon[plz] = lon;
     plzWerte[plz] = row["value_hr_n_umsatz_0"]?.raw || 0;
     console.log("🧪 plzWerte[plz]:", plzWerte[plz]);
 console.log("🧪 hzFlags[plz]:", hzFlags[plz]);
