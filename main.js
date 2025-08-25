@@ -587,18 +587,35 @@ Object.keys(Niederlassung).forEach(plz => {
   const lon = parseFloat(koordinaten.lon);
   if (isNaN(lat) || isNaN(lon)) return;
 
-  const marker = L.marker([lat, lon], {
-    title: `Niederlassung: ${nl}`
-  }).addTo(this.map);
+const redMarkerIcon = L.divIcon({
+  html: `<div style="
+    background-color: #e53935;
+    color: white;
+    padding: 6px 10px;
+    border-radius: 12px;
+    font-weight: bold;
+    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+    border: 2px solid white;
+    font-family: sans-serif;
+  ">${nl}</div>`,
+  className: '', // Verhindert Leaflet-Standard-Styling
+  iconSize: [40, 24],
+  iconAnchor: [20, 12]
+});
 
-  marker.bindPopup(`<strong>${nl}</strong>`);
+const marker = L.marker([lat, lon], {
+  icon: redMarkerIcon,
+  title: `Niederlassung: ${nl}`
+}).addTo(this.map);
+
+marker.bindPopup(`<strong>${nl}</strong>`);
+
 
   markerListe.push(marker);
   gesetzteNLs.add(nl);
 });
 
-// Jetzt kannst du bringToFront auf alle Marker anwenden
-markerListe.forEach(m => m.bringToFront());
+
 
 
   // 🧹 Spinner ausblenden nach erfolgreichem Rendern
@@ -639,6 +656,7 @@ markerListe.forEach(m => m.bringToFront());
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
