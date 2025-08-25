@@ -417,20 +417,13 @@ async render() {
 
     if (!plz || !lat || !lon) return;
 
-const hasKennwerte = kennzahlenIDs.some(id => {
-  const val = row[id]?.raw;
-  return typeof val === "number" && !isNaN(val);
-});
 
-    if (!hasKennwerte) {
+
+    if (!plz) {
       extraNLs.push({ nl: nl || plz, lat: parseFloat(lat), lon: parseFloat(lon) });
       return;
     }
 
-    console.log("Extra Niederlassungen ohne gepflegte Kennzahlen:");
-extraNLs.forEach(({ nl, lat, lon }, index) => {
-  console.log(`${index + 1}. NL: ${nl}, Koordinaten: (${lat}, ${lon})`);
-});
     Niederlassung[plz] = nl;
     nlKoordinaten[nl] = nlKoordinaten[nl] || { lat, lon };
     hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
@@ -716,6 +709,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
