@@ -176,20 +176,7 @@ let hasTriggeredClick = false;
       cursor: pointer;
       border-radius: 3px;
     }
-/* Werte rechtsbündig */
-#side-popup .value-cell {
-  width: 30%;
-  text-align: right;
-  font-weight: normal;
-}
-    /* Beschreibungszelle: 70% Breite */
-#side-popup .label-cell {
-  width: 70%;
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
 
 #side-popup .extra-table {
   display: table;
@@ -227,7 +214,20 @@ let hasTriggeredClick = false;
   white-space: nowrap;
 }
 
-
+/* Werte rechtsbündig */
+#side-popup .value-cell {
+  width: 30%;
+  text-align: right;
+  font-weight: normal;
+}
+    /* Beschreibungszelle: 70% Breite */
+#side-popup .label-cell {
+  width: 70%;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
   </style>
 
 <div class="layout">
@@ -413,8 +413,8 @@ async render() {
 
     plzKennwerte[plz] = {
       value_hr_n_umsatz_0: row["value_hr_n_umsatz_0"]?.raw || 0,
-      value_wk_potentiell: row["value_wk_potentiell_0"]?.raw,
-      value_hz_potentiell: row["value_hz_potentiell_0"]?.raw
+      value_wk_potentiell_0: row["value_wk_potentiell_0"]?.raw,
+      value_hz_potentiell_0: row["value_hz_potentiell_0"]?.raw
     };
 
     hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
@@ -620,6 +620,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
