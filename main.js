@@ -382,7 +382,7 @@ const kennzahlenIDs = [
   "value_ums_erhebung_0",
   "value_kd_erhebung_0",
   "value_bon_erhebung_0",
-  "value_auflage_0"
+  "value_auflage_0",
 ];
 
 
@@ -409,6 +409,11 @@ kennwerte[plz] = kennzahlenIDs.map(id => {
   return typeof raw === "number" ? raw : "–";
 });
     
+kennwerte[plz] = sidePopUpIDs.map(id => {
+  const raw = row[id]?.raw;
+  return typeof raw === "number" ? raw : "–";
+});
+
     hzFlags[plz] = hzFlag === "X";
     Niederlassung[plz] = nl;
     Erhebung[plz] = erheb;
@@ -416,11 +421,7 @@ kennwerte[plz] = kennzahlenIDs.map(id => {
     Lat[plz] = lat;
     Lon[plz] = lon;
     plzWerte[plz] = row["value_hr_n_umsatz_0"]?.raw || 0;
-    console.log("🧪 plzWerte[plz]:", plzWerte[plz]);
-console.log("🧪 hzFlags[plz]:", hzFlags[plz]);
 
-    console.log("📍 PLZ:", plz);
-console.log("📊 Kennwerte:", kennwerte[plz]);
 
 
 
@@ -490,7 +491,12 @@ onEachFeature: (feature, layer) => {
       value_ums_erhebung_0: "Umsatz",
       value_kd_erhebung_0: "Anzahl Kunden",
       value_bon_erhebung_0: "Ø-Bon",
-      value_auflage_0: "Auflage"
+      value_auflage_0: "Auflage",
+    };
+
+    const beschreibungenSide = {
+      value_wk_potentiell:"WK in %",
+      value_hz_potentiell:"HZ-Werbekosten"
     };
 
 let rows = "";
@@ -534,21 +540,24 @@ kennwerteArray.forEach((wert, index) => {
 console.log("🔍 Prüfung für Extra-Tabelle:", plz, hzFlags[plz], plzWerte[plz]);
 
 if (!hzFlags[plz] && plzWerte[plz] > 0) {
+  const wkPotentiell = plzWerte[plz]?.value_wk_potentiell ?? "–";
+  const hzPotentiell = plzWerte[plz]?.value_hz_potentiell ?? "–";
+
   const extraTable = `
     <table class="extra-table">
       <thead>
         <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
       </thead>
       <tbody>
-        <tr><td>PLZ-Wert</td><td>${plzWerte[plz]}</td></tr>
-        <tr><td>Status</td><td>Kein HZ</td></tr>
+        <tr><td>${beschreibungenSide.value_wk_potentiell}</td><td>${wkPotentiell}</td></tr>
+        <tr><td>${beschreibungenSide.value_hz_potentiell}</td><td>${hzPotentiell}</td></tr>
       </tbody>
     </table>
   `;
 
-sidePopup.insertAdjacentHTML('beforeend', extraTable);
-
+  sidePopup.insertAdjacentHTML('beforeend', extraTable);
 }
+
 
     // Reflow für Animation
     void sidePopup.offsetWidth;
@@ -622,9 +631,3 @@ sidePopup.insertAdjacentHTML('beforeend', extraTable);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
-
-
-
