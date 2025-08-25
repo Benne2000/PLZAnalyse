@@ -345,6 +345,17 @@ hideSpinner() {
       }
     }
 
+   toggleExtraNLs(visible) {
+  markerListeExtra.forEach(marker => {
+    if (visible) {
+      marker.addTo(this.map);
+    } else {
+      this.map.removeLayer(marker);
+    }
+  });
+}
+
+
     onCustomWidgetEvent(event) {
       if (event.name === "toggleTiles") {
         this.toggleMapTiles();
@@ -374,52 +385,41 @@ async render() {
 
   const data = this._myDataSource.data;
 
-  // 🔧 Initialisierung der Datenstrukturen
   const plzWerte = {};
   const hzFlags = {};
   const Niederlassung = {};
   const nlKoordinaten = {};
   const kennwerte = {};
   const plzKennwerte = {};
+  const extraNLs = [];
 
   const kennzahlenIDs = [
-    "value_hr_n_umsatz_0",
-    "value_umsatz_p_hh_0",
-    "value_wk_in_percent_0",
-    "value_wk_nachbar_0",
-    "value_hz_kosten_0",
-    "value_werbeverweigerer_0",
-    "value_haushalte_0",
-    "value_kaufkraft_0",
-    "value_ums_erhebung_0",
-    "value_kd_erhebung_0",
-    "value_bon_erhebung_0",
-    "value_auflage_0",
+    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
+    "value_wk_nachbar_0", "value_hz_kosten_0", "value_werbeverweigerer_0",
+    "value_haushalte_0", "value_kaufkraft_0", "value_ums_erhebung_0",
+    "value_kd_erhebung_0", "value_bon_erhebung_0", "value_auflage_0"
   ];
 
-  const sidePopUpIDs = [
-    "value_wk_potentiell_0",
-    "value_hz_potentiell_0"
-  ];
+  const sidePopUpIDs = ["value_wk_potentiell_0", "value_hz_potentiell_0"];
 
   // 📦 Daten extrahieren
   data.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
-    if (!plz) return;
-
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
-    if (nl) {
-      Niederlassung[plz] = nl;
+    const lat = row["dimension_Lat_0"]?.id?.trim();
+    const lon = row["dimension_lon_0"]?.id?.trim();
 
-      if (!nlKoordinaten[nl]) {
-        const lat = row["dimension_Lat_0"]?.id?.trim();
-        const lon = row["dimension_lon_0"]?.id?.trim();
-        if (lat && lon) {
-          nlKoordinaten[nl] = { lat, lon };
-        }
-      }
+    if (!plz || !lat || !lon) return;
+
+    const hasKennwerte = kennzahlenIDs.some(id => typeof row[id]?.raw === "number");
+
+    if (!hasKennwerte) {
+      extraNLs.push({ nl: nl || plz, lat: parseFloat(lat), lon: parseFloat(lon) });
+      return;
     }
 
+    Niederlassung[plz] = nl;
+    nlKoordinaten[nl] = nlKoordinaten[nl] || { lat, lon };
     hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
 
     kennwerte[plz] = kennzahlenIDs.map(id => {
@@ -447,7 +447,7 @@ async render() {
     }
   }
 
-  // 🎨 Farbskala definieren
+  // 🎨 Farbskala
   const getColor = (value, isHZ) => {
     const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
     return isHZ
@@ -571,55 +571,87 @@ async render() {
     }
   }).addTo(this.map);
     // 🧭 Marker pro Niederlassung setzen
-  const gesetzteNLs = new Set();
-
-const markerListe = [];
-
+// 📍 Marker für vollständige NLs
+const gesetzteNLs = new Set();
 Object.keys(Niederlassung).forEach(plz => {
   const nl = Niederlassung[plz];
-  console.log(nl);
   if (!nl || gesetzteNLs.has(nl)) return;
 
   const koordinaten = nlKoordinaten[nl];
-  if (!koordinaten || !koordinaten.lat || !koordinaten.lon) return;
+  if (!koordinaten) return;
 
   const lat = parseFloat(koordinaten.lat);
   const lon = parseFloat(koordinaten.lon);
-  if (isNaN(lat) || isNaN(lon)) return;
 
-const redPinIcon = L.divIcon({
-  html: `
+  const markerHtml = `
     <div style="
-      position: relative;
-      width: 24px;
-      height: 24px;
-      background-color: #e53935;
+      background-color: #d7191c;
       color: white;
-      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
       font-size: 12px;
-      text-align: center;
-      line-height: 24px;
-      border-radius: 50% 50% 50% 50%;
-      box-shadow: 0 0 4px rgba(0,0,0,0.3);
+      font-weight: bold;
+      position: relative;
     ">
-      NL
+      ${nl}
       <div style="
         position: absolute;
-        bottom: -8px;
+        bottom: -6px;
         left: 50%;
         transform: translateX(-50%);
         width: 0;
         height: 0;
         border-left: 6px solid transparent;
         border-right: 6px solid transparent;
-        border-top: 8px solid #e53935;
+        border-top: 6px solid #d7191c;
       "></div>
     </div>
-  `,
-  className: '',
-  iconSize: [24, 32],
-  iconAnchor: [12, 32] // Spitze zeigt auf den Punkt
+  `;
+
+  const icon = L.divIcon({
+    html: markerHtml,
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30]
+  });
+
+  L.marker([lat, lon], { icon }).addTo(this.map);
+  gesetzteNLs.add(nl);
 });
+
+// ➕ Marker für zusätzliche NLs ohne Kennwerte
+extraNLs.forEach(({ nl, lat, lon }) => {
+  const markerHtml = `
+    <div style="
+      background-color: #999;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      position: relative;
+    ">
+      ${nl}
+      <div style="
+        position: absolute;
+        bottom: -6px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 6px solid #999;
+      "></div>
+    </div>
+  `;
+
+  const icon = L.divIcon({
+    html: markerHtml,
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30]
+  });
 
 const marker = L.marker([lat, lon], {
   icon: redPinIcon,
@@ -630,6 +662,7 @@ markerListe.push(marker);
 gesetzteNLs.add(nl);
 
 });
+
 
 
 
@@ -649,7 +682,7 @@ gesetzteNLs.add(nl);
         const note = layer.feature?.properties?.note;
         const center = layer.getBounds?.().getCenter?.();
 
-        if (zoomLevel >= 11 && note && center && bounds.contains(center)) {
+        if (zoomLevel >= 12 && note && center && bounds.contains(center)) {
           if (!layer.getTooltip()) {
             layer.bindTooltip(note, {
               permanent: true,
@@ -672,7 +705,6 @@ gesetzteNLs.add(nl);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
