@@ -122,7 +122,7 @@ let hasTriggeredClick = false;
 
 #side-popup th.subtitle-cell {
   background-color: #f3f3f3;
-  color: #333;
+  color: black;
   font-weight: bold;
   padding: 6px;
   text-align: left;
@@ -148,11 +148,11 @@ let hasTriggeredClick = false;
 }
 
 #side-popup .section-title {
+  background-color: #f3f3f3;
+  color: black;
   font-weight: bold;
-  background-color: #f0f0f0;
-  text-align: center;
   padding: 6px;
-  font-size: 0.9rem;
+  text-align: left;
 }
 
 #side-popup td:last-child {
@@ -200,25 +200,26 @@ let hasTriggeredClick = false;
   border-collapse: collapse;
   border: 1px solid #b41821; /* Außenrahmen */
   font-size: 0.85rem;
+  
 }
 
 /* Kopfzeile mit Rahmen */
 #side-popup .extra-table th {
-  background-color: #eaeaea;
-  color: #333;
-  font-weight: bold;
-  padding: 6px;
-  text-align: left;
   border: 1px solid #b41821;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  background-color: #f3f3f3;
+  color: black;
+  font-weight: bold;
+  padding: 6px;
+  text-align: left;
 }
 
 /* Zellen ohne Innenrahmen */
 #side-popup .extra-table td {
   padding: 6px;
-  text-align: left;
+  text-align: right;
   border: none; /* keine Zellrahmen */
   font-weight: bold;
   overflow: hidden;
@@ -613,6 +614,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
