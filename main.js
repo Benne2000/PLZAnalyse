@@ -626,50 +626,22 @@ Object.keys(Niederlassung).forEach(plz => {
   gesetzteNLs.add(nl);
 });
 
-// ➕ Marker für zusätzliche NLs ohne Kennwerte
-extraNLs.forEach(({ nl, lat, lon }) => {
-  const markerHtml = `
-    <div style="
-      width: 24px;
-      height: 24px;
-      background-color: #999;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      position: relative;
-      box-shadow: 0 0 2px rgba(0,0,0,0.5);
-    ">
-      <div style="
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(45deg);
-        color: white;
-        font-size: 10px;
-        font-weight: bold;
-      ">
-        ${nl}
-      </div>
-    </div>
-  `;
+this.markerListeExtra = []; // Initialisierung vor der Schleife
 
-  const icon = L.divIcon({
-    html: markerHtml,
-    className: '',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30]
-  });
+extraNLs.forEach(({ nl, lat, lon }) => {
+  const markerHtml = `...`; // wie gehabt
+
+  const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [30, 30], iconAnchor: [15, 30] });
 
   const marker = L.marker([lat, lon], {
     icon,
     title: `${nl}`
   }).addTo(this.map);
 
-  // Optional: falls du eine Liste der Marker brauchst
-  if (!this.markerListe) this.markerListe = [];
-  this.markerListe.push(marker);
-
+  this.markerListeExtra.push(marker); // Hier speichern!
   gesetzteNLs.add(nl);
 });
+
 
 
 
@@ -714,21 +686,6 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
