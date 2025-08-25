@@ -572,7 +572,10 @@ async render() {
   }).addTo(this.map);
     // 🧭 Marker pro Niederlassung setzen
 // 📍 Marker für vollständige NLs
+// 🧭 Marker pro Niederlassung setzen
 const gesetzteNLs = new Set();
+
+// 📍 Marker für vollständige NLs mit Kennwerten
 Object.keys(Niederlassung).forEach(plz => {
   const nl = Niederlassung[plz];
   if (!nl || gesetzteNLs.has(nl)) return;
@@ -585,26 +588,25 @@ Object.keys(Niederlassung).forEach(plz => {
 
   const markerHtml = `
     <div style="
+      width: 24px;
+      height: 24px;
       background-color: #d7191c;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
       position: relative;
+      box-shadow: 0 0 2px rgba(0,0,0,0.5);
     ">
-      ${nl}
       <div style="
         position: absolute;
-        bottom: -6px;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
-        width: 0;
-        height: 0;
-        border-left: 6px solid transparent;
-        border-right: 6px solid transparent;
-        border-top: 6px solid #d7191c;
-      "></div>
+        transform: translate(-50%, -50%) rotate(45deg);
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+      ">
+        ${nl}
+      </div>
     </div>
   `;
 
@@ -623,26 +625,25 @@ Object.keys(Niederlassung).forEach(plz => {
 extraNLs.forEach(({ nl, lat, lon }) => {
   const markerHtml = `
     <div style="
+      width: 24px;
+      height: 24px;
       background-color: #999;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      font-weight: bold;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
       position: relative;
+      box-shadow: 0 0 2px rgba(0,0,0,0.5);
     ">
-      ${nl}
       <div style="
         position: absolute;
-        bottom: -6px;
+        top: 50%;
         left: 50%;
-        transform: translateX(-50%);
-        width: 0;
-        height: 0;
-        border-left: 6px solid transparent;
-        border-right: 6px solid transparent;
-        border-top: 6px solid #999;
-      "></div>
+        transform: translate(-50%, -50%) rotate(45deg);
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+      ">
+        ${nl}
+      </div>
     </div>
   `;
 
@@ -653,15 +654,18 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     iconAnchor: [15, 30]
   });
 
-const marker = L.marker([lat, lon], {
-  icon: redPinIcon,
-  title: `${nl}`
-}).addTo(this.map);
+  const marker = L.marker([lat, lon], {
+    icon,
+    title: `${nl}`
+  }).addTo(this.map);
 
-markerListe.push(marker);
-gesetzteNLs.add(nl);
+  // Optional: falls du eine Liste der Marker brauchst
+  if (!this.markerListe) this.markerListe = [];
+  this.markerListe.push(marker);
 
+  gesetzteNLs.add(nl);
 });
+
 
 
 
@@ -705,7 +709,6 @@ gesetzteNLs.add(nl);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
