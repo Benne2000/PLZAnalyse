@@ -587,28 +587,44 @@ Object.keys(Niederlassung).forEach(plz => {
   const lon = parseFloat(koordinaten.lon);
   if (isNaN(lat) || isNaN(lon)) return;
 
-const redMarkerIcon = L.divIcon({
-  html: `<div style="
-    background-color: #e53935;
-    color: white;
-    padding: 6px 10px;
-    border-radius: 12px;
-    font-weight: bold;
-    box-shadow: 0 0 4px rgba(0,0,0,0.3);
-    border: 2px solid white;
-    font-family: sans-serif;
-  ">${nl}</div>`,
-  className: '', // Verhindert Leaflet-Standard-Styling
-  iconSize: [40, 24],
-  iconAnchor: [20, 12]
+const redPinIcon = L.divIcon({
+  html: `
+    <div style="
+      position: relative;
+      width: 24px;
+      height: 24px;
+      background-color: #e53935;
+      color: white;
+      font-weight: bold;
+      font-size: 12px;
+      text-align: center;
+      line-height: 24px;
+      border-radius: 50% 50% 50% 50%;
+      box-shadow: 0 0 4px rgba(0,0,0,0.3);
+    ">
+      NL
+      <div style="
+        position: absolute;
+        bottom: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0;
+        height: 0;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
+        border-top: 8px solid #e53935;
+      "></div>
+    </div>
+  `,
+  className: '',
+  iconSize: [24, 32],
+  iconAnchor: [12, 32] // Spitze zeigt auf den Punkt
 });
 
-const marker = L.marker([lat, lon], {
-  icon: redMarkerIcon,
+L.marker([lat, lon], {
+  icon: redPinIcon,
   title: `Niederlassung: ${nl}`
 }).addTo(this.map);
-
-marker.bindPopup(`<strong>${nl}</strong>`);
 
 
   markerListe.push(marker);
@@ -656,6 +672,7 @@ marker.bindPopup(`<strong>${nl}</strong>`);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
