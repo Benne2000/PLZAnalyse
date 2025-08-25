@@ -572,6 +572,13 @@ async render() {
 
   Object.keys(Niederlassung).forEach(plz => {
     const nl = Niederlassung[plz];
+    console.log("🧭 Versuche Marker zu setzen für:", nl);
+console.log("Koordinaten:", koordinaten);
+
+if (!koordinaten || !koordinaten.lat || !koordinaten.lon) {
+  console.warn("❌ Ungültige Koordinaten für NL:", nl);
+}
+
     if (!nl || gesetzteNLs.has(nl)) return;
 
     const koordinaten = nlKoordinaten[nl];
@@ -593,11 +600,11 @@ async render() {
 
     marker.bindPopup(`
       <strong>${nl}</strong><br>
-      PLZ mit Daten: ${zugeordnetePLZs}
     `);
 
     gesetzteNLs.add(nl);
   });
+marker.addTo(this.map).bringToFront();
 
   // 🧹 Spinner ausblenden nach erfolgreichem Rendern
   this.hideSpinner();
@@ -637,6 +644,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
