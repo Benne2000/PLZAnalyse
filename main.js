@@ -436,6 +436,8 @@ async render() {
   
   // 📦 Daten extrahieren
   data.forEach(row => {
+    console.log("Setze Marker für extraNL:", nl, lat, lon);
+
     this.validateRow(row);
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
@@ -736,6 +738,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
