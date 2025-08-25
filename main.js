@@ -360,6 +360,31 @@ toggleNeighbours() {
     this.neighbours = true;
   }
 }
+    validateRow(row) {
+  const plz = row["dimension_plz_0"]?.id?.trim();
+  const nl = row["dimension_niederlassung_0"]?.id?.trim();
+  const lat = row["dimension_Lat_0"]?.id?.trim();
+  const lon = row["dimension_lon_0"]?.id?.trim();
+
+  const errors = [];
+
+  if (!nl) errors.push("❌ Niederlassung fehlt");
+  if (!lat || isNaN(parseFloat(lat))) errors.push("❌ Latitude ungültig");
+  if (!lon || isNaN(parseFloat(lon))) errors.push("❌ Longitude ungültig");
+
+  if (!plz) {
+    errors.push("ℹ️ PLZ fehlt – wird als extraNL behandelt");
+  } else {
+    if (plz.length !== 5 || isNaN(parseInt(plz))) {
+      errors.push("❌ PLZ ungültig");
+    }
+  }
+
+  if (errors.length > 0) {
+    console.warn(`🔍 Validierungsfehler für NL "${nl}" / PLZ "${plz}":`, errors);
+  }
+}
+
 
 
     onCustomWidgetEvent(event) {
@@ -407,9 +432,11 @@ async render() {
   ];
 
   const sidePopUpIDs = ["value_wk_potentiell_0", "value_hz_potentiell_0"];
-
+  
+  
   // 📦 Daten extrahieren
   data.forEach(row => {
+    this.validateRow(row);
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const lat = row["dimension_Lat_0"]?.id?.trim();
@@ -709,6 +736,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
