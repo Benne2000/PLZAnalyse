@@ -358,222 +358,202 @@ hideSpinner() {
 
 
 
-    async render() {
+async render() {
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
 
-      if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
+  const data = this._myDataSource.data;
 
-      const data = this._myDataSource.data;
-      const plzWerte = {};
-      const hzFlags = {};
-      const Niederlassung = {};
-      const Erhebung = {};
-      const Datum = {};
-      const Lat = {};
-      const Lon = {};
+  // 🔧 Initialisierung der Datenstrukturen
+  const plzWerte = {};
+  const hzFlags = {};
+  const Niederlassung = {};
+  const Erhebung = {};
+  const Datum = {};
+  const Lat = {};
+  const Lon = {};
+  const kennwerte = {};
+  const sideKennwerte = {};
+  const plzKennwerte = {};
 
-const kennzahlenIDs = [
-  "value_hr_n_umsatz_0",
-  "value_umsatz_p_hh_0",
-  "value_wk_in_percent_0",
-  "value_wk_nachbar_0",
-  "value_hz_kosten_0",
-  "value_werbeverweigerer_0",
-  "value_haushalte_0",
-  "value_kaufkraft_0",
-  "value_ums_erhebung_0",
-  "value_kd_erhebung_0",
-  "value_bon_erhebung_0",
-  "value_auflage_0",
-];
+  const kennzahlenIDs = [
+    "value_hr_n_umsatz_0",
+    "value_umsatz_p_hh_0",
+    "value_wk_in_percent_0",
+    "value_wk_nachbar_0",
+    "value_hz_kosten_0",
+    "value_werbeverweigerer_0",
+    "value_haushalte_0",
+    "value_kaufkraft_0",
+    "value_ums_erhebung_0",
+    "value_kd_erhebung_0",
+    "value_bon_erhebung_0",
+    "value_auflage_0",
+  ];
 
+  const sidePopUpIDs = [
+    "value_wk_potentiell",
+    "value_hz_potentiell"
+  ];
 
-      
-const kennwerte = {};
+  // 📦 Daten extrahieren
+  data.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    if (!plz) return;
 
-data.forEach(row => {
-  // 👉 Hier einfügen:
-
-
-  const plz = row["dimension_plz_0"]?.id?.trim();
-  const hzFlag = row["dimension_hzflag_0"]?.id?.trim();
-  const nl = row["ddimension_niederlassung_0"]?.id?.trim();
-  const erheb = row["dimension_erhebung_0"]?.id?.trim();
-  const datum = row["dimension_Datum_0"]?.id?.trim();
-  const lat = row["dimension_Lat_0"]?.id?.trim();
-  const lon = row["dimension_lon_0"]?.id?.trim();
-
-
-
-  if (plz) {
-kennwerte[plz] = kennzahlenIDs.map(id => {
-  const raw = row[id]?.raw;
-  return typeof raw === "number" ? raw : "–";
-});
-    
-kennwerte[plz] = sidePopUpIDs.map(id => {
-  const raw = row[id]?.raw;
-  return typeof raw === "number" ? raw : "–";
-});
-
-    hzFlags[plz] = hzFlag === "X";
-    Niederlassung[plz] = nl;
-    Erhebung[plz] = erheb;
-    Datum[plz] = datum;
-    Lat[plz] = lat;
-    Lon[plz] = lon;
-    plzWerte[plz] = row["value_hr_n_umsatz_0"]?.raw || 0;
-
-
-
-
-  }
-});
-
-
-      if (!this._geoData) {
-        try {
-          const res = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
-          this._geoData = await res.json();
-        } catch (err) {
-          console.error("❌ Fehler beim Laden der GeoJSON-Daten:", err);
-          return;
-        }
-      }
-
-const getColor = (value, isHZ) => {
-  const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
-
-  if (isHZ) {
-    return safeValue > 10000 ? "#00441b" :
-           safeValue > 5000  ? "#238b45" :
-           safeValue > 1000  ? "#66c2a4" :
-           safeValue > 100   ? "#ccece6" : "#cfd4da";
-  } else {
-    return safeValue > 10000 ? "#08306b" :
-           safeValue > 5000  ? "#2171b5" :
-           safeValue > 1000  ? "#6baed6" :
-           safeValue > 100   ? "#c6dbef" : "#cfd4da";
-  }
-};
-
-      if (this._geoLayer) {
-        this.map.removeLayer(this._geoLayer);
-      }
-
-this._geoLayer = L.geoJSON(this._geoData, {
-  style: feature => {
-    const plz = feature.properties?.plz;
-    const value = plzWerte[plz] || 0;
-    const isHZ = hzFlags[plz] || false;
-
-    return {
-      fillColor: getColor(value, isHZ),
-      weight: 1,
-      opacity: 1,
-      color: 'white',
-      fillOpacity: 0.7
-    };
-  },
-onEachFeature: (feature, layer) => {
-  layer.on('click', () => {
-    const plz = feature.properties.plz;
-    const note = feature.properties.note || "Keine Notiz";
-    const kennwerteArray = kennwerte[plz] || Array(11).fill("–");
-
-    // Neue Beschreibungen für die Kennzahlen
-    const beschreibungen = {
-      value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
-      value_umsatz_p_hh_0: "Umsatz p. HH",
-      value_wk_in_percent_0: "Werbekosten (%)",
-      value_wk_nachbar_0: "WK (%) incl. Nachb.",
-      value_hz_kosten_0: "HZ-Werbekosten",
-      value_werbeverweigerer_0: "Werbeverweigerer (%)",
-      value_haushalte_0: "Haushalte)",
-      value_kaufkraft_0: "BM-Kaufkraft-Idx",
-      value_ums_erhebung_0: "Umsatz",
-      value_kd_erhebung_0: "Anzahl Kunden",
-      value_bon_erhebung_0: "Ø-Bon",
-      value_auflage_0: "Auflage",
-    };
-
-    const beschreibungenSide = {
-      value_wk_potentiell:"WK in %",
-      value_hz_potentiell:"HZ-Werbekosten"
-    };
-
-let rows = "";
-
-kennwerteArray.forEach((wert, index) => {
-  const id = kennzahlenIDs[index];
-  const label = beschreibungen[id] || id.replace("value_", "").replace(/_/g, " ").toUpperCase();
-
-  // Nach der 6. Kennzahl eine Titelzeile einfügen
-  if (index === 8) {
-    rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
-  }
-
-  rows += `
-    <tr class="kennzahl-row">
-      <td class="label-cell">${label}</td>
-      <td class="value-cell">${wert}</td>
-    </tr>
-  `;
-});
-
-    const sidePopup = this._shadowRoot.getElementById('side-popup');
-
-    sidePopup.innerHTML = `
-      <button class="close-btn">×</button>
-      <table>
-        <thead>
-          <tr>
-            <th colspan="2" class="title-cell" title="${note}">${note}</th>
-          </tr>
-          <tr>
-            <th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows}
-        </tbody>
-      </table>
-    `;
-// Bedingung: Kein HZ-Flag und Wert vorhanden
-console.log("🔍 Prüfung für Extra-Tabelle:", plz, hzFlags[plz], plzWerte[plz]);
-
-if (!hzFlags[plz] && plzWerte[plz] > 0) {
-  const wkPotentiell = plzWerte[plz]?.value_wk_potentiell ?? "–";
-  const hzPotentiell = plzWerte[plz]?.value_hz_potentiell ?? "–";
-
-  const extraTable = `
-    <table class="extra-table">
-      <thead>
-        <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
-      </thead>
-      <tbody>
-        <tr><td>${beschreibungenSide.value_wk_potentiell}</td><td>${wkPotentiell}</td></tr>
-        <tr><td>${beschreibungenSide.value_hz_potentiell}</td><td>${hzPotentiell}</td></tr>
-      </tbody>
-    </table>
-  `;
-
-  sidePopup.insertAdjacentHTML('beforeend', extraTable);
-}
-
-
-    // Reflow für Animation
-    void sidePopup.offsetWidth;
-    setTimeout(() => {
-      sidePopup.classList.add('show');
-    }, 10);
-
-    // Close-Button aktivieren
-    const closeBtn = sidePopup.querySelector('.close-btn');
-    closeBtn.addEventListener('click', () => {
-      sidePopup.classList.remove('show');
+    kennwerte[plz] = kennzahlenIDs.map(id => {
+      const raw = row[id]?.raw;
+      return typeof raw === "number" ? raw : "–";
     });
+
+    sideKennwerte[plz] = sidePopUpIDs.map(id => {
+      const raw = row[id]?.raw;
+      return typeof raw === "number" ? raw : "–";
+    });
+
+    plzKennwerte[plz] = {
+      value_hr_n_umsatz_0: row["value_hr_n_umsatz_0"]?.raw || 0,
+      value_wk_potentiell: row["value_wk_potentiell"]?.raw,
+      value_hz_potentiell: row["value_hz_potentiell"]?.raw
+    };
+
+    hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    Niederlassung[plz] = row["ddimension_niederlassung_0"]?.id?.trim();
+    Erhebung[plz] = row["dimension_erhebung_0"]?.id?.trim();
+    Datum[plz] = row["dimension_Datum_0"]?.id?.trim();
+    Lat[plz] = row["dimension_Lat_0"]?.id?.trim();
+    Lon[plz] = row["dimension_lon_0"]?.id?.trim();
+    plzWerte[plz] = plzKennwerte[plz].value_hr_n_umsatz_0;
   });
-}
+
+  // 🌍 GeoJSON laden
+  if (!this._geoData) {
+    try {
+      const res = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
+      this._geoData = await res.json();
+    } catch (err) {
+      console.error("❌ Fehler beim Laden der GeoJSON-Daten:", err);
+      return;
+    }
+  }
+
+  // 🎨 Farbskala definieren
+  const getColor = (value, isHZ) => {
+    const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
+    return isHZ
+      ? safeValue > 10000 ? "#00441b" :
+        safeValue > 5000  ? "#238b45" :
+        safeValue > 1000  ? "#66c2a4" :
+        safeValue > 100   ? "#ccece6" : "#cfd4da"
+      : safeValue > 10000 ? "#08306b" :
+        safeValue > 5000  ? "#2171b5" :
+        safeValue > 1000  ? "#6baed6" :
+        safeValue > 100   ? "#c6dbef" : "#cfd4da";
+  };
+
+  // 🗺️ Alte Layer entfernen
+  if (this._geoLayer) {
+    this.map.removeLayer(this._geoLayer);
+  }
+
+  // 🧩 Neue Layer erstellen
+  this._geoLayer = L.geoJSON(this._geoData, {
+    style: feature => {
+      const plz = feature.properties?.plz;
+      const value = plzWerte[plz] || 0;
+      const isHZ = hzFlags[plz] || false;
+
+      return {
+        fillColor: getColor(value, isHZ),
+        weight: 1,
+        opacity: 1,
+        color: 'white',
+        fillOpacity: 0.7
+      };
+    },
+    onEachFeature: (feature, layer) => {
+      layer.on('click', () => {
+        const plz = feature.properties.plz;
+        const note = feature.properties.note || "Keine Notiz";
+        const kennwerteArray = kennwerte[plz] || Array(kennzahlenIDs.length).fill("–");
+
+        const beschreibungen = {
+          value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
+          value_umsatz_p_hh_0: "Umsatz p. HH",
+          value_wk_in_percent_0: "Werbekosten (%)",
+          value_wk_nachbar_0: "WK (%) incl. Nachb.",
+          value_hz_kosten_0: "HZ-Werbekosten",
+          value_werbeverweigerer_0: "Werbeverweigerer (%)",
+          value_haushalte_0: "Haushalte",
+          value_kaufkraft_0: "BM-Kaufkraft-Idx",
+          value_ums_erhebung_0: "Umsatz",
+          value_kd_erhebung_0: "Anzahl Kunden",
+          value_bon_erhebung_0: "Ø-Bon",
+          value_auflage_0: "Auflage",
+        };
+
+        const beschreibungenSide = {
+          value_wk_potentiell: "WK in %",
+          value_hz_potentiell: "HZ-Werbekosten"
+        };
+
+        let rows = "";
+        kennwerteArray.forEach((wert, index) => {
+          const id = kennzahlenIDs[index];
+          const label = beschreibungen[id] || id;
+
+          if (index === 8) {
+            rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
+          }
+
+          rows += `
+            <tr class="kennzahl-row">
+              <td class="label-cell">${label}</td>
+              <td class="value-cell">${wert}</td>
+            </tr>
+          `;
+        });
+
+        const sidePopup = this._shadowRoot.getElementById('side-popup');
+        sidePopup.innerHTML = `
+          <button class="close-btn">×</button>
+          <table>
+            <thead>
+              <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
+              <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        `;
+
+        // ➕ Zusatztabelle bei Nicht-HZ
+        if (!hzFlags[plz] && plzWerte[plz] > 0) {
+          const wkPotentiell = plzKennwerte[plz]?.value_wk_potentiell ?? "–";
+          const hzPotentiell = plzKennwerte[plz]?.value_hz_potentiell ?? "–";
+
+          const extraTable = `
+            <table class="extra-table">
+              <thead>
+                <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>${beschreibungenSide.value_wk_potentiell}</td><td>${wkPotentiell}</td></tr>
+                <tr><td>${beschreibungenSide.value_hz_potentiell}</td><td>${hzPotentiell}</td></tr>
+              </tbody>
+            </table>
+          `;
+          sidePopup.insertAdjacentHTML('beforeend', extraTable);
+        }
+
+        // 🎬 Animation & Close-Button
+        void sidePopup.offsetWidth;
+        setTimeout(() => sidePopup.classList.add('show'), 10);
+
+        const closeBtn = sidePopup.querySelector('.close-btn');
+        closeBtn.addEventListener('click', () => {
+          sidePopup.classList.remove('show');
+        });
+      });
+    }
 
 
 });
