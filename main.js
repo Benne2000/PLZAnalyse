@@ -1,3 +1,4 @@
+let neighbours = true;
 let hasTriggeredClick = false;
 (function () {
   const template = document.createElement('template');
@@ -345,14 +346,18 @@ hideSpinner() {
       }
     }
 
-   toggleNeighbours(visible) {
-  markerListeExtra.forEach(marker => {
-    if (visible) {
+toggleNeighbours() {
+  if (this.neighbours === true) {
+    this.markerListeExtra.forEach(marker => {
       marker.addTo(this.map);
-    } else {
+    });
+    this.neighbours = false;
+  } else {
+    this.markerListeExtra.forEach(marker => {
       this.map.removeLayer(marker);
-    }
-  });
+    });
+    this.neighbours = true;
+  }
 }
 
 
@@ -709,6 +714,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
