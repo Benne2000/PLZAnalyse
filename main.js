@@ -570,41 +570,32 @@ async render() {
     // 🧭 Marker pro Niederlassung setzen
   const gesetzteNLs = new Set();
 
-  Object.keys(Niederlassung).forEach(plz => {
-    const nl = Niederlassung[plz];
-    console.log("🧭 Versuche Marker zu setzen für:", nl);
-console.log("Koordinaten:", koordinaten);
+const markerListe = [];
 
-if (!koordinaten || !koordinaten.lat || !koordinaten.lon) {
-  console.warn("❌ Ungültige Koordinaten für NL:", nl);
-}
+Object.keys(Niederlassung).forEach(plz => {
+  const nl = Niederlassung[plz];
+  if (!nl || gesetzteNLs.has(nl)) return;
 
-    if (!nl || gesetzteNLs.has(nl)) return;
+  const koordinaten = nlKoordinaten[nl];
+  if (!koordinaten || !koordinaten.lat || !koordinaten.lon) return;
 
-    const koordinaten = nlKoordinaten[nl];
-    if (!koordinaten || !koordinaten.lat || !koordinaten.lon) return;
+  const lat = parseFloat(koordinaten.lat);
+  const lon = parseFloat(koordinaten.lon);
+  if (isNaN(lat) || isNaN(lon)) return;
 
-    const lat = parseFloat(koordinaten.lat);
-    const lon = parseFloat(koordinaten.lon);
-    if (isNaN(lat) || isNaN(lon)) return;
+  const marker = L.marker([lat, lon], {
+    title: `Niederlassung: ${nl}`
+  }).addTo(this.map);
 
-    const marker = L.marker([lat, lon], {
-      title: `Niederlassung: ${nl}`
-    }).addTo(this.map);
+  marker.bindPopup(`<strong>${nl}</strong>`);
 
-    // Optional: Popup mit PLZ-Liste oder Zusatzinfos
-    const zugeordnetePLZs = Object.entries(Niederlassung)
-      .filter(([p, n]) => n === nl)
-      .map(([p]) => p)
-      .join(', ');
+  markerListe.push(marker);
+  gesetzteNLs.add(nl);
+});
 
-    marker.bindPopup(`
-      <strong>${nl}</strong><br>
-    `);
+// Jetzt kannst du bringToFront auf alle Marker anwenden
+markerListe.forEach(m => m.bringToFront());
 
-    gesetzteNLs.add(nl);
-  });
-marker.addTo(this.map).bringToFront();
 
   // 🧹 Spinner ausblenden nach erfolgreichem Rendern
   this.hideSpinner();
@@ -644,6 +635,7 @@ marker.addTo(this.map).bringToFront();
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
