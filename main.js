@@ -376,6 +376,7 @@ const kennzahlenIDs = [
   "value_umsatz_p_hh_0",
   "value_wk_in_percent_0",
   "value_wk_nachbar_0",
+  "value_hz_kosten_0",
   "value_werbeverweigerer_0",
   "value_haushalte_0",
   "value_kaufkraft_0",
@@ -485,7 +486,8 @@ onEachFeature: (feature, layer) => {
       value_umsatz_p_hh_0: "Umsatz p. HH",
       value_wk_in_percent_0: "Werbekosten (%)",
       value_wk_nachbar_0: "WK (%) incl. Nachb.",
-      value_werbeverweigerer_0: "HZ-Werbekosten",
+      value_hz_kosten_0: "HZ-Werbekosten",
+      value_werbeverweigerer_0: "Werbeverweigerer (%)",
       value_haushalte_0: "Haushalte)",
       value_kaufkraft_0: "BM-Kaufkraft-Idx",
       value_ums_erhebung_0: "Umsatz",
@@ -506,7 +508,7 @@ kennwerteArray.forEach((wert, index) => {
   const label = beschreibungen[id] || id.replace("value_", "").replace(/_/g, " ").toUpperCase();
 
   // Nach der 6. Kennzahl eine Titelzeile einfügen
-  if (index === 7) {
+  if (index === 8) {
     rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
   }
 
@@ -631,3 +633,9 @@ if (!hzFlags[plz] && plzWerte[plz] > 0) {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
+
+
+
+
+
