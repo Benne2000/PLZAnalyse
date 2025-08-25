@@ -214,20 +214,17 @@ let hasTriggeredClick = false;
   white-space: nowrap;
 }
 
-/* Werte rechtsbündig */
-#side-popup .value-cell {
-  width: 30%;
+#side-popup .extra-table td.label-cell {
+  text-align: left;
+  width: 70%;
+}
+
+#side-popup .extra-table td.value-cell {
   text-align: right;
+  width: 30%;
   font-weight: normal;
 }
-    /* Beschreibungszelle: 70% Breite */
-#side-popup .label-cell {
-  width: 70%;
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
+
   </style>
 
 <div class="layout">
@@ -630,6 +627,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
