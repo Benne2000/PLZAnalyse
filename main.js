@@ -158,6 +158,16 @@ let hasTriggeredClick = false;
 #side-popup td:last-child {
   font-weight: bold;
 }
+#side-popup td.label-cell {
+  text-align: left;
+  width: 75%;
+}
+
+#side-popup td.value-cell {
+  text-align: right;
+  width: 25%;
+  font-weight: normal;
+}
 
     #side-popup.show {
       opacity: 1;
@@ -216,12 +226,12 @@ let hasTriggeredClick = false;
 
 #side-popup .extra-table td.label-cell {
   text-align: left;
-  width: 70%;
+  width: 75%;
 }
 
 #side-popup .extra-table td.value-cell {
   text-align: right;
-  width: 30%;
+  width: 25%;
   font-weight: normal;
 }
 
@@ -627,6 +637,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
