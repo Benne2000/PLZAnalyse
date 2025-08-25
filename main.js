@@ -532,15 +532,21 @@ async render() {
           const hzPotentiell = plzKennwerte[plz]?.value_hz_potentiell_0 ?? "–";
 
           const extraTable = `
-            <table class="extra-table">
-              <thead>
-                <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
-              </thead>
-              <tbody>
-                <tr><td>${beschreibungenSide.value_wk_potentiell_0}</td><td>${wkPotentiell}</td></tr>
-                <tr><td>${beschreibungenSide.value_hz_potentiell_0}</td><td>${hzPotentiell}</td></tr>
-              </tbody>
-            </table>
+<table class="extra-table">
+  <thead>
+    <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
+      <td class="value-cell">${wkPotentiell}</td>
+    </tr>
+    <tr>
+      <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
+      <td class="value-cell">${hzPotentiell}</td>
+    </tr>
+  </tbody>
+</table>
           `;
           sidePopup.insertAdjacentHTML('beforeend', extraTable);
         }
@@ -614,6 +620,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
