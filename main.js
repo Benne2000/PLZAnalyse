@@ -391,8 +391,8 @@ async render() {
   ];
 
   const sidePopUpIDs = [
-    "value_wk_potentiell",
-    "value_hz_potentiell"
+    "value_wk_potentiell_0",
+    "value_hz_potentiell_0"
   ];
 
   // 📦 Daten extrahieren
@@ -412,8 +412,8 @@ async render() {
 
     plzKennwerte[plz] = {
       value_hr_n_umsatz_0: row["value_hr_n_umsatz_0"]?.raw || 0,
-      value_wk_potentiell: row["value_wk_potentiell"]?.raw,
-      value_hz_potentiell: row["value_hz_potentiell"]?.raw
+      value_wk_potentiell: row["value_wk_potentiell_0"]?.raw,
+      value_hz_potentiell: row["value_hz_potentiell_0"]?.raw
     };
 
     hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
@@ -492,8 +492,8 @@ async render() {
         };
 
         const beschreibungenSide = {
-          value_wk_potentiell: "WK in %",
-          value_hz_potentiell: "HZ-Werbekosten"
+          value_wk_potentiell_0: "WK in %",
+          value_hz_potentiell_0: "HZ-Werbekosten"
         };
 
         let rows = "";
@@ -527,8 +527,8 @@ async render() {
 
         // ➕ Zusatztabelle bei Nicht-HZ
         if (!hzFlags[plz] && plzWerte[plz] > 0) {
-          const wkPotentiell = plzKennwerte[plz]?.value_wk_potentiell ?? "–";
-          const hzPotentiell = plzKennwerte[plz]?.value_hz_potentiell ?? "–";
+          const wkPotentiell = plzKennwerte[plz]?.value_wk_potentiell_0 ?? "–";
+          const hzPotentiell = plzKennwerte[plz]?.value_hz_potentiell_0 ?? "–";
 
           const extraTable = `
             <table class="extra-table">
@@ -536,8 +536,8 @@ async render() {
                 <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
               </thead>
               <tbody>
-                <tr><td>${beschreibungenSide.value_wk_potentiell}</td><td>${wkPotentiell}</td></tr>
-                <tr><td>${beschreibungenSide.value_hz_potentiell}</td><td>${hzPotentiell}</td></tr>
+                <tr><td>${beschreibungenSide.value_wk_potentiell_0}</td><td>${wkPotentiell}</td></tr>
+                <tr><td>${beschreibungenSide.value_hz_potentiell_0}</td><td>${hzPotentiell}</td></tr>
               </tbody>
             </table>
           `;
@@ -613,6 +613,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
