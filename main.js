@@ -126,6 +126,9 @@ let hasTriggeredClick = false;
   font-weight: bold;
   padding: 6px;
   text-align: left;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  
 }
 
 #side-popup td {
@@ -404,7 +407,7 @@ async render() {
     const plz = row["dimension_plz_0"]?.id?.trim();
     if (!plz) return;
 
-    const nl = row["ddimension_niederlassung_0"]?.id?.trim();
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
     if (nl) {
       Niederlassung[plz] = nl;
 
@@ -636,6 +639,7 @@ markerListe.forEach(m => m.bringToFront());
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
