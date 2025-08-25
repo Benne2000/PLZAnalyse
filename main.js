@@ -263,6 +263,7 @@ let hasTriggeredClick = false;
   class GeoMapWidget extends HTMLElement {
     constructor() {
       super();
+      this.neighbours = true;
       this._shadowRoot = this.attachShadow({ mode: 'open' });
       this._shadowRoot.appendChild(template.content.cloneNode(true));
       this.map = null;
@@ -629,7 +630,29 @@ Object.keys(Niederlassung).forEach(plz => {
 this.markerListeExtra = []; // Initialisierung vor der Schleife
 
 extraNLs.forEach(({ nl, lat, lon }) => {
-  const markerHtml = `...`; // wie gehabt
+   const markerHtml = `
+    <div style="
+      width: 24px;
+      height: 24px;
+      background-color: #d7191c;
+      border-radius: 50% 50% 50% 0;
+      transform: rotate(-45deg);
+      position: relative;
+      box-shadow: 0 0 2px rgba(0,0,0,0.5);
+    ">
+      <div style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(45deg);
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+      ">
+        ${nl}
+      </div>
+    </div>
+  `;
 
   const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [30, 30], iconAnchor: [15, 30] });
 
@@ -686,6 +709,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
