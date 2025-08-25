@@ -345,7 +345,7 @@ hideSpinner() {
       }
     }
 
-   toggleExtraNLs(visible) {
+   toggleNeighbours(visible) {
   markerListeExtra.forEach(marker => {
     if (visible) {
       marker.addTo(this.map);
@@ -705,6 +705,7 @@ gesetzteNLs.add(nl);
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
