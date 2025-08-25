@@ -574,6 +574,7 @@ const markerListe = [];
 
 Object.keys(Niederlassung).forEach(plz => {
   const nl = Niederlassung[plz];
+  console.log(nl);
   if (!nl || gesetzteNLs.has(nl)) return;
 
   const koordinaten = nlKoordinaten[nl];
@@ -635,6 +636,7 @@ markerListe.forEach(m => m.bringToFront());
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
