@@ -436,19 +436,20 @@ async render() {
   
   // 📦 Daten extrahieren
   data.forEach(row => {
-    console.log("Setze Marker für extraNL:", nl, lat, lon);
+
 
     this.validateRow(row);
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const lat = row["dimension_Lat_0"]?.id?.trim();
     const lon = row["dimension_lon_0"]?.id?.trim();
-
+    console.log("Setze Marker für extraNL:", nl, lat, lon);
     if (!plz || !lat || !lon) return;
 
 
 
     if (!plz) {
+      console.log("Keine PLz:", nl, lat, lon);
       extraNLs.push({ nl: nl || plz, lat: parseFloat(lat), lon: parseFloat(lon) });
       return;
     }
@@ -738,6 +739,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
