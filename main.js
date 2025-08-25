@@ -368,12 +368,8 @@ async render() {
   const plzWerte = {};
   const hzFlags = {};
   const Niederlassung = {};
-  const Erhebung = {};
-  const Datum = {};
-  const Lat = {};
-  const Lon = {};
+  const nlKoordinaten = {};
   const kennwerte = {};
-  const sideKennwerte = {};
   const plzKennwerte = {};
 
   const kennzahlenIDs = [
@@ -401,12 +397,22 @@ async render() {
     const plz = row["dimension_plz_0"]?.id?.trim();
     if (!plz) return;
 
-    kennwerte[plz] = kennzahlenIDs.map(id => {
-      const raw = row[id]?.raw;
-      return typeof raw === "number" ? raw : "–";
-    });
+    const nl = row["ddimension_niederlassung_0"]?.id?.trim();
+    if (nl) {
+      Niederlassung[plz] = nl;
 
-    sideKennwerte[plz] = sidePopUpIDs.map(id => {
+      if (!nlKoordinaten[nl]) {
+        const lat = row["dimension_Lat_0"]?.id?.trim();
+        const lon = row["dimension_lon_0"]?.id?.trim();
+        if (lat && lon) {
+          nlKoordinaten[nl] = { lat, lon };
+        }
+      }
+    }
+
+    hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
+
+    kennwerte[plz] = kennzahlenIDs.map(id => {
       const raw = row[id]?.raw;
       return typeof raw === "number" ? raw : "–";
     });
@@ -417,12 +423,6 @@ async render() {
       value_hz_potentiell_0: row["value_hz_potentiell_0"]?.raw
     };
 
-    hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
-    Niederlassung[plz] = row["ddimension_niederlassung_0"]?.id?.trim();
-    Erhebung[plz] = row["dimension_erhebung_0"]?.id?.trim();
-    Datum[plz] = row["dimension_Datum_0"]?.id?.trim();
-    Lat[plz] = row["dimension_Lat_0"]?.id?.trim();
-    Lon[plz] = row["dimension_lon_0"]?.id?.trim();
     plzWerte[plz] = plzKennwerte[plz].value_hr_n_umsatz_0;
   });
 
@@ -526,32 +526,30 @@ async render() {
           </table>
         `;
 
-        // ➕ Zusatztabelle bei Nicht-HZ
         if (!hzFlags[plz] && plzWerte[plz] > 0) {
           const wkPotentiell = plzKennwerte[plz]?.value_wk_potentiell_0 ?? "–";
           const hzPotentiell = plzKennwerte[plz]?.value_hz_potentiell_0 ?? "–";
 
           const extraTable = `
-<table class="extra-table">
-  <thead>
-    <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-      <td class="value-cell">${wkPotentiell}</td>
-    </tr>
-    <tr>
-      <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-      <td class="value-cell">${hzPotentiell}</td>
-    </tr>
-  </tbody>
-</table>
+            <table class="extra-table">
+              <thead>
+                <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
+                  <td class="value-cell">${wkPotentiell}</td>
+                </tr>
+                <tr>
+                  <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
+                  <td class="value-cell">${hzPotentiell}</td>
+                </tr>
+              </tbody>
+            </table>
           `;
           sidePopup.insertAdjacentHTML('beforeend', extraTable);
         }
 
-        // 🎬 Animation & Close-Button
         void sidePopup.offsetWidth;
         setTimeout(() => sidePopup.classList.add('show'), 10);
 
@@ -561,31 +559,43 @@ async render() {
         });
       });
     }
+  }).addTo(this.map);
+    // 🧭 Marker pro Niederlassung setzen
+  const gesetzteNLs = new Set();
 
+  Object.keys(Niederlassung).forEach(plz => {
+    const nl = Niederlassung[plz];
+    if (!nl || gesetzteNLs.has(nl)) return;
 
-});
+    const koordinaten = nlKoordinaten[nl];
+    if (!koordinaten || !koordinaten.lat || !koordinaten.lon) return;
 
+    const lat = parseFloat(koordinaten.lat);
+    const lon = parseFloat(koordinaten.lon);
+    if (isNaN(lat) || isNaN(lon)) return;
 
-      this._geoLayer.addTo(this.map);
-      this._geoLayerVisible = true;
+    const marker = L.marker([lat, lon], {
+      title: `Niederlassung: ${nl}`
+    }).addTo(this.map);
 
-      const geoBounds = this._geoLayer.getBounds();
-      this.map.fitBounds(geoBounds);
-        const mapContainer = document.getElementById('map');
-  if (mapContainer && !hasTriggeredClick) {
-    hasTriggeredClick = true;
+    // Optional: Popup mit PLZ-Liste oder Zusatzinfos
+    const zugeordnetePLZs = Object.entries(Niederlassung)
+      .filter(([p, n]) => n === nl)
+      .map(([p]) => p)
+      .join(', ');
 
-    setTimeout(() => {
-      mapContainer.dispatchEvent(new MouseEvent('click', {
-        bubbles: true,
-        cancelable: true,
-        view: window
-      }));
-    }, 300);
-  }
-      this.hideSpinner();
+    marker.bindPopup(`
+      <strong>${nl}</strong><br>
+      PLZ mit Daten: ${zugeordnetePLZs}
+    `);
 
-    }
+    gesetzteNLs.add(nl);
+  });
+
+  // 🧹 Spinner ausblenden nach erfolgreichem Rendern
+  this.hideSpinner();
+}
+
 
     showNotesOnMap() {
       if (!this._geoLayer) return;
@@ -620,7 +630,6 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
