@@ -621,14 +621,14 @@ const redPinIcon = L.divIcon({
   iconAnchor: [12, 32] // Spitze zeigt auf den Punkt
 });
 
-L.marker([lat, lon], {
+const marker = L.marker([lat, lon], {
   icon: redPinIcon,
-  title: `Niederlassung: ${nl}`
+  title: `${nl}`
 }).addTo(this.map);
 
+markerListe.push(marker);
+gesetzteNLs.add(nl);
 
-  markerListe.push(marker);
-  gesetzteNLs.add(nl);
 });
 
 
@@ -672,6 +672,7 @@ L.marker([lat, lon], {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
