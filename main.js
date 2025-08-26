@@ -627,28 +627,31 @@ Object.keys(Niederlassung).forEach(plz => {
   const lat = parseFloat(koordinaten.lat);
   const lon = parseFloat(koordinaten.lon);
 
-  const markerHtml = `
+const markerHtml = `
+  <div style="
+    width: 20px;
+    height: 30px;
+    background-color: #ed1f34;
+    border-radius: 50% 50% 50% 0;
+    position: relative;
+    box-shadow: -1px 1px 4px rgba(0, 0, 0, .5);
+    transform: rotate(-45deg);
+    transform-origin: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: white;
+    font-family: sans-serif;
+  ">
     <div style="
-      transform: perspective(40px) rotateX(20deg) rotateZ(-45deg);
-      transform-origin: 50% 50%;
-      border-radius: 50% 50% 50% 0;
-      padding: 0 3px 3px 0;
-      width: 40px;
-      height: 40px;
-      background: #ed1f34;
-      position: relative;
-      box-shadow: -1px 1px 4px rgba(0, 0, 0, .5);
-      text-align: center;
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
-      font-family: sans-serif;
-      line-height: 40px;
-      pointer-events: none;
+      transform: rotate(45deg);
     ">
       ${nl}
     </div>
-  `;
+  </div>
+`;
 
 
   const icon = L.divIcon({
@@ -665,28 +668,31 @@ Object.keys(Niederlassung).forEach(plz => {
 this.markerListeExtra = []; // Initialisierung vor der Schleife
 
 extraNLs.forEach(({ nl, lat, lon }) => {
-  const markerHtml = `
+const markerHtml = `
+  <div style="
+    width: 20px;
+    height: 30px;
+    background-color: #ed1f34;
+    border-radius: 50% 50% 50% 0;
+    position: relative;
+    box-shadow: -1px 1px 4px rgba(0, 0, 0, .5);
+    transform: rotate(-45deg);
+    transform-origin: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    color: white;
+    font-family: sans-serif;
+  ">
     <div style="
-      transform: perspective(40px) rotateX(20deg) rotateZ(-45deg);
-      transform-origin: 50% 50%;
-      border-radius: 50% 50% 50% 0;
-      padding: 0 3px 3px 0;
-      width: 40px;
-      height: 40px;
-      background: #ed1f34;
-      position: relative;
-      box-shadow: -1px 1px 4px rgba(0, 0, 0, .5);
-      text-align: center;
-      color: white;
-      font-weight: bold;
-      font-size: 14px;
-      font-family: sans-serif;
-      line-height: 40px;
-      pointer-events: none;
+      transform: rotate(45deg);
     ">
       ${nl}
     </div>
-  `;
+  </div>
+`;
 
 
   const icon = L.divIcon({
@@ -751,6 +757,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
