@@ -448,11 +448,12 @@ async render() {
 
 
 
-    if (!plz) {
-      console.log("Keine PLz:", nl, lat, lon);
-      extraNLs.push({ nl: nl || plz, lat: parseFloat(lat), lon: parseFloat(lon) });
-      return;
-    }
+if (!plz || plz === "@NullMember") {
+  console.log("Extra:", nl, lat, lon);
+  extraNLs.push({ nl: nl || "Unbekannt", lat: parseFloat(lat), lon: parseFloat(lon) });
+  return;
+}
+
 
     Niederlassung[plz] = nl;
     nlKoordinaten[nl] = nlKoordinaten[nl] || { lat, lon };
@@ -739,6 +740,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
