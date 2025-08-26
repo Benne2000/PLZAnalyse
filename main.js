@@ -629,11 +629,9 @@ Object.keys(Niederlassung).forEach(plz => {
 
   const markerHtml = `
     <div style="
-      transform: perspective(40px) rotateX(20deg) rotateZ(-45deg);
-      transform-origin: center;
       border-radius: 50% 50% 50% 0;
       padding: 0 3px 3px 0;
-      width: 20px;
+      width: 30px;
       height: 30px;
       background: #ed1f34;
       position: relative;
@@ -667,11 +665,9 @@ this.markerListeExtra = []; // Initialisierung vor der Schleife
 extraNLs.forEach(({ nl, lat, lon }) => {
   const markerHtml = `
     <div style="
-      transform: perspective(40px) rotateX(20deg) rotateZ(-45deg);
-      transform-origin: center;
       border-radius: 50% 50% 50% 0;
       padding: 0 3px 3px 0;
-      width: 20px;
+      width: 30px;
       height: 30px;
       background: #ed1f34;
       position: relative;
@@ -751,6 +747,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
