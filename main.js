@@ -488,14 +488,18 @@ if (!plz || plz === "@NullMember") {
   const getColor = (value, isHZ) => {
     const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
     return isHZ
-      ? safeValue > 10000 ? "#00441b" :
-        safeValue > 5000  ? "#238b45" :
-        safeValue > 1000  ? "#66c2a4" :
-        safeValue > 100   ? "#ccece6" : "#cfd4da"
-      : safeValue > 10000 ? "#08306b" :
-        safeValue > 5000  ? "#2171b5" :
-        safeValue > 1000  ? "#6baed6" :
-        safeValue > 100   ? "#c6dbef" : "#cfd4da";
+      ? safeValue > 10000 ? "#006837" :   // Dunkelgrün
+           safeValue > 5000  ? "#78c679" :   // Mittelgrün
+           safeValue > 2500  ? "#ffffb2" :   // Gelb
+           safeValue > 1000  ? "#fd8d3c" :   // Orange
+           safeValue > 100   ? "#e31a1c" :   // Rot
+                               "#cfd4da"
+      : safeValue > 10000 ? "#08306b" :   // Dunkelblau
+           safeValue > 5000  ? "#2171b5" :   // Mittelblau
+           safeValue > 2500  ? "#6baed6" :   // Hellblau
+           safeValue > 1000  ? "#c6dbef" :   // Blassblau
+           safeValue > 100   ? "#eff3ff" :   // Sehr hell
+                               "#cfd4da";
   };
 
   // 🗺️ Alte Layer entfernen
@@ -767,6 +771,7 @@ const markerHtml = `
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
