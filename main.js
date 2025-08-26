@@ -670,6 +670,7 @@ const markerHtml = `
 
 this.markerListeExtra = []; // Initialisierung vor der Schleife
 
+extraNLs.forEach(({ nl, lat, lon }) => {
 const markerHtml = `
   <div style="
     width: 30px;
@@ -727,6 +728,7 @@ const markerHtml = `
 
 
 
+
   // 🧹 Spinner ausblenden nach erfolgreichem Rendern
   this.hideSpinner();
 }
@@ -765,7 +767,6 @@ const markerHtml = `
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
