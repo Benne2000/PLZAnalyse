@@ -623,29 +623,39 @@ Object.keys(Niederlassung).forEach(plz => {
   const lat = parseFloat(koordinaten.lat);
   const lon = parseFloat(koordinaten.lon);
 
-  const markerHtml = `
+const markerHtml = `
+  <div style="
+    width: 30px;
+    height: 30px;
+    background-color: #d7191c;
+    border-radius: 50% 50% 50% 50%;
+    position: relative;
+    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+  ">
     <div style="
-      width: 24px;
-      height: 24px;
-      background-color: #d7191c;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      position: relative;
-      box-shadow: 0 0 2px rgba(0,0,0,0.5);
-    ">
-      <div style="
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(45deg);
-        color: white;
-        font-size: 10px;
-        font-weight: bold;
-      ">
-        ${nl}
-      </div>
-    </div>
-  `;
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    "></div>
+    <div style="
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 10px solid #d7191c;
+    "></div>
+  </div>
+`;
+
 
   const icon = L.divIcon({
     html: markerHtml,
@@ -660,41 +670,56 @@ Object.keys(Niederlassung).forEach(plz => {
 
 this.markerListeExtra = []; // Initialisierung vor der Schleife
 
-extraNLs.forEach(({ nl, lat, lon }) => {
-   const markerHtml = `
+const markerHtml = `
+  <div style="
+    width: 30px;
+    height: 30px;
+    background-color: #d7191c;
+    border-radius: 50% 50% 50% 50%;
+    position: relative;
+    box-shadow: 0 0 4px rgba(0,0,0,0.3);
+  ">
     <div style="
-      width: 24px;
-      height: 24px;
-      background-color: #d7191c;
-      border-radius: 50% 50% 50% 0;
-      transform: rotate(-45deg);
-      position: relative;
-      box-shadow: 0 0 2px rgba(0,0,0,0.5);
-    ">
-      <div style="
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) rotate(45deg);
-        color: white;
-        font-size: 10px;
-        font-weight: bold;
-      ">
-        ${nl}
-      </div>
-    </div>
-  `;
+      width: 10px;
+      height: 10px;
+      background-color: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    "></div>
+    <div style="
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 6px solid transparent;
+      border-right: 6px solid transparent;
+      border-top: 10px solid #d7191c;
+    "></div>
+  </div>
+`;
 
-  const icon = L.divIcon({ html: markerHtml, className: '', iconSize: [30, 30], iconAnchor: [15, 30] });
+
+  const icon = L.divIcon({
+    html: markerHtml,
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30]
+  });
 
   const marker = L.marker([lat, lon], {
     icon,
     title: `${nl}`
-  }).addTo(this.map);
+  });
 
-  this.markerListeExtra.push(marker); // Hier speichern!
+  this.markerListeExtra.push(marker); // Nur speichern, nicht zur Karte hinzufügen
   gesetzteNLs.add(nl);
 });
+
 
 
 
@@ -740,6 +765,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
