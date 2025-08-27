@@ -239,9 +239,48 @@ let hasTriggeredClick = false;
   font-weight: normal;
 }
 
+.filter-container {
+  width: 25%;
+  padding: 10px;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  background: #f9f9f9;
+  border-right: 2px solid #b41821;
+}
+
+.filter-container label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+.filter-container select,
+.filter-container button {
+  width: 100%;
+  margin-top: 5px;
+  padding: 6px;
+  font-size: 0.9rem;
+}
+
+
   </style>
 
+
+
 <div class="layout">
+  <div class="filter-container">
+    <label for="erhebung-select">ErhebungsID:</label>
+    <select id="erhebung-select"></select>
+
+    <label for="jahr-select">Jahr:</label>
+    <select id="jahr-select" disabled></select>
+
+    <label for="nummer-select">Erhebungsnummer:</label>
+    <select id="nummer-select" disabled></select>
+
+    <button id="filter-button">Anzeigen</button>
+  </div>
   <div class="map-container">
     <div id="loading-spinner" class="spinner"></div> <!-- Spinner hier einfügen -->
     <div id="map"></div>
@@ -291,6 +330,7 @@ let hasTriggeredClick = false;
       } else {
         this.initializeMapBase();
       }
+        this.setupFilterDropdowns();
     }
 showSpinner() {
   const spinner = this._shadowRoot.getElementById('loading-spinner');
@@ -360,30 +400,80 @@ toggleNeighbours() {
     this.neighbours = true;
   }
 }
-    validateRow(row) {
-  const plz = row["dimension_plz_0"]?.id?.trim();
-  const nl = row["dimension_niederlassung_0"]?.id?.trim();
-  const lat = row["dimension_Lat_0"]?.id?.trim();
-  const lon = row["dimension_lon_0"]?.id?.trim();
-
-  const errors = [];
-
-  if (!nl) errors.push("❌ Niederlassung fehlt");
-  if (!lat || isNaN(parseFloat(lat))) errors.push("❌ Latitude ungültig");
-  if (!lon || isNaN(parseFloat(lon))) errors.push("❌ Longitude ungültig");
-
-  if (!plz) {
-    errors.push("ℹ️ PLZ fehlt – wird als extraNL behandelt");
-  } else {
-    if (plz.length !== 5 || isNaN(parseInt(plz))) {
-      errors.push("❌ PLZ ungültig");
-    }
-  }
-
-  if (errors.length > 0) {
-    console.warn(`🔍 Validierungsfehler für NL "${nl}" / PLZ "${plz}":`, errors);
-  }
+createMarkerIcon(nl) {
+  const markerHtml = `
+    <div style="width:30px;height:30px;background-color:#ed1f34;border-radius:50% 50% 50% 0;box-shadow:-1px 1px 4px rgba(0,0,0,.5);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:white;font-family:sans-serif;">
+      <div style="transform:rotate(45deg);">${nl}</div>
+    </div>
+  `;
+  return L.divIcon({
+    html: markerHtml,
+    className: '',
+    iconSize: [30, 30],
+    iconAnchor: [15, 30]
+  });
 }
+
+showPopup(feature) {
+  // Deine bestehende Popup-Logik hier einfügen
+}
+
+applyFilter(erhID, jahr, nummer) {
+  this._activeFilter = { erhID, jahr, nummer };
+  this.render();
+}
+
+
+
+setupFilterDropdowns() {
+  const erhSelect = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect = this._shadowRoot.getElementById("jahr-select");
+  const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+  const filterButton = this._shadowRoot.getElementById("filter-button");
+
+  erhSelect.addEventListener("change", () => {
+    jahrSelect.innerHTML = "";
+    nummerSelect.innerHTML = "";
+    jahrSelect.disabled = false;
+    nummerSelect.disabled = true;
+
+    const selectedID = erhSelect.value;
+    const jahre = Object.keys(this._erhData[selectedID] || {});
+
+    jahre.forEach(j => {
+      const opt = document.createElement("option");
+      opt.value = j;
+      opt.textContent = j;
+      jahrSelect.appendChild(opt);
+    });
+  });
+
+  jahrSelect.addEventListener("change", () => {
+    nummerSelect.innerHTML = "";
+    nummerSelect.disabled = false;
+
+    const selectedID = erhSelect.value;
+    const selectedJahr = jahrSelect.value;
+    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []);
+
+    nummern.forEach(n => {
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n;
+      nummerSelect.appendChild(opt);
+    });
+  });
+
+  filterButton.addEventListener("click", () => {
+    const selectedID = erhSelect.value;
+    const selectedJahr = jahrSelect.value;
+    const selectedNummer = nummerSelect.value;
+
+    this.applyFilter(selectedID, selectedJahr, selectedNummer);
+  });
+}
+
+
 
 
 
@@ -414,7 +504,40 @@ toggleNeighbours() {
 async render() {
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
 
-  const data = this._myDataSource.data;
+  let data = this._myDataSource.data;
+
+this._erhData = {}; // { erhID: { jahr: Set(nummern) } }
+
+data.forEach(row => {
+  const erhID = row["dimension_erhebung_0"]?.id?.trim();
+  const jahr = row["dimension_jahr_0"]?.id?.trim();
+  const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
+
+  if (!erhID || !jahr || !nummer) return;
+
+  this._erhData[erhID] = this._erhData[erhID] || {};
+  this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
+  this._erhData[erhID][jahr].add(nummer);
+});
+
+
+  // 🔍 Filter anwenden, falls aktiv
+if (this._activeFilter) {
+  const { erhID, jahr, nummer } = this._activeFilter;
+
+  data = data.filter(row => {
+    const id = row["dimension_erhebung_0"]?.id?.trim() || "@NullMember";
+    const y = row["dimension_jahr_0"]?.id?.trim() || "@NullMember";
+    const num = row["dimension_erhebungsnummer_0"]?.id?.trim() || "@NullMember";
+
+    return (
+      (id === erhID || id === "@NullMember") &&
+      (y === jahr || y === "@NullMember") &&
+      (num === nummer || num === "@NullMember")
+    );
+  });
+}
+
 
   const plzWerte = {};
   const hzFlags = {};
@@ -449,7 +572,6 @@ async render() {
 
 
 if (!plz || plz === "@NullMember") {
-  console.log("Extra:", nl, lat, lon);
   extraNLs.push({ nl: nl || "Unbekannt", lat: parseFloat(lat), lon: parseFloat(lon) });
   return;
 }
@@ -627,85 +749,19 @@ Object.keys(Niederlassung).forEach(plz => {
   const lat = parseFloat(koordinaten.lat);
   const lon = parseFloat(koordinaten.lon);
 
-const markerHtml = `
-  <div style="
-    width: 30px;
-    height: 30px;
-    background-color: #ed1f34;
-    border-radius: 50% 50% 50% 0;
-    position: relative;
-    box-shadow: -1px 1px 4px rgba(0, 0, 0, .5);
-    transform: rotate(-45deg);
-    transform-origin: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
-    color: white;
-    font-family: sans-serif;
-  ">
-    <div style="
-      transform: rotate(45deg);
-    ">
-      ${nl}
-    </div>
-  </div>
-`;
-
-
-
-  const icon = L.divIcon({
-    html: markerHtml,
-    className: '',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30]
-  });
-
+  const icon = this.createMarkerIcon(nl);
   L.marker([lat, lon], { icon }).addTo(this.map);
   gesetzteNLs.add(nl);
 });
 
 this.markerListeExtra = []; // Initialisierung vor der Schleife
 
+// 📍 Marker für extraNLs (nicht direkt zugeordnet)
 extraNLs.forEach(({ nl, lat, lon }) => {
-const markerHtml = `
-  <div style="
-    width: 30px;
-    height: 30px;
-    background-color: #ed1f34;
-    border-radius: 50% 50% 50% 0;
-    position: relative;
-    box-shadow: -1px 1px 4px rgba(0, 0, 0, .5);
-    transform: rotate(-45deg);
-    transform-origin: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    font-weight: bold;
-    color: white;
-    font-family: sans-serif;
-  ">
-    <div style="
-      transform: rotate(45deg);
-    ">
-      ${nl}
-    </div>
-  </div>
-`;
-
-
-  const icon = L.divIcon({
-    html: markerHtml,
-    className: '',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30]
-  });
-
+  const icon = this.createMarkerIcon(nl);
   const marker = L.marker([lat, lon], {
     icon,
-    title: `${nl}`
+    title: nl
   });
 
   this.markerListeExtra.push(marker); // Nur speichern, nicht zur Karte hinzufügen
@@ -758,6 +814,7 @@ const markerHtml = `
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
