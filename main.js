@@ -429,8 +429,28 @@ setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
   const nummerSelect = this._shadowRoot.getElementById("nummer-select");
-  const filterButton = this._shadowRoot.getElementById("filter-button");
 
+  if (!erhSelect || !jahrSelect || !nummerSelect) {
+    console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
+    return;
+  }
+
+  // 🧹 Vorherige Optionen entfernen
+  erhSelect.innerHTML = "";
+  jahrSelect.innerHTML = "";
+  nummerSelect.innerHTML = "";
+  jahrSelect.disabled = true;
+  nummerSelect.disabled = true;
+
+  // 🧩 ErhebungsIDs einfügen
+  Object.keys(this._erhData).forEach(erhID => {
+    const opt = document.createElement("option");
+    opt.value = erhID;
+    opt.textContent = erhID;
+    erhSelect.appendChild(opt);
+  });
+
+  // 📅 Jahre nach Auswahl
   erhSelect.addEventListener("change", () => {
     jahrSelect.innerHTML = "";
     nummerSelect.innerHTML = "";
@@ -448,6 +468,7 @@ setupFilterDropdowns() {
     });
   });
 
+  // 🔢 Nummern nach Jahr
   jahrSelect.addEventListener("change", () => {
     nummerSelect.innerHTML = "";
     nummerSelect.disabled = false;
@@ -464,13 +485,17 @@ setupFilterDropdowns() {
     });
   });
 
-  filterButton.addEventListener("click", () => {
-    const selectedID = erhSelect.value;
-    const selectedJahr = jahrSelect.value;
-    const selectedNummer = nummerSelect.value;
+  // 🟢 Filter aktivieren
+  const filterButton = this._shadowRoot.getElementById("filter-button");
+  if (filterButton) {
+    filterButton.addEventListener("click", () => {
+      const selectedID = erhSelect.value;
+      const selectedJahr = jahrSelect.value;
+      const selectedNummer = nummerSelect.value;
 
-    this.applyFilter(selectedID, selectedJahr, selectedNummer);
-  });
+      this.applyFilter(selectedID, selectedJahr, selectedNummer);
+    });
+  }
 }
 
 
@@ -814,6 +839,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
