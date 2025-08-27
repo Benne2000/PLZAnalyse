@@ -518,6 +518,8 @@ data.forEach(row => {
   this._erhData[erhID] = this._erhData[erhID] || {};
   this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
   this._erhData[erhID][jahr].add(nummer);
+  console.log("ErhData für Dropdowns:", this._erhData);
+
 });
 
 
@@ -813,4 +815,5 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
