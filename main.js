@@ -521,7 +521,7 @@ data.forEach(row => {
   this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
   this._erhData[erhID][jahr].add(nummer);
 });
-
+console.log("Finale erhData:", this._erhData);
 
   // 🔍 Filter anwenden, falls aktiv
 if (this._activeFilter) {
@@ -814,6 +814,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
