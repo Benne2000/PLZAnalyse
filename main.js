@@ -330,7 +330,7 @@ let hasTriggeredClick = false;
       } else {
         this.initializeMapBase();
       }
-        this.setupFilterDropdowns();
+
     }
 showSpinner() {
   const spinner = this._shadowRoot.getElementById('loading-spinner');
@@ -772,7 +772,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
 
 
 
-
+        this.setupFilterDropdowns();
 
 
   // 🧹 Spinner ausblenden nach erfolgreichem Rendern
@@ -813,19 +813,4 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
