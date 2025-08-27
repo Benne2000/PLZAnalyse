@@ -561,7 +561,6 @@ if (this._activeFilter) {
   data.forEach(row => {
 
 
-    this.validateRow(row);
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const lat = row["dimension_Lat_0"]?.id?.trim();
@@ -814,6 +813,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
