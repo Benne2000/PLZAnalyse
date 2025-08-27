@@ -513,13 +513,13 @@ data.forEach(row => {
   const jahr = row["dimension_jahr_0"]?.id?.trim();
   const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
 
+  console.log("ErhData für Dropdowns:", erhID,jahr, nummer);
+  
   if (!erhID || !jahr || !nummer) return;
 
   this._erhData[erhID] = this._erhData[erhID] || {};
   this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
   this._erhData[erhID][jahr].add(nummer);
-  console.log("ErhData für Dropdowns:", this._erhData);
-
 });
 
 
@@ -567,7 +567,6 @@ if (this._activeFilter) {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const lat = row["dimension_Lat_0"]?.id?.trim();
     const lon = row["dimension_lon_0"]?.id?.trim();
-    console.log("Setze Marker für extraNL:", nl, lat, lon);
     if (!plz || !lat || !lon) return;
 
 
@@ -815,5 +814,6 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
