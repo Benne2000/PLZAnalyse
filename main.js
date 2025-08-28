@@ -697,64 +697,65 @@ updateGeoLayer() {
     }
   });
 }
-
 updateMarkers() {
   console.log("📍 updateMarkers gestartet");
 
   const gesetzteNLs = new Set();
   this.markerListeExtra = [];
 
-  Object.keys(this.Niederlassung).forEach(plz => {
-    const nl = this.Niederlassung[plz];
-    console.log(`🔄 Prüfe PLZ ${plz} → Niederlassung: ${nl}`);
+  // 🗂️ Schritt 1: Sammle alle relevanten NLs mit Koordinaten
+  const alleNLs = new Map();
 
-    if (!nl) {
-      console.warn(`⚠️ Keine Niederlassung für PLZ ${plz}`);
-      return;
-    }
-
-    if (gesetzteNLs.has(nl)) {
-      console.log(`⏭️ Marker für NL ${nl} bereits gesetzt`);
-      return;
-    }
+  // 🔄 Aus PLZ-basierten Niederlassungen
+  Object.entries(this.Niederlassung).forEach(([plz, nl]) => {
+    if (!nl) return;
 
     const koordinaten = this.nlKoordinaten[plz];
-    console.log(`📌 Koordinaten für PLZ ${plz}:`, koordinaten);
-
-    if (!koordinaten) {
-      console.warn(`⚠️ Keine Koordinaten für PLZ ${plz} / NL ${nl}`);
-      return;
-    }
+    if (!koordinaten) return;
 
     const lat = parseFloat(koordinaten.lat);
     const lon = parseFloat(koordinaten.lon);
+    if (isNaN(lat) || isNaN(lon)) return;
 
-    if (isNaN(lat) || isNaN(lon)) {
-      console.error(`❌ Ungültige Koordinaten für NL ${nl}:`, { lat, lon });
-      return;
-    }
-
-    const icon = this.createMarkerIcon(nl);
-    console.log(`📍 Setze Marker für NL ${nl} bei [${lat}, ${lon}]`);
-    L.marker([lat, lon], { icon }).addTo(this.map);
-    gesetzteNLs.add(nl);
+    alleNLs.set(nl, { lat, lon, ausPLZ: true });
   });
 
+  // ➕ Aus zusätzlichen NLs
   this.extraNLs.forEach(({ nl, lat, lon }) => {
-    console.log(`➕ Zusätzliche NL: ${nl} bei [${lat}, ${lon}]`);
+    if (!nl || isNaN(lat) || isNaN(lon)) return;
 
+    // Falls bereits vorhanden, PLZ-Flag beibehalten
+    const vorhandene = alleNLs.get(nl);
+    alleNLs.set(nl, {
+      lat,
+      lon,
+      ausPLZ: vorhandene?.ausPLZ || false
+    });
+  });
+
+  // 📍 Schritt 2: Marker setzen und speichern
+  alleNLs.forEach(({ lat, lon, ausPLZ }, nl) => {
     const icon = this.createMarkerIcon(nl);
     const marker = L.marker([lat, lon], {
       icon,
       title: nl
     });
 
+    // 🗺️ Nur anzeigen, wenn aus PLZ-Filter
+    if (ausPLZ) {
+      marker.addTo(this.map);
+      console.log(`✅ Marker angezeigt für NL ${nl} bei [${lat}, ${lon}]`);
+    } else {
+      console.log(`📦 Marker gespeichert aber nicht angezeigt für NL ${nl}`);
+    }
+
     this.markerListeExtra.push(marker);
     gesetzteNLs.add(nl);
   });
 
-  console.log("✅ Marker-Update abgeschlossen");
+  console.log(`🔚 updateMarkers abgeschlossen – ${this.markerListeExtra.length} Marker gespeichert`);
 }
+
 
 
 
