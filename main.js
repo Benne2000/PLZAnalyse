@@ -378,7 +378,7 @@ const filteredPLZMap = new Map(
 
 
     const plzWerte = this.extractPLZWerte(filteredData);
-
+    console.log('FilteredData',plzWerte);
     this._geoLayer = L.geoJSON(this._geoData, {
       style: feature => {
         const plz = feature.properties?.plz?.trim();
@@ -406,9 +406,6 @@ const filteredPLZMap = new Map(
       },
 
 onEachFeature: (feature, layer) => {
-const plz = feature.properties?.plz?.trim();
-const daten = this.plzKennwerte?.[plz];
-
 
 
 layer.on("click", (e) => {
