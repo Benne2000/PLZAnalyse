@@ -918,7 +918,7 @@ if (nlName) {
   console.warn(`⚠️ Keine gültige Niederlassung für PLZ ${plz}`);
 }
 
-const lat = row["dimension_lat_0"]?.id;
+const lat = row["dimension_Lat_0"]?.id;
 const lon = row["dimension_lon_0"]?.id;
 
 console.log(`📌 Roh-Koordinaten für PLZ ${plz}: lat=${lat}, lon=${lon}`);
