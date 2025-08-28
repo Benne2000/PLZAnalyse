@@ -622,22 +622,19 @@ getFilteredData() {
     const id = row["dimension_erhebung_0"]?.id?.trim() || "@NullMember";
     const y = row["dimension_jahr_0"]?.id?.trim() || "@NullMember";
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim() || "@NullMember";
-    const plz = row.plz?.trim();
+    const plz = row["dimension_plz_0"]?.id?.trim();
 
     const match =
       (id === erhID || id === "@NullMember") &&
       (y === jahr || y === "@NullMember") &&
       (num === nummer || num === "@NullMember");
 
-    if (match && plz) {
+    if (match && plz && plz !== "@NullMember") {
       filteredKennwerte[plz] = row;
     }
 
     return match;
   });
-
-  // 🔍 Debug: Was ist this?
-  console.log("🔍 this in getFilteredData:", this);
 
   this.filteredKennwerte = filteredKennwerte;
 
@@ -646,6 +643,7 @@ getFilteredData() {
 
   return filtered;
 }
+
 
 
 
