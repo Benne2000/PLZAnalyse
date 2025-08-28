@@ -910,6 +910,8 @@ setupFilterDropdowns() {
 
 
  // Niederlassung & Koordinaten
+ console.log(`🧾 Raw row für PLZ ${plz}:`, row);
+
 const nlName = row["dimension_niederlassung_0"]?.name?.trim();
 console.log(`🔍 Gefundene NL für PLZ ${plz}:`, nlName);
 
