@@ -365,7 +365,7 @@ async loadGeoJson() {
     const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
     this._geoData = await response.json();
 
-    const filteredData = this.getFilteredData();
+    const filteredData = this.getFilteredData(); // baut filteredKennwerte
     const plzWerte = this.extractPLZWerte(filteredData);
 
     this._geoLayer = L.geoJSON(this._geoData, {
@@ -388,10 +388,13 @@ async loadGeoJson() {
           const plz = e.target.feature.properties.plz?.toString().trim();
           const kennwerte = this.filteredKennwerte[plz];
 
+          console.log("🖱️ Klick auf PLZ:", plz);
+          console.log("📦 Daten im Popup:", kennwerte);
+
           if (kennwerte) {
             this.showPopup(e.target.feature, kennwerte);
           } else {
-            console.log("🚫 Keine gefilterten Daten für PLZ:", plz);
+            console.warn("🚫 Keine gefilterten Daten für PLZ:", plz);
           }
         });
       }
@@ -399,7 +402,7 @@ async loadGeoJson() {
 
     this._geoLayer.addTo(this.map);
   } catch (error) {
-    console.error("❌ Fehler beim Laden der GeoJSON-Daten:", error);
+    console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
 }
 
@@ -478,9 +481,13 @@ createMarkerIcon(nl) {
     iconAnchor: [15, 30]
   });
 }
+
 showPopup(feature, daten = {}) {
   const plz = feature.properties?.plz?.trim();
   const note = feature.properties?.note || "Keine Notiz";
+
+  console.log("📍 Popup geöffnet für PLZ:", plz);
+  console.log("📊 Daten übergeben an Popup:", daten);
 
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
@@ -509,6 +516,10 @@ showPopup(feature, daten = {}) {
       ? daten[id].toLocaleString("de-DE")
       : "–";
 
+    if (wert === "–") {
+      console.warn(`⚠️ Kennzahl fehlt: ${id} (${label}) für PLZ ${plz}`);
+    }
+
     if (index === 8) {
       rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
     }
@@ -533,7 +544,7 @@ showPopup(feature, daten = {}) {
     </table>
   `;
 
-  // ➕ Zusatztabelle bei Nicht-HZ mit Umsatz
+  // Zusatztabelle bei Nicht-HZ mit Umsatz
   const isHZ = this.hzFlags?.[plz] === false;
   const zusatzKennwerte = this.filteredKennwerte?.[plz] || {};
   const umsatz = zusatzKennwerte.value_umsatz_0;
@@ -567,16 +578,15 @@ showPopup(feature, daten = {}) {
     sidePopup.insertAdjacentHTML('beforeend', extraTable);
   }
 
-  // 🎬 Popup anzeigen
   void sidePopup.offsetWidth;
   setTimeout(() => sidePopup.classList.add('show'), 10);
 
-  // ❌ Schließen-Button aktivieren
   const closeBtn = sidePopup.querySelector('.close-btn');
   closeBtn.addEventListener('click', () => {
     sidePopup.classList.remove('show');
   });
 }
+
 
 
 
@@ -601,25 +611,39 @@ applyFilter(erhID, jahr, nummer) {
   return plzWerte;
 }
 
-
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") return [];
 
   const data = this._myDataSource.data;
   const { erhID, jahr, nummer } = this._activeFilter || {};
 
-  return data.filter(row => {
+  const filteredKennwerte = {};
+  const filtered = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim() || "@NullMember";
     const y = row["dimension_jahr_0"]?.id?.trim() || "@NullMember";
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim() || "@NullMember";
+    const plz = row.plz?.trim();
 
-    return (
+    const match =
       (id === erhID || id === "@NullMember") &&
       (y === jahr || y === "@NullMember") &&
-      (num === nummer || num === "@NullMember")
-    );
+      (num === nummer || num === "@NullMember");
+
+    if (match && plz) {
+      filteredKennwerte[plz] = row;
+    }
+
+    return match;
   });
+
+  this.filteredKennwerte = filteredKennwerte;
+
+  console.log("✅ Gefilterte Daten:", filtered);
+  console.log("📦 Gefilterte Kennwerte nach PLZ:", this.filteredKennwerte);
+
+  return filtered;
 }
+
 
 getColor(value, isHZ) {
   const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
