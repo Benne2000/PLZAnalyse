@@ -534,8 +534,14 @@ showPopup(feature) {
     </table>
   `;
 
+
   // ➕ Zusatztabelle bei Nicht-HZ mit Umsatz
-  if (!this.hzFlags[plz] && this.plzWerte[plz] > 0) {
+if (
+  this.hzFlags?.[plz] === false &&
+  typeof this.plzKennwerte?.[plz]?.value_umsatz_0 === "number" &&
+  this.plzKennwerte[plz].value_umsatz_0 > 0
+)
+ {
     const wkPotentiell = this.plzKennwerte[plz]?.value_wk_potentiell_0 ?? "–";
     const hzPotentiell = this.plzKennwerte[plz]?.value_hz_potentiell_0 ?? "–";
 
