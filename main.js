@@ -478,7 +478,7 @@ createMarkerIcon(nl) {
     iconAnchor: [15, 30]
   });
 }
-showPopup(feature, daten = null) {
+showPopup(feature, daten = {}) {
   const plz = feature.properties?.plz?.trim();
   const note = feature.properties?.note || "Keine Notiz";
 
@@ -535,7 +535,7 @@ showPopup(feature, daten = null) {
 
   // ➕ Zusatztabelle bei Nicht-HZ mit Umsatz
   const isHZ = this.hzFlags?.[plz] === false;
-  const zusatzKennwerte = this.plzKennwerte?.[plz] || {};
+  const zusatzKennwerte = this.filteredKennwerte?.[plz] || {};
   const umsatz = zusatzKennwerte.value_umsatz_0;
 
   if (isHZ && typeof umsatz === "number" && umsatz > 0) {
@@ -1049,7 +1049,7 @@ async render() {
   console.log("📍 Marker aktualisiert");
 
   this.hideSpinner();
-  console.log("✅ Spinner 777777777777777777777777777777");
+  console.log("✅ Spinner 888888888877777");
 }
 
 
@@ -1089,7 +1089,6 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
