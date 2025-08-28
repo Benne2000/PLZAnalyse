@@ -794,13 +794,17 @@ setupFilterDropdowns() {
 
 prepareMapData(filteredData) {
   const rawData = this._myDataSource?.data || [];
+
   this.kennwerte = {};
-  this.hzFlags = {}; // 🆕 Initialisierung der HZ-Flags
+  this.hzFlags = {};
+  this.Niederlassung = {};
+  this.nlKoordinaten = {};
+  this.plzKennwerte = {};
+  this.extraNLs = [];
 
   const kennzahlenIDs = [
     "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
     "value_wk_nachbar_0", "value_hz_kosten_0",
-    // Diese drei sollen **nicht gefiltert werden**
     "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
     "value_ums_erhebung_0", "value_kd_erhebung_0",
     "value_bon_erhebung_0", "value_auflage_0"
@@ -812,31 +816,44 @@ prepareMapData(filteredData) {
 
   const dataByPLZ = {};
 
-  // Erst die gefilterten Werte
+  // Gefilterte Daten
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     if (!plz || plz === "@NullMember") return;
 
     dataByPLZ[plz] = dataByPLZ[plz] || {};
 
-    // 🆕 HZ-Flag setzen
+    // HZ-Flag
     const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
     this.hzFlags[plz] = hzFlag;
 
+    // Kennwerte
     kennzahlenIDs.forEach(id => {
       if (!unfilterbareIDs.includes(id)) {
         const raw = row[id]?.raw;
         dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
       }
     });
+
+    // Niederlassung
+    const nlName = row["dimension_niederlassung_0"]?.name?.trim();
+    if (nlName) this.Niederlassung[plz] = nlName;
+
+    // Koordinaten
+    const lat = row["value_latitude_0"]?.raw;
+    const lon = row["value_longitude_0"]?.raw;
+    if (typeof lat === "number" && typeof lon === "number") {
+      this.nlKoordinaten[plz] = { lat, lon };
+    }
   });
 
-  // Jetzt die unfilterbaren Werte aus dem vollen Datensatz
+  // Unfilterbare Werte aus rawData
   rawData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     if (!plz || plz === "@NullMember") return;
 
     dataByPLZ[plz] = dataByPLZ[plz] || {};
+
     unfilterbareIDs.forEach(id => {
       if (dataByPLZ[plz][id] === undefined) {
         const raw = row[id]?.raw;
@@ -844,18 +861,50 @@ prepareMapData(filteredData) {
       }
     });
 
-    // 🆕 Falls HZ-Flag noch nicht gesetzt, aus rawData ergänzen
+    // HZ-Flag ergänzen
     if (this.hzFlags[plz] === undefined) {
       const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
       this.hzFlags[plz] = hzFlag;
     }
+
+    // Niederlassung ergänzen
+    const nlName = row["dimension_niederlassung_0"]?.name?.trim();
+    if (nlName && !this.Niederlassung[plz]) {
+      this.Niederlassung[plz] = nlName;
+    }
+
+    // Koordinaten ergänzen
+    if (!this.nlKoordinaten[plz]) {
+      const lat = row["value_latitude_0"]?.raw;
+      const lon = row["value_longitude_0"]?.raw;
+      if (typeof lat === "number" && typeof lon === "number") {
+        this.nlKoordinaten[plz] = { lat, lon };
+      }
+    }
   });
 
-  // Finales Array für Popup
+  // Finales Mapping
   Object.keys(dataByPLZ).forEach(plz => {
-    this.kennwerte[plz] = kennzahlenIDs.map(id => dataByPLZ[plz][id] ?? "–");
+    const werte = kennzahlenIDs.map(id => dataByPLZ[plz][id] ?? "–");
+    this.kennwerte[plz] = werte;
+
+    // Alternative Struktur
+    this.plzKennwerte[plz] = {};
+    kennzahlenIDs.forEach((id, i) => {
+      this.plzKennwerte[plz][id] = werte[i];
+    });
+  });
+
+  // Sonder-Niederlassungen (z. B. ohne PLZ)
+  rawData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    const nlName = row["dimension_niederlassung_0"]?.name?.trim();
+    if ((!plz || plz === "@NullMember") && nlName) {
+      this.extraNLs.push(nlName);
+    }
   });
 }
+
 
 
 
