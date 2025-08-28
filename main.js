@@ -366,6 +366,7 @@ async loadGeoJson() {
     this._geoData = await response.json();
 
     const filteredData = this.getFilteredData();
+    console.log('gefiltert: ',filteredData);
 const filteredPLZMap = new Map(
   filteredData
     .map(row => {
@@ -378,7 +379,7 @@ const filteredPLZMap = new Map(
 
 
     const plzWerte = this.extractPLZWerte(filteredData);
-    console.log('FilteredData',plzWerte);
+
     this._geoLayer = L.geoJSON(this._geoData, {
       style: feature => {
         const plz = feature.properties?.plz?.trim();
@@ -411,7 +412,7 @@ onEachFeature: (feature, layer) => {
 layer.on("click", (e) => {
   const plz = e.target.feature.properties.plz?.toString().trim();
   const kennwerte = this.plzKennwerte[plz];
-console.log(kennwerte);
+
   if (kennwerte) {
     this.showPopup(e.target.feature, kennwerte);
   } else {
@@ -670,6 +671,7 @@ updateGeoLayer() {
   if (!this._geoLayer) return;
 
   const filteredData = this.getFilteredData();
+
   const plzWerte = this.extractPLZWerte(filteredData);
 
   this._geoLayer.eachLayer(layer => {
@@ -929,10 +931,7 @@ prepareMapData(filteredData) {
     });
   });
   // 👇 Logging der Kennwerte pro PLZ
-console.log("📦 Inhalt von plzKennwerte:");
-Object.entries(this.plzKennwerte).forEach(([plz, werte]) => {
-  console.log(`PLZ ${plz}:`, werte);
-});
+
 
   // Sonder-Niederlassungen (z. B. ohne PLZ)
   rawData.forEach(row => {
