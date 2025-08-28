@@ -366,6 +366,10 @@ async loadGeoJson() {
     this._geoData = await response.json();
 
     const filteredData = this.getFilteredData();
+    const filteredPLZMap = new Map(
+  filteredData.map(row => [row["dimension_plz_0"]?.id?.trim(), row])
+);
+
     const plzWerte = this.extractPLZWerte(filteredData);
 
     this._geoLayer = L.geoJSON(this._geoData, {
@@ -394,9 +398,13 @@ async loadGeoJson() {
         };
       },
 
-      onEachFeature: (feature, layer) => {
-        layer.on("click", () => this.showPopup(feature));
-      }
+onEachFeature: (feature, layer) => {
+  const plz = feature.properties?.plz?.trim();
+  const daten = filteredPLZMap.get(plz); // Nur gefilterte Daten
+
+  layer.on("click", () => this.showPopup(feature, daten));
+}
+
     });
 
     this._geoLayer.addTo(this.map);
@@ -480,10 +488,9 @@ createMarkerIcon(nl) {
   });
 }
 
-showPopup(feature) {
-  const plz = feature.properties?.plz;
+showPopup(feature, daten = null) {
+  const plz = feature.properties?.plz?.trim();
   const note = feature.properties?.note || "Keine Notiz";
-  const kennwerteArray = this.kennwerte[plz] || Array(12).fill("–"); // 12 = Anzahl der Kennzahlen
 
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
@@ -506,9 +513,10 @@ showPopup(feature) {
   };
 
   let rows = "";
-  Object.keys(beschreibungen).forEach((id, index) => {
-    const label = beschreibungen[id];
-    const wert = kennwerteArray[index] ?? "–";
+
+  Object.entries(beschreibungen).forEach(([id, label], index) => {
+    const raw = daten?.[id]?.raw;
+    const wert = typeof raw === "number" ? raw.toLocaleString("de-DE") : "–";
 
     if (index === 8) {
       rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
@@ -534,16 +542,14 @@ showPopup(feature) {
     </table>
   `;
 
-
   // ➕ Zusatztabelle bei Nicht-HZ mit Umsatz
-if (
-  this.hzFlags?.[plz] === false &&
-  typeof this.plzKennwerte?.[plz]?.value_umsatz_0 === "number" &&
-  this.plzKennwerte[plz].value_umsatz_0 > 0
-)
- {
-    const wkPotentiell = this.plzKennwerte[plz]?.value_wk_potentiell_0 ?? "–";
-    const hzPotentiell = this.plzKennwerte[plz]?.value_hz_potentiell_0 ?? "–";
+  const isHZ = this.hzFlags?.[plz] === false;
+  const zusatzKennwerte = this.plzKennwerte?.[plz] || {};
+  const umsatz = zusatzKennwerte.value_umsatz_0;
+
+  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
+    const wkPotentiell = zusatzKennwerte.value_wk_potentiell_0 ?? "–";
+    const hzPotentiell = zusatzKennwerte.value_hz_potentiell_0 ?? "–";
 
     const extraTable = `
       <table class="extra-table">
@@ -575,6 +581,7 @@ if (
     sidePopup.classList.remove('show');
   });
 }
+
 
 
 applyFilter(erhID, jahr, nummer) {
