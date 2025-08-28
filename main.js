@@ -549,6 +549,13 @@ showPopup(feature, daten = {}) {
   const zusatzKennwerte = this.filteredKennwerte?.[plz] || {};
   const umsatz = zusatzKennwerte.value_umsatz_0?.raw;
 
+console.log("🔍 Debug-Log für PLZ:", plz);
+console.log("➡️ Ist HZ:", isHZ);
+console.log("📊 Zusatzkennwerte:", zusatzKennwerte);
+console.log("💰 Umsatz (raw):", umsatz);
+
+
+  
   if (isHZ && typeof umsatz === "number" && umsatz > 0) {
     const wkPotentiellRaw = zusatzKennwerte.value_wk_potentiell_0?.raw;
     const hzPotentiellRaw = zusatzKennwerte.value_hz_potentiell_0?.raw;
@@ -1119,6 +1126,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
