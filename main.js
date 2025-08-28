@@ -359,15 +359,41 @@ buildErhebungsStruktur(data) {
 
     
 async loadGeoJson() {
-  if (this._geoData) return; // Schon geladen? Dann abbrechen.
+  if (this._geoLayer) return; // Layer existiert schon
 
   try {
     const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
     this._geoData = await response.json();
+
+    const filteredData = this.getFilteredData();
+    const plzWerte = this.extractPLZWerte(filteredData);
+
+    this._geoLayer = L.geoJSON(this._geoData, {
+      style: feature => {
+        const plz = feature.properties?.plz;
+        const value = plzWerte[plz] || 0;
+        const isHZ = this.hzFlags[plz] || false;
+
+        return {
+          fillColor: this.getColor(value, isHZ),
+          weight: 1,
+          opacity: 1,
+          color: "white",
+          fillOpacity: 0.7
+        };
+      },
+      onEachFeature: (feature, layer) => {
+        const note = feature.properties?.note;
+        if (note) {
+          layer.bindTooltip(note);
+        }
+      }
+    }).addTo(this.map);
   } catch (error) {
     console.error("❌ Fehler beim Laden der GeoJSON-Daten:", error);
   }
 }
+
 
 
     initializeMapBase() {
@@ -595,6 +621,8 @@ getColor(value, isHZ) {
 
 
 updateGeoLayer() {
+  if (!this._geoLayer) return;
+
   const filteredData = this.getFilteredData();
   const plzWerte = this.extractPLZWerte(filteredData);
 
@@ -610,10 +638,11 @@ updateGeoLayer() {
 
     const note = layer.feature?.properties?.note;
     if (note) {
-      layer.setTooltipContent(note);
+      layer.setTooltipContent?.(note); // Optional chaining für Sicherheit
     }
   });
 }
+
 
 updateMarkers() {
   const gesetzteNLs = new Set();
@@ -890,36 +919,42 @@ prepareDropdownData(data) {
 
 
 async render() {
-  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+    return;
+  }
 
   this.showSpinner();
+  console.log("🔄 Spinner angezeigt");
 
   const rawData = this._myDataSource.data;
+  console.log("📥 Rohdaten geladen:", rawData);
 
-  // 🧩 Erhebungsstruktur aufbauen und Dropdowns aktualisieren
   this._erhData = this.buildErhebungsStruktur(rawData);
+  console.log("🧩 Erhebungsstruktur erstellt");
+
   this.setupFilterDropdowns();
+  console.log("📊 Filter-Dropdowns aktualisiert");
 
-  // 🔍 Daten ggf. filtern
-  const filteredData = this._activeFilter
-    ? this.getFilteredData()
-    : rawData;
+  const filteredData = this._activeFilter ? this.getFilteredData() : rawData;
+  console.log("🔍 Daten gefiltert:", filteredData);
 
-  // 📦 Daten vorbereiten für Karte & Popup
   this.prepareMapData(filteredData);
+  console.log("📦 Kartendaten vorbereitet");
 
-  // 🌍 GeoJSON laden (nur einmal)
   await this.loadGeoJson();
+  console.log("🌍 GeoJSON geladen");
 
-  // 🗺️ GeoLayer aktualisieren
   this.updateGeoLayer();
+  console.log("🗺️ GeoLayer aktualisiert");
 
-  // 📍 Marker aktualisieren
   this.updateMarkers();
+  console.log("📍 Marker aktualisiert");
 
-  // 🧹 Spinner ausblenden
   this.hideSpinner();
+  console.log("✅ Spinner ausgeblendet – Render abgeschlossen");
 }
+
 
 
 
@@ -957,7 +992,6 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
