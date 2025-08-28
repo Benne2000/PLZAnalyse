@@ -382,12 +382,11 @@ async loadGeoJson() {
           fillOpacity: 0.7
         };
       },
-      onEachFeature: (feature, layer) => {
-        const note = feature.properties?.note;
-        if (note) {
-          layer.bindTooltip(note);
-        }
-      }
+onEachFeature: (feature, layer) => {
+
+  layer.on('click', () => this.showPopup(feature));
+}
+
     }).addTo(this.map);
   } catch (error) {
     console.error("❌ Fehler beim Laden der GeoJSON-Daten:", error);
