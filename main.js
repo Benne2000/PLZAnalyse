@@ -631,6 +631,7 @@ getFilteredData() {
 
     if (match && plz && plz !== "@NullMember") {
       filteredKennwerte[plz] = row;
+      console.log('filteredKennwerte:' ,filteredKennwerte[plz]);
     }
 
     return match;
