@@ -481,7 +481,6 @@ createMarkerIcon(nl) {
     iconAnchor: [15, 30]
   });
 }
-
 showPopup(feature, daten = {}) {
   const plz = feature.properties?.plz?.trim();
   const note = feature.properties?.note || "Keine Notiz";
@@ -512,8 +511,9 @@ showPopup(feature, daten = {}) {
   let rows = "";
 
   Object.entries(beschreibungen).forEach(([id, label], index) => {
-    const wert = typeof daten?.[id] === "number"
-      ? daten[id].toLocaleString("de-DE")
+    const rawValue = daten?.[id]?.raw;
+    const wert = typeof rawValue === "number"
+      ? rawValue.toLocaleString("de-DE")
       : "–";
 
     if (wert === "–") {
@@ -547,15 +547,18 @@ showPopup(feature, daten = {}) {
   // Zusatztabelle bei Nicht-HZ mit Umsatz
   const isHZ = this.hzFlags?.[plz] === false;
   const zusatzKennwerte = this.filteredKennwerte?.[plz] || {};
-  const umsatz = zusatzKennwerte.value_umsatz_0;
+  const umsatz = zusatzKennwerte.value_umsatz_0?.raw;
 
   if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPotentiell = typeof zusatzKennwerte.value_wk_potentiell_0 === "number"
-      ? zusatzKennwerte.value_wk_potentiell_0.toLocaleString("de-DE")
+    const wkPotentiellRaw = zusatzKennwerte.value_wk_potentiell_0?.raw;
+    const hzPotentiellRaw = zusatzKennwerte.value_hz_potentiell_0?.raw;
+
+    const wkPotentiell = typeof wkPotentiellRaw === "number"
+      ? wkPotentiellRaw.toLocaleString("de-DE")
       : "–";
 
-    const hzPotentiell = typeof zusatzKennwerte.value_hz_potentiell_0 === "number"
-      ? zusatzKennwerte.value_hz_potentiell_0.toLocaleString("de-DE")
+    const hzPotentiell = typeof hzPotentiellRaw === "number"
+      ? hzPotentiellRaw.toLocaleString("de-DE")
       : "–";
 
     const extraTable = `
