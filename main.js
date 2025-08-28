@@ -366,9 +366,16 @@ async loadGeoJson() {
     this._geoData = await response.json();
 
     const filteredData = this.getFilteredData();
-    const filteredPLZMap = new Map(
-  filteredData.map(row => [row["dimension_plz_0"]?.id?.trim(), row])
+const filteredPLZMap = new Map(
+  filteredData
+    .map(row => {
+      const rawPlz = row["dimension_plz_0"]?.id;
+      const plz = rawPlz?.trim();
+      return plz && plz !== "@NullMember" ? [plz, row] : null;
+    })
+    .filter(Boolean)
 );
+
 
     const plzWerte = this.extractPLZWerte(filteredData);
 
@@ -401,11 +408,19 @@ async loadGeoJson() {
 onEachFeature: (feature, layer) => {
   const plz = feature.properties?.plz?.trim();
 const daten = this.plzKennwerte?.[plz];
-console.log("PLZ:", plz);
-console.log("Gefilterte Daten:", daten);
 
 
-  layer.on("click", () => this.showPopup(feature, daten));
+
+layer.on("click", (e) => {
+  const plz = e.target.feature.properties.plz?.toString().trim();
+  const kennwerte = filteredPLZMap.get(plz);
+
+  if (kennwerte) {
+    this.showPopup(e.target.feature, kennwerte);
+  } else {
+    console.log("🚫 Keine gefilterten Daten für PLZ:", plz);
+  }
+});
 }
 
     });
