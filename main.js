@@ -697,18 +697,16 @@ updateGeoLayer() {
     }
   });
 }
+
 updateMarkers() {
   console.log("📍 updateMarkers gestartet");
 
   const gesetzteNLs = new Set();
   this.markerListeExtra = [];
 
-  // 🗂️ Schritt 1: Sammle alle relevanten NLs mit Koordinaten
-  const alleNLs = new Map();
-
-  // 🔄 Aus PLZ-basierten Niederlassungen
+  // 🗂️ Marker aus PLZ-basierten Daten
   Object.entries(this.Niederlassung).forEach(([plz, nl]) => {
-    if (!nl) return;
+    if (!nl || gesetzteNLs.has(nl)) return;
 
     const koordinaten = this.nlKoordinaten[plz];
     if (!koordinaten) return;
@@ -717,47 +715,26 @@ updateMarkers() {
     const lon = parseFloat(koordinaten.lon);
     if (isNaN(lat) || isNaN(lon)) return;
 
-    alleNLs.set(nl, { lat, lon, ausPLZ: true });
-  });
-
-  // ➕ Aus zusätzlichen NLs
-  this.extraNLs.forEach(({ nl, lat, lon }) => {
-    if (!nl || isNaN(lat) || isNaN(lon)) return;
-
-    // Falls bereits vorhanden, PLZ-Flag beibehalten
-    const vorhandene = alleNLs.get(nl);
-    alleNLs.set(nl, {
-      lat,
-      lon,
-      ausPLZ: vorhandene?.ausPLZ || false
-    });
-  });
-
-  // 📍 Schritt 2: Marker setzen und speichern
-  alleNLs.forEach(({ lat, lon, ausPLZ }, nl) => {
     const icon = this.createMarkerIcon(nl);
-    const marker = L.marker([lat, lon], {
-      icon,
-      title: nl
-    });
-
-    // 🗺️ Nur anzeigen, wenn aus PLZ-Filter
-    if (ausPLZ) {
-      marker.addTo(this.map);
-      console.log(`✅ Marker angezeigt für NL ${nl} bei [${lat}, ${lon}]`);
-    } else {
-      console.log(`📦 Marker gespeichert aber nicht angezeigt für NL ${nl}`);
-    }
-
+    const marker = L.marker([lat, lon], { icon, title: nl });
+    marker.addTo(this.map); // ✅ Nur PLZ-basierte Marker werden angezeigt
     this.markerListeExtra.push(marker);
     gesetzteNLs.add(nl);
   });
 
-  console.log(`🔚 updateMarkers abgeschlossen – ${this.markerListeExtra.length} Marker gespeichert`);
+  // ➕ Zusätzliche Marker (ohne PLZ)
+  this.extraNLs.forEach(({ nl, lat, lon }) => {
+    if (!nl || gesetzteNLs.has(nl)) return;
+    if (isNaN(lat) || isNaN(lon)) return;
+
+    const icon = this.createMarkerIcon(nl);
+    const marker = L.marker([lat, lon], { icon, title: nl });
+    this.markerListeExtra.push(marker); // ❗ Nur speichern, nicht anzeigen
+    gesetzteNLs.add(nl);
+  });
+
+  console.log(`✅ Marker-Update abgeschlossen – ${this.markerListeExtra.length} Marker gespeichert`);
 }
-
-
-
 
 
 
