@@ -404,6 +404,7 @@ const daten = this.plzKennwerte?.[plz];
 console.log("PLZ:", plz);
 console.log("Gefilterte Daten:", daten);
 
+
   layer.on("click", () => this.showPopup(feature, daten));
 }
 
@@ -909,6 +910,11 @@ prepareMapData(filteredData) {
       this.plzKennwerte[plz][id] = werte[i];
     });
   });
+  // 👇 Logging der Kennwerte pro PLZ
+console.log("📦 Inhalt von plzKennwerte:");
+Object.entries(this.plzKennwerte).forEach(([plz, werte]) => {
+  console.log(`PLZ ${plz}:`, werte);
+});
 
   // Sonder-Niederlassungen (z. B. ohne PLZ)
   rawData.forEach(row => {
