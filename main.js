@@ -370,9 +370,20 @@ async loadGeoJson() {
 
     this._geoLayer = L.geoJSON(this._geoData, {
       style: feature => {
-        const plz = feature.properties?.plz;
-        const value = plzWerte[plz] || 0;
-        const isHZ = this.hzFlags[plz] || false;
+        const plz = feature.properties?.plz?.trim();
+        if (!plz) {
+          console.warn("PLZ fehlt im Feature:", feature);
+          return {
+            fillColor: "#ccc",
+            weight: 1,
+            opacity: 1,
+            color: "gray",
+            fillOpacity: 0.5
+          };
+        }
+
+        const value = plzWerte[plz] ?? 0;
+        const isHZ = this.hzFlags?.[plz] ?? false;
 
         return {
           fillColor: this.getColor(value, isHZ),
@@ -382,16 +393,18 @@ async loadGeoJson() {
           fillOpacity: 0.7
         };
       },
-onEachFeature: (feature, layer) => {
 
-  layer.on('click', () => this.showPopup(feature));
-}
+      onEachFeature: (feature, layer) => {
+        layer.on("click", () => this.showPopup(feature));
+      }
+    });
 
-    }).addTo(this.map);
+    this._geoLayer.addTo(this.map);
   } catch (error) {
     console.error("❌ Fehler beim Laden der GeoJSON-Daten:", error);
   }
 }
+
 
 
 
