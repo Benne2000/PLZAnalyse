@@ -547,7 +547,7 @@ showPopup(feature, daten = {}) {
   // Zusatztabelle bei Nicht-HZ mit Umsatz
   const isHZ = this.hzFlags?.[plz] === false;
   const zusatzKennwerte = this.filteredKennwerte?.[plz] || {};
-  const umsatz = zusatzKennwerte.value_umsatz_0?.raw;
+  const umsatz = zusatzKennwerte.value_hr_n_umsatz_0?.raw;
 
 console.log("🔍 Debug-Log für PLZ:", plz);
 console.log("➡️ Ist HZ:", isHZ);
@@ -1126,6 +1126,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
