@@ -703,36 +703,62 @@ updateGeoLayer() {
   });
 }
 
-
 updateMarkers() {
+  console.log("📍 updateMarkers gestartet");
+
   const gesetzteNLs = new Set();
   this.markerListeExtra = [];
 
   Object.keys(this.Niederlassung).forEach(plz => {
     const nl = this.Niederlassung[plz];
-    if (!nl || gesetzteNLs.has(nl)) return;
+    console.log(`🔄 Prüfe PLZ ${plz} → Niederlassung: ${nl}`);
 
-    const koordinaten = this.nlKoordinaten[plz]; // ✅ Zugriff über PLZ
-    if (!koordinaten) return;
+    if (!nl) {
+      console.warn(`⚠️ Keine Niederlassung für PLZ ${plz}`);
+      return;
+    }
+
+    if (gesetzteNLs.has(nl)) {
+      console.log(`⏭️ Marker für NL ${nl} bereits gesetzt`);
+      return;
+    }
+
+    const koordinaten = this.nlKoordinaten[plz];
+    console.log(`📌 Koordinaten für PLZ ${plz}:`, koordinaten);
+
+    if (!koordinaten) {
+      console.warn(`⚠️ Keine Koordinaten für PLZ ${plz} / NL ${nl}`);
+      return;
+    }
 
     const lat = parseFloat(koordinaten.lat);
     const lon = parseFloat(koordinaten.lon);
 
+    if (isNaN(lat) || isNaN(lon)) {
+      console.error(`❌ Ungültige Koordinaten für NL ${nl}:`, { lat, lon });
+      return;
+    }
+
     const icon = this.createMarkerIcon(nl);
+    console.log(`📍 Setze Marker für NL ${nl} bei [${lat}, ${lon}]`);
     L.marker([lat, lon], { icon }).addTo(this.map);
     gesetzteNLs.add(nl);
   });
 
   this.extraNLs.forEach(({ nl, lat, lon }) => {
+    console.log(`➕ Zusätzliche NL: ${nl} bei [${lat}, ${lon}]`);
+
     const icon = this.createMarkerIcon(nl);
     const marker = L.marker([lat, lon], {
       icon,
       title: nl
     });
 
-    this.markerListeExtra.push(marker); // Nur speichern
+    this.markerListeExtra.push(marker);
     gesetzteNLs.add(nl);
   });
+
+  console.log("✅ Marker-Update abgeschlossen");
 }
 
 
@@ -1127,7 +1153,6 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
