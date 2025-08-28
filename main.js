@@ -342,6 +342,22 @@ hideSpinner() {
   if (spinner) spinner.classList.add('hidden');
 }
 
+buildErhebungsStruktur(data) {
+  const struktur = {};
+  data.forEach(row => {
+    const erhID = row["dimension_erhebung_0"]?.id?.trim();
+    const jahr = row["dimension_jahr_0"]?.id?.trim();
+    const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    if (!erhID || !jahr || !nummer) return;
+
+    struktur[erhID] = struktur[erhID] || {};
+    struktur[erhID][jahr] = struktur[erhID][jahr] || new Set();
+    struktur[erhID][jahr].add(nummer);
+  });
+  return struktur;
+}
+
+    
 async loadGeoJson() {
   if (this._geoData) return; // Schon geladen? Dann abbrechen.
 
@@ -941,6 +957,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
