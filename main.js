@@ -546,7 +546,6 @@ data.forEach(row => {
   this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
   this._erhData[erhID][jahr].add(nummer);
 });
-  console.log("Erste 10 Einträge:", this.erhData.slice(0, 10));
 
 console.log("Finale erhData:", this._erhData);
 
@@ -841,7 +840,6 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
