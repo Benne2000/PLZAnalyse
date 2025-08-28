@@ -401,6 +401,8 @@ async loadGeoJson() {
 onEachFeature: (feature, layer) => {
   const plz = feature.properties?.plz?.trim();
   const daten = filteredPLZMap.get(plz); // Nur gefilterte Daten
+console.log("PLZ:", plz);
+console.log("Gefilterte Daten:", daten);
 
   layer.on("click", () => this.showPopup(feature, daten));
 }
