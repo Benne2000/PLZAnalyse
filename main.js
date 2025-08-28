@@ -802,7 +802,8 @@ setupFilterDropdowns() {
 
       this.render();
     }
-prepareMapData(filteredData) {
+
+ prepareMapData(filteredData) {
   const rawData = this._myDataSource?.data || [];
 
   this.kennwerte = {};
@@ -827,23 +828,23 @@ prepareMapData(filteredData) {
 
   const dataByPLZ = {};
 
-  // Gefilterte Daten
+  // 🔍 Gefilterte Daten für Popup
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     if (!plz || plz === "@NullMember") return;
 
-    dataByPLZ[plz] = dataByPLZ[plz] || {};
-
+    // Initialisierung
+    this.filteredKennwerte[plz] = {};
     const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
     this.hzFlags[plz] = hzFlag;
 
+    // Kennzahlen für Popup
     kennzahlenIDs.forEach(id => {
-      if (!unfilterbareIDs.includes(id)) {
-        const raw = row[id]?.raw;
-        dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
-      }
+      const raw = row[id]?.raw;
+      this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
     });
 
+    // Niederlassung & Koordinaten
     const nlName = row["dimension_niederlassung_0"]?.name?.trim();
     if (nlName) this.Niederlassung[plz] = nlName;
 
@@ -853,15 +854,17 @@ prepareMapData(filteredData) {
       this.nlKoordinaten[plz] = { lat, lon };
     }
 
-    // ➕ Filterstruktur für Popup
-    this.filteredKennwerte[plz] = {};
+    // Für vollständige Kennwertstruktur
+    dataByPLZ[plz] = dataByPLZ[plz] || {};
     kennzahlenIDs.forEach(id => {
-      const raw = row[id]?.raw;
-      this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
+      if (!unfilterbareIDs.includes(id)) {
+        const raw = row[id]?.raw;
+        dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
+      }
     });
   });
 
-  // Unfilterbare Werte aus rawData ergänzen
+  // 🔄 Ergänzung unfilterbarer Werte aus rawData
   rawData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     if (!plz || plz === "@NullMember") return;
@@ -894,7 +897,7 @@ prepareMapData(filteredData) {
     }
   });
 
-  // Finales Mapping
+  // 🧩 Finales Mapping für plzKennwerte
   Object.keys(dataByPLZ).forEach(plz => {
     const werte = kennzahlenIDs.map(id => dataByPLZ[plz][id] ?? "–");
     this.kennwerte[plz] = werte;
@@ -905,7 +908,7 @@ prepareMapData(filteredData) {
     });
   });
 
-  // Sonder-Niederlassungen ohne PLZ
+  // 🧭 Sonder-Niederlassungen ohne PLZ
   rawData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nlName = row["dimension_niederlassung_0"]?.name?.trim();
@@ -917,6 +920,7 @@ prepareMapData(filteredData) {
     }
   });
 }
+
 
 
 
