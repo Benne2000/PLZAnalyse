@@ -795,6 +795,7 @@ setupFilterDropdowns() {
 prepareMapData(filteredData) {
   const rawData = this._myDataSource?.data || [];
   this.kennwerte = {};
+  this.hzFlags = {}; // 🆕 Initialisierung der HZ-Flags
 
   const kennzahlenIDs = [
     "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
@@ -817,6 +818,11 @@ prepareMapData(filteredData) {
     if (!plz || plz === "@NullMember") return;
 
     dataByPLZ[plz] = dataByPLZ[plz] || {};
+
+    // 🆕 HZ-Flag setzen
+    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    this.hzFlags[plz] = hzFlag;
+
     kennzahlenIDs.forEach(id => {
       if (!unfilterbareIDs.includes(id)) {
         const raw = row[id]?.raw;
@@ -837,6 +843,12 @@ prepareMapData(filteredData) {
         dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
       }
     });
+
+    // 🆕 Falls HZ-Flag noch nicht gesetzt, aus rawData ergänzen
+    if (this.hzFlags[plz] === undefined) {
+      const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
+      this.hzFlags[plz] = hzFlag;
+    }
   });
 
   // Finales Array für Popup
@@ -844,6 +856,7 @@ prepareMapData(filteredData) {
     this.kennwerte[plz] = kennzahlenIDs.map(id => dataByPLZ[plz][id] ?? "–");
   });
 }
+
 
 
 prepareDropdownData(data) {
