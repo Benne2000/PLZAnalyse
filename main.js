@@ -912,7 +912,8 @@ setupFilterDropdowns() {
  // Niederlassung & Koordinaten
  console.log(`🧾 Raw row für PLZ ${plz}:`, row);
 
-const nlName = row["dimension_niederlassung_0"]?.name?.trim();
+const nlName = row["dimension_niederlassung_0"]?.id?.trim();
+
 console.log(`🔍 Gefundene NL für PLZ ${plz}:`, nlName);
 
 if (nlName) {
@@ -922,8 +923,9 @@ if (nlName) {
   console.warn(`⚠️ Keine gültige Niederlassung für PLZ ${plz}`);
 }
 
-const lat = row["value_latitude_0"]?.raw;
-const lon = row["value_longitude_0"]?.raw;
+const lat = row["dimension_lat_0"]?.id;
+const lon = row["dimension_lon_0"]?.id;
+
 console.log(`📌 Roh-Koordinaten für PLZ ${plz}: lat=${lat}, lon=${lon}`);
 
 if (typeof lat === "number" && typeof lon === "number") {
