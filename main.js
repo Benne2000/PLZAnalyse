@@ -779,50 +779,56 @@ setupFilterDropdowns() {
       this.render();
     }
 
-prepareMapData(data) {
-  this.plzWerte = {};
-  this.hzFlags = {};
-  this.Niederlassung = {};
-  this.nlKoordinaten = {};
+prepareMapData(filteredData) {
+  const rawData = this._myDataSource?.data || [];
   this.kennwerte = {};
-  this.plzKennwerte = {};
-  this.extraNLs = [];
 
   const kennzahlenIDs = [
     "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0", "value_werbeverweigerer_0",
-    "value_haushalte_0", "value_kaufkraft_0", "value_ums_erhebung_0",
-    "value_kd_erhebung_0", "value_bon_erhebung_0", "value_auflage_0"
+    "value_wk_nachbar_0", "value_hz_kosten_0",
+    // Diese drei sollen **nicht gefiltert werden**
+    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
+    "value_ums_erhebung_0", "value_kd_erhebung_0",
+    "value_bon_erhebung_0", "value_auflage_0"
   ];
 
-  data.forEach(row => {
+  const unfilterbareIDs = [
+    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0"
+  ];
+
+  const dataByPLZ = {};
+
+  // Erst die gefilterten Werte
+  filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
-    const nl = row["dimension_niederlassung_0"]?.id?.trim();
-    const lat = row["dimension_Lat_0"]?.id?.trim();
-    const lon = row["dimension_lon_0"]?.id?.trim();
-    if (!lat || !lon) return;
+    if (!plz || plz === "@NullMember") return;
 
-    if (!plz || plz === "@NullMember") {
-      this.extraNLs.push({ nl: nl || "Unbekannt", lat: parseFloat(lat), lon: parseFloat(lon) });
-      return;
-    }
-
-    this.Niederlassung[plz] = nl;
-    this.nlKoordinaten[nl] = this.nlKoordinaten[nl] || { lat, lon };
-    this.hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
-
-    this.kennwerte[plz] = kennzahlenIDs.map(id => {
-      const raw = row[id]?.raw;
-      return typeof raw === "number" ? raw : "–";
+    dataByPLZ[plz] = dataByPLZ[plz] || {};
+    kennzahlenIDs.forEach(id => {
+      if (!unfilterbareIDs.includes(id)) {
+        const raw = row[id]?.raw;
+        dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
+      }
     });
+  });
 
-    this.plzKennwerte[plz] = {
-      value_hr_n_umsatz_0: row["value_hr_n_umsatz_0"]?.raw || 0,
-      value_wk_potentiell_0: row["value_wk_potentiell_0"]?.raw,
-      value_hz_potentiell_0: row["value_hz_potentiell_0"]?.raw
-    };
+  // Jetzt die unfilterbaren Werte aus dem vollen Datensatz
+  rawData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    if (!plz || plz === "@NullMember") return;
 
-    this.plzWerte[plz] = this.plzKennwerte[plz].value_hr_n_umsatz_0;
+    dataByPLZ[plz] = dataByPLZ[plz] || {};
+    unfilterbareIDs.forEach(id => {
+      if (dataByPLZ[plz][id] === undefined) {
+        const raw = row[id]?.raw;
+        dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
+      }
+    });
+  });
+
+  // Finales Array für Popup
+  Object.keys(dataByPLZ).forEach(plz => {
+    this.kennwerte[plz] = kennzahlenIDs.map(id => dataByPLZ[plz][id] ?? "–");
   });
 }
 
