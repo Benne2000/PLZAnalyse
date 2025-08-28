@@ -505,7 +505,6 @@ createMarkerIcon(nl) {
     iconAnchor: [15, 30]
   });
 }
-
 showPopup(feature, daten = null) {
   const plz = feature.properties?.plz?.trim();
   const note = feature.properties?.note || "Keine Notiz";
@@ -533,8 +532,9 @@ showPopup(feature, daten = null) {
   let rows = "";
 
   Object.entries(beschreibungen).forEach(([id, label], index) => {
-    const raw = daten?.[id]?.raw;
-    const wert = typeof raw === "number" ? raw.toLocaleString("de-DE") : "–";
+    const wert = typeof daten?.[id] === "number"
+      ? daten[id].toLocaleString("de-DE")
+      : "–";
 
     if (index === 8) {
       rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
@@ -566,8 +566,13 @@ showPopup(feature, daten = null) {
   const umsatz = zusatzKennwerte.value_umsatz_0;
 
   if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPotentiell = zusatzKennwerte.value_wk_potentiell_0 ?? "–";
-    const hzPotentiell = zusatzKennwerte.value_hz_potentiell_0 ?? "–";
+    const wkPotentiell = typeof zusatzKennwerte.value_wk_potentiell_0 === "number"
+      ? zusatzKennwerte.value_wk_potentiell_0.toLocaleString("de-DE")
+      : "–";
+
+    const hzPotentiell = typeof zusatzKennwerte.value_hz_potentiell_0 === "number"
+      ? zusatzKennwerte.value_hz_potentiell_0.toLocaleString("de-DE")
+      : "–";
 
     const extraTable = `
       <table class="extra-table">
@@ -599,6 +604,7 @@ showPopup(feature, daten = null) {
     sidePopup.classList.remove('show');
   });
 }
+
 
 
 
