@@ -636,6 +636,9 @@ getFilteredData() {
     return match;
   });
 
+  // 🔍 Debug: Was ist this?
+  console.log("🔍 this in getFilteredData:", this);
+
   this.filteredKennwerte = filteredKennwerte;
 
   console.log("✅ Gefilterte Daten:", filtered);
@@ -643,6 +646,7 @@ getFilteredData() {
 
   return filtered;
 }
+
 
 
 getColor(value, isHZ) {
