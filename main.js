@@ -406,15 +406,15 @@ const filteredPLZMap = new Map(
       },
 
 onEachFeature: (feature, layer) => {
-  const plz = feature.properties?.plz?.trim();
+const plz = feature.properties?.plz?.trim();
 const daten = this.plzKennwerte?.[plz];
 
 
 
 layer.on("click", (e) => {
   const plz = e.target.feature.properties.plz?.toString().trim();
-  const kennwerte = filteredPLZMap.get(plz);
-
+  const kennwerte = this.plzKennwerte[plz];
+console.log(kennwerte);
   if (kennwerte) {
     this.showPopup(e.target.feature, kennwerte);
   } else {
