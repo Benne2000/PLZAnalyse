@@ -420,8 +420,60 @@ showPopup(feature) {
 
 applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
-  this.render();
+  this.updateGeoLayer(); // Nur Layer aktualisieren
+  this.updateMarkers();  // Marker ggf. neu setzen
 }
+
+getFilteredData() {
+  if (!this._myDataSource || this._myDataSource.state !== "success") return [];
+
+  const data = this._myDataSource.data;
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  return data.filter(row => {
+    const id = row["dimension_erhebung_0"]?.id?.trim() || "@NullMember";
+    const y = row["dimension_jahr_0"]?.id?.trim() || "@NullMember";
+    const num = row["dimension_erhebungsnummer_0"]?.id?.trim() || "@NullMember";
+
+    return (
+      (id === erhID || id === "@NullMember") &&
+      (y === jahr || y === "@NullMember") &&
+      (num === nummer || num === "@NullMember")
+    );
+  });
+}
+
+updateGeoLayer() {
+  const filteredData = this.getFilteredData();
+  const plzWerte = this.extractPLZWerte(filteredData);
+
+  this._geoLayer.eachLayer(layer => {
+    const plz = layer.feature?.properties?.plz;
+    const value = plzWerte[plz] || 0;
+    const isHZ = this.hzFlags[plz] || false;
+
+    layer.setStyle({
+      fillColor: this.getColor(value, isHZ),
+      fillOpacity: 0.7
+    });
+
+    const note = layer.feature?.properties?.note;
+    if (note) {
+      layer.setTooltipContent(note);
+    }
+  });
+}
+
+updateMarkers() {
+  if (!this.neighbours) return;
+
+  this.markerListeExtra.forEach(marker => {
+    if (!this.map.hasLayer(marker)) {
+      marker.addTo(this.map);
+    }
+  });
+}
+
 
 
 
