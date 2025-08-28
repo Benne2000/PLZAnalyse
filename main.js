@@ -1049,7 +1049,7 @@ async render() {
   console.log("📍 Marker aktualisiert");
 
   this.hideSpinner();
-  console.log("✅ Spinner ausgeblendet – Render abgeschlossen");
+  console.log("✅ Spinner 777777777777777777777777777777");
 }
 
 
@@ -1089,6 +1089,7 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
