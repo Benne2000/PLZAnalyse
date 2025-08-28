@@ -712,7 +712,7 @@ updateMarkers() {
     const nl = this.Niederlassung[plz];
     if (!nl || gesetzteNLs.has(nl)) return;
 
-    const koordinaten = this.nlKoordinaten[nl];
+    const koordinaten = this.nlKoordinaten[plz]; // ✅ Zugriff über PLZ
     if (!koordinaten) return;
 
     const lat = parseFloat(koordinaten.lat);
@@ -734,6 +734,7 @@ updateMarkers() {
     gesetzteNLs.add(nl);
   });
 }
+
 
 
 
@@ -1126,7 +1127,6 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
