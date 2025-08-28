@@ -388,14 +388,9 @@ async loadGeoJson() {
           const plz = e.target.feature.properties.plz?.toString().trim();
           const kennwerte = this.filteredKennwerte[plz];
 
-          console.log("🖱️ Klick auf PLZ:", plz);
-          console.log("📦 Daten im Popup:", kennwerte);
 
-          if (kennwerte) {
             this.showPopup(e.target.feature, kennwerte);
-          } else {
-            console.warn("🚫 Keine gefilterten Daten für PLZ:", plz);
-          }
+
         });
       }
     });
