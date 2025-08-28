@@ -908,15 +908,29 @@ setupFilterDropdowns() {
       this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
     });
 
-    // Niederlassung & Koordinaten
-    const nlName = row["dimension_niederlassung_0"]?.name?.trim();
-    if (nlName) this.Niederlassung[plz] = nlName;
 
-    const lat = row["value_latitude_0"]?.raw;
-    const lon = row["value_longitude_0"]?.raw;
-    if (typeof lat === "number" && typeof lon === "number") {
-      this.nlKoordinaten[plz] = { lat, lon };
-    }
+ // Niederlassung & Koordinaten
+const nlName = row["dimension_niederlassung_0"]?.name?.trim();
+console.log(`🔍 Gefundene NL für PLZ ${plz}:`, nlName);
+
+if (nlName) {
+  this.Niederlassung[plz] = nlName;
+  console.log(`✅ Niederlassung gesetzt: ${plz} → ${nlName}`);
+} else {
+  console.warn(`⚠️ Keine gültige Niederlassung für PLZ ${plz}`);
+}
+
+const lat = row["value_latitude_0"]?.raw;
+const lon = row["value_longitude_0"]?.raw;
+console.log(`📌 Roh-Koordinaten für PLZ ${plz}: lat=${lat}, lon=${lon}`);
+
+if (typeof lat === "number" && typeof lon === "number") {
+  this.nlKoordinaten[plz] = { lat, lon };
+  console.log(`✅ Koordinaten gespeichert für ${plz}:`, { lat, lon });
+} else {
+  console.error(`❌ Ungültige Koordinaten für PLZ ${plz}:`, { lat, lon });
+}
+
 
     // Für vollständige Kennwertstruktur
     dataByPLZ[plz] = dataByPLZ[plz] || {};
