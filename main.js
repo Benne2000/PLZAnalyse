@@ -342,6 +342,18 @@ hideSpinner() {
   if (spinner) spinner.classList.add('hidden');
 }
 
+async loadGeoJson() {
+  if (this._geoData) return; // Schon geladen? Dann abbrechen.
+
+  try {
+    const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
+    this._geoData = await response.json();
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der GeoJSON-Daten:", error);
+  }
+}
+
+
     initializeMapBase() {
       const mapContainer = this._shadowRoot.getElementById('map');
       this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
@@ -415,8 +427,95 @@ createMarkerIcon(nl) {
 }
 
 showPopup(feature) {
-  // Deine bestehende Popup-Logik hier einfügen
+  const plz = feature.properties?.plz;
+  const note = feature.properties?.note || "Keine Notiz";
+  const kennwerteArray = this.kennwerte[plz] || Array(12).fill("–"); // 12 = Anzahl der Kennzahlen
+
+  const beschreibungen = {
+    value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
+    value_umsatz_p_hh_0: "Umsatz p. HH",
+    value_wk_in_percent_0: "Werbekosten (%)",
+    value_wk_nachbar_0: "WK (%) incl. Nachb.",
+    value_hz_kosten_0: "HZ-Werbekosten",
+    value_werbeverweigerer_0: "Werbeverweigerer (%)",
+    value_haushalte_0: "Haushalte",
+    value_kaufkraft_0: "BM-Kaufkraft-Idx",
+    value_ums_erhebung_0: "Umsatz",
+    value_kd_erhebung_0: "Anzahl Kunden",
+    value_bon_erhebung_0: "Ø-Bon",
+    value_auflage_0: "Auflage"
+  };
+
+  const beschreibungenSide = {
+    value_wk_potentiell_0: "WK in %",
+    value_hz_potentiell_0: "HZ-Werbekosten"
+  };
+
+  let rows = "";
+  Object.keys(beschreibungen).forEach((id, index) => {
+    const label = beschreibungen[id];
+    const wert = kennwerteArray[index] ?? "–";
+
+    if (index === 8) {
+      rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
+    }
+
+    rows += `
+      <tr class="kennzahl-row">
+        <td class="label-cell">${label}</td>
+        <td class="value-cell">${wert}</td>
+      </tr>
+    `;
+  });
+
+  const sidePopup = this._shadowRoot.getElementById('side-popup');
+  sidePopup.innerHTML = `
+    <button class="close-btn">×</button>
+    <table>
+      <thead>
+        <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
+        <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  // ➕ Zusatztabelle bei Nicht-HZ mit Umsatz
+  if (!this.hzFlags[plz] && this.plzWerte[plz] > 0) {
+    const wkPotentiell = this.plzKennwerte[plz]?.value_wk_potentiell_0 ?? "–";
+    const hzPotentiell = this.plzKennwerte[plz]?.value_hz_potentiell_0 ?? "–";
+
+    const extraTable = `
+      <table class="extra-table">
+        <thead>
+          <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
+            <td class="value-cell">${wkPotentiell}</td>
+          </tr>
+          <tr>
+            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
+            <td class="value-cell">${hzPotentiell}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    sidePopup.insertAdjacentHTML('beforeend', extraTable);
+  }
+
+  // 🎬 Popup anzeigen
+  void sidePopup.offsetWidth;
+  setTimeout(() => sidePopup.classList.add('show'), 10);
+
+  // ❌ Schließen-Button aktivieren
+  const closeBtn = sidePopup.querySelector('.close-btn');
+  closeBtn.addEventListener('click', () => {
+    sidePopup.classList.remove('show');
+  });
 }
+
 
 applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
@@ -458,6 +557,27 @@ getFilteredData() {
   });
 }
 
+getColor(value, isHZ) {
+  const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
+
+  if (isHZ) {
+    return safeValue > 10000 ? "#006837" :   // Dunkelgrün
+           safeValue > 5000  ? "#78c679" :   // Mittelgrün
+           safeValue > 2500  ? "#ffffb2" :   // Gelb
+           safeValue > 1000  ? "#fd8d3c" :   // Orange
+           safeValue > 100   ? "#e31a1c" :   // Rot
+                               "#cfd4da";    // Grau
+  } else {
+    return safeValue > 10000 ? "#08306b" :   // Dunkelblau
+           safeValue > 5000  ? "#2171b5" :   // Mittelblau
+           safeValue > 2500  ? "#6baed6" :   // Hellblau
+           safeValue > 1000  ? "#c6dbef" :   // Blassblau
+           safeValue > 100   ? "#eff3ff" :   // Sehr hell
+                               "#cfd4da";    // Grau
+  }
+}
+
+
 updateGeoLayer() {
   const filteredData = this.getFilteredData();
   const plzWerte = this.extractPLZWerte(filteredData);
@@ -480,14 +600,38 @@ updateGeoLayer() {
 }
 
 updateMarkers() {
-  if (!this.neighbours) return;
+  const gesetzteNLs = new Set();
+  this.markerListeExtra = [];
 
-  this.markerListeExtra.forEach(marker => {
-    if (!this.map.hasLayer(marker)) {
-      marker.addTo(this.map);
-    }
+  Object.keys(this.Niederlassung).forEach(plz => {
+    const nl = this.Niederlassung[plz];
+    if (!nl || gesetzteNLs.has(nl)) return;
+
+    const koordinaten = this.nlKoordinaten[nl];
+    if (!koordinaten) return;
+
+    const lat = parseFloat(koordinaten.lat);
+    const lon = parseFloat(koordinaten.lon);
+
+    const icon = this.createMarkerIcon(nl);
+    L.marker([lat, lon], { icon }).addTo(this.map);
+    gesetzteNLs.add(nl);
+  });
+
+  this.extraNLs.forEach(({ nl, lat, lon }) => {
+    const icon = this.createMarkerIcon(nl);
+    const marker = L.marker([lat, lon], {
+      icon,
+      title: nl
+    });
+
+    this.markerListeExtra.push(marker); // Nur speichern
+    gesetzteNLs.add(nl);
   });
 }
+
+
+
 
 
 
@@ -591,56 +735,14 @@ setupFilterDropdowns() {
       this.render();
     }
 
-
-
-async render() {
-  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
-
-  let data = this._myDataSource.data;
-
-this._erhData = {}; // { erhID: { jahr: Set(nummern) } }
-
-data.forEach(row => {
-  const erhID = row["dimension_erhebung_0"]?.id?.trim();
-  const jahr = row["dimension_jahr_0"]?.id?.trim();
-  const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
-
-  console.log("ErhData 999 für Dropdowns:", erhID,jahr, nummer);
-  
-  if (!erhID || !jahr || !nummer) return;
-
-  this._erhData[erhID] = this._erhData[erhID] || {};
-  this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
-  this._erhData[erhID][jahr].add(nummer);
-});
-
-console.log("Finale erhData:", this._erhData);
-
-  // 🔍 Filter anwenden, falls aktiv
-if (this._activeFilter) {
-  const { erhID, jahr, nummer } = this._activeFilter;
-
-  data = data.filter(row => {
-    const id = row["dimension_erhebung_0"]?.id?.trim() || "@NullMember";
-    const y = row["dimension_jahr_0"]?.id?.trim() || "@NullMember";
-    const num = row["dimension_erhebungsnummer_0"]?.id?.trim() || "@NullMember";
-
-    return (
-      (id === erhID || id === "@NullMember") &&
-      (y === jahr || y === "@NullMember") &&
-      (num === nummer || num === "@NullMember")
-    );
-  });
-}
-
-
-  const plzWerte = {};
-  const hzFlags = {};
-  const Niederlassung = {};
-  const nlKoordinaten = {};
-  const kennwerte = {};
-  const plzKennwerte = {};
-  const extraNLs = [];
+prepareMapData(data) {
+  this.plzWerte = {};
+  this.hzFlags = {};
+  this.Niederlassung = {};
+  this.nlKoordinaten = {};
+  this.kennwerte = {};
+  this.plzKennwerte = {};
+  this.extraNLs = [];
 
   const kennzahlenIDs = [
     "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
@@ -649,229 +751,161 @@ if (this._activeFilter) {
     "value_kd_erhebung_0", "value_bon_erhebung_0", "value_auflage_0"
   ];
 
-  const sidePopUpIDs = ["value_wk_potentiell_0", "value_hz_potentiell_0"];
-  
-  
-  // 📦 Daten extrahieren
   data.forEach(row => {
-
-
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const lat = row["dimension_Lat_0"]?.id?.trim();
     const lon = row["dimension_lon_0"]?.id?.trim();
-    if (!plz || !lat || !lon) return;
+    if (!lat || !lon) return;
 
+    if (!plz || plz === "@NullMember") {
+      this.extraNLs.push({ nl: nl || "Unbekannt", lat: parseFloat(lat), lon: parseFloat(lon) });
+      return;
+    }
 
+    this.Niederlassung[plz] = nl;
+    this.nlKoordinaten[nl] = this.nlKoordinaten[nl] || { lat, lon };
+    this.hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
 
-if (!plz || plz === "@NullMember") {
-  extraNLs.push({ nl: nl || "Unbekannt", lat: parseFloat(lat), lon: parseFloat(lon) });
-  return;
-}
-
-
-    Niederlassung[plz] = nl;
-    nlKoordinaten[nl] = nlKoordinaten[nl] || { lat, lon };
-    hzFlags[plz] = row["dimension_hzflag_0"]?.id?.trim() === "X";
-
-    kennwerte[plz] = kennzahlenIDs.map(id => {
+    this.kennwerte[plz] = kennzahlenIDs.map(id => {
       const raw = row[id]?.raw;
       return typeof raw === "number" ? raw : "–";
     });
 
-    plzKennwerte[plz] = {
+    this.plzKennwerte[plz] = {
       value_hr_n_umsatz_0: row["value_hr_n_umsatz_0"]?.raw || 0,
       value_wk_potentiell_0: row["value_wk_potentiell_0"]?.raw,
       value_hz_potentiell_0: row["value_hz_potentiell_0"]?.raw
     };
 
-    plzWerte[plz] = plzKennwerte[plz].value_hr_n_umsatz_0;
+    this.plzWerte[plz] = this.plzKennwerte[plz].value_hr_n_umsatz_0;
   });
+}
 
-  // 🌍 GeoJSON laden
-  if (!this._geoData) {
-    try {
-      const res = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
-      this._geoData = await res.json();
-    } catch (err) {
-      console.error("❌ Fehler beim Laden der GeoJSON-Daten:", err);
-      return;
-    }
+
+prepareDropdownData(data) {
+  const erhSelect = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect = this._shadowRoot.getElementById("jahr-select");
+  const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+
+  if (!erhSelect || !jahrSelect || !nummerSelect) {
+    console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
+    return;
   }
 
-  // 🎨 Farbskala
-  const getColor = (value, isHZ) => {
-    const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
-    return isHZ
-      ? safeValue > 10000 ? "#006837" :   // Dunkelgrün
-           safeValue > 5000  ? "#78c679" :   // Mittelgrün
-           safeValue > 2500  ? "#ffffb2" :   // Gelb
-           safeValue > 1000  ? "#fd8d3c" :   // Orange
-           safeValue > 100   ? "#e31a1c" :   // Rot
-                               "#cfd4da"
-      : safeValue > 10000 ? "#08306b" :   // Dunkelblau
-           safeValue > 5000  ? "#2171b5" :   // Mittelblau
-           safeValue > 2500  ? "#6baed6" :   // Hellblau
-           safeValue > 1000  ? "#c6dbef" :   // Blassblau
-           safeValue > 100   ? "#eff3ff" :   // Sehr hell
-                               "#cfd4da";
-  };
+  // 🧹 Vorherige Optionen entfernen
+  erhSelect.innerHTML = "";
+  jahrSelect.innerHTML = "";
+  nummerSelect.innerHTML = "";
+  jahrSelect.disabled = true;
+  nummerSelect.disabled = true;
 
-  // 🗺️ Alte Layer entfernen
-  if (this._geoLayer) {
-    this.map.removeLayer(this._geoLayer);
-  }
+  // 🧩 Erhebungsstruktur aufbauen
+  this._erhData = {}; // { erhID: { jahr: Set(nummern) } }
 
-  // 🧩 Neue Layer erstellen
-  this._geoLayer = L.geoJSON(this._geoData, {
-    style: feature => {
-      const plz = feature.properties?.plz;
-      const value = plzWerte[plz] || 0;
-      const isHZ = hzFlags[plz] || false;
+  data.forEach(row => {
+    const erhID = row["dimension_erhebung_0"]?.id?.trim();
+    const jahr = row["dimension_jahr_0"]?.id?.trim();
+    const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    if (!erhID || !jahr || !nummer) return;
 
-      return {
-        fillColor: getColor(value, isHZ),
-        weight: 1,
-        opacity: 1,
-        color: 'white',
-        fillOpacity: 0.7
-      };
-    },
-    onEachFeature: (feature, layer) => {
-      layer.on('click', () => {
-        const plz = feature.properties.plz;
-        const note = feature.properties.note || "Keine Notiz";
-        const kennwerteArray = kennwerte[plz] || Array(kennzahlenIDs.length).fill("–");
-
-        const beschreibungen = {
-          value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
-          value_umsatz_p_hh_0: "Umsatz p. HH",
-          value_wk_in_percent_0: "Werbekosten (%)",
-          value_wk_nachbar_0: "WK (%) incl. Nachb.",
-          value_hz_kosten_0: "HZ-Werbekosten",
-          value_werbeverweigerer_0: "Werbeverweigerer (%)",
-          value_haushalte_0: "Haushalte",
-          value_kaufkraft_0: "BM-Kaufkraft-Idx",
-          value_ums_erhebung_0: "Umsatz",
-          value_kd_erhebung_0: "Anzahl Kunden",
-          value_bon_erhebung_0: "Ø-Bon",
-          value_auflage_0: "Auflage",
-        };
-
-        const beschreibungenSide = {
-          value_wk_potentiell_0: "WK in %",
-          value_hz_potentiell_0: "HZ-Werbekosten"
-        };
-
-        let rows = "";
-        kennwerteArray.forEach((wert, index) => {
-          const id = kennzahlenIDs[index];
-          const label = beschreibungen[id] || id;
-
-          if (index === 8) {
-            rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
-          }
-
-          rows += `
-            <tr class="kennzahl-row">
-              <td class="label-cell">${label}</td>
-              <td class="value-cell">${wert}</td>
-            </tr>
-          `;
-        });
-
-        const sidePopup = this._shadowRoot.getElementById('side-popup');
-        sidePopup.innerHTML = `
-          <button class="close-btn">×</button>
-          <table>
-            <thead>
-              <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
-              <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        `;
-
-        if (!hzFlags[plz] && plzWerte[plz] > 0) {
-          const wkPotentiell = plzKennwerte[plz]?.value_wk_potentiell_0 ?? "–";
-          const hzPotentiell = plzKennwerte[plz]?.value_hz_potentiell_0 ?? "–";
-
-          const extraTable = `
-            <table class="extra-table">
-              <thead>
-                <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-                  <td class="value-cell">${wkPotentiell}</td>
-                </tr>
-                <tr>
-                  <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-                  <td class="value-cell">${hzPotentiell}</td>
-                </tr>
-              </tbody>
-            </table>
-          `;
-          sidePopup.insertAdjacentHTML('beforeend', extraTable);
-        }
-
-        void sidePopup.offsetWidth;
-        setTimeout(() => sidePopup.classList.add('show'), 10);
-
-        const closeBtn = sidePopup.querySelector('.close-btn');
-        closeBtn.addEventListener('click', () => {
-          sidePopup.classList.remove('show');
-        });
-      });
-    }
-  }).addTo(this.map);
-    // 🧭 Marker pro Niederlassung setzen
-// 📍 Marker für vollständige NLs
-// 🧭 Marker pro Niederlassung setzen
-const gesetzteNLs = new Set();
-
-// 📍 Marker für vollständige NLs mit Kennwerten
-Object.keys(Niederlassung).forEach(plz => {
-  const nl = Niederlassung[plz];
-  if (!nl || gesetzteNLs.has(nl)) return;
-
-  const koordinaten = nlKoordinaten[nl];
-  if (!koordinaten) return;
-
-  const lat = parseFloat(koordinaten.lat);
-  const lon = parseFloat(koordinaten.lon);
-
-  const icon = this.createMarkerIcon(nl);
-  L.marker([lat, lon], { icon }).addTo(this.map);
-  gesetzteNLs.add(nl);
-});
-
-this.markerListeExtra = []; // Initialisierung vor der Schleife
-
-// 📍 Marker für extraNLs (nicht direkt zugeordnet)
-extraNLs.forEach(({ nl, lat, lon }) => {
-  const icon = this.createMarkerIcon(nl);
-  const marker = L.marker([lat, lon], {
-    icon,
-    title: nl
+    this._erhData[erhID] = this._erhData[erhID] || {};
+    this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
+    this._erhData[erhID][jahr].add(nummer);
   });
 
-  this.markerListeExtra.push(marker); // Nur speichern, nicht zur Karte hinzufügen
-  gesetzteNLs.add(nl);
-});
+  // 🧩 ErhebungsIDs in Dropdown einfügen
+  Object.keys(this._erhData).forEach(erhID => {
+    const opt = document.createElement("option");
+    opt.value = erhID;
+    opt.textContent = erhID;
+    erhSelect.appendChild(opt);
+  });
+
+  // 📅 Jahre nach Auswahl
+  erhSelect.addEventListener("change", () => {
+    jahrSelect.innerHTML = "";
+    nummerSelect.innerHTML = "";
+    jahrSelect.disabled = false;
+    nummerSelect.disabled = true;
+
+    const selectedID = erhSelect.value;
+    const jahre = Object.keys(this._erhData[selectedID] || {});
+
+    jahre.forEach(j => {
+      const opt = document.createElement("option");
+      opt.value = j;
+      opt.textContent = j;
+      jahrSelect.appendChild(opt);
+    });
+  });
+
+  // 🔢 Nummern nach Jahr
+  jahrSelect.addEventListener("change", () => {
+    nummerSelect.innerHTML = "";
+    nummerSelect.disabled = false;
+
+    const selectedID = erhSelect.value;
+    const selectedJahr = jahrSelect.value;
+    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []);
+
+    nummern.forEach(n => {
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n;
+      nummerSelect.appendChild(opt);
+    });
+  });
+
+  // 🟢 Filter aktivieren
+  const filterButton = this._shadowRoot.getElementById("filter-button");
+  if (filterButton) {
+    filterButton.addEventListener("click", () => {
+      const selectedID = erhSelect.value;
+      const selectedJahr = jahrSelect.value;
+      const selectedNummer = nummerSelect.value;
+
+      this.applyFilter(selectedID, selectedJahr, selectedNummer);
+    });
+  }
+}
 
 
 
 
+async render() {
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
 
+  this.showSpinner();
 
-        this.setupFilterDropdowns();
+  const rawData = this._myDataSource.data;
 
+  // 🧩 Erhebungsstruktur aufbauen und Dropdowns aktualisieren
+  this._erhData = this.buildErhebungsStruktur(rawData);
+  this.setupFilterDropdowns();
 
-  // 🧹 Spinner ausblenden nach erfolgreichem Rendern
+  // 🔍 Daten ggf. filtern
+  const filteredData = this._activeFilter
+    ? this.getFilteredData()
+    : rawData;
+
+  // 📦 Daten vorbereiten für Karte & Popup
+  this.prepareMapData(filteredData);
+
+  // 🌍 GeoJSON laden (nur einmal)
+  await this.loadGeoJson();
+
+  // 🗺️ GeoLayer aktualisieren
+  this.updateGeoLayer();
+
+  // 📍 Marker aktualisieren
+  this.updateMarkers();
+
+  // 🧹 Spinner ausblenden
   this.hideSpinner();
 }
+
+
 
 
     showNotesOnMap() {
@@ -907,7 +941,6 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
