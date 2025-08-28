@@ -423,6 +423,21 @@ applyFilter(erhID, jahr, nummer) {
   this.updateGeoLayer(); // Nur Layer aktualisieren
   this.updateMarkers();  // Marker ggf. neu setzen
 }
+    extractPLZWerte(data) {
+  const plzWerte = {};
+
+  data.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    const value = row["value_hr_n_umsatz_0"]?.raw;
+
+    if (!plz || plz === "@NullMember") return;
+
+    plzWerte[plz] = typeof value === "number" ? value : 0;
+  });
+
+  return plzWerte;
+}
+
 
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") return [];
@@ -892,6 +907,7 @@ extraNLs.forEach(({ nl, lat, lon }) => {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
+
 
 
 
