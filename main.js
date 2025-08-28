@@ -918,17 +918,21 @@ if (nlName) {
   console.warn(`⚠️ Keine gültige Niederlassung für PLZ ${plz}`);
 }
 
-const lat = row["dimension_Lat_0"]?.id;
-const lon = row["dimension_lon_0"]?.id;
+const latRaw = row["dimension_Lat_0"]?.label;
+const lonRaw = row["dimension_lon_0"]?.label;
 
-console.log(`📌 Roh-Koordinaten für PLZ ${plz}: lat=${lat}, lon=${lon}`);
+const lat = parseFloat(latRaw);
+const lon = parseFloat(lonRaw);
 
-if (typeof lat === "number" && typeof lon === "number") {
+console.log(`📌 Parsed Koordinaten für PLZ ${plz}: lat=${lat}, lon=${lon}`);
+
+if (!isNaN(lat) && !isNaN(lon)) {
   this.nlKoordinaten[plz] = { lat, lon };
   console.log(`✅ Koordinaten gespeichert für ${plz}:`, { lat, lon });
 } else {
-  console.error(`❌ Ungültige Koordinaten für PLZ ${plz}:`, { lat, lon });
+  console.error(`❌ Ungültige Koordinaten für PLZ ${plz}:`, { latRaw, lonRaw });
 }
+
 
 
     // Für vollständige Kennwertstruktur
