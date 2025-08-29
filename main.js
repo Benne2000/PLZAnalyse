@@ -423,7 +423,7 @@ initializeMapBase() {
   // 🧱 Initialisiere Marker-Gruppen und Marker
   this.filteredGroup = L.layerGroup().addTo(this.map);
   this.neighbourGroup = L.layerGroup();
-  this.createAllMarkers();
+
 
   // 📐 Resize-Handling
   if (!this._resizeObserver) {
