@@ -473,9 +473,18 @@ toggleNeighbours() {
     this.map.addLayer(this.neighbourGroup);
   }
 }
-
 createAllMarkers() {
   this.allMarkers = {};
+
+  if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
+    console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
+    return;
+  }
+
+  if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") {
+    console.warn("⚠️ nlKoordinaten ist nicht definiert oder kein Objekt:", this.nlKoordinaten);
+    return;
+  }
 
   Object.entries(this.Niederlassung).forEach(([plz, nl]) => {
     const coords = this.nlKoordinaten[plz];
@@ -487,14 +496,18 @@ createAllMarkers() {
     this.allMarkers[plz] = marker;
   });
 
-  // Sonder-Niederlassungen
-  this.extraNLs.forEach(({ nl, lat, lon }) => {
-    const icon = this.createMarkerIcon(nl);
-    const marker = L.marker([lat, lon], { icon, title: nl });
+  if (Array.isArray(this.extraNLs)) {
+    this.extraNLs.forEach(({ nl, lat, lon }) => {
+      const icon = this.createMarkerIcon(nl);
+      const marker = L.marker([lat, lon], { icon, title: nl });
 
-    this.allMarkers[`extra-${nl}`] = marker;
-  });
+      this.allMarkers[`extra-${nl}`] = marker;
+    });
+  } else {
+    console.warn("⚠️ extraNLs ist nicht definiert oder kein Array:", this.extraNLs);
+  }
 }
+
 
 createMarkerIcon(nl) {
   if (!this.iconCache) this.iconCache = {};
