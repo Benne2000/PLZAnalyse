@@ -244,8 +244,11 @@ let hasTriggeredClick = false;
   padding: 10px;
   box-sizing: border-box;
   font-family: sans-serif;
-  background: #f9f9f9;
+  background: f2f4f7;
   border-right: 2px solid #b41821;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 }
 
 .filter-container label {
@@ -458,10 +461,15 @@ renderDataTable(data) {
     return;
   }
 
+  // 🧱 Container auf flex setzen, damit Scrollbereich sich ausdehnen kann
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.height = '100%';
+
   const scrollWrapper = document.createElement('div');
-  scrollWrapper.style.maxHeight = '450px';
+  scrollWrapper.style.flex = '1'; // ⬆️ nimmt gesamte Höhe ein
   scrollWrapper.style.overflowY = 'auto';
-  scrollWrapper.style.border = '1px solid #b41821'; // 🔴 Außenrahmen rot
+  scrollWrapper.style.border = '1px solid #b41821';
   scrollWrapper.style.borderRadius = '6px';
 
   const table = document.createElement('table');
@@ -469,8 +477,8 @@ renderDataTable(data) {
   table.style.width = '100%';
   table.style.borderCollapse = 'collapse';
   table.style.fontFamily = 'sans-serif';
-  table.style.tableLayout = 'fixed'; // 📏 feste Spaltenbreite
-  table.style.border = '1px solid #b41821'; // 🔴 Tabellenrahmen rot
+  table.style.tableLayout = 'fixed';
+  table.style.border = '1px solid #b41821';
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -479,7 +487,7 @@ renderDataTable(data) {
     { label: 'PLZ', width: '40px' },
     { label: 'Gemeinde', width: '100px' },
     { label: 'HZ', width: '20px' },
-    { label: 'Netto-Umsatz\n(Jahr)', width: '7ßpx' },
+    { label: 'Netto-Umsatz\n(Jahr)', width: '70px' },
     { label: 'WK (%)\nincl. Nachb.', width: '50px' }
   ];
 
@@ -493,10 +501,10 @@ renderDataTable(data) {
     th.style.position = 'sticky';
     th.style.top = '0';
     th.style.zIndex = '1';
-    th.style.whiteSpace = 'pre-line'; // ✅ Zeilenumbruch im Header erlaubt
+    th.style.whiteSpace = 'pre-line';
     th.style.width = width;
-    th.style.borderBottom = '1px solid #b41821'; // 🔴 untere Linie im Header
-    th.style.borderRight = '1px solid #b41821'; // 🔴 rechte Linie im Header
+    th.style.borderBottom = '1px solid #b41821';
+    th.style.borderRight = '1px solid #b41821';
     headerRow.appendChild(th);
   });
 
@@ -523,7 +531,7 @@ renderDataTable(data) {
 
       const wkRaw = kennwerte["value_wk_nachbar_0"];
       const wk = typeof wkRaw === "number"
-        ? wkRaw.toFixed(1) 
+        ? wkRaw.toFixed(1)
         : wkRaw === "–"
           ? '–'
           : 'Keine Angabe';
@@ -532,13 +540,13 @@ renderDataTable(data) {
 
       rowValues.forEach((text, i) => {
         const td = document.createElement('td');
-        td.textContent = text.replace(/\n/g, ' '); // 🚫 Kein Zeilenumbruch im Inhalt
-        td.title = text; // 🧠 Tooltip mit vollem Text
+        td.textContent = text.replace(/\n/g, ' ');
+        td.title = text;
         td.style.padding = '6px 8px';
-        td.style.borderBottom = '1px solid #b41821'; // 🔴 Zelllinie unten
-        td.style.borderRight = '1px solid #b41821'; // 🔴 Zelllinie rechts
+        td.style.borderBottom = '1px solid #b41821';
+        td.style.borderRight = '1px solid #b41821';
         td.style.fontSize = '0.9rem';
-        td.style.whiteSpace = 'nowrap'; // 🚫 Kein Umbruch
+        td.style.whiteSpace = 'nowrap';
         td.style.overflow = 'hidden';
         td.style.textOverflow = 'ellipsis';
         td.style.width = headers[i].width;
