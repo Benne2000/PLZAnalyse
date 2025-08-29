@@ -313,31 +313,24 @@ let hasTriggeredClick = false;
     <select id="nummer-select" disabled></select>
 
     <button id="filter-button">Anzeigen</button>
-  </div>
 
-  <!-- 📊 Tabelle unterhalb der Filter -->
-  <div class="table-container" id="table-container">
-    <!-- Die Tabelle wird hier dynamisch eingefügt -->
+    <!-- 📊 Tabelle jetzt innerhalb der Filtermaske -->
+    <div class="table-container" id="table-container">
+      <!-- Die Tabelle wird hier dynamisch eingefügt -->
+    </div>
   </div>
 
   <!-- 🗺️ Kartenbereich -->
   <div class="map-container">
     <div id="loading-spinner" class="spinner"></div>
     <div id="map"></div>
-
-    <div class="legend" id="legend">
-      <strong>Wert (PLZ)</strong><br>
-      <i style="background:#08306b"></i> > 10.000<br>
-      <i style="background:#2171b5"></i> > 5.000<br>
-      <i style="background:#6baed6"></i> > 1.000<br>
-      <i style="background:#c6dbef"></i> > 100<br>
-      <i style="background:#f7fbff"></i> ≤ 100
-    </div>
+    <div class="legend" id="legend">...</div>
   </div>
 
   <!-- 📌 Popup für Details -->
   <div id="side-popup"></div>
 </div>
+
 
 
 
@@ -466,9 +459,10 @@ renderDataTable(data) {
   const table = document.createElement('table');
   table.classList.add('data-table');
 
+  // 🔠 Tabellenkopf
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  ['PLZ', 'PLZ.Note', 'HZFlag', 'N_Umsatz', 'WK% inkl. Nachbar'].forEach(header => {
+  ['PLZ', 'Note', 'HZFlag', 'Netto-Umsatz (Jahr)', 'WK (%) incl. Nachb.'].forEach(header => {
     const th = document.createElement('th');
     th.textContent = header;
     headerRow.appendChild(th);
@@ -476,15 +470,20 @@ renderDataTable(data) {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
+  // 📄 Tabelleninhalt
   const tbody = document.createElement('tbody');
   data.forEach(entry => {
     const tr = document.createElement('tr');
 
     const plz = entry["dimension_plz_0"]?.id?.trim() || '–';
-    const note = entry["plzNote"] || '–';
+    const note = entry?.feature?.properties?.note || 'Keine Notiz';
     const hzFlag = entry["HZFlag"] ? '🟢' : '🔴';
-    const umsatz = entry["N_Umsatz"] ?? '–';
-    const wk = entry["WK_withNeighbours"] != null ? `${entry["WK_withNeighbours"]}%` : '–';
+    const umsatz = typeof entry["value_hr_n_umsatz_0"] === 'number'
+      ? entry["value_hr_n_umsatz_0"].toLocaleString('de-DE') + ' €'
+      : '–';
+    const wk = typeof entry["value_wk_nachbar_0"] === 'number'
+      ? entry["value_wk_nachbar_0"].toFixed(1) + ' %'
+      : '–';
 
     [plz, note, hzFlag, umsatz, wk].forEach(text => {
       const td = document.createElement('td');
@@ -498,6 +497,7 @@ renderDataTable(data) {
   table.appendChild(tbody);
   container.appendChild(table);
 }
+
 
 
 initializeMapBase() {
@@ -740,6 +740,10 @@ console.log("💰 Umsatz (raw):", umsatz);
   });
 }
 
+updateNeighbours(filteredData) {
+  const filteredMarkers = filteredData.map(entry => createMarker(entry));
+  this.neighbours = computeNeighbours(filteredMarkers);
+}
 
 
 
