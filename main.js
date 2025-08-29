@@ -344,18 +344,28 @@ hideSpinner() {
 
 buildErhebungsStruktur(data) {
   const struktur = {};
+
   data.forEach(row => {
     const erhID = row["dimension_erhebung_0"]?.id?.trim();
     const jahr = row["dimension_jahr_0"]?.id?.trim();
     const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
-    if (!erhID || !jahr || !nummer) return;
 
+    // 🚫 Ungültige Werte überspringen
+    if (
+      !erhID || erhID === "@NullMember" ||
+      !jahr || jahr === "@NullMember" ||
+      !nummer || nummer === "@NullMember"
+    ) return;
+
+    // 🧩 Struktur aufbauen
     struktur[erhID] = struktur[erhID] || {};
     struktur[erhID][jahr] = struktur[erhID][jahr] || new Set();
     struktur[erhID][jahr].add(nummer);
   });
+
   return struktur;
 }
+
 
     
 async loadGeoJson() {
@@ -739,8 +749,6 @@ updateMarkers() {
 
 
 
-
-
 setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
@@ -751,30 +759,42 @@ setupFilterDropdowns() {
     return;
   }
 
-  // 🧹 Vorherige Optionen entfernen
+  // 🧹 Reset
   erhSelect.innerHTML = "";
   jahrSelect.innerHTML = "";
   nummerSelect.innerHTML = "";
   jahrSelect.disabled = true;
   nummerSelect.disabled = true;
 
-  // 🧩 ErhebungsIDs einfügen
-  Object.keys(this._erhData).forEach(erhID => {
+  // 🏷️ Platzhalter einfügen
+  const createPlaceholder = (text) => {
     const opt = document.createElement("option");
-    opt.value = erhID;
-    opt.textContent = erhID;
-    erhSelect.appendChild(opt);
+    opt.value = "";
+    opt.textContent = text;
+    opt.disabled = true;
+    opt.selected = true;
+    return opt;
+  };
+
+  erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
+  Object.keys(this._erhData).forEach(erhID => {
+    if (erhID !== "@NullMember") {
+      const opt = document.createElement("option");
+      opt.value = erhID;
+      opt.textContent = erhID;
+      erhSelect.appendChild(opt);
+    }
   });
 
-  // 📅 Jahre nach Auswahl
   erhSelect.addEventListener("change", () => {
     jahrSelect.innerHTML = "";
     nummerSelect.innerHTML = "";
     jahrSelect.disabled = false;
     nummerSelect.disabled = true;
 
+    jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
     const selectedID = erhSelect.value;
-    const jahre = Object.keys(this._erhData[selectedID] || {});
+    const jahre = Object.keys(this._erhData[selectedID] || {}).filter(j => j !== "@NullMember");
 
     jahre.forEach(j => {
       const opt = document.createElement("option");
@@ -784,14 +804,14 @@ setupFilterDropdowns() {
     });
   });
 
-  // 🔢 Nummern nach Jahr
   jahrSelect.addEventListener("change", () => {
     nummerSelect.innerHTML = "";
     nummerSelect.disabled = false;
 
+    nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
     const selectedID = erhSelect.value;
     const selectedJahr = jahrSelect.value;
-    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []);
+    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []).filter(n => n !== "@NullMember");
 
     nummern.forEach(n => {
       const opt = document.createElement("option");
@@ -801,7 +821,6 @@ setupFilterDropdowns() {
     });
   });
 
-  // 🟢 Filter aktivieren
   const filterButton = this._shadowRoot.getElementById("filter-button");
   if (filterButton) {
     filterButton.addEventListener("click", () => {
@@ -809,10 +828,15 @@ setupFilterDropdowns() {
       const selectedJahr = jahrSelect.value;
       const selectedNummer = nummerSelect.value;
 
-      this.applyFilter(selectedID, selectedJahr, selectedNummer);
+      if (selectedID && selectedJahr && selectedNummer) {
+        this.applyFilter(selectedID, selectedJahr, selectedNummer);
+      } else {
+        console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
+      }
     });
   }
 }
+
 
 
 
@@ -843,12 +867,14 @@ setupFilterDropdowns() {
  prepareMapData(filteredData) {
   const rawData = this._myDataSource?.data || [];
 
+  // Initialisierung aller relevanten Strukturen
   this.kennwerte = {};
   this.hzFlags = {};
   this.Niederlassung = {};
   this.nlKoordinaten = {};
   this.plzKennwerte = {};
   this.filteredKennwerte = {};
+  this.filteredKennwerteOhnePLZ = {};
   this.extraNLs = [];
 
   const kennzahlenIDs = [
@@ -865,62 +891,54 @@ setupFilterDropdowns() {
 
   const dataByPLZ = {};
 
-  // 🔍 Gefilterte Daten für Popup
+  // 🔍 Verarbeitung der gefilterten Daten
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
-    if (!plz || plz === "@NullMember") return;
-
-    // Initialisierung
-    this.filteredKennwerte[plz] = {};
     const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
-    this.hzFlags[plz] = hzFlag;
+    const nlName = row["dimension_niederlassung_0"]?.id?.trim();
+    const latRaw = row["dimension_Lat_0"]?.label;
+    const lonRaw = row["dimension_lon_0"]?.label;
+    const lat = parseFloat(latRaw);
+    const lon = parseFloat(lonRaw);
 
-    // Kennzahlen für Popup
+    const isValidPLZ = plz && plz !== "@NullMember";
+
+    const targetKennwerte = isValidPLZ ? this.filteredKennwerte : this.filteredKennwerteOhnePLZ;
+    const key = isValidPLZ ? plz : `NL_${nlName || Math.random().toString(36).slice(2)}`;
+
+    targetKennwerte[key] = {};
+    this.hzFlags[key] = hzFlag;
+
     kennzahlenIDs.forEach(id => {
       const raw = row[id]?.raw;
-      this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
+      targetKennwerte[key][id] = typeof raw === "number" ? raw : "–";
     });
 
+    // 📍 Niederlassung speichern
+    if (nlName) {
+      this.Niederlassung[key] = nlName;
+    }
 
- // Niederlassung & Koordinaten
- console.log(`🧾 Raw row für PLZ ${plz}:`, row);
+    // 📌 Koordinaten speichern
+    if (!isNaN(lat) && !isNaN(lon)) {
+      this.nlKoordinaten[key] = { lat, lon };
+    }
 
-const nlName = row["dimension_niederlassung_0"]?.id?.trim();
+    // 🧭 Sonderfall: ohne PLZ → extraNLs
+    if (!isValidPLZ && nlName && !isNaN(lat) && !isNaN(lon)) {
+      this.extraNLs.push({ nl: nlName, lat, lon });
+    }
 
-console.log(`🔍 Gefundene NL für PLZ ${plz}:`, nlName);
-
-if (nlName) {
-  this.Niederlassung[plz] = nlName;
-  console.log(`✅ Niederlassung gesetzt: ${plz} → ${nlName}`);
-} else {
-  console.warn(`⚠️ Keine gültige Niederlassung für PLZ ${plz}`);
-}
-
-const latRaw = row["dimension_Lat_0"]?.label;
-const lonRaw = row["dimension_lon_0"]?.label;
-
-const lat = parseFloat(latRaw);
-const lon = parseFloat(lonRaw);
-
-console.log(`📌 Parsed Koordinaten für PLZ ${plz}: lat=${lat}, lon=${lon}`);
-
-if (!isNaN(lat) && !isNaN(lon)) {
-  this.nlKoordinaten[plz] = { lat, lon };
-  console.log(`✅ Koordinaten gespeichert für ${plz}:`, { lat, lon });
-} else {
-  console.error(`❌ Ungültige Koordinaten für PLZ ${plz}:`, { latRaw, lonRaw });
-}
-
-
-
-    // Für vollständige Kennwertstruktur
-    dataByPLZ[plz] = dataByPLZ[plz] || {};
-    kennzahlenIDs.forEach(id => {
-      if (!unfilterbareIDs.includes(id)) {
-        const raw = row[id]?.raw;
-        dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
-      }
-    });
+    // 📦 Kennwerte für plzKennwerte
+    if (isValidPLZ) {
+      dataByPLZ[plz] = dataByPLZ[plz] || {};
+      kennzahlenIDs.forEach(id => {
+        if (!unfilterbareIDs.includes(id)) {
+          const raw = row[id]?.raw;
+          dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
+        }
+      });
+    }
   });
 
   // 🔄 Ergänzung unfilterbarer Werte aus rawData
@@ -942,7 +960,7 @@ if (!isNaN(lat) && !isNaN(lon)) {
       this.hzFlags[plz] = hzFlag;
     }
 
-    const nlName = row["dimension_niederlassung_0"]?.name?.trim();
+    const nlName = row["dimension_niederlassung_0"]?.id?.trim();
     if (nlName && !this.Niederlassung[plz]) {
       this.Niederlassung[plz] = nlName;
     }
@@ -966,19 +984,8 @@ if (!isNaN(lat) && !isNaN(lon)) {
       this.plzKennwerte[plz][id] = werte[i];
     });
   });
-
-  // 🧭 Sonder-Niederlassungen ohne PLZ
-  rawData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const nlName = row["dimension_niederlassung_0"]?.name?.trim();
-    const lat = row["value_latitude_0"]?.raw;
-    const lon = row["value_longitude_0"]?.raw;
-
-    if ((!plz || plz === "@NullMember") && nlName && typeof lat === "number" && typeof lon === "number") {
-      this.extraNLs.push({ nl: nlName, lat, lon });
-    }
-  });
 }
+
 
 
 
@@ -1148,7 +1155,6 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
