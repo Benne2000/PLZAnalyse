@@ -263,11 +263,34 @@ let hasTriggeredClick = false;
   font-size: 0.9rem;
 }
 
+.table-container {
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.table-container th,
+.table-container td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: left;
+}
+
+.table-container th {
+  background-color: #f0f0f0;
+}
+
 
   </style>
 
 
 
+<div class="layout">
 <div class="layout">
   <div class="filter-container">
     <label for="erhebung-select">ErhebungsID:</label>
@@ -281,8 +304,14 @@ let hasTriggeredClick = false;
 
     <button id="filter-button">Anzeigen</button>
   </div>
+
+  <!-- 🆕 Tabelle unterhalb der Filter -->
+  <div class="table-container" id="table-container">
+    <!-- Die Tabelle wird hier dynamisch eingefügt -->
+  </div>
+
   <div class="map-container">
-    <div id="loading-spinner" class="spinner"></div> <!-- Spinner hier einfügen -->
+    <div id="loading-spinner" class="spinner"></div>
     <div id="map"></div>
     <div class="legend" id="legend">
       <strong>Wert (PLZ)</strong><br>
@@ -296,6 +325,7 @@ let hasTriggeredClick = false;
 
   <div id="side-popup"></div>
 </div>
+
 
   `;
 
@@ -409,6 +439,52 @@ async loadGeoJson() {
   } catch (error) {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
+}
+
+renderDataTable(data) {
+  const container = this._shadowRoot.getElementById('table-container');
+  container.innerHTML = ''; // Vorherige Tabelle entfernen
+
+  if (!Array.isArray(data) || data.length === 0) {
+    container.textContent = 'Keine Daten verfügbar.';
+    return;
+  }
+
+  const table = document.createElement('table');
+  table.classList.add('data-table');
+
+  // Tabellenkopf
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  ['PLZ', 'Niederlassung', 'Koordinaten'].forEach(header => {
+    const th = document.createElement('th');
+    th.textContent = header;
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Tabellenkörper
+  const tbody = document.createElement('tbody');
+  data.forEach(entry => {
+    const row = document.createElement('tr');
+
+    const plz = entry["dimension_plz_0"]?.id?.trim() || '–';
+    const nl = entry["niederlassung"] || '–';
+    const coords = this.nlKoordinaten?.[plz];
+    const coordText = coords ? `${coords.lat}, ${coords.lon}` : '–';
+
+    [plz, nl, coordText].forEach(text => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      row.appendChild(td);
+    });
+
+    tbody.appendChild(row);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
 }
 
 
@@ -1125,9 +1201,9 @@ async render() {
   this.setupFilterDropdowns();
 
   const filteredData = this._activeFilter ? this.getFilteredData() : rawData;
-  this.prepareMapData(filteredData); // ⬅️ Marker-Daten vorbereiten
+  this.prepareMapData(filteredData);
 
-  this.createAllMarkers(); // ⬅️ Marker erzeugen und anzeigen
+  this.createAllMarkers();
 
   await this.loadGeoJson();
   this.updateGeoLayer();
@@ -1136,10 +1212,13 @@ async render() {
     .map(d => d["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  this.updateMarkers(filteredPLZs); // ⬅️ Marker nach Filter anzeigen
+  this.updateMarkers(filteredPLZs);
+
+  this.renderDataTable(filteredData); // ⬅️ Tabelle aktualisieren
 
   this.hideSpinner();
 }
+
 
 
 
