@@ -524,7 +524,7 @@ renderDataTable(data) {
       const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
       const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-const umsatz = typeof umsatzRaw?.raw === "number"
+      const umsatz = typeof umsatzRaw?.raw === "number"
 
         ? umsatzRaw.toLocaleString('de-DE')
         : umsatzRaw === "–"
@@ -532,9 +532,9 @@ const umsatz = typeof umsatzRaw?.raw === "number"
           : 'Keine Angabe';
 
       const wkRaw = kennwerte["value_wk_nachbar_0"];
-const wk = typeof wkRaw?.raw === "number"
+      const wk = typeof wkRaw?.raw === "number"
 
-        ? wkRaw.toFixed(1)
+        ? wkRaw.raw.toFixed(1)
         : wkRaw === "–"
           ? '–'
           : 'Keine Angabe';
