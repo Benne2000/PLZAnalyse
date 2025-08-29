@@ -451,13 +451,22 @@ renderDataTable(data) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = ''; // Tabelle leeren
 
-  if (!Array.isArray(data) || data.length === 0) {
+  if (!data || Object.keys(this.filteredKennwerte).length === 0) {
     container.textContent = 'Keine Daten verfügbar.';
     return;
   }
 
+  // 📦 Scrollbarer Wrapper
+  const scrollWrapper = document.createElement('div');
+  scrollWrapper.style.maxHeight = '300px'; // Höhe anpassbar
+  scrollWrapper.style.overflowY = 'auto';
+  scrollWrapper.style.border = '1px solid #ccc';
+  scrollWrapper.style.borderRadius = '6px';
+
   const table = document.createElement('table');
-  table.classList.add('data-table');
+  table.style.width = '100%';
+  table.style.borderCollapse = 'collapse';
+  table.style.fontFamily = 'sans-serif';
 
   // 🔠 Tabellenkopf
   const thead = document.createElement('thead');
@@ -465,6 +474,13 @@ renderDataTable(data) {
   ['PLZ', 'Note', 'HZFlag', 'Netto-Umsatz (Jahr)', 'WK (%) incl. Nachb.'].forEach(header => {
     const th = document.createElement('th');
     th.textContent = header;
+    th.style.backgroundColor = '#b41821';
+    th.style.color = 'white';
+    th.style.padding = '8px';
+    th.style.textAlign = 'left';
+    th.style.position = 'sticky';
+    th.style.top = '0';
+    th.style.zIndex = '1';
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
@@ -472,22 +488,28 @@ renderDataTable(data) {
 
   // 📄 Tabelleninhalt
   const tbody = document.createElement('tbody');
-  data.forEach(entry => {
+  Object.entries(this.filteredKennwerte).forEach(([plz, kennwerte]) => {
     const tr = document.createElement('tr');
 
-    const plz = entry["dimension_plz_0"]?.id?.trim() || '–';
-    const note = entry?.feature?.properties?.note || 'Keine Notiz';
-    const hzFlag = entry["HZFlag"] ? '🟢' : '🔴';
-    const umsatz = typeof entry["value_hr_n_umsatz_0"] === 'number'
-      ? entry["value_hr_n_umsatz_0"].toLocaleString('de-DE') + ' €'
+    const note = kennwerte["dimension_note_0"]?.label?.trim() || 'Keine Notiz';
+    const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
+
+    const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
+    const umsatz = typeof umsatzRaw === "number"
+      ? umsatzRaw.toLocaleString('de-DE') + ' €'
       : '–';
-    const wk = typeof entry["value_wk_nachbar_0"] === 'number'
-      ? entry["value_wk_nachbar_0"].toFixed(1) + ' %'
+
+    const wkRaw = kennwerte["value_wk_nachbar_0"];
+    const wk = typeof wkRaw === "number"
+      ? wkRaw.toFixed(1) + ' %'
       : '–';
 
     [plz, note, hzFlag, umsatz, wk].forEach(text => {
       const td = document.createElement('td');
       td.textContent = text;
+      td.style.padding = '6px 8px';
+      td.style.borderBottom = '1px solid #eee';
+      td.style.fontSize = '0.9rem';
       tr.appendChild(td);
     });
 
@@ -495,8 +517,10 @@ renderDataTable(data) {
   });
 
   table.appendChild(tbody);
-  container.appendChild(table);
+  scrollWrapper.appendChild(table);
+  container.appendChild(scrollWrapper);
 }
+
 
 
 
