@@ -584,7 +584,8 @@ createAllMarkers() {
     const marker = L.marker([coords.lat, coords.lon], { icon, title: nl });
 
     this.allMarkers[plz] = marker;
-    this.filteredGroup.addLayer(marker); // ⬅️ Marker direkt sichtbar machen
+
+
   });
 
   if (Array.isArray(this.extraNLs)) {
@@ -751,7 +752,13 @@ updateNeighbours(filteredData) {
 applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
   this.updateGeoLayer(); // Nur Layer aktualisieren
-  this.updateMarkers();  // Marker ggf. neu setzen
+
+  const filteredData = this.getFilteredData(); // 🔍 Hole gefilterte Daten
+
+  const filteredPLZs = filteredData
+    .map(row => row["dimension_plz_0"]?.id?.trim())
+    .filter(plz => plz && plz !== "@NullMember");
+  this.updateMarkers(filteredPLZs);  
 }
     extractPLZWerte(data) {
   const plzWerte = {};
@@ -856,19 +863,17 @@ updateMarkers(filteredPLZs) {
   const filteredSet = new Set(filteredPLZs);
 
   Object.entries(this.allMarkers).forEach(([key, marker]) => {
-    // Extra-Marker immer anzeigen
-    if (key.startsWith("extra-")) {
-      this.filteredGroup.addLayer(marker);
-      return;
-    }
+    const isExtra = key.startsWith("extra-");
+    const isFiltered = filteredSet.has(key);
 
-    if (filteredSet.has(key)) {
+    if (isExtra || isFiltered) {
       this.filteredGroup.addLayer(marker);
     } else {
       this.neighbourGroup.addLayer(marker);
     }
   });
 }
+
 
 
 
@@ -1213,27 +1218,41 @@ async render() {
   this.showSpinner();
 
   const rawData = this._myDataSource.data;
+
+  // 🔧 Filterstruktur & Dropdowns vorbereiten
   this._erhData = this.buildErhebungsStruktur(rawData);
   this.setupFilterDropdowns();
 
-  const filteredData = this._activeFilter ? this.getFilteredData() : rawData;
+  // 🔍 Filter anwenden oder Rohdaten verwenden
+  const isFiltered = !!this._activeFilter;
+  const filteredData = isFiltered ? this.getFilteredData() : rawData;
+
+  // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
   this.prepareMapData(filteredData);
 
+  // 📍 Marker erzeugen (aber noch nicht anzeigen)
   this.createAllMarkers();
 
+  // 🌍 GeoJSON laden & Layer aktualisieren
   await this.loadGeoJson();
   this.updateGeoLayer();
 
-  const filteredPLZs = filteredData
-    .map(d => d["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember");
+  // 📌 PLZs extrahieren für Marker-Filterung
+  const filteredPLZs = isFiltered
+    ? filteredData
+        .map(d => d["dimension_plz_0"]?.id?.trim())
+        .filter(plz => plz && plz !== "@NullMember")
+    : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
 
+  // 📍 Marker anzeigen (gefiltert oder vollständig)
   this.updateMarkers(filteredPLZs);
 
-  this.renderDataTable(filteredData); // ⬅️ Tabelle aktualisieren
+  // 📊 Tabelle aktualisieren
+  this.renderDataTable(filteredData);
 
   this.hideSpinner();
 }
+
 
 
 
