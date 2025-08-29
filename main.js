@@ -1326,8 +1326,7 @@ async render() {
   // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
   this.prepareMapData(filteredData);
 
-  // 📍 Marker erzeugen (aber noch nicht anzeigen)
-  this.createAllMarkers();
+
 
   // 🌍 GeoJSON laden & Layer aktualisieren
   await this.loadGeoJson();
