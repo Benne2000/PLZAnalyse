@@ -1329,8 +1329,9 @@ async render() {
 
   // 🌍 GeoJSON laden & Layer aktualisieren
   await this.loadGeoJson();
-  this.updateGeoLayer();
 
+  this.updateGeoLayer();
+    this.createAllMarkers();
   // 📌 PLZs extrahieren für Marker-Filterung
   const filteredPLZs = isFiltered
     ? filteredData
