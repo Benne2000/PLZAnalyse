@@ -759,6 +759,7 @@ applyFilter(erhID, jahr, nummer) {
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
   this.updateMarkers(filteredPLZs);  
+  this.renderDataTable(filteredData); 
 }
     extractPLZWerte(data) {
   const plzWerte = {};
