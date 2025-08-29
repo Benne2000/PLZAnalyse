@@ -484,7 +484,7 @@
     const headerRow = document.createElement('tr');
 
     const headers = [
-      { label: 'PLZ', width: '35px' },
+      { label: 'PLZ', width: '40px' },
       { label: 'Gemeinde', width: '90px' },
       { label: 'HZ', width: '20px' },
       { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
