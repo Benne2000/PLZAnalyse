@@ -264,34 +264,44 @@ let hasTriggeredClick = false;
 }
 
 .table-container {
-  margin: 1rem 0;
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-family: sans-serif;
   overflow-x: auto;
 }
 
 .table-container table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.9rem;
 }
 
 .table-container th,
 .table-container td {
-  border: 1px solid #ccc;
-  padding: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #eee;
   text-align: left;
+  font-size: 0.9rem;
 }
 
 .table-container th {
-  background-color: #f0f0f0;
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: #333;
 }
 
+.table-container tr:hover {
+  background-color: #f0f8ff;
+}
 
   </style>
 
 
 
 <div class="layout">
-<div class="layout">
+  <!-- 🔍 Filterbereich -->
   <div class="filter-container">
     <label for="erhebung-select">ErhebungsID:</label>
     <select id="erhebung-select"></select>
@@ -305,14 +315,16 @@ let hasTriggeredClick = false;
     <button id="filter-button">Anzeigen</button>
   </div>
 
-  <!-- 🆕 Tabelle unterhalb der Filter -->
+  <!-- 📊 Tabelle unterhalb der Filter -->
   <div class="table-container" id="table-container">
     <!-- Die Tabelle wird hier dynamisch eingefügt -->
   </div>
 
+  <!-- 🗺️ Kartenbereich -->
   <div class="map-container">
     <div id="loading-spinner" class="spinner"></div>
     <div id="map"></div>
+
     <div class="legend" id="legend">
       <strong>Wert (PLZ)</strong><br>
       <i style="background:#08306b"></i> > 10.000<br>
@@ -323,8 +335,10 @@ let hasTriggeredClick = false;
     </div>
   </div>
 
+  <!-- 📌 Popup für Details -->
   <div id="side-popup"></div>
 </div>
+
 
 
   `;
@@ -440,10 +454,9 @@ async loadGeoJson() {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
 }
-
 renderDataTable(data) {
   const container = this._shadowRoot.getElementById('table-container');
-  container.innerHTML = ''; // Vorherige Tabelle entfernen
+  container.innerHTML = ''; // Tabelle leeren
 
   if (!Array.isArray(data) || data.length === 0) {
     container.textContent = 'Keine Daten verfügbar.';
@@ -453,10 +466,9 @@ renderDataTable(data) {
   const table = document.createElement('table');
   table.classList.add('data-table');
 
-  // Tabellenkopf
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  ['PLZ', 'Niederlassung', 'Koordinaten'].forEach(header => {
+  ['PLZ', 'PLZ.Note', 'HZFlag', 'N_Umsatz', 'WK% inkl. Nachbar'].forEach(header => {
     const th = document.createElement('th');
     th.textContent = header;
     headerRow.appendChild(th);
@@ -464,23 +476,23 @@ renderDataTable(data) {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  // Tabellenkörper
   const tbody = document.createElement('tbody');
   data.forEach(entry => {
-    const row = document.createElement('tr');
+    const tr = document.createElement('tr');
 
     const plz = entry["dimension_plz_0"]?.id?.trim() || '–';
-    const nl = entry["niederlassung"] || '–';
-    const coords = this.nlKoordinaten?.[plz];
-    const coordText = coords ? `${coords.lat}, ${coords.lon}` : '–';
+    const note = entry["plzNote"] || '–';
+    const hzFlag = entry["HZFlag"] ? '🟢' : '🔴';
+    const umsatz = entry["N_Umsatz"] ?? '–';
+    const wk = entry["WK_withNeighbours"] != null ? `${entry["WK_withNeighbours"]}%` : '–';
 
-    [plz, nl, coordText].forEach(text => {
+    [plz, note, hzFlag, umsatz, wk].forEach(text => {
       const td = document.createElement('td');
       td.textContent = text;
-      row.appendChild(td);
+      tr.appendChild(td);
     });
 
-    tbody.appendChild(row);
+    tbody.appendChild(tr);
   });
 
   table.appendChild(tbody);
