@@ -447,6 +447,8 @@ async loadGeoJson() {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
 }
+
+
 renderDataTable(data) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
@@ -459,7 +461,7 @@ renderDataTable(data) {
   const scrollWrapper = document.createElement('div');
   scrollWrapper.style.maxHeight = '450px';
   scrollWrapper.style.overflowY = 'auto';
-  scrollWrapper.style.border = '1px solid #ccc';
+  scrollWrapper.style.border = '1px solid #b41821'; // 🔴 Außenrahmen rot
   scrollWrapper.style.borderRadius = '6px';
 
   const table = document.createElement('table');
@@ -468,14 +470,15 @@ renderDataTable(data) {
   table.style.borderCollapse = 'collapse';
   table.style.fontFamily = 'sans-serif';
   table.style.tableLayout = 'fixed'; // 📏 feste Spaltenbreite
+  table.style.border = '1px solid #b41821'; // 🔴 Tabellenrahmen rot
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
   const headers = [
     { label: 'PLZ', width: '60px' },
-    { label: 'Note', width: '200px' },
-    { label: 'HZFlag', width: '40px' },
+    { label: 'Gemeinde', width: '200px' },
+    { label: 'HZ', width: '40px' },
     { label: 'Netto-Umsatz\n(Jahr)', width: '140px' },
     { label: 'WK (%)\nincl. Nachb.', width: '120px' }
   ];
@@ -490,8 +493,10 @@ renderDataTable(data) {
     th.style.position = 'sticky';
     th.style.top = '0';
     th.style.zIndex = '1';
-    th.style.whiteSpace = 'pre-line'; // ✅ Zeilenumbruch im Header
+    th.style.whiteSpace = 'pre-line'; // ✅ Zeilenumbruch im Header erlaubt
     th.style.width = width;
+    th.style.borderBottom = '1px solid #b41821'; // 🔴 untere Linie im Header
+    th.style.borderRight = '1px solid #b41821'; // 🔴 rechte Linie im Header
     headerRow.appendChild(th);
   });
 
@@ -511,14 +516,14 @@ renderDataTable(data) {
 
       const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
       const umsatz = typeof umsatzRaw === "number"
-        ? umsatzRaw.toLocaleString('de-DE') + ' €'
+        ? umsatzRaw.toLocaleString('de-DE')
         : umsatzRaw === "–"
           ? '–'
           : 'Keine Angabe';
 
       const wkRaw = kennwerte["value_wk_nachbar_0"];
       const wk = typeof wkRaw === "number"
-        ? wkRaw.toFixed(1) + ' %'
+        ? wkRaw.toFixed(1) 
         : wkRaw === "–"
           ? '–'
           : 'Keine Angabe';
@@ -530,7 +535,8 @@ renderDataTable(data) {
         td.textContent = text.replace(/\n/g, ' '); // 🚫 Kein Zeilenumbruch im Inhalt
         td.title = text; // 🧠 Tooltip mit vollem Text
         td.style.padding = '6px 8px';
-        td.style.borderBottom = '1px solid #eee';
+        td.style.borderBottom = '1px solid #b41821'; // 🔴 Zelllinie unten
+        td.style.borderRight = '1px solid #b41821'; // 🔴 Zelllinie rechts
         td.style.fontSize = '0.9rem';
         td.style.whiteSpace = 'nowrap'; // 🚫 Kein Umbruch
         td.style.overflow = 'hidden';
