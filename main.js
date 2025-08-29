@@ -447,28 +447,31 @@ async loadGeoJson() {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
 }
+
 renderDataTable(data) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = ''; // Tabelle leeren
 
-  if (!data || Object.keys(this.filteredKennwerte).length === 0) {
+  // 1️⃣ Parameter verwenden statt this.filteredKennwerte
+  if (!data || Object.keys(data).length === 0) {
     container.textContent = 'Keine Daten verfügbar.';
     return;
   }
 
-  // 📦 Scrollbarer Wrapper
+  // 2️⃣ Scrollbarer Wrapper mit Styles
   const scrollWrapper = document.createElement('div');
-  scrollWrapper.style.maxHeight = '450px'; // Höhe anpassbar
+  scrollWrapper.style.maxHeight = '450px';
   scrollWrapper.style.overflowY = 'auto';
   scrollWrapper.style.border = '1px solid #ccc';
   scrollWrapper.style.borderRadius = '6px';
 
   const table = document.createElement('table');
+  table.setAttribute('role', 'table'); // 3️⃣ Semantik verbessern
   table.style.width = '100%';
   table.style.borderCollapse = 'collapse';
   table.style.fontFamily = 'sans-serif';
 
-  // 🔠 Tabellenkopf
+  // Tabellenkopf
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
   ['PLZ', 'Note', 'HZFlag', 'Netto-Umsatz (Jahr)', 'WK (%) incl. Nachb.'].forEach(header => {
@@ -486,36 +489,43 @@ renderDataTable(data) {
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  // 📄 Tabelleninhalt
+  // Tabelleninhalt mit DocumentFragment für Performance
   const tbody = document.createElement('tbody');
-  Object.entries(this.filteredKennwerte).forEach(([plz, kennwerte]) => {
-    const tr = document.createElement('tr');
+  const fragment = document.createDocumentFragment();
 
-    const note = kennwerte["dimension_note_0"]?.label?.trim() || 'Keine Notiz';
-    const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
+  // 4️⃣ Sortierung nach PLZ
+  Object.entries(data)
+    .sort(([plzA], [plzB]) => plzA.localeCompare(plzB))
+    .forEach(([plz, kennwerte]) => {
+      const tr = document.createElement('tr');
 
-    const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-    const umsatz = typeof umsatzRaw === "number"
-      ? umsatzRaw.toLocaleString('de-DE') + ' €'
-      : '–';
+      const note = kennwerte["dimension_note_0"]?.label?.trim() || 'Keine Notiz';
+      const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
-    const wkRaw = kennwerte["value_wk_nachbar_0"];
-    const wk = typeof wkRaw === "number"
-      ? wkRaw.toFixed(1) + ' %'
-      : '–';
+      // 5️⃣ Korrekte Typprüfung für Kennwerte
+      const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
+      const umsatz = typeof umsatzRaw?.raw === "number"
+        ? umsatzRaw.raw.toLocaleString('de-DE') + ' €'
+        : '–';
 
-    [plz, note, hzFlag, umsatz, wk].forEach(text => {
-      const td = document.createElement('td');
-      td.textContent = text;
-      td.style.padding = '6px 8px';
-      td.style.borderBottom = '1px solid #eee';
-      td.style.fontSize = '0.9rem';
-      tr.appendChild(td);
+      const wkRaw = kennwerte["value_wk_nachbar_0"];
+      const wk = typeof wkRaw?.raw === "number"
+        ? wkRaw.raw.toFixed(1) + ' %'
+        : '–';
+
+      [plz, note, hzFlag, umsatz, wk].forEach(text => {
+        const td = document.createElement('td');
+        td.textContent = text;
+        td.style.padding = '6px 8px';
+        td.style.borderBottom = '1px solid #eee';
+        td.style.fontSize = '0.9rem';
+        tr.appendChild(td);
+      });
+
+      fragment.appendChild(tr);
     });
 
-    tbody.appendChild(tr);
-  });
-
+  tbody.appendChild(fragment);
   table.appendChild(tbody);
   scrollWrapper.appendChild(table);
   container.appendChild(scrollWrapper);
@@ -796,7 +806,7 @@ console.log("Filtered Data",filteredData);
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
   this.updateMarkers(filteredPLZs);  
-  this.renderDataTable(filteredData); 
+  this.renderDataTable(this.filteredKennwerte); 
 }
     extractPLZWerte(data) {
   const plzWerte = {};
@@ -1287,7 +1297,7 @@ async render() {
   this.updateMarkers(filteredPLZs);
 
   // 📊 Tabelle aktualisieren
-  this.renderDataTable(filteredData);
+  this.renderDataTable(this.filteredKennwerte);
 
   this.hideSpinner();
 }
