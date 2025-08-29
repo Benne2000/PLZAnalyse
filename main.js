@@ -458,7 +458,7 @@ renderDataTable(data) {
 
   // 📦 Scrollbarer Wrapper
   const scrollWrapper = document.createElement('div');
-  scrollWrapper.style.maxHeight = '300px'; // Höhe anpassbar
+  scrollWrapper.style.maxHeight = '450px'; // Höhe anpassbar
   scrollWrapper.style.overflowY = 'auto';
   scrollWrapper.style.border = '1px solid #ccc';
   scrollWrapper.style.borderRadius = '6px';
@@ -671,8 +671,6 @@ showPopup(feature, daten = {}) {
   const plz = feature.properties?.plz?.trim();
   const note = feature.properties?.note || "Keine Notiz";
 
-  console.log("📍 Popup geöffnet für PLZ:", plz);
-  console.log("📊 Daten übergeben an Popup:", daten);
 
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
@@ -735,10 +733,7 @@ showPopup(feature, daten = {}) {
   const zusatzKennwerte = this.filteredKennwerte?.[plz] || {};
   const umsatz = zusatzKennwerte.value_hr_n_umsatz_0?.raw;
 
-console.log("🔍 Debug-Log für PLZ:", plz);
-console.log("➡️ Ist HZ:", isHZ);
-console.log("📊 Zusatzkennwerte:", zusatzKennwerte);
-console.log("💰 Umsatz (raw):", umsatz);
+
 
 
   
@@ -796,7 +791,7 @@ applyFilter(erhID, jahr, nummer) {
   this.updateGeoLayer(); // Nur Layer aktualisieren
 
   const filteredData = this.getFilteredData(); // 🔍 Hole gefilterte Daten
-
+console.log("Filtered Data",filteredData);
   const filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
@@ -880,7 +875,7 @@ updateGeoLayer() {
   if (!this._geoLayer) return;
 
   const filteredData = this.getFilteredData();
-
+console.log('Update geo layer', filteredData);
   const plzWerte = this.extractPLZWerte(filteredData);
 
   this._geoLayer.eachLayer(layer => {
