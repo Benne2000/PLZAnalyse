@@ -563,8 +563,7 @@ toggleNeighbours() {
 }
 createAllMarkers() {
   this.filteredGroup.clearLayers(); // Entfernt alle Marker aus der Gruppe
-
-  this.allMarkers = {};
+  this.allMarkers = []; // Array statt Objekt, da Marker mehrfachen PLZs zugeordnet sein können
 
   if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
     console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
@@ -576,32 +575,51 @@ createAllMarkers() {
     return;
   }
 
+  const seen = new Map(); // Verhindert doppelte Marker pro Standort
+
   Object.entries(this.Niederlassung).forEach(([plz, nl]) => {
     const coords = this.nlKoordinaten[plz];
     if (!coords) return;
 
-    const icon = this.createMarkerIcon(nl);
-    const marker = L.marker([coords.lat, coords.lon], { icon, title: nl });
+    const key = `${coords.lat},${coords.lon}`; // Standort als eindeutiger Schlüssel
 
-    this.allMarkers[plz] = marker;
-
-
+    if (!seen.has(key)) {
+      const icon = this.createMarkerIcon(nl);
+      const marker = L.marker([coords.lat, coords.lon], {
+        icon,
+        title: nl,
+        plzs: [plz] // Start mit einer PLZ
+      });
+      seen.set(key, marker);
+    } else {
+      // Marker existiert schon – PLZ ergänzen
+      const existingMarker = seen.get(key);
+      if (!existingMarker.options.plzs.includes(plz)) {
+        existingMarker.options.plzs.push(plz);
+      }
+    }
   });
 
+  // Marker aus Map in Array übernehmen
+  this.allMarkers = Array.from(seen.values());
+
+  // Extra-Niederlassungen hinzufügen
   if (Array.isArray(this.extraNLs)) {
     this.extraNLs.forEach(({ nl, lat, lon }) => {
       const icon = this.createMarkerIcon(nl);
-      const marker = L.marker([lat, lon], { icon, title: nl });
+      const marker = L.marker([lat, lon], {
+        icon,
+        title: nl,
+        plzs: [`extra-${lat}-${lon}`] // künstliche PLZ zur Unterscheidung
+      });
 
-      const fakePLZ = `extra-${lat}-${lon}`; // ⬅️ künstlicher Key
-      this.allMarkers[fakePLZ] = marker;
-      this.filteredGroup.addLayer(marker); // ⬅️ auch direkt sichtbar
+      this.allMarkers.push(marker);
+      this.filteredGroup.addLayer(marker); // direkt sichtbar
     });
   } else {
     console.warn("⚠️ extraNLs ist nicht definiert oder kein Array:", this.extraNLs);
   }
 }
-
 
 
 createMarkerIcon(nl) {
@@ -863,17 +881,18 @@ updateMarkers(filteredPLZs) {
 
   const filteredSet = new Set(filteredPLZs);
 
-  Object.entries(this.allMarkers).forEach(([key, marker]) => {
-    const isExtra = key.startsWith("extra-");
-    const isFiltered = filteredSet.has(key);
+  this.allMarkers.forEach(marker => {
+    const markerPLZs = marker.options.plzs || [];
+    const isFiltered = markerPLZs.some(plz => filteredSet.has(plz));
 
-    if (isExtra || isFiltered) {
+    if (isFiltered) {
       this.filteredGroup.addLayer(marker);
     } else {
       this.neighbourGroup.addLayer(marker);
     }
   });
 }
+
 
 
 
@@ -1295,7 +1314,6 @@ async render() {
     customElements.define('geo-map-widget', GeoMapWidget);
   }
 })();
-
 
 
 
