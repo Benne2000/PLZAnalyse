@@ -1108,44 +1108,25 @@ async render() {
   }
 
   this.showSpinner();
-  console.log("🔄 Spinner angezeigt");
 
   const rawData = this._myDataSource.data;
-  console.log("📥 Rohdaten geladen:", rawData);
-
-  // 1️⃣ Struktur aufbauen
   this._erhData = this.buildErhebungsStruktur(rawData);
-  console.log("🧩 Erhebungsstruktur erstellt");
-
-  // 2️⃣ Filter vorbereiten
   this.setupFilterDropdowns();
-  console.log("📊 Filter-Dropdowns aktualisiert");
 
   const filteredData = this._activeFilter ? this.getFilteredData() : rawData;
-  console.log("🔍 Daten gefiltert:", filteredData);
+  this.prepareMapData(filteredData); // ⬅️ Hier werden die Marker-Daten gesetzt
 
-  // 3️⃣ PLZs extrahieren für Marker-Update
-  const filteredPLZs = filteredData.map(d => d.plz).filter(Boolean);
-  console.log("📮 Gefilterte PLZs:", filteredPLZs);
+  this.createAllMarkers(); // ⬅️ Jetzt ist alles bereit!
 
-  // 4️⃣ Kartendaten vorbereiten
-  this.prepareMapData(filteredData);
-  console.log("📦 Kartendaten vorbereitet");
-
-  // 5️⃣ GeoJSON laden und Layer aktualisieren
   await this.loadGeoJson();
-  console.log("🌍 GeoJSON geladen");
-
   this.updateGeoLayer();
-  console.log("🗺️ GeoLayer aktualisiert");
 
-  // 6️⃣ Marker aktualisieren
+  const filteredPLZs = filteredData.map(d => d["dimension_plz_0"]?.id?.trim()).filter(plz => plz && plz !== "@NullMember");
   this.updateMarkers(filteredPLZs);
-  console.log("📍 Marker aktualisiert");
 
   this.hideSpinner();
-  console.log("✅ Spinner ausgeblendet");
 }
+
 
 
 
