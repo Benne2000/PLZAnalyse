@@ -462,17 +462,16 @@ async loadGeoJson() {
 
 toggleNeighbours() {
   if (this.neighbours === true) {
-    this.markerListeExtra.forEach(marker => {
-      marker.addTo(this.map);
-    });
+    this.neighbourMarkers.forEach(marker => marker.addTo(this.map));
     this.neighbours = false;
+    console.log("👥 Nachbarschaftsmarker eingeblendet");
   } else {
-    this.markerListeExtra.forEach(marker => {
-      this.map.removeLayer(marker);
-    });
+    this.neighbourMarkers.forEach(marker => this.map.removeLayer(marker));
     this.neighbours = true;
+    console.log("👥 Nachbarschaftsmarker ausgeblendet");
   }
 }
+
 createMarkerIcon(nl) {
   const markerHtml = `
     <div style="width:30px;height:30px;background-color:#ed1f34;border-radius:50% 50% 50% 0;box-shadow:-1px 1px 4px rgba(0,0,0,.5);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:white;font-family:sans-serif;">
@@ -707,14 +706,20 @@ updateGeoLayer() {
     }
   });
 }
-
 updateMarkers() {
   console.log("📍 updateMarkers gestartet");
 
-  const gesetzteNLs = new Set();
-  this.markerListeExtra = [];
+  // 🧹 Vorherige Marker entfernen
+  [...this.filteredMarkers, ...this.neighbourMarkers].forEach(marker => {
+    this.map.removeLayer(marker);
+  });
 
-  // 🗂️ Marker aus PLZ-basierten Daten
+  this.filteredMarkers = [];
+  this.neighbourMarkers = [];
+
+  const gesetzteNLs = new Set();
+  const filteredPLZs = Object.keys(this.filteredKennwerte || {});
+
   Object.entries(this.Niederlassung).forEach(([plz, nl]) => {
     if (!nl || gesetzteNLs.has(nl)) return;
 
@@ -727,24 +732,32 @@ updateMarkers() {
 
     const icon = this.createMarkerIcon(nl);
     const marker = L.marker([lat, lon], { icon, title: nl });
-    marker.addTo(this.map); // ✅ Nur PLZ-basierte Marker werden angezeigt
-    this.markerListeExtra.push(marker);
+
+    if (filteredPLZs.includes(plz)) {
+      marker.addTo(this.map); // ✅ Nur gefilterte Marker sofort anzeigen
+      this.filteredMarkers.push(marker);
+    } else {
+      this.neighbourMarkers.push(marker); // ❗ Nur speichern, nicht anzeigen
+    }
+
     gesetzteNLs.add(nl);
   });
 
-  // ➕ Zusätzliche Marker (ohne PLZ)
+  // ➕ Sonder-Niederlassungen ohne PLZ
   this.extraNLs.forEach(({ nl, lat, lon }) => {
     if (!nl || gesetzteNLs.has(nl)) return;
     if (isNaN(lat) || isNaN(lon)) return;
 
     const icon = this.createMarkerIcon(nl);
     const marker = L.marker([lat, lon], { icon, title: nl });
-    this.markerListeExtra.push(marker); // ❗ Nur speichern, nicht anzeigen
+
+    this.neighbourMarkers.push(marker); // ❗ Nur speichern
     gesetzteNLs.add(nl);
   });
 
-  console.log(`✅ Marker-Update abgeschlossen – ${this.markerListeExtra.length} Marker gespeichert`);
+  console.log(`✅ Marker-Update abgeschlossen – ${this.filteredMarkers.length} gefiltert, ${this.neighbourMarkers.length} Nachbarn`);
 }
+
 
 
 
