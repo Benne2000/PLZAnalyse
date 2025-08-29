@@ -474,6 +474,8 @@ toggleNeighbours() {
   }
 }
 createAllMarkers() {
+  this.filteredGroup.clearLayers(); // Entfernt alle Marker aus der Gruppe
+
   this.allMarkers = {};
 
   if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
@@ -494,6 +496,7 @@ createAllMarkers() {
     const marker = L.marker([coords.lat, coords.lon], { icon, title: nl });
 
     this.allMarkers[plz] = marker;
+    this.filteredGroup.addLayer(marker); // ⬅️ Marker direkt sichtbar machen
   });
 
   if (Array.isArray(this.extraNLs)) {
@@ -501,12 +504,15 @@ createAllMarkers() {
       const icon = this.createMarkerIcon(nl);
       const marker = L.marker([lat, lon], { icon, title: nl });
 
-      this.allMarkers[`extra-${nl}`] = marker;
+      const fakePLZ = `extra-${lat}-${lon}`; // ⬅️ künstlicher Key
+      this.allMarkers[fakePLZ] = marker;
+      this.filteredGroup.addLayer(marker); // ⬅️ auch direkt sichtbar
     });
   } else {
     console.warn("⚠️ extraNLs ist nicht definiert oder kein Array:", this.extraNLs);
   }
 }
+
 
 
 createMarkerIcon(nl) {
@@ -755,16 +761,23 @@ updateMarkers(filteredPLZs) {
   this.filteredGroup.clearLayers();
   this.neighbourGroup.clearLayers();
 
-  filteredPLZs = new Set(filteredPLZs);
+  const filteredSet = new Set(filteredPLZs);
 
-  Object.entries(this.allMarkers).forEach(([plz, marker]) => {
-    if (filteredPLZs.has(plz)) {
+  Object.entries(this.allMarkers).forEach(([key, marker]) => {
+    // Extra-Marker immer anzeigen
+    if (key.startsWith("extra-")) {
+      this.filteredGroup.addLayer(marker);
+      return;
+    }
+
+    if (filteredSet.has(key)) {
       this.filteredGroup.addLayer(marker);
     } else {
       this.neighbourGroup.addLayer(marker);
     }
   });
 }
+
 
 
 
@@ -1099,8 +1112,6 @@ prepareDropdownData(data) {
   }
 }
 
-
-
 async render() {
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
@@ -1114,15 +1125,18 @@ async render() {
   this.setupFilterDropdowns();
 
   const filteredData = this._activeFilter ? this.getFilteredData() : rawData;
-  this.prepareMapData(filteredData); // ⬅️ Hier werden die Marker-Daten gesetzt
+  this.prepareMapData(filteredData); // ⬅️ Marker-Daten vorbereiten
 
-  this.createAllMarkers(); // ⬅️ Jetzt ist alles bereit!
+  this.createAllMarkers(); // ⬅️ Marker erzeugen und anzeigen
 
   await this.loadGeoJson();
   this.updateGeoLayer();
 
-  const filteredPLZs = filteredData.map(d => d["dimension_plz_0"]?.id?.trim()).filter(plz => plz && plz !== "@NullMember");
-  this.updateMarkers(filteredPLZs);
+  const filteredPLZs = filteredData
+    .map(d => d["dimension_plz_0"]?.id?.trim())
+    .filter(plz => plz && plz !== "@NullMember");
+
+  this.updateMarkers(filteredPLZs); // ⬅️ Marker nach Filter anzeigen
 
   this.hideSpinner();
 }
