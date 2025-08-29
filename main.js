@@ -447,18 +447,15 @@ async loadGeoJson() {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
 }
-
 renderDataTable(data) {
   const container = this._shadowRoot.getElementById('table-container');
-  container.innerHTML = ''; // Tabelle leeren
+  container.innerHTML = '';
 
-  // 1️⃣ Parameter verwenden statt this.filteredKennwerte
   if (!data || Object.keys(data).length === 0) {
     container.textContent = 'Keine Daten verfügbar.';
     return;
   }
 
-  // 2️⃣ Scrollbarer Wrapper mit Styles
   const scrollWrapper = document.createElement('div');
   scrollWrapper.style.maxHeight = '450px';
   scrollWrapper.style.overflowY = 'auto';
@@ -466,17 +463,26 @@ renderDataTable(data) {
   scrollWrapper.style.borderRadius = '6px';
 
   const table = document.createElement('table');
-  table.setAttribute('role', 'table'); // 3️⃣ Semantik verbessern
+  table.setAttribute('role', 'table');
   table.style.width = '100%';
   table.style.borderCollapse = 'collapse';
   table.style.fontFamily = 'sans-serif';
+  table.style.tableLayout = 'fixed'; // 📏 feste Spaltenbreite
 
-  // Tabellenkopf
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  ['PLZ', 'Note', 'HZFlag', 'Netto-Umsatz (Jahr)', 'WK (%) incl. Nachb.'].forEach(header => {
+
+  const headers = [
+    { label: 'PLZ', width: '60px' },
+    { label: 'Note', width: '200px' },
+    { label: 'HZFlag', width: '40px' },
+    { label: 'Netto-Umsatz\n(Jahr)', width: '140px' },
+    { label: 'WK (%)\nincl. Nachb.', width: '120px' }
+  ];
+
+  headers.forEach(({ label, width }) => {
     const th = document.createElement('th');
-    th.textContent = header;
+    th.textContent = label;
     th.style.backgroundColor = '#b41821';
     th.style.color = 'white';
     th.style.padding = '8px';
@@ -484,16 +490,17 @@ renderDataTable(data) {
     th.style.position = 'sticky';
     th.style.top = '0';
     th.style.zIndex = '1';
+    th.style.whiteSpace = 'pre-line'; // ✅ Zeilenumbruch im Header
+    th.style.width = width;
     headerRow.appendChild(th);
   });
+
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
-  // Tabelleninhalt mit DocumentFragment für Performance
   const tbody = document.createElement('tbody');
   const fragment = document.createDocumentFragment();
 
-  // 4️⃣ Sortierung nach PLZ
   Object.entries(data)
     .sort(([plzA], [plzB]) => plzA.localeCompare(plzB))
     .forEach(([plz, kennwerte]) => {
@@ -502,23 +509,33 @@ renderDataTable(data) {
       const note = kennwerte["dimension_note_0"]?.label?.trim() || 'Keine Notiz';
       const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
-      // 5️⃣ Korrekte Typprüfung für Kennwerte
       const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-      const umsatz = typeof umsatzRaw?.raw === "number"
-        ? umsatzRaw.raw.toLocaleString('de-DE') + ' €'
-        : '–';
+      const umsatz = typeof umsatzRaw === "number"
+        ? umsatzRaw.toLocaleString('de-DE') + ' €'
+        : umsatzRaw === "–"
+          ? '–'
+          : 'Keine Angabe';
 
       const wkRaw = kennwerte["value_wk_nachbar_0"];
-      const wk = typeof wkRaw?.raw === "number"
-        ? wkRaw.raw.toFixed(1) + ' %'
-        : '–';
+      const wk = typeof wkRaw === "number"
+        ? wkRaw.toFixed(1) + ' %'
+        : wkRaw === "–"
+          ? '–'
+          : 'Keine Angabe';
 
-      [plz, note, hzFlag, umsatz, wk].forEach(text => {
+      const rowValues = [plz, note, hzFlag, umsatz, wk];
+
+      rowValues.forEach((text, i) => {
         const td = document.createElement('td');
-        td.textContent = text;
+        td.textContent = text.replace(/\n/g, ' '); // 🚫 Kein Zeilenumbruch im Inhalt
+        td.title = text; // 🧠 Tooltip mit vollem Text
         td.style.padding = '6px 8px';
         td.style.borderBottom = '1px solid #eee';
         td.style.fontSize = '0.9rem';
+        td.style.whiteSpace = 'nowrap'; // 🚫 Kein Umbruch
+        td.style.overflow = 'hidden';
+        td.style.textOverflow = 'ellipsis';
+        td.style.width = headers[i].width;
         tr.appendChild(td);
       });
 
@@ -530,7 +547,6 @@ renderDataTable(data) {
   scrollWrapper.appendChild(table);
   container.appendChild(scrollWrapper);
 }
-
 
 
 
@@ -1043,9 +1059,9 @@ setupFilterDropdowns() {
 
       this.render();
     }
-
- prepareMapData(filteredData) {
+prepareMapData(filteredData) {
   const rawData = this._myDataSource?.data || [];
+  const geoFeatures = this._geoData?.features || [];
 
   // Initialisierung aller relevanten Strukturen
   this.kennwerte = {};
@@ -1071,6 +1087,16 @@ setupFilterDropdowns() {
 
   const dataByPLZ = {};
 
+  // 🗂️ Mapping: PLZ → Note aus GeoJSON
+  const geoNotes = {};
+  geoFeatures.forEach(feature => {
+    const plz = feature.properties?.plz?.trim();
+    const note = feature.properties?.note?.trim();
+    if (plz && note) {
+      geoNotes[plz] = note;
+    }
+  });
+
   // 🔍 Verarbeitung der gefilterten Daten
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
@@ -1093,6 +1119,10 @@ setupFilterDropdowns() {
       const raw = row[id]?.raw;
       targetKennwerte[key][id] = typeof raw === "number" ? raw : "–";
     });
+
+    // 📝 Note aus GeoJSON hinzufügen
+    const note = geoNotes[plz]?.trim() || '';
+    targetKennwerte[key]["dimension_note_0"] = { label: note };
 
     // 📍 Niederlassung speichern
     if (nlName) {
