@@ -412,27 +412,33 @@ async loadGeoJson() {
 }
 
 
+initializeMapBase() {
+  const mapContainer = this._shadowRoot.getElementById('map');
+  this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
+  // 🧭 Events für Marker-Notizen
+  this.map.on('zoomend', () => this.showNotesOnMap());
+  this.map.on('moveend', () => this.showNotesOnMap());
 
+  // 🧱 Initialisiere Marker-Gruppen und Marker
+  this.filteredGroup = L.layerGroup().addTo(this.map);
+  this.neighbourGroup = L.layerGroup();
+  this.createAllMarkers();
 
-    initializeMapBase() {
-      const mapContainer = this._shadowRoot.getElementById('map');
-      this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
-
-      this.map.on('zoomend', () => this.showNotesOnMap());
-      this.map.on('moveend', () => this.showNotesOnMap());
-
-      if (!this._resizeObserver) {
-        this._resizeObserver = new ResizeObserver(() => {
-          if (this.map) {
-            this.map.invalidateSize();
-          }
-        });
-        this._resizeObserver.observe(this._shadowRoot.host);
+  // 📐 Resize-Handling
+  if (!this._resizeObserver) {
+    this._resizeObserver = new ResizeObserver(() => {
+      if (this.map) {
+        this.map.invalidateSize();
       }
+    });
+    this._resizeObserver.observe(this._shadowRoot.host);
+  }
 
-      this.render();
-    }
+  // 🔄 Starte das Rendering
+  this.render();
+}
+
 
     initializeMapTiles() {
       if (!this.map) return;
@@ -461,30 +467,56 @@ async loadGeoJson() {
     }
 
 toggleNeighbours() {
-  if (this.neighbours === true) {
-    this.neighbourMarkers.forEach(marker => marker.addTo(this.map));
-    this.neighbours = false;
-    console.log("👥 Nachbarschaftsmarker eingeblendet");
+  if (this.map.hasLayer(this.neighbourGroup)) {
+    this.map.removeLayer(this.neighbourGroup);
   } else {
-    this.neighbourMarkers.forEach(marker => this.map.removeLayer(marker));
-    this.neighbours = true;
-    console.log("👥 Nachbarschaftsmarker ausgeblendet");
+    this.map.addLayer(this.neighbourGroup);
   }
 }
 
-createMarkerIcon(nl) {
-  const markerHtml = `
-    <div style="width:30px;height:30px;background-color:#ed1f34;border-radius:50% 50% 50% 0;box-shadow:-1px 1px 4px rgba(0,0,0,.5);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:white;font-family:sans-serif;">
-      <div style="transform:rotate(45deg);">${nl}</div>
-    </div>
-  `;
-  return L.divIcon({
-    html: markerHtml,
-    className: '',
-    iconSize: [30, 30],
-    iconAnchor: [15, 30]
+createAllMarkers() {
+  this.allMarkers = {};
+
+  Object.entries(this.Niederlassung).forEach(([plz, nl]) => {
+    const coords = this.nlKoordinaten[plz];
+    if (!coords) return;
+
+    const icon = this.createMarkerIcon(nl);
+    const marker = L.marker([coords.lat, coords.lon], { icon, title: nl });
+
+    this.allMarkers[plz] = marker;
+  });
+
+  // Sonder-Niederlassungen
+  this.extraNLs.forEach(({ nl, lat, lon }) => {
+    const icon = this.createMarkerIcon(nl);
+    const marker = L.marker([lat, lon], { icon, title: nl });
+
+    this.allMarkers[`extra-${nl}`] = marker;
   });
 }
+
+createMarkerIcon(nl) {
+  if (!this.iconCache) this.iconCache = {};
+
+  if (!this.iconCache[nl]) {
+    const markerHtml = `
+      <div style="width:30px;height:30px;background-color:#ed1f34;border-radius:50% 50% 50% 0;box-shadow:-1px 1px 4px rgba(0,0,0,.5);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:white;font-family:sans-serif;">
+        <div style="transform:rotate(45deg);">${nl}</div>
+      </div>
+    `;
+
+    this.iconCache[nl] = L.divIcon({
+      html: markerHtml,
+      className: '',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30]
+    });
+  }
+
+  return this.iconCache[nl];
+}
+
 showPopup(feature, daten = {}) {
   const plz = feature.properties?.plz?.trim();
   const note = feature.properties?.note || "Keine Notiz";
@@ -706,56 +738,19 @@ updateGeoLayer() {
     }
   });
 }
-updateMarkers() {
-  console.log("📍 updateMarkers gestartet");
+updateMarkers(filteredPLZs) {
+  this.filteredGroup.clearLayers();
+  this.neighbourGroup.clearLayers();
 
-  // 🧹 Vorherige Marker entfernen
-  [...this.filteredMarkers, ...this.neighbourMarkers].forEach(marker => {
-    this.map.removeLayer(marker);
-  });
+  filteredPLZs = new Set(filteredPLZs);
 
-  this.filteredMarkers = [];
-  this.neighbourMarkers = [];
-
-  const gesetzteNLs = new Set();
-  const filteredPLZs = Object.keys(this.filteredKennwerte || {});
-
-  Object.entries(this.Niederlassung).forEach(([plz, nl]) => {
-    if (!nl || gesetzteNLs.has(nl)) return;
-
-    const koordinaten = this.nlKoordinaten[plz];
-    if (!koordinaten) return;
-
-    const lat = parseFloat(koordinaten.lat);
-    const lon = parseFloat(koordinaten.lon);
-    if (isNaN(lat) || isNaN(lon)) return;
-
-    const icon = this.createMarkerIcon(nl);
-    const marker = L.marker([lat, lon], { icon, title: nl });
-
-    if (filteredPLZs.includes(plz)) {
-      marker.addTo(this.map); // ✅ Nur gefilterte Marker sofort anzeigen
-      this.filteredMarkers.push(marker);
+  Object.entries(this.allMarkers).forEach(([plz, marker]) => {
+    if (filteredPLZs.has(plz)) {
+      this.filteredGroup.addLayer(marker);
     } else {
-      this.neighbourMarkers.push(marker); // ❗ Nur speichern, nicht anzeigen
+      this.neighbourGroup.addLayer(marker);
     }
-
-    gesetzteNLs.add(nl);
   });
-
-  // ➕ Sonder-Niederlassungen ohne PLZ
-  this.extraNLs.forEach(({ nl, lat, lon }) => {
-    if (!nl || gesetzteNLs.has(nl)) return;
-    if (isNaN(lat) || isNaN(lon)) return;
-
-    const icon = this.createMarkerIcon(nl);
-    const marker = L.marker([lat, lon], { icon, title: nl });
-
-    this.neighbourMarkers.push(marker); // ❗ Nur speichern
-    gesetzteNLs.add(nl);
-  });
-
-  console.log(`✅ Marker-Update abgeschlossen – ${this.filteredMarkers.length} gefiltert, ${this.neighbourMarkers.length} Nachbarn`);
 }
 
 
@@ -1093,7 +1088,6 @@ prepareDropdownData(data) {
 
 
 
-
 async render() {
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
@@ -1106,30 +1100,40 @@ async render() {
   const rawData = this._myDataSource.data;
   console.log("📥 Rohdaten geladen:", rawData);
 
+  // 1️⃣ Struktur aufbauen
   this._erhData = this.buildErhebungsStruktur(rawData);
   console.log("🧩 Erhebungsstruktur erstellt");
 
+  // 2️⃣ Filter vorbereiten
   this.setupFilterDropdowns();
   console.log("📊 Filter-Dropdowns aktualisiert");
 
   const filteredData = this._activeFilter ? this.getFilteredData() : rawData;
   console.log("🔍 Daten gefiltert:", filteredData);
 
+  // 3️⃣ PLZs extrahieren für Marker-Update
+  const filteredPLZs = filteredData.map(d => d.plz).filter(Boolean);
+  console.log("📮 Gefilterte PLZs:", filteredPLZs);
+
+  // 4️⃣ Kartendaten vorbereiten
   this.prepareMapData(filteredData);
   console.log("📦 Kartendaten vorbereitet");
 
+  // 5️⃣ GeoJSON laden und Layer aktualisieren
   await this.loadGeoJson();
   console.log("🌍 GeoJSON geladen");
 
   this.updateGeoLayer();
   console.log("🗺️ GeoLayer aktualisiert");
 
-  this.updateMarkers();
+  // 6️⃣ Marker aktualisieren
+  this.updateMarkers(filteredPLZs);
   console.log("📍 Marker aktualisiert");
 
   this.hideSpinner();
-  console.log("✅ Spinner 888888888877777");
+  console.log("✅ Spinner ausgeblendet");
 }
+
 
 
 
