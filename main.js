@@ -476,11 +476,11 @@ renderDataTable(data) {
   const headerRow = document.createElement('tr');
 
   const headers = [
-    { label: 'PLZ', width: '60px' },
-    { label: 'Gemeinde', width: '200px' },
-    { label: 'HZ', width: '40px' },
-    { label: 'Netto-Umsatz\n(Jahr)', width: '140px' },
-    { label: 'WK (%)\nincl. Nachb.', width: '120px' }
+    { label: 'PLZ', width: '40px' },
+    { label: 'Gemeinde', width: '100px' },
+    { label: 'HZ', width: '20px' },
+    { label: 'Netto-Umsatz\n(Jahr)', width: '7ßpx' },
+    { label: 'WK (%)\nincl. Nachb.', width: '50px' }
   ];
 
   headers.forEach(({ label, width }) => {
