@@ -485,9 +485,9 @@ renderDataTable(data) {
 
   const headers = [
     { label: 'PLZ', width: '40px' },
-    { label: 'Gemeinde', width: '100px' },
+    { label: 'Gemeinde', width: '90px' },
     { label: 'HZ', width: '20px' },
-    { label: 'Netto-Umsatz\n(Jahr)', width: '70px' },
+    { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
     { label: 'WK (%)\nincl. Nachb.', width: '50px' }
   ];
 
@@ -517,7 +517,7 @@ renderDataTable(data) {
   Object.entries(data)
     .sort(([plzA], [plzB]) => plzA.localeCompare(plzB))
     .forEach(([plz, kennwerte]) => {
-      consol.log("Kennwerte Tabelle: ", kennwerte);
+      console.log("Kennwerte Tabelle: ", kennwerte);
       const tr = document.createElement('tr');
 
       const note = kennwerte["dimension_note_0"]?.label?.trim() || 'Keine Notiz';
