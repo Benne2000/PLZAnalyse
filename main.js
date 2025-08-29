@@ -286,7 +286,7 @@ let hasTriggeredClick = false;
   padding: 0.6rem 0.8rem;
   border-bottom: 1px solid #eee;
   text-align: left;
-  font-size: 0.9rem;
+  font-size: 0.8rem;
 }
 
 .table-container th {
@@ -517,6 +517,7 @@ renderDataTable(data) {
   Object.entries(data)
     .sort(([plzA], [plzB]) => plzA.localeCompare(plzB))
     .forEach(([plz, kennwerte]) => {
+      consol.log("Kennwerte Tabelle: ", kennwerte);
       const tr = document.createElement('tr');
 
       const note = kennwerte["dimension_note_0"]?.label?.trim() || 'Keine Notiz';
