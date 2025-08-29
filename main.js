@@ -524,14 +524,16 @@ renderDataTable(data) {
       const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
       const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-      const umsatz = typeof umsatzRaw === "number"
+const umsatz = typeof umsatzRaw?.raw === "number"
+
         ? umsatzRaw.toLocaleString('de-DE')
         : umsatzRaw === "–"
           ? '–'
           : 'Keine Angabe';
 
       const wkRaw = kennwerte["value_wk_nachbar_0"];
-      const wk = typeof wkRaw === "number"
+const wk = typeof wkRaw?.raw === "number"
+
         ? wkRaw.toFixed(1)
         : wkRaw === "–"
           ? '–'
@@ -546,7 +548,7 @@ renderDataTable(data) {
         td.style.padding = '6px 8px';
         td.style.borderBottom = '1px solid #b41821';
         td.style.borderRight = '1px solid #b41821';
-        td.style.fontSize = '0.9rem';
+        td.style.fontSize = '0.8rem';
         td.style.whiteSpace = 'nowrap';
         td.style.overflow = 'hidden';
         td.style.textOverflow = 'ellipsis';
