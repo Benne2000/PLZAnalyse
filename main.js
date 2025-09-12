@@ -903,21 +903,23 @@
   getColor(value, isHZ) {
     const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
 
-    if (isHZ) {
-      return safeValue > 10000 ? "#006837" :   // Dunkelgrün
-            safeValue > 5000  ? "#78c679" :   // Mittelgrün
-            safeValue > 2500  ? "#ffffb2" :   // Gelb
-            safeValue > 1000  ? "#fd8d3c" :   // Orange
-            safeValue > 100   ? "#e31a1c" :   // Rot
-                                "#cfd4da";    // Grau
-    } else {
-      return safeValue > 10000 ? "#08306b" :   // Dunkelblau
-            safeValue > 5000  ? "#2171b5" :   // Mittelblau
-            safeValue > 2500  ? "#6baed6" :   // Hellblau
-            safeValue > 1000  ? "#c6dbef" :   // Blassblau
-            safeValue > 100   ? "#eff3ff" :   // Sehr hell
-                                "#cfd4da";    // Grau
-    }
+  if (isHZ) {
+    return safeValue > 25 ? "#e31a1c" :   // Rot
+           safeValue > 15 ? "#fd8d3c" :   // Orange
+           safeValue > 10 ? "#ffffb2" :   // Gelb
+           safeValue > 5  ? "#78c679" :   // Hellgrün
+           safeValue > 2  ? "#41ab5d" :   // Mittelgrün
+           safeValue > 0  ? "#006837" :   // Dunkelgrün
+                            "#cfd4da";    // Grau
+  } else {
+    return safeValue > 50 ? "#cfd4da" :   // Grau
+           safeValue > 25 ? "#bdbdbd" :   // Dunkles Grau
+           safeValue > 15 ? "#969696" :   // Noch dunkleres Grau
+           safeValue > 10 ? "#6baed6" :   // Hellblau
+           safeValue > 5  ? "#2171b5" :   // Dunkles Blau
+           safeValue > 0  ? "#08306b" :   // Sehr dunkles Blau
+                            "#cfd4da";    // Grau
+  }
   }
 
 
@@ -1397,6 +1399,5 @@
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
-
 
 
