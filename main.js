@@ -853,7 +853,7 @@
 
     data.forEach(row => {
       const plz = row["dimension_plz_0"]?.id?.trim();
-      const value = row["value_hr_n_umsatz_0"]?.raw;
+      const value = row["value_wk_in_percent_0"]?.raw;
 
       if (!plz || plz === "@NullMember") return;
 
@@ -1399,5 +1399,6 @@
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
+
 
 
