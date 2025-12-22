@@ -529,7 +529,8 @@ style: feature => {
         console.log("Kennwerte Tabelle: ", kennwerte);
         const tr = document.createElement('tr');
 
-        const note = kennwerte["plz"]?.label?.trim() || 'Keine PLZ-Bezeichnung';
+const note = kennwerte["dimension_note_0"]?.label?.trim() || 'Keine PLZ-Bezeichnung';
+
 
         const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
