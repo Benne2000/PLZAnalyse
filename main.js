@@ -968,23 +968,30 @@ updateGeoLayer() {
   });
 }
 
-  updateMarkers(filteredPLZs) {
-    this.filteredGroup.clearLayers();
-    this.neighbourGroup.clearLayers();
+updateMarkers() {
+  this.filteredGroup.clearLayers();
+  this.neighbourGroup.clearLayers();
 
-    const filteredSet = new Set(filteredPLZs);
+  const { erhID, jahr, nummer } = this._activeFilter || {};
 
-    this.allMarkers.forEach(marker => {
-      const markerPLZs = marker.options.plzs || [];
-      const isFiltered = markerPLZs.some(plz => filteredSet.has(plz));
+  this.allMarkers.forEach(marker => {
+    const markerKey = marker.options.plzs?.[0]; // z. B. "560 HU+574 DA+589 F+..."
 
-      if (isFiltered) {
-        this.filteredGroup.addLayer(marker);
-      } else {
-        this.neighbourGroup.addLayer(marker);
-      }
-    });
-  }
+    // Prüfen, ob dieser Marker zur aktiven Erhebung gehört
+    const kennwerte = this.filteredKennwerte?.[markerKey];
+    const match =
+      kennwerte &&
+      kennwerte["dimension_erhebung_0"]?.id?.trim() === erhID &&
+      kennwerte["dimension_jahr_0"]?.id?.trim() === jahr &&
+      kennwerte["dimension_erhebungsnummer_0"]?.id?.trim() === nummer;
+
+    if (match) {
+      this.filteredGroup.addLayer(marker);
+    }
+    // Marker, die nicht dazugehören, werden ignoriert
+  });
+}
+
 
 
 
