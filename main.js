@@ -413,6 +413,14 @@
   try {
     const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
     this._geoData = await response.json();
+    this.geoNotes = {};
+(this._geoData.features || []).forEach(feature => {
+  const plz = feature.properties?.plz?.trim();
+  const note = feature.properties?.note?.trim();
+  if (plz && note) {
+    this.geoNotes[plz] = note;
+  }
+});
 
     const filteredData = this.getFilteredData(); // baut filteredKennwerte
     const plzWerte = this.extractPLZWerte(filteredData);
@@ -529,8 +537,7 @@ style: feature => {
         console.log("Kennwerte Tabelle: ", kennwerte);
         const tr = document.createElement('tr');
 
-        const note = feature.properties?.note || 'Keine PLZ-Bezeichnung';
-
+        const note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
 
         const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
