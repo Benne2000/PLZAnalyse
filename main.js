@@ -418,19 +418,22 @@
     const plzWerte = this.extractPLZWerte(filteredData);
 
     this._geoLayer = L.geoJSON(this._geoData, {
-      style: feature => {
-        const plz = feature.properties?.plz?.trim();
-        const value = plzWerte[plz] ?? 0;
-        const isHZ = this.hzFlags?.[plz] ?? false;
+style: feature => {
+  const plz = feature.properties?.plz?.trim();
+  const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+  const isHZ = this.hzFlags?.[plz] ?? false;
 
-        return {
-          fillColor: this.getColor(value, isHZ),
-          weight: 1,
-          opacity: 1,
-          color: "white",
-          fillOpacity: 0.7
-        };
-      },
+  const value = isHZ ? values.wk : values.wkPot;
+
+  return {
+    fillColor: this.getColor(value, isHZ),
+    weight: 1,
+    opacity: 1,
+    color: "white",
+    fillOpacity: 0.7
+  };
+}
+,
 
       onEachFeature: (feature, layer) => {
         layer.on("click", (e) => {
@@ -848,20 +851,18 @@
     this.updateMarkers(filteredPLZs);  
     this.renderDataTable(this.filteredKennwerte); 
   }
-      extractPLZWerte(data) {
-    const plzWerte = {};
-
-    data.forEach(row => {
-      const plz = row["dimension_plz_0"]?.id?.trim();
-      const value = row["value_wk_in_percent_0"]?.raw;
-
-      if (!plz || plz === "@NullMember") return;
-
-      plzWerte[plz] = typeof value === "number" ? value : 0;
-    });
-
-    return plzWerte;
-  }
+extractPLZWerte(data) { 
+  const plzWerte = {}; 
+  data.forEach(row => { const plz = row["dimension_plz_0"]?.id?.trim(); 
+  if (!plz || plz === "@NullMember") return; 
+  const wk = row["value_wk_in_percent_0"]?.raw; 
+  const wkPot = row["value_wk_potentiell_0"]?.raw; 
+  plzWerte[plz] = { 
+    wk: typeof wk === "number" ? wk : 0, 
+    wkPot: typeof wkPot === "number" ? 
+    wkPot : 0 }; }); 
+    return plzWerte; 
+    }
 
   getFilteredData() {
     if (!this._myDataSource || this._myDataSource.state !== "success") return [];
@@ -923,29 +924,50 @@
   }
 
 
-  updateGeoLayer() {
-    if (!this._geoLayer) return;
+updateGeoLayer() {
+  if (!this._geoLayer) return;
 
-    const filteredData = this.getFilteredData();
-  console.log('Update geo layer', filteredData);
-    const plzWerte = this.extractPLZWerte(filteredData);
+  // Hole gefilterte Daten
+  const filteredData = this.getFilteredData();
 
-    this._geoLayer.eachLayer(layer => {
-      const plz = layer.feature?.properties?.plz;
-      const value = plzWerte[plz] || 0;
-      const isHZ = this.hzFlags[plz] || false;
+  // Extrahiere beide Werte: wk und wkPot
+  const plzWerte = {};
+  filteredData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    if (!plz || plz === "@NullMember") return;
 
-      layer.setStyle({
-        fillColor: this.getColor(value, isHZ),
-        fillOpacity: 0.7
-      });
+    const wk = row["value_wk_in_percent_0"]?.raw;
+    const wkPot = row["value_wk_potentiell_0"]?.raw;
 
-      const note = layer.feature?.properties?.note;
-      if (note) {
-        layer.setTooltipContent?.(note); // Optional chaining für Sicherheit
-      }
+    plzWerte[plz] = {
+      wk: typeof wk === "number" ? wk : 0,
+      wkPot: typeof wkPot === "number" ? wkPot : 0
+    };
+  });
+
+  // Layer aktualisieren
+  this._geoLayer.eachLayer(layer => {
+    const plz = layer.feature?.properties?.plz;
+    const isHZ = this.hzFlags?.[plz] ?? false;
+
+    const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+
+    // HZ → WK in %, Nicht-HZ → WK potentiell
+    const value = isHZ ? values.wk : values.wkPot;
+
+    layer.setStyle({
+      fillColor: this.getColor(value, isHZ),
+      fillOpacity: 0.7
     });
-  }
+
+    // Tooltip aktualisieren (falls vorhanden)
+    const note = layer.feature?.properties?.note;
+    if (note && layer.setTooltipContent) {
+      layer.setTooltipContent(note);
+    }
+  });
+}
+
   updateMarkers(filteredPLZs) {
     this.filteredGroup.clearLayers();
     this.neighbourGroup.clearLayers();
@@ -1399,6 +1421,5 @@
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
-
 
 
