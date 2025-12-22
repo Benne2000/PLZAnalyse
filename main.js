@@ -537,7 +537,11 @@ style: feature => {
         console.log("Kennwerte Tabelle: ", kennwerte);
         const tr = document.createElement('tr');
 
-        const note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
+let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
+
+// Entfernt führende PLZ, egal ob mit Leerzeichen oder Bindestrich
+note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
+
 
         const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
