@@ -650,65 +650,62 @@ note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
       this.map.addLayer(this.neighbourGroup);
     }
   }
-  createAllMarkers() {
-    this.filteredGroup.clearLayers(); // Entfernt alle Marker aus der Gruppe
-    this.allMarkers = []; // Array statt Objekt, da Marker mehrfachen PLZs zugeordnet sein können
+createAllMarkers() {
+  this.filteredGroup.clearLayers();
+  this.allMarkers = [];
 
-    if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
-      console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
-      return;
-    }
-
-    if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") {
-      console.warn("⚠️ nlKoordinaten ist nicht definiert oder kein Objekt:", this.nlKoordinaten);
-      return;
-    }
-
-    const seen = new Map(); // Verhindert doppelte Marker pro Standort
-
-    Object.entries(this.Niederlassung).forEach(([plz, nl]) => {
-      const coords = this.nlKoordinaten[plz];
-      if (!coords) return;
-
-      const key = `${coords.lat},${coords.lon}`; // Standort als eindeutiger Schlüssel
-
-      if (!seen.has(key)) {
-        const icon = this.createMarkerIcon(nl);
-        const marker = L.marker([coords.lat, coords.lon], {
-          icon,
-          title: nl,
-          plzs: [plz] // Start mit einer PLZ
-        });
-        seen.set(key, marker);
-      } else {
-        // Marker existiert schon – PLZ ergänzen
-        const existingMarker = seen.get(key);
-        if (!existingMarker.options.plzs.includes(plz)) {
-          existingMarker.options.plzs.push(plz);
-        }
-      }
-    });
-
-    // Marker aus Map in Array übernehmen
-    this.allMarkers = Array.from(seen.values());
-
-    // Extra-Niederlassungen hinzufügen
-    if (Array.isArray(this.extraNLs)) {
-      this.extraNLs.forEach(({ nl, lat, lon }) => {
-        const icon = this.createMarkerIcon(nl);
-        const marker = L.marker([lat, lon], {
-          icon,
-          title: nl,
-          plzs: [`extra-${lat}-${lon}`] // künstliche PLZ zur Unterscheidung
-        });
-
-        this.allMarkers.push(marker);
-        this.filteredGroup.addLayer(marker); // direkt sichtbar
-      });
-    } else {
-      console.warn("⚠️ extraNLs ist nicht definiert oder kein Array:", this.extraNLs);
-    }
+  if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
+    console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
+    return;
   }
+
+  if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") {
+    console.warn("⚠️ nlKoordinaten ist nicht definiert oder kein Objekt:", this.nlKoordinaten);
+    return;
+  }
+
+  const seen = new Map(); // verhindert doppelte Marker pro NL
+
+  Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
+    const coords = this.nlKoordinaten[nlKey];
+    if (!coords) {
+      console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
+      return;
+    }
+
+    // Jeder NL bekommt genau einen Marker
+    if (!seen.has(nlKey)) {
+      const icon = this.createMarkerIcon(nlName);
+
+      const marker = L.marker([coords.lat, coords.lon], {
+        icon,
+        title: nlName,
+        plzs: [nlKey]   // WICHTIG: NL-Key, nicht PLZ
+      });
+
+      seen.set(nlKey, marker);
+    }
+  });
+
+  // Marker in Array übernehmen
+  this.allMarkers = Array.from(seen.values());
+
+  // Extra-Niederlassungen hinzufügen (falls vorhanden)
+  if (Array.isArray(this.extraNLs)) {
+    this.extraNLs.forEach(({ nl, lat, lon }) => {
+      const icon = this.createMarkerIcon(nl);
+      const marker = L.marker([lat, lon], {
+        icon,
+        title: nl,
+        plzs: [`extra-${lat}-${lon}`]
+      });
+
+      this.allMarkers.push(marker);
+      this.filteredGroup.addLayer(marker);
+    });
+  }
+}
+
 
 
   createMarkerIcon(nl) {
@@ -984,23 +981,26 @@ updateMarkers() {
   this.filteredGroup.clearLayers();
   this.neighbourGroup.clearLayers();
 
-  const { erhID, jahr, nummer } = this._activeFilter || {};
+  // Hole alle gefilterten Zeilen
+  const filteredData = this.getFilteredData();
 
+  // Extrahiere alle NLs, die im Filter vorkommen
+  const filteredNLs = new Set(
+    filteredData
+      .map(row => row["dimension_niederlassung_0"]?.id?.trim())
+      .filter(nl => nl)
+  );
+
+  // Marker durchgehen
   this.allMarkers.forEach(marker => {
-    const markerKey = marker.options.plzs?.[0]; // z. B. "560 HU+574 DA+589 F+..."
+    const markerNLs = marker.options.plzs || [];
 
-    // Prüfen, ob dieser Marker zur aktiven Erhebung gehört
-    const kennwerte = this.filteredKennwerte?.[markerKey];
-    const match =
-      kennwerte &&
-      kennwerte["dimension_erhebung_0"]?.id?.trim() === erhID &&
-      kennwerte["dimension_jahr_0"]?.id?.trim() === jahr &&
-      kennwerte["dimension_erhebungsnummer_0"]?.id?.trim() === nummer;
+    // Marker gehört zur Erhebung, wenn mindestens eine NL passt
+    const belongs = markerNLs.some(nl => filteredNLs.has(nl));
 
-    if (match) {
+    if (belongs) {
       this.filteredGroup.addLayer(marker);
     }
-    // Marker, die nicht dazugehören, werden ignoriert
   });
 }
 
@@ -1440,5 +1440,6 @@ updateMarkers() {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
+
 
 
