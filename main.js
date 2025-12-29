@@ -666,29 +666,32 @@ createAllMarkers() {
 
   const seen = new Map(); // verhindert doppelte Marker pro NL
 
-  Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
-    const coords = this.nlKoordinaten[nlKey];
+  Object.entries(this.Niederlassung).forEach(([plzKey, nlName]) => {
+    const coords = this.nlKoordinaten[plzKey];
     if (!coords) {
-      console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
+      console.warn("⚠️ Keine Koordinaten für NL:", plzKey, nlName);
       return;
     }
 
     // Jeder NL bekommt genau einen Marker
-    if (!seen.has(nlKey)) {
+    if (!seen.has(nlName)) {
       const icon = this.createMarkerIcon(nlName);
 
       const marker = L.marker([coords.lat, coords.lon], {
         icon,
         title: nlName,
-        plzs: [nlKey]   // WICHTIG: NL-Key, nicht PLZ
+        plzs: [nlName]   // WICHTIG: NL-Name für korrektes Filtern
       });
 
-      seen.set(nlKey, marker);
+      seen.set(nlName, marker);
     }
   });
 
-  // Marker in Array übernehmen
+  // Marker in Array übernehmen und zur Karte hinzufügen
   this.allMarkers = Array.from(seen.values());
+  this.allMarkers.forEach(marker => {
+    this.filteredGroup.addLayer(marker);
+  });
 
   // Extra-Niederlassungen hinzufügen (falls vorhanden)
   if (Array.isArray(this.extraNLs)) {
@@ -697,7 +700,7 @@ createAllMarkers() {
       const marker = L.marker([lat, lon], {
         icon,
         title: nl,
-        plzs: [`extra-${lat}-${lon}`]
+        plzs: [nl]
       });
 
       this.allMarkers.push(marker);
@@ -705,6 +708,7 @@ createAllMarkers() {
     });
   }
 }
+
 
 
 
@@ -979,12 +983,10 @@ updateGeoLayer() {
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
-  this.neighbourGroup.clearLayers();
 
-  // Hole alle gefilterten Zeilen
   const filteredData = this.getFilteredData();
 
-  // Extrahiere alle NLs, die im Filter vorkommen
+  // Alle NLs, die im Filter vorkommen
   const filteredNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
@@ -995,7 +997,6 @@ updateMarkers() {
   this.allMarkers.forEach(marker => {
     const markerNLs = marker.options.plzs || [];
 
-    // Marker gehört zur Erhebung, wenn mindestens eine NL passt
     const belongs = markerNLs.some(nl => filteredNLs.has(nl));
 
     if (belongs) {
@@ -1003,6 +1004,7 @@ updateMarkers() {
     }
   });
 }
+
 
 
 
@@ -1440,6 +1442,5 @@ updateMarkers() {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
-
 
 
