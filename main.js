@@ -1125,149 +1125,70 @@ updateMarkers() {
 
         this.render();
       }
-  prepareMapData(filteredData) {
-    const rawData = this._myDataSource?.data || [];
-    const geoFeatures = this._geoData?.features || [];
+prepareMapData(filteredData) {
+  const rawData = this._myDataSource?.data || [];
+  const geoFeatures = this._geoData?.features || [];
 
-    // Initialisierung aller relevanten Strukturen
-    this.kennwerte = {};
-    this.hzFlags = {};
-    this.Niederlassung = {};
-    this.nlKoordinaten = {};
-    this.plzKennwerte = {};
-    this.filteredKennwerte = {};
-    this.filteredKennwerteOhnePLZ = {};
-    this.extraNLs = [];
+  // Reset
+  this.kennwerte = {};
+  this.hzFlags = {};
+  this.Niederlassung = {};
+  this.nlKoordinaten = {};
+  this.plzKennwerte = {};
+  this.filteredKennwerte = {};
+  this.extraNLs = [];
 
-    const kennzahlenIDs = [
-      "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-      "value_wk_nachbar_0", "value_hz_kosten_0",
-      "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-      "value_ums_erhebung_0", "value_kd_erhebung_0",
-      "value_bon_erhebung_0", "value_auflage_0"
-    ];
-const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
-if (nlKey) {
-  this.Niederlassung[nlKey] = nlKey;
-  if (!isNaN(lat) && !isNaN(lon)) {
-    this.nlKoordinaten[nlKey] = { lat, lon };
-  }
-}
+  const kennzahlenIDs = [
+    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
+    "value_wk_nachbar_0", "value_hz_kosten_0",
+    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
+    "value_ums_erhebung_0", "value_kd_erhebung_0",
+    "value_bon_erhebung_0", "value_auflage_0"
+  ];
 
-    const unfilterbareIDs = [
-      "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0"
-    ];
+  // Geo-Notes
+  const geoNotes = {};
+  geoFeatures.forEach(f => {
+    const plz = f.properties?.plz?.trim();
+    const note = f.properties?.note?.trim();
+    if (plz) geoNotes[plz] = note || "";
+  });
 
-    const dataByPLZ = {};
+  // Verarbeitung der gefilterten Daten
+  filteredData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
+    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
 
-    // 🗂️ Mapping: PLZ → Note aus GeoJSON
-    const geoNotes = {};
-    geoFeatures.forEach(feature => {
-      const plz = feature.properties?.plz?.trim();
-      const note = feature.properties?.note?.trim();
-      if (plz && note) {
-        geoNotes[plz] = note;
+    const lat = parseFloat(row["dimension_Lat_0"]?.label);
+    const lon = parseFloat(row["dimension_lon_0"]?.label);
+
+    // --- Niederlassung speichern ---
+    if (nlKey) {
+      this.Niederlassung[nlKey] = nlKey;
+
+      if (!isNaN(lat) && !isNaN(lon)) {
+        this.nlKoordinaten[nlKey] = { lat, lon };
       }
-    });
+    }
 
-    // 🔍 Verarbeitung der gefilterten Daten
-    filteredData.forEach(row => {
-      const plz = row["dimension_plz_0"]?.id?.trim();
-      const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
-      const nlName = row["dimension_niederlassung_0"]?.id?.trim();
-      const latRaw = row["dimension_Lat_0"]?.label;
-      const lonRaw = row["dimension_lon_0"]?.label;
-      const lat = parseFloat(latRaw);
-      const lon = parseFloat(lonRaw);
-
-      const isValidPLZ = plz && plz !== "@NullMember";
-
-      const targetKennwerte = isValidPLZ ? this.filteredKennwerte : this.filteredKennwerteOhnePLZ;
-      const key = isValidPLZ ? plz : `NL_${nlName || Math.random().toString(36).slice(2)}`;
-
-      targetKennwerte[key] = {};
-      this.hzFlags[key] = hzFlag;
+    // --- PLZ-Kennwerte speichern ---
+    if (plz && plz !== "@NullMember") {
+      this.filteredKennwerte[plz] = {};
+      this.hzFlags[plz] = hzFlag;
 
       kennzahlenIDs.forEach(id => {
         const raw = row[id]?.raw;
-        targetKennwerte[key][id] = typeof raw === "number" ? raw : "–";
+        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
       });
 
-      // 📝 Note aus GeoJSON hinzufügen
-      const note = geoNotes[plz]?.trim() || '';
-      targetKennwerte[key]["dimension_note_0"] = { label: note };
+      this.filteredKennwerte[plz]["dimension_note_0"] = {
+        label: geoNotes[plz] || ""
+      };
+    }
+  });
+}
 
-      // 📍 Niederlassung speichern
-      if (nlName) {
-        this.Niederlassung[key] = nlName;
-      }
-
-      // 📌 Koordinaten speichern
-      if (!isNaN(lat) && !isNaN(lon)) {
-        this.nlKoordinaten[key] = { lat, lon };
-      }
-
-      // 🧭 Sonderfall: ohne PLZ → extraNLs
-      if (!isValidPLZ && nlName && !isNaN(lat) && !isNaN(lon)) {
-        this.extraNLs.push({ nl: nlName, lat, lon });
-      }
-
-      // 📦 Kennwerte für plzKennwerte
-      if (isValidPLZ) {
-        dataByPLZ[plz] = dataByPLZ[plz] || {};
-        kennzahlenIDs.forEach(id => {
-          if (!unfilterbareIDs.includes(id)) {
-            const raw = row[id]?.raw;
-            dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
-          }
-        });
-      }
-    });
-
-    // 🔄 Ergänzung unfilterbarer Werte aus rawData
-    rawData.forEach(row => {
-      const plz = row["dimension_plz_0"]?.id?.trim();
-      if (!plz || plz === "@NullMember") return;
-
-      dataByPLZ[plz] = dataByPLZ[plz] || {};
-
-      unfilterbareIDs.forEach(id => {
-        if (dataByPLZ[plz][id] === undefined) {
-          const raw = row[id]?.raw;
-          dataByPLZ[plz][id] = typeof raw === "number" ? raw : "–";
-        }
-      });
-
-      if (this.hzFlags[plz] === undefined) {
-        const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
-        this.hzFlags[plz] = hzFlag;
-      }
-
-      const nlName = row["dimension_niederlassung_0"]?.id?.trim();
-      if (nlName && !this.Niederlassung[plz]) {
-        this.Niederlassung[plz] = nlName;
-      }
-
-      if (!this.nlKoordinaten[plz]) {
-        const lat = row["value_latitude_0"]?.raw;
-        const lon = row["value_longitude_0"]?.raw;
-        if (typeof lat === "number" && typeof lon === "number") {
-          this.nlKoordinaten[plz] = { lat, lon };
-        }
-      }
-    });
-
-    // 🧩 Finales Mapping für plzKennwerte
-    Object.keys(dataByPLZ).forEach(plz => {
-      const werte = kennzahlenIDs.map(id => dataByPLZ[plz][id] ?? "–");
-      this.kennwerte[plz] = werte;
-
-      this.plzKennwerte[plz] = {};
-      kennzahlenIDs.forEach((id, i) => {
-        this.plzKennwerte[plz][id] = werte[i];
-      });
-    });
-  }
 
 
 
