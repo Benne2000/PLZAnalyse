@@ -664,33 +664,29 @@ createAllMarkers() {
     return;
   }
 
-  const seen = new Map(); // verhindert doppelte Marker pro NL
+  const seen = new Set(); // verhindert doppelte Marker pro NL
 
-  Object.entries(this.Niederlassung).forEach(([plzKey, nlName]) => {
-    const coords = this.nlKoordinaten[plzKey];
+  Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
+    const coords = this.nlKoordinaten[nlKey];
     if (!coords) {
-      console.warn("⚠️ Keine Koordinaten für NL:", plzKey, nlName);
+      console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
       return;
     }
 
     // Jeder NL bekommt genau einen Marker
-    if (!seen.has(nlName)) {
+    if (!seen.has(nlKey)) {
       const icon = this.createMarkerIcon(nlName);
 
       const marker = L.marker([coords.lat, coords.lon], {
         icon,
         title: nlName,
-        plzs: [nlName]   // WICHTIG: NL-Name für korrektes Filtern
+        plzs: [nlKey] // ← wichtig: echter NL-Name für Filterung
       });
 
-      seen.set(nlName, marker);
+      this.allMarkers.push(marker);
+      this.filteredGroup.addLayer(marker);
+      seen.add(nlKey);
     }
-  });
-
-  // Marker in Array übernehmen und zur Karte hinzufügen
-  this.allMarkers = Array.from(seen.values());
-  this.allMarkers.forEach(marker => {
-    this.filteredGroup.addLayer(marker);
   });
 
   // Extra-Niederlassungen hinzufügen (falls vorhanden)
@@ -708,6 +704,7 @@ createAllMarkers() {
     });
   }
 }
+
 
 
 
@@ -1149,6 +1146,13 @@ updateMarkers() {
       "value_ums_erhebung_0", "value_kd_erhebung_0",
       "value_bon_erhebung_0", "value_auflage_0"
     ];
+const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
+if (nlKey) {
+  this.Niederlassung[nlKey] = nlKey;
+  if (!isNaN(lat) && !isNaN(lon)) {
+    this.nlKoordinaten[nlKey] = { lat, lon };
+  }
+}
 
     const unfilterbareIDs = [
       "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0"
