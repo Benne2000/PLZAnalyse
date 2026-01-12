@@ -937,46 +937,40 @@ extractPLZWerte(data) {
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
-  // Hole gefilterte Daten
-  const filteredData = this.getFilteredData();
+  // Verwende ausschließlich die Kennwerte der aktiven Erhebung
+  const plzKennwerte = this.filteredKennwerte || {};
 
-  // Extrahiere beide Werte: wk und wkPot
-  const plzWerte = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    if (!plz || plz === "@NullMember") return;
-
-    const wk = row["value_wk_in_percent_0"]?.raw;
-    const wkPot = row["value_wk_potentiell_0"]?.raw;
-
-    plzWerte[plz] = {
-      wk: typeof wk === "number" ? wk : 0,
-      wkPot: typeof wkPot === "number" ? wkPot : 0
-    };
-  });
-
-  // Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
+    if (!plz) return;
+
+    // HZ-Flag pro PLZ
     const isHZ = this.hzFlags?.[plz] ?? false;
 
-    const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+    // Kennwerte der aktiven Erhebung
+    const werte = plzKennwerte[plz] || {};
 
-    // HZ → WK in %, Nicht-HZ → WK potentiell
-    const value = isHZ ? values.wk : values.wkPot;
+    // WK für HZ, WK potentiell für Nicht-HZ
+    const wk = werte["value_wk_in_percent_0"];
+    const wkPot = werte["value_wk_potentiell_0"];
+    const value = isHZ ? wk : wkPot;
 
+    // Farbe setzen
     layer.setStyle({
       fillColor: this.getColor(value, isHZ),
-      fillOpacity: 0.7
+      fillOpacity: 0.7,
+      weight: 1,
+      color: "#666"
     });
 
-    // Tooltip aktualisieren (falls vorhanden)
-    const note = layer.feature?.properties?.note;
+    // Tooltip aktualisieren
+    const note = werte["dimension_note_0"]?.label || "";
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
   });
 }
+
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
@@ -1367,5 +1361,4 @@ prepareMapData(filteredData) {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
-
 
