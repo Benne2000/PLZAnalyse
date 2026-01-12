@@ -874,39 +874,46 @@ extractPLZWerte(data) {
     return plzWerte; 
     }
 
-  getFilteredData() {
-    if (!this._myDataSource || this._myDataSource.state !== "success") return [];
-
-    const data = this._myDataSource.data;
-    const { erhID, jahr, nummer } = this._activeFilter || {};
-
-    const filteredKennwerte = {};
-    const filtered = data.filter(row => {
-      const id = row["dimension_erhebung_0"]?.id?.trim() || "@NullMember";
-      const y = row["dimension_jahr_0"]?.id?.trim() || "@NullMember";
-      const num = row["dimension_erhebungsnummer_0"]?.id?.trim() || "@NullMember";
-      const plz = row["dimension_plz_0"]?.id?.trim();
-
-      const match =
-        (id === erhID || id === "@NullMember") &&
-        (y === jahr || y === "@NullMember") &&
-        (num === nummer || num === "@NullMember");
-
-      if (match && plz && plz !== "@NullMember") {
-        filteredKennwerte[plz] = row;
-        console.log('filteredKennwerte:' ,filteredKennwerte[plz]);
-      }
-
-      return match;
-    });
-
-    this.filteredKennwerte = filteredKennwerte;
-
-    console.log("✅ Gefilterte Daten:", filtered);
-    console.log("📦 Gefilterte Kennwerte nach PLZ:", this.filteredKennwerte);
-
-    return filtered;
+getFilteredData() {
+  if (!this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
+    return [];
   }
+
+  const data = this._myDataSource.data;
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  console.group("🔍 Filtervorgang gestartet");
+  console.log("➡️ ErhebungsID:", erhID);
+  console.log("➡️ Jahr:", jahr);
+  console.log("➡️ Nummer:", nummer);
+
+  const filteredKennwerte = {};
+  const filtered = data.filter(row => {
+    const id = row["dimension_erhebung_0"]?.id?.trim();
+    const y = row["dimension_jahr_0"]?.id?.trim();
+    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    const plz = row["dimension_plz_0"]?.id?.trim();
+
+    const match = id === erhID && y === jahr && num === nummer;
+
+    if (match) {
+      console.log(`✔️ Match: PLZ ${plz} | HZ=${row["dimension_hzflag_0"]?.id}`);
+      if (plz && plz !== "@NullMember") {
+        filteredKennwerte[plz] = row;
+      }
+    }
+
+    return match;
+  });
+
+  console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
+  console.groupEnd();
+
+  this.filteredKennwerte = filteredKennwerte;
+  return filtered;
+}
+
 
 
 
