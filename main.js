@@ -937,7 +937,8 @@ extractPLZWerte(data) {
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
-  const plzStatus = this.plzStatus || {};
+const plzStatus = this.plzStatus ?? {};
+
 
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
@@ -1120,12 +1121,13 @@ updateMarkers() {
         this.render();
       }
 prepareMapData(filteredData) {
+  console.log("UPDATED");
   const geoFeatures = this._geoData?.features || [];
 
   // Reset
+  this.plzStatus = {};       // zentrale Struktur für Farben
   this.Niederlassung = {};
   this.nlKoordinaten = {};
-  this.plzStatus = {};       // zentrale Struktur für Farben
   this.extraNLs = [];
 
   // Geo-Notes
