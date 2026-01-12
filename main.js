@@ -937,46 +937,40 @@ extractPLZWerte(data) {
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
-  // Hole gefilterte Daten
-  const filteredData = this.getFilteredData();
+  const plzStatus = this.plzStatus || {};
 
-  // Extrahiere beide Werte: wk und wkPot
-  const plzWerte = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    if (!plz || plz === "@NullMember") return;
-
-    const wk = row["value_wk_in_percent_0"]?.raw;
-    const wkPot = row["value_wk_potentiell_0"]?.raw;
-
-    plzWerte[plz] = {
-      wk: typeof wk === "number" ? wk : 0,
-      wkPot: typeof wkPot === "number" ? wkPot : 0
-    };
-  });
-
-  // Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
-    const isHZ = this.hzFlags?.[plz] ?? false;
+    if (!plz) return;
 
-    const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+    const status = plzStatus[plz];
 
-    // HZ → WK in %, Nicht-HZ → WK potentiell
-    const value = isHZ ? values.wk : values.wkPot;
+    if (!status) {
+      layer.setStyle({
+        fillColor: this.getColor(null, false),
+        fillOpacity: 0.3,
+        weight: 1,
+        color: "#ccc"
+      });
+      return;
+    }
+
+    const { isHZ, wk, wkPot, note } = status;
+    const value = isHZ ? wk : wkPot;
 
     layer.setStyle({
       fillColor: this.getColor(value, isHZ),
-      fillOpacity: 0.7
+      fillOpacity: 0.7,
+      weight: 1,
+      color: "#666"
     });
 
-    // Tooltip aktualisieren (falls vorhanden)
-    const note = layer.feature?.properties?.note;
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
   });
 }
+
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
@@ -1126,25 +1120,13 @@ updateMarkers() {
         this.render();
       }
 prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
   // Reset
-  this.kennwerte = {};
-  this.hzFlags = {};
   this.Niederlassung = {};
   this.nlKoordinaten = {};
-  this.plzKennwerte = {};
-  this.filteredKennwerte = {};
+  this.plzStatus = {};       // zentrale Struktur für Farben
   this.extraNLs = [];
-
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0"
-  ];
 
   // Geo-Notes
   const geoNotes = {};
@@ -1154,11 +1136,10 @@ prepareMapData(filteredData) {
     if (plz) geoNotes[plz] = note || "";
   });
 
-  // Verarbeitung der gefilterten Daten
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
-    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    const isHZ = row["dimension_hzflag_0"]?.id?.trim() === "X";
 
     const lat = parseFloat(row["dimension_Lat_0"]?.label);
     const lon = parseFloat(row["dimension_lon_0"]?.label);
@@ -1172,19 +1153,26 @@ prepareMapData(filteredData) {
       }
     }
 
-    // --- PLZ-Kennwerte speichern ---
+    // --- PLZ-Status speichern (für Farben) ---
     if (plz && plz !== "@NullMember") {
-      this.filteredKennwerte[plz] = {};
-      this.hzFlags[plz] = hzFlag;
+      const wk = row["value_wk_in_percent_0"]?.raw;
+      const wkPot =
+        row["value_wk_potentiell_0"]?.raw ??
+        row["value_wk_nachbar_0"]?.raw;
 
-      kennzahlenIDs.forEach(id => {
-        const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
-      });
+      const existing = this.plzStatus[plz];
 
-      this.filteredKennwerte[plz]["dimension_note_0"] = {
-        label: geoNotes[plz] || ""
-      };
+      // Wenn mehrere Zeilen existieren:
+      // - HZ gewinnt immer
+      // - sonst erste Zeile behalten
+      if (!existing || (isHZ && !existing.isHZ)) {
+        this.plzStatus[plz] = {
+          isHZ,
+          wk: typeof wk === "number" ? wk : 0,
+          wkPot: typeof wkPot === "number" ? wkPot : 0,
+          note: geoNotes[plz] || ""
+        };
+      }
     }
   });
 }
@@ -1367,4 +1355,3 @@ prepareMapData(filteredData) {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
-
