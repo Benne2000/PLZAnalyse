@@ -874,7 +874,7 @@ extractPLZWerte(data) {
     return plzWerte; 
     }
 
-getFilteredData() {
+ggetFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
     return [];
@@ -918,6 +918,7 @@ getFilteredData() {
 
 
 
+
   getColor(value, isHZ) {
     const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
 
@@ -942,48 +943,47 @@ getFilteredData() {
 
 
 updateGeoLayer() {
-  if (!this._geoLayer) return;
+  if (!this._geoLayer) {
+    console.warn("⛔ updateGeoLayer: Kein GeoLayer vorhanden.");
+    return;
+  }
 
-  // Hole gefilterte Daten
-  const filteredData = this.getFilteredData();
+  console.group("🎨 updateGeoLayer");
 
-  // Extrahiere beide Werte: wk und wkPot
-  const plzWerte = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    if (!plz || plz === "@NullMember") return;
-
-    const wk = row["value_wk_in_percent_0"]?.raw;
-    const wkPot = row["value_wk_potentiell_0"]?.raw;
-
-    plzWerte[plz] = {
-      wk: typeof wk === "number" ? wk : 0,
-      wkPot: typeof wkPot === "number" ? wkPot : 0
-    };
-  });
-
-  // Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
-    const isHZ = this.hzFlags?.[plz] ?? false;
 
-    const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+    // HZ-Flag aus vorbereiteten Daten
+    const isHZ = this.hzFlags[plz] === true;
 
-    // HZ → WK in %, Nicht-HZ → WK potentiell
-    const value = isHZ ? values.wk : values.wkPot;
+    // WK-Werte aus vorbereiteten Kennwerten
+    const wk     = this.filteredKennwerte[plz]?.value_wk_in_percent_0?.raw ?? 0;
+    const wkPot  = this.filteredKennwerte[plz]?.value_wk_potentiell_0?.raw ?? 0;
+
+    // HZ → WK, Nicht-HZ → WKPot
+    const value = isHZ ? wk : wkPot;
+
+    const color = this.getColor(value, isHZ);
+
+    console.log(
+      `PLZ ${plz}: HZ=${isHZ} | WK=${wk} | WKPot=${wkPot} | Wert=${value} | Farbe=${color}`
+    );
 
     layer.setStyle({
-      fillColor: this.getColor(value, isHZ),
+      fillColor: color,
       fillOpacity: 0.7
     });
 
-    // Tooltip aktualisieren (falls vorhanden)
+    // Tooltip aktualisieren
     const note = layer.feature?.properties?.note;
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
   });
+
+  console.groupEnd();
 }
+
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
@@ -1132,36 +1132,15 @@ updateMarkers() {
 
         this.render();
       }
-prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
-  const geoFeatures = this._geoData?.features || [];
 
-  // Reset
-  this.kennwerte = {};
+prepareMapData(filteredData) {
+  console.group("🧱 prepareMapData");
+
   this.hzFlags = {};
+  this.filteredKennwerte = {};
   this.Niederlassung = {};
   this.nlKoordinaten = {};
-  this.plzKennwerte = {};
-  this.filteredKennwerte = {};
-  this.extraNLs = [];
 
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0"
-  ];
-
-  // Geo-Notes
-  const geoNotes = {};
-  geoFeatures.forEach(f => {
-    const plz = f.properties?.plz?.trim();
-    const note = f.properties?.note?.trim();
-    if (plz) geoNotes[plz] = note || "";
-  });
-
-  // Verarbeitung der gefilterten Daten
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
@@ -1170,31 +1149,51 @@ prepareMapData(filteredData) {
     const lat = parseFloat(row["dimension_Lat_0"]?.label);
     const lon = parseFloat(row["dimension_lon_0"]?.label);
 
-    // --- Niederlassung speichern ---
+    // Niederlassung
     if (nlKey) {
       this.Niederlassung[nlKey] = nlKey;
-
       if (!isNaN(lat) && !isNaN(lon)) {
         this.nlKoordinaten[nlKey] = { lat, lon };
       }
     }
 
-    // --- PLZ-Kennwerte speichern ---
+    // PLZ-Kennwerte
     if (plz && plz !== "@NullMember") {
-      this.filteredKennwerte[plz] = {};
+      console.log(`➡️ PLZ ${plz}: HZ=${hzFlag}`);
       this.hzFlags[plz] = hzFlag;
+
+      if (!this.filteredKennwerte[plz]) {
+        this.filteredKennwerte[plz] = {};
+      }
+
+      const kennzahlenIDs = [
+        "value_hr_n_umsatz_0",
+        "value_umsatz_p_hh_0",
+        "value_wk_in_percent_0",
+        "value_wk_nachbar_0",
+        "value_hz_kosten_0",
+        "value_werbeverweigerer_0",
+        "value_haushalte_0",
+        "value_kaufkraft_0",
+        "value_ums_erhebung_0",
+        "value_kd_erhebung_0",
+        "value_bon_erhebung_0",
+        "value_auflage_0",
+        "value_wk_potentiell_0",
+        "value_hz_potentiell_0"
+      ];
 
       kennzahlenIDs.forEach(id => {
         const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
+        this.filteredKennwerte[plz][id] = { raw };
+        console.log(`   📊 ${id}:`, raw);
       });
-
-      this.filteredKennwerte[plz]["dimension_note_0"] = {
-        label: geoNotes[plz] || ""
-      };
     }
   });
+
+  console.groupEnd();
 }
+
 
 
 
