@@ -1120,16 +1120,13 @@ updateMarkers() {
         this.render();
       }
 prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
   // Reset
-  this.kennwerte = {};
-  this.hzFlags = {};
   this.Niederlassung = {};
   this.nlKoordinaten = {};
-  this.plzKennwerte = {};
   this.filteredKennwerte = {};
+  this.hzFlags = {};
   this.extraNLs = [];
 
   const kennzahlenIDs = [
@@ -1173,7 +1170,7 @@ prepareMapData(filteredData) {
 
       kennzahlenIDs.forEach(id => {
         const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
+        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : 0;
       });
 
       this.filteredKennwerte[plz]["dimension_note_0"] = {
@@ -1182,6 +1179,7 @@ prepareMapData(filteredData) {
     }
   });
 }
+
 
 
 
