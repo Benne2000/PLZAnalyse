@@ -937,40 +937,46 @@ extractPLZWerte(data) {
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
-  // Verwende ausschließlich die Kennwerte der aktiven Erhebung
-  const plzKennwerte = this.filteredKennwerte || {};
+  // Hole gefilterte Daten
+  const filteredData = this.getFilteredData();
 
+  // Extrahiere beide Werte: wk und wkPot
+  const plzWerte = {};
+  filteredData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    if (!plz || plz === "@NullMember") return;
+
+    const wk = row["value_wk_in_percent_0"]?.raw;
+    const wkPot = row["value_wk_potentiell_0"]?.raw;
+
+    plzWerte[plz] = {
+      wk: typeof wk === "number" ? wk : 0,
+      wkPot: typeof wkPot === "number" ? wkPot : 0
+    };
+  });
+
+  // Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
-    if (!plz) return;
-
-    // HZ-Flag pro PLZ
     const isHZ = this.hzFlags?.[plz] ?? false;
 
-    // Kennwerte der aktiven Erhebung
-    const werte = plzKennwerte[plz] || {};
+    const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
 
-    // WK für HZ, WK potentiell für Nicht-HZ
-    const wk = werte["value_wk_in_percent_0"];
-    const wkPot = werte["value_wk_potentiell_0"];
-    const value = isHZ ? wk : wkPot;
+    // HZ → WK in %, Nicht-HZ → WK potentiell
+    const value = isHZ ? values.wk : values.wkPot;
 
-    // Farbe setzen
     layer.setStyle({
       fillColor: this.getColor(value, isHZ),
-      fillOpacity: 0.7,
-      weight: 1,
-      color: "#666"
+      fillOpacity: 0.7
     });
 
-    // Tooltip aktualisieren
-    const note = werte["dimension_note_0"]?.label || "";
+    // Tooltip aktualisieren (falls vorhanden)
+    const note = layer.feature?.properties?.note;
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
   });
 }
-
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
@@ -1120,13 +1126,16 @@ updateMarkers() {
         this.render();
       }
 prepareMapData(filteredData) {
+  const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
   // Reset
+  this.kennwerte = {};
+  this.hzFlags = {};
   this.Niederlassung = {};
   this.nlKoordinaten = {};
+  this.plzKennwerte = {};
   this.filteredKennwerte = {};
-  this.hzFlags = {};
   this.extraNLs = [];
 
   const kennzahlenIDs = [
@@ -1170,7 +1179,7 @@ prepareMapData(filteredData) {
 
       kennzahlenIDs.forEach(id => {
         const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : 0;
+        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
       });
 
       this.filteredKennwerte[plz]["dimension_note_0"] = {
@@ -1179,7 +1188,6 @@ prepareMapData(filteredData) {
     }
   });
 }
-
 
 
 
