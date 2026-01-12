@@ -407,45 +407,44 @@
   }
 
 
-      async loadGeoJson() {
+async loadGeoJson() {
   if (this._geoLayer) return;
 
   try {
     const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
     this._geoData = await response.json();
+
+    // Notes extrahieren
     this.geoNotes = {};
-(this._geoData.features || []).forEach(feature => {
-  const plz = feature.properties?.plz?.trim();
-  const note = feature.properties?.note?.trim();
-  if (plz && note) {
-    this.geoNotes[plz] = note;
-  }
-});
+    (this._geoData.features || []).forEach(feature => {
+      const plz = feature.properties?.plz?.trim();
+      const note = feature.properties?.note?.trim();
+      if (plz) this.geoNotes[plz] = note || "";
+    });
 
-    const filteredData = this.getFilteredData(); // baut filteredKennwerte
-    const plzWerte = this.extractPLZWerte(filteredData);
-
+    // GeoJSON Layer erzeugen
     this._geoLayer = L.geoJSON(this._geoData, {
-style: feature => {
-  const plz = feature.properties?.plz?.trim();
-  const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
-  const isHZ = this.hzFlags?.[plz] ?? false;
+      style: feature => {
+        const plz = feature.properties?.plz?.trim();
+        const isHZ = this.hzFlags?.[plz] === true;
 
-  const value = isHZ ? values.wk : values.wkPot;
+        const wk = this.filteredKennwerte[plz]?.value_wk_in_percent_0?.raw ?? 0;
+        const wkPot = this.filteredKennwerte[plz]?.value_wk_potentiell_0?.raw ?? 0;
 
-  return {
-    fillColor: this.getColor(value, isHZ),
-    weight: 1,
-    opacity: 1,
-    color: "white",
-    fillOpacity: 0.7
-  };
-}
-,
+        const value = isHZ ? wk : wkPot;
+
+        return {
+          fillColor: this.getColor(value, isHZ),
+          weight: 1,
+          opacity: 1,
+          color: "white",
+          fillOpacity: 0.7
+        };
+      },
 
       onEachFeature: (feature, layer) => {
-        layer.on("click", (e) => {
-          const plz = e.target.feature.properties.plz?.toString().trim();
+        layer.on("click", e => {
+          const plz = e.target.feature.properties.plz?.trim();
           const kennwerte = this.filteredKennwerte[plz];
           this.showPopup(e.target.feature, kennwerte);
         });
@@ -454,18 +453,18 @@ style: feature => {
 
     this._geoLayer.addTo(this.map);
 
-    // 📍 Automatisch auf die volle Ausdehnung zoomen
+    // Karte einrahmen
     const bounds = this._geoLayer.getBounds();
-    console.log("Geojson einrahmen");
     this.map.fitBounds(bounds, {
-      padding: [20, 20],   // Optional: Randabstand
-      maxZoom: 14          // Optional: Maximaler Zoom-Level
+      padding: [20, 20],
+      maxZoom: 14
     });
 
   } catch (error) {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
 }
+
 
 
 
