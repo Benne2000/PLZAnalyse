@@ -407,44 +407,45 @@
   }
 
 
-async loadGeoJson() {
+      async loadGeoJson() {
   if (this._geoLayer) return;
 
   try {
     const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
     this._geoData = await response.json();
-
-    // Notes extrahieren
     this.geoNotes = {};
-    (this._geoData.features || []).forEach(feature => {
-      const plz = feature.properties?.plz?.trim();
-      const note = feature.properties?.note?.trim();
-      if (plz) this.geoNotes[plz] = note || "";
-    });
+(this._geoData.features || []).forEach(feature => {
+  const plz = feature.properties?.plz?.trim();
+  const note = feature.properties?.note?.trim();
+  if (plz && note) {
+    this.geoNotes[plz] = note;
+  }
+});
 
-    // GeoJSON Layer erzeugen
+    const filteredData = this.getFilteredData(); // baut filteredKennwerte
+    const plzWerte = this.extractPLZWerte(filteredData);
+
     this._geoLayer = L.geoJSON(this._geoData, {
-      style: feature => {
-        const plz = feature.properties?.plz?.trim();
-        const isHZ = this.hzFlags?.[plz] === true;
+style: feature => {
+  const plz = feature.properties?.plz?.trim();
+  const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+  const isHZ = this.hzFlags?.[plz] ?? false;
 
-        const wk = this.filteredKennwerte[plz]?.value_wk_in_percent_0?.raw ?? 0;
-        const wkPot = this.filteredKennwerte[plz]?.value_wk_potentiell_0?.raw ?? 0;
+  const value = isHZ ? values.wk : values.wkPot;
 
-        const value = isHZ ? wk : wkPot;
-
-        return {
-          fillColor: this.getColor(value, isHZ),
-          weight: 1,
-          opacity: 1,
-          color: "white",
-          fillOpacity: 0.7
-        };
-      },
+  return {
+    fillColor: this.getColor(value, isHZ),
+    weight: 1,
+    opacity: 1,
+    color: "white",
+    fillOpacity: 0.7
+  };
+}
+,
 
       onEachFeature: (feature, layer) => {
-        layer.on("click", e => {
-          const plz = e.target.feature.properties.plz?.trim();
+        layer.on("click", (e) => {
+          const plz = e.target.feature.properties.plz?.toString().trim();
           const kennwerte = this.filteredKennwerte[plz];
           this.showPopup(e.target.feature, kennwerte);
         });
@@ -453,18 +454,18 @@ async loadGeoJson() {
 
     this._geoLayer.addTo(this.map);
 
-    // Karte einrahmen
+    // 📍 Automatisch auf die volle Ausdehnung zoomen
     const bounds = this._geoLayer.getBounds();
+    console.log("Geojson einrahmen");
     this.map.fitBounds(bounds, {
-      padding: [20, 20],
-      maxZoom: 14
+      padding: [20, 20],   // Optional: Randabstand
+      maxZoom: 14          // Optional: Maximaler Zoom-Level
     });
 
   } catch (error) {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
 }
-
 
 
 
@@ -873,47 +874,39 @@ extractPLZWerte(data) {
     return plzWerte; 
     }
 
-ggetFilteredData() {
-  if (!this._myDataSource || this._myDataSource.state !== "success") {
-    console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
-    return [];
-  }
+  getFilteredData() {
+    if (!this._myDataSource || this._myDataSource.state !== "success") return [];
 
-  const data = this._myDataSource.data;
-  const { erhID, jahr, nummer } = this._activeFilter || {};
+    const data = this._myDataSource.data;
+    const { erhID, jahr, nummer } = this._activeFilter || {};
 
-  console.group("🔍 Filtervorgang gestartet");
-  console.log("➡️ ErhebungsID:", erhID);
-  console.log("➡️ Jahr:", jahr);
-  console.log("➡️ Nummer:", nummer);
+    const filteredKennwerte = {};
+    const filtered = data.filter(row => {
+      const id = row["dimension_erhebung_0"]?.id?.trim() || "@NullMember";
+      const y = row["dimension_jahr_0"]?.id?.trim() || "@NullMember";
+      const num = row["dimension_erhebungsnummer_0"]?.id?.trim() || "@NullMember";
+      const plz = row["dimension_plz_0"]?.id?.trim();
 
-  const filteredKennwerte = {};
-  const filtered = data.filter(row => {
-    const id = row["dimension_erhebung_0"]?.id?.trim();
-    const y = row["dimension_jahr_0"]?.id?.trim();
-    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
-    const plz = row["dimension_plz_0"]?.id?.trim();
+      const match =
+        (id === erhID || id === "@NullMember") &&
+        (y === jahr || y === "@NullMember") &&
+        (num === nummer || num === "@NullMember");
 
-    const match = id === erhID && y === jahr && num === nummer;
-
-    if (match) {
-      console.log(`✔️ Match: PLZ ${plz} | HZ=${row["dimension_hzflag_0"]?.id}`);
-      if (plz && plz !== "@NullMember") {
+      if (match && plz && plz !== "@NullMember") {
         filteredKennwerte[plz] = row;
+        console.log('filteredKennwerte:' ,filteredKennwerte[plz]);
       }
-    }
 
-    return match;
-  });
+      return match;
+    });
 
-  console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
-  console.groupEnd();
+    this.filteredKennwerte = filteredKennwerte;
 
-  this.filteredKennwerte = filteredKennwerte;
-  return filtered;
-}
+    console.log("✅ Gefilterte Daten:", filtered);
+    console.log("📦 Gefilterte Kennwerte nach PLZ:", this.filteredKennwerte);
 
-
+    return filtered;
+  }
 
 
 
@@ -942,47 +935,48 @@ ggetFilteredData() {
 
 
 updateGeoLayer() {
-  if (!this._geoLayer) {
-    console.warn("⛔ updateGeoLayer: Kein GeoLayer vorhanden.");
-    return;
-  }
+  if (!this._geoLayer) return;
 
-  console.group("🎨 updateGeoLayer");
+  // Hole gefilterte Daten
+  const filteredData = this.getFilteredData();
 
+  // Extrahiere beide Werte: wk und wkPot
+  const plzWerte = {};
+  filteredData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    if (!plz || plz === "@NullMember") return;
+
+    const wk = row["value_wk_in_percent_0"]?.raw;
+    const wkPot = row["value_wk_potentiell_0"]?.raw;
+
+    plzWerte[plz] = {
+      wk: typeof wk === "number" ? wk : 0,
+      wkPot: typeof wkPot === "number" ? wkPot : 0
+    };
+  });
+
+  // Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
+    const isHZ = this.hzFlags?.[plz] ?? false;
 
-    // HZ-Flag aus vorbereiteten Daten
-    const isHZ = this.hzFlags[plz] === true;
+    const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
 
-    // WK-Werte aus vorbereiteten Kennwerten
-    const wk     = this.filteredKennwerte[plz]?.value_wk_in_percent_0?.raw ?? 0;
-    const wkPot  = this.filteredKennwerte[plz]?.value_wk_potentiell_0?.raw ?? 0;
-
-    // HZ → WK, Nicht-HZ → WKPot
-    const value = isHZ ? wk : wkPot;
-
-    const color = this.getColor(value, isHZ);
-
-    console.log(
-      `PLZ ${plz}: HZ=${isHZ} | WK=${wk} | WKPot=${wkPot} | Wert=${value} | Farbe=${color}`
-    );
+    // HZ → WK in %, Nicht-HZ → WK potentiell
+    const value = isHZ ? values.wk : values.wkPot;
 
     layer.setStyle({
-      fillColor: color,
+      fillColor: this.getColor(value, isHZ),
       fillOpacity: 0.7
     });
 
-    // Tooltip aktualisieren
+    // Tooltip aktualisieren (falls vorhanden)
     const note = layer.feature?.properties?.note;
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
   });
-
-  console.groupEnd();
 }
-
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
@@ -1131,15 +1125,36 @@ updateMarkers() {
 
         this.render();
       }
-
 prepareMapData(filteredData) {
-  console.group("🧱 prepareMapData");
+  const rawData = this._myDataSource?.data || [];
+  const geoFeatures = this._geoData?.features || [];
 
+  // Reset
+  this.kennwerte = {};
   this.hzFlags = {};
-  this.filteredKennwerte = {};
   this.Niederlassung = {};
   this.nlKoordinaten = {};
+  this.plzKennwerte = {};
+  this.filteredKennwerte = {};
+  this.extraNLs = [];
 
+  const kennzahlenIDs = [
+    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
+    "value_wk_nachbar_0", "value_hz_kosten_0",
+    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
+    "value_ums_erhebung_0", "value_kd_erhebung_0",
+    "value_bon_erhebung_0", "value_auflage_0"
+  ];
+
+  // Geo-Notes
+  const geoNotes = {};
+  geoFeatures.forEach(f => {
+    const plz = f.properties?.plz?.trim();
+    const note = f.properties?.note?.trim();
+    if (plz) geoNotes[plz] = note || "";
+  });
+
+  // Verarbeitung der gefilterten Daten
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
@@ -1148,51 +1163,31 @@ prepareMapData(filteredData) {
     const lat = parseFloat(row["dimension_Lat_0"]?.label);
     const lon = parseFloat(row["dimension_lon_0"]?.label);
 
-    // Niederlassung
+    // --- Niederlassung speichern ---
     if (nlKey) {
       this.Niederlassung[nlKey] = nlKey;
+
       if (!isNaN(lat) && !isNaN(lon)) {
         this.nlKoordinaten[nlKey] = { lat, lon };
       }
     }
 
-    // PLZ-Kennwerte
+    // --- PLZ-Kennwerte speichern ---
     if (plz && plz !== "@NullMember") {
-      console.log(`➡️ PLZ ${plz}: HZ=${hzFlag}`);
+      this.filteredKennwerte[plz] = {};
       this.hzFlags[plz] = hzFlag;
-
-      if (!this.filteredKennwerte[plz]) {
-        this.filteredKennwerte[plz] = {};
-      }
-
-      const kennzahlenIDs = [
-        "value_hr_n_umsatz_0",
-        "value_umsatz_p_hh_0",
-        "value_wk_in_percent_0",
-        "value_wk_nachbar_0",
-        "value_hz_kosten_0",
-        "value_werbeverweigerer_0",
-        "value_haushalte_0",
-        "value_kaufkraft_0",
-        "value_ums_erhebung_0",
-        "value_kd_erhebung_0",
-        "value_bon_erhebung_0",
-        "value_auflage_0",
-        "value_wk_potentiell_0",
-        "value_hz_potentiell_0"
-      ];
 
       kennzahlenIDs.forEach(id => {
         const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = { raw };
-        console.log(`   📊 ${id}:`, raw);
+        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
       });
+
+      this.filteredKennwerte[plz]["dimension_note_0"] = {
+        label: geoNotes[plz] || ""
+      };
     }
   });
-
-  console.groupEnd();
 }
-
 
 
 
