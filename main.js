@@ -861,52 +861,70 @@ createAllMarkers() {
     this.updateMarkers(filteredPLZs);  
     this.renderDataTable(this.filteredKennwerte); 
   }
-extractPLZWerte(data) { 
-  const plzWerte = {}; 
-  data.forEach(row => { const plz = row["dimension_plz_0"]?.id?.trim(); 
-  if (!plz || plz === "@NullMember") return; 
-  const wk = row["value_wk_in_percent_0"]?.raw; 
-  const wkPot = row["value_wk_potentiell_0"]?.raw; 
-  plzWerte[plz] = { 
-    wk: typeof wk === "number" ? wk : 0, 
-    wkPot: typeof wkPot === "number" ? 
-    wkPot : 0 }; }); 
-    return plzWerte; 
+extractPLZWerte(data) {
+  const plzWerte = {};
+
+  data.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    if (!plz || plz === "@NullMember") return;
+
+    const wk = row["value_wk_in_percent_0"]?.raw;
+    const wkPot = row["value_wk_potentiell_0"]?.raw;
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
+
+    plzWerte[plz] = {
+      wk: typeof wk === "number" ? wk : 0,
+      wkPot: typeof wkPot === "number" ? wkPot : 0,
+      hz
+    };
+
+    console.log(
+      `📊 extractPLZWerte → PLZ ${plz}: WK=${plzWerte[plz].wk}, WKPot=${plzWerte[plz].wkPot}, HZ=${hz}`
+    );
+  });
+
+  return plzWerte;
+}
+
+
+getFilteredData() {
+  if (!this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
+    return [];
+  }
+
+  const data = this._myDataSource.data;
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  console.group("🔍 Filtervorgang gestartet");
+  console.log("➡️ ErhebungsID:", erhID);
+  console.log("➡️ Jahr:", jahr);
+  console.log("➡️ Nummer:", nummer);
+
+  const filteredKennwerte = {};
+  const filtered = data.filter(row => {
+    const id = row["dimension_erhebung_0"]?.id?.trim();
+    const y = row["dimension_jahr_0"]?.id?.trim();
+    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    const plz = row["dimension_plz_0"]?.id?.trim();
+
+    const match = id === erhID && y === jahr && num === nummer;
+
+    if (match && plz && plz !== "@NullMember") {
+      filteredKennwerte[plz] = row;
+      console.log(`✔️ Match: PLZ ${plz} | HZ=${row["dimension_hzflag_0"]?.id}`);
     }
 
-  getFilteredData() {
-    if (!this._myDataSource || this._myDataSource.state !== "success") return [];
+    return match;
+  });
 
-    const data = this._myDataSource.data;
-    const { erhID, jahr, nummer } = this._activeFilter || {};
+  this.filteredKennwerte = filteredKennwerte;
 
-    const filteredKennwerte = {};
-    const filtered = data.filter(row => {
-      const id = row["dimension_erhebung_0"]?.id?.trim() || "@NullMember";
-      const y = row["dimension_jahr_0"]?.id?.trim() || "@NullMember";
-      const num = row["dimension_erhebungsnummer_0"]?.id?.trim() || "@NullMember";
-      const plz = row["dimension_plz_0"]?.id?.trim();
+  console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
+  console.groupEnd();
 
-      const match =
-        (id === erhID || id === "@NullMember") &&
-        (y === jahr || y === "@NullMember") &&
-        (num === nummer || num === "@NullMember");
-
-      if (match && plz && plz !== "@NullMember") {
-        filteredKennwerte[plz] = row;
-        console.log('filteredKennwerte:' ,filteredKennwerte[plz]);
-      }
-
-      return match;
-    });
-
-    this.filteredKennwerte = filteredKennwerte;
-
-    console.log("✅ Gefilterte Daten:", filtered);
-    console.log("📦 Gefilterte Kennwerte nach PLZ:", this.filteredKennwerte);
-
-    return filtered;
-  }
+  return filtered;
+}
 
 
 
@@ -940,7 +958,7 @@ updateGeoLayer() {
   // Hole gefilterte Daten
   const filteredData = this.getFilteredData();
 
-  // Extrahiere beide Werte: wk und wkPot
+  // Extrahiere WK, WKPot und HZ-Flag aus den gefilterten Daten
   const plzWerte = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
@@ -948,25 +966,27 @@ updateGeoLayer() {
 
     const wk = row["value_wk_in_percent_0"]?.raw;
     const wkPot = row["value_wk_potentiell_0"]?.raw;
+    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
 
     plzWerte[plz] = {
       wk: typeof wk === "number" ? wk : 0,
-      wkPot: typeof wkPot === "number" ? wkPot : 0
+      wkPot: typeof wkPot === "number" ? wkPot : 0,
+      hz: hzFlag
     };
   });
 
   // Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
-    const plz = layer.feature?.properties?.plz;
-    const isHZ = this.hzFlags?.[plz] ?? false;
+    const plz = layer.feature?.properties?.plz?.trim();
 
-    const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+    // Werte aus gefilterten Daten holen
+    const values = plzWerte[plz] || { wk: 0, wkPot: 0, hz: false };
 
     // HZ → WK in %, Nicht-HZ → WK potentiell
-    const value = isHZ ? values.wk : values.wkPot;
+    const value = values.hz ? values.wk : values.wkPot;
 
     layer.setStyle({
-      fillColor: this.getColor(value, isHZ),
+      fillColor: this.getColor(value, values.hz),
       fillOpacity: 0.7
     });
 
@@ -977,6 +997,7 @@ updateGeoLayer() {
     }
   });
 }
+
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
@@ -1367,4 +1388,3 @@ prepareMapData(filteredData) {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
-
