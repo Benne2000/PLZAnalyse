@@ -473,17 +473,93 @@ style: feature => {
 renderDataTable(data) {
   console.log("▶ renderDataTable aufgerufen");
   console.log("   _sortState beim Render:", this._sortState);
-  console.log("   Anzahl Keys in data:", Object.keys(data || {}).length);
 
+  let entries = Object.entries(data || {});
+
+  // Default: beim ersten Laden nach PLZ sortieren
+  if (!this._sortState || this._sortState.column == null) {
+    entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
+  }
+
+  this.renderDataTableFromEntries(entries);
+}
+
+
+sortTableByColumn(columnIndex) {
+  console.log("▶ sortTableByColumn aufgerufen, columnIndex:", columnIndex);
+  console.log("   SortState VOR Toggle:", this._sortState);
+
+  if (this._sortState.column === columnIndex) {
+    this._sortState.direction =
+      this._sortState.direction === "asc" ? "desc" : "asc";
+  } else {
+    this._sortState.column = columnIndex;
+    this._sortState.direction = "asc";
+  }
+
+  console.log("   SortState NACH Toggle:", this._sortState);
+
+  const dir = this._sortState.direction === "asc" ? 1 : -1;
+
+  const entries = Object.entries(this.filteredKennwerte);
+  console.log("   Einträge vor Sortierung:", entries.length);
+
+  const sorted = entries.sort(([plzA, a], [plzB, b]) => {
+    let valA, valB;
+
+    switch (columnIndex) {
+      case 0: // PLZ
+        valA = plzA;
+        valB = plzB;
+        break;
+
+      case 1: // Gemeinde
+        valA = this.geoNotes?.[plzA] || "";
+        valB = this.geoNotes?.[plzB] || "";
+        break;
+
+      case 2: // HZ
+        valA = this.hzFlags[plzA] ? 1 : 0;
+        valB = this.hzFlags[plzB] ? 1 : 0;
+        break;
+
+      case 3: // Umsatz
+        valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
+        valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
+        break;
+
+      case 4: // WK
+        valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
+        valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
+        break;
+    }
+
+    if (typeof valA === "string") {
+      return valA.localeCompare(valB) * dir;
+    }
+
+    return (valA - valB) * dir;
+  });
+
+  console.log("   Erste 5 PLZ nach Sortierung:",
+    sorted.slice(0, 5).map(([plz]) => plz)
+  );
+
+  // Wichtig: wir verlassen uns NICHT mehr auf Objekt-Reihenfolge,
+  // sondern geben das sortierte Array direkt an den Renderer
+  this.renderDataTableFromEntries(sorted);
+}
+
+      
+      renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
-  if (!data || Object.keys(data).length === 0) {
+  if (!entries || entries.length === 0) {
     container.textContent = 'Keine Daten verfügbar.';
     return;
   }
 
-  // Layout für Scrollbereich
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
   container.style.height = '100%';
@@ -513,7 +589,6 @@ renderDataTable(data) {
     { label: 'WK (%)\nincl. Nachb.', width: '50px' }
   ];
 
-  // 🔹 Header erzeugen + Sortier-Events
   headers.forEach(({ label, width }, i) => {
     const th = document.createElement('th');
     th.innerHTML = `${label} <span class="sort-icon"></span>`;
@@ -543,27 +618,6 @@ renderDataTable(data) {
   const tbody = document.createElement('tbody');
   const fragment = document.createDocumentFragment();
 
-  // 🔹 Variante B: Nur sortieren, wenn NOCH NICHT sortiert wurde
-
-  let entries = Object.entries(data);
-
-  console.log("   Einträge vor evtl. PLZ-Sortierung, erste 5 PLZ:",
-    entries.slice(0, 5).map(([plz]) => plz)
-  );
-
-  if (!this._sortState || this._sortState.column == null) {
-    console.log("   KEIN SortState aktiv → sortiere nach PLZ");
-    entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
-  } else {
-    console.log("   SortState aktiv → KEINE PLZ-Sortierung mehr");
-  }
-
-  console.log("   Einträge nach evtl. PLZ-Sortierung, erste 5 PLZ:",
-    entries.slice(0, 5).map(([plz]) => plz)
-  );
-
-
-  // 🔹 Tabellenzeilen erzeugen
   entries.forEach(([plz, kennwerte]) => {
     const tr = document.createElement('tr');
 
@@ -611,86 +665,13 @@ renderDataTable(data) {
   scrollWrapper.appendChild(table);
   container.appendChild(scrollWrapper);
 
-  // 🔹 Sortiersymbole aktualisieren (falls bereits sortiert)
-  if (this._sortState?.column) {
-    this.updateSortIcons(headers.findIndex(h => h.label === this._sortState.column));
+  // Sort-Icons aktualisieren
+  if (this._sortState && this._sortState.column != null) {
+    this.updateSortIcons(this._sortState.column);
   }
 }
 
       
-sortTableByColumn(columnIndex) {
-  console.log("▶ sortTableByColumn aufgerufen, columnIndex:", columnIndex);
-  console.log("   SortState VOR Toggle:", this._sortState);
-
-  // Sortierrichtung toggeln
-  if (this._sortState.column === columnIndex) {
-    this._sortState.direction =
-      this._sortState.direction === "asc" ? "desc" : "asc";
-  } else {
-    this._sortState.column = columnIndex;
-    this._sortState.direction = "asc";
-  }
-
-  console.log("   SortState NACH Toggle:", this._sortState);
-
-  const dir = this._sortState.direction === "asc" ? 1 : -1;
-
-  // Daten holen
-  const entries = Object.entries(this.filteredKennwerte);
-  console.log("   Einträge vor Sortierung:", entries.length);
-
-  // 🔥 WICHTIG: sorted wird HIER deklariert – nicht vorher, nicht später
-  const sorted = entries.sort(([plzA, a], [plzB, b]) => {
-    let valA, valB;
-
-    switch (columnIndex) {
-      case 0: // PLZ
-        valA = plzA;
-        valB = plzB;
-        break;
-
-      case 1: // Gemeinde
-        valA = this.geoNotes?.[plzA] || "";
-        valB = this.geoNotes?.[plzB] || "";
-        break;
-
-      case 2: // HZ
-        valA = this.hzFlags[plzA] ? 1 : 0;
-        valB = this.hzFlags[plzB] ? 1 : 0;
-        break;
-
-      case 3: // Umsatz
-        valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
-        valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
-        break;
-
-      case 4: // WK
-        valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
-        valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
-        break;
-    }
-
-    if (typeof valA === "string") {
-      return valA.localeCompare(valB) * dir;
-    }
-
-    return (valA - valB) * dir;
-  });
-
-  console.log("   Erste 5 PLZ nach Sortierung:",
-    sorted.slice(0, 5).map(([plz]) => plz)
-  );
-
-  // Ergebnis speichern
-  this.filteredKennwerte = Object.fromEntries(sorted);
-
-  // Icons aktualisieren
-  this.updateSortIcons(columnIndex);
-
-  // Tabelle neu rendern
-  this.renderDataTable(this.filteredKennwerte);
-}
-
       
 updateSortIcons(activeIndex) {
   const headerCells = this._shadowRoot.querySelectorAll("th .sort-icon");
