@@ -618,7 +618,7 @@ renderDataTable(data) {
 }
 
       
-sortTableByColumn(columnIndex) {
+
   sortTableByColumn(columnIndex) {
   console.log("▶ sortTableByColumn aufgerufen, columnIndex:", columnIndex);
   console.log("   SortState VOR Toggle:", this._sortState);
