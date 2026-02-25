@@ -470,131 +470,136 @@ style: feature => {
 
 
 
-  renderDataTable(data) {
-    const container = this._shadowRoot.getElementById('table-container');
-    container.innerHTML = '';
+renderDataTable(data) {
+  const container = this._shadowRoot.getElementById('table-container');
+  container.innerHTML = '';
 
-    if (!data || Object.keys(data).length === 0) {
-      container.textContent = 'Keine Daten verfügbar.';
-      return;
-    }
+  if (!data || Object.keys(data).length === 0) {
+    container.textContent = 'Keine Daten verfügbar.';
+    return;
+  }
 
-    // 🧱 Container auf flex setzen, damit Scrollbereich sich ausdehnen kann
-    container.style.display = 'flex';
-    container.style.flexDirection = 'column';
-    container.style.height = '100%';
+  // Layout für Scrollbereich
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.height = '100%';
 
-    const scrollWrapper = document.createElement('div');
-    scrollWrapper.style.flex = '1'; // ⬆️ nimmt gesamte Höhe ein
-    scrollWrapper.style.overflowY = 'auto';
-    scrollWrapper.style.border = '1px solid #b41821';
-    scrollWrapper.style.borderRadius = '6px';
+  const scrollWrapper = document.createElement('div');
+  scrollWrapper.style.flex = '1';
+  scrollWrapper.style.overflowY = 'auto';
+  scrollWrapper.style.border = '1px solid #b41821';
+  scrollWrapper.style.borderRadius = '6px';
 
-    const table = document.createElement('table');
-    table.setAttribute('role', 'table');
-    table.style.width = '100%';
-    table.style.borderCollapse = 'collapse';
-    table.style.fontFamily = 'sans-serif';
-    table.style.tableLayout = 'fixed';
-    table.style.border = '1px solid #b41821';
+  const table = document.createElement('table');
+  table.setAttribute('role', 'table');
+  table.style.width = '100%';
+  table.style.borderCollapse = 'collapse';
+  table.style.fontFamily = 'sans-serif';
+  table.style.tableLayout = 'fixed';
+  table.style.border = '1px solid #b41821';
 
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
 
-    const headers = [
-      { label: 'PLZ', width: '40px' },
-      { label: 'Gemeinde', width: '90px' },
-      { label: 'HZ', width: '20px' },
-      { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
-      { label: 'WK (%)\nincl. Nachb.', width: '50px' }
-    ];
+  const headers = [
+    { label: 'PLZ', width: '40px' },
+    { label: 'Gemeinde', width: '90px' },
+    { label: 'HZ', width: '20px' },
+    { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
+    { label: 'WK (%)\nincl. Nachb.', width: '50px' }
+  ];
 
-headers.forEach(({ label, width }, i) => {
-  const th = document.createElement('th');
-  th.innerHTML = `${label} <span class="sort-icon"></span>`;
-  th.style.backgroundColor = '#b41821';
-  th.style.color = 'white';
-  th.style.padding = '8px';
-  th.style.textAlign = 'left';
-  th.style.position = 'sticky';
-  th.style.top = '0';
-  th.style.zIndex = '1';
-  th.style.whiteSpace = 'pre-line';
-  th.style.width = width;
-  th.style.borderBottom = '1px solid #b41821';
-  th.style.borderRight = '1px solid #b41821';
-  th.style.cursor = "pointer";
+  // 🔹 Header erzeugen + Sortier-Events
+  headers.forEach(({ label, width }, i) => {
+    const th = document.createElement('th');
+    th.innerHTML = `${label} <span class="sort-icon"></span>`;
+    th.style.backgroundColor = '#b41821';
+    th.style.color = 'white';
+    th.style.padding = '8px';
+    th.style.textAlign = 'left';
+    th.style.position = 'sticky';
+    th.style.top = '0';
+    th.style.zIndex = '1';
+    th.style.whiteSpace = 'pre-line';
+    th.style.width = width;
+    th.style.borderBottom = '1px solid #b41821';
+    th.style.borderRight = '1px solid #b41821';
+    th.style.cursor = 'pointer';
 
-  th.addEventListener("click", () => {
-    this.sortTableByColumn(i);
+    th.addEventListener('click', () => {
+      this.sortTableByColumn(i);
+    });
+
+    headerRow.appendChild(th);
   });
 
-  headerRow.appendChild(th);
-});
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
 
+  const tbody = document.createElement('tbody');
+  const fragment = document.createDocumentFragment();
 
+  // 🔹 Variante B: Nur sortieren, wenn NOCH NICHT sortiert wurde
+  let entries = Object.entries(data);
 
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-
-    const tbody = document.createElement('tbody');
-    const fragment = document.createDocumentFragment();
-
-    Object.entries(data)
-      .sort(([plzA], [plzB]) => plzA.localeCompare(plzB))
-      .forEach(([plz, kennwerte]) => {
-        console.log("Kennwerte Tabelle: ", kennwerte);
-        const tr = document.createElement('tr');
-
-let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
-
-// Entfernt führende PLZ, egal ob mit Leerzeichen oder Bindestrich
-note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
-
-
-        const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
-
-        const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-        const umsatz = typeof umsatzRaw?.raw === "number"
-
-          ? umsatzRaw.raw.toLocaleString('de-DE')
-          : umsatzRaw === "–"
-            ? '–'
-            : 'Keine Angabe';
-
-        const wkRaw = kennwerte["value_wk_nachbar_0"];
-        const wk = typeof wkRaw?.raw === "number"
-
-          ? wkRaw.raw.toFixed(1)
-          : wkRaw === "–"
-            ? '–'
-            : 'Keine Angabe';
-
-        const rowValues = [plz, note, hzFlag, umsatz, wk];
-
-        rowValues.forEach((text, i) => {
-          const td = document.createElement('td');
-          td.textContent = text.replace(/\n/g, ' ');
-          td.title = text;
-          td.style.padding = '6px 8px';
-          td.style.borderBottom = '1px solid #b41821';
-          td.style.borderRight = '1px solid #b41821';
-          td.style.fontSize = '0.8rem';
-          td.style.whiteSpace = 'nowrap';
-          td.style.overflow = 'hidden';
-          td.style.textOverflow = 'ellipsis';
-          td.style.width = headers[i].width;
-          tr.appendChild(td);
-        });
-
-        fragment.appendChild(tr);
-      });
-
-    tbody.appendChild(fragment);
-    table.appendChild(tbody);
-    scrollWrapper.appendChild(table);
-    container.appendChild(scrollWrapper);
+  if (!this._sortState || !this._sortState.column) {
+    entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
   }
+
+  // 🔹 Tabellenzeilen erzeugen
+  entries.forEach(([plz, kennwerte]) => {
+    const tr = document.createElement('tr');
+
+    let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
+    note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
+
+    const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
+
+    const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
+    const umsatz = typeof umsatzRaw?.raw === "number"
+      ? umsatzRaw.raw.toLocaleString('de-DE')
+      : umsatzRaw === "–"
+        ? '–'
+        : 'Keine Angabe';
+
+    const wkRaw = kennwerte["value_wk_nachbar_0"];
+    const wk = typeof wkRaw?.raw === "number"
+      ? wkRaw.raw.toFixed(1)
+      : wkRaw === "–"
+        ? '–'
+        : 'Keine Angabe';
+
+    const rowValues = [plz, note, hzFlag, umsatz, wk];
+
+    rowValues.forEach((text, i) => {
+      const td = document.createElement('td');
+      td.textContent = text.replace(/\n/g, ' ');
+      td.title = text;
+      td.style.padding = '6px 8px';
+      td.style.borderBottom = '1px solid #b41821';
+      td.style.borderRight = '1px solid #b41821';
+      td.style.fontSize = '0.8rem';
+      td.style.whiteSpace = 'nowrap';
+      td.style.overflow = 'hidden';
+      td.style.textOverflow = 'ellipsis';
+      td.style.width = headers[i].width;
+      tr.appendChild(td);
+    });
+
+    fragment.appendChild(tr);
+  });
+
+  tbody.appendChild(fragment);
+  table.appendChild(tbody);
+  scrollWrapper.appendChild(table);
+  container.appendChild(scrollWrapper);
+
+  // 🔹 Sortiersymbole aktualisieren (falls bereits sortiert)
+  if (this._sortState?.column) {
+    this.updateSortIcons(headers.findIndex(h => h.label === this._sortState.column));
+  }
+}
+
       
 sortTableByColumn(columnIndex) {
   const columns = ["plz", "note", "hz", "umsatz", "wk"];
