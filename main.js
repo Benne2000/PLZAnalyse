@@ -618,14 +618,11 @@ renderDataTable(data) {
 }
 
       
-
-  sortTableByColumn(columnIndex) {
+sortTableByColumn(columnIndex) {
   console.log("▶ sortTableByColumn aufgerufen, columnIndex:", columnIndex);
   console.log("   SortState VOR Toggle:", this._sortState);
 
-  
-  
-  // Richtung toggeln
+  // Sortierrichtung toggeln
   if (this._sortState.column === columnIndex) {
     this._sortState.direction =
       this._sortState.direction === "asc" ? "desc" : "asc";
@@ -636,11 +633,13 @@ renderDataTable(data) {
 
   console.log("   SortState NACH Toggle:", this._sortState);
 
-
   const dir = this._sortState.direction === "asc" ? 1 : -1;
 
+  // Daten holen
   const entries = Object.entries(this.filteredKennwerte);
+  console.log("   Einträge vor Sortierung:", entries.length);
 
+  // 🔥 WICHTIG: sorted wird HIER deklariert – nicht vorher, nicht später
   const sorted = entries.sort(([plzA, a], [plzB, b]) => {
     let valA, valB;
 
@@ -670,8 +669,6 @@ renderDataTable(data) {
         valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
         break;
     }
-    
-    console.log(" Erste 5 PLZ nach Sortierung:", sorted.slice(0, 5).map(([plz]) => plz) );
 
     if (typeof valA === "string") {
       return valA.localeCompare(valB) * dir;
@@ -680,9 +677,17 @@ renderDataTable(data) {
     return (valA - valB) * dir;
   });
 
+  console.log("   Erste 5 PLZ nach Sortierung:",
+    sorted.slice(0, 5).map(([plz]) => plz)
+  );
+
+  // Ergebnis speichern
   this.filteredKennwerte = Object.fromEntries(sorted);
 
+  // Icons aktualisieren
   this.updateSortIcons(columnIndex);
+
+  // Tabelle neu rendern
   this.renderDataTable(this.filteredKennwerte);
 }
 
