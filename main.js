@@ -621,6 +621,11 @@ sortTableByColumn(columnIndex) {
   entries.forEach(([plz, kennwerte]) => {
     const tr = document.createElement('tr');
 
+    tr.addEventListener("click", () => {
+    this.highlightMapArea(plz);
+    });
+
+    
     let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
     note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
@@ -671,7 +676,42 @@ sortTableByColumn(columnIndex) {
   }
 }
 
-      
+highlightMapArea(plz) {
+  if (!this.geoJsonLayer) return;
+
+  // 1. Alle Gebiete zurücksetzen
+  this.geoJsonLayer.eachLayer(layer => {
+    layer.setStyle({
+      weight: 1,
+      color: "#333",
+      fillOpacity: 0.6
+    });
+  });
+
+  // 2. Das passende Gebiet finden
+  let targetLayer = null;
+
+  this.geoJsonLayer.eachLayer(layer => {
+    if (layer.feature?.properties?.plz == plz) {
+      targetLayer = layer;
+    }
+  });
+
+  if (!targetLayer) {
+    console.warn("Kein Gebiet für PLZ gefunden:", plz);
+    return;
+  }
+
+  // 3. Highlight setzen
+  targetLayer.setStyle({
+    weight: 4,
+    fillOpacity: 0.9
+  });
+
+  // 4. Karte auf das Gebiet zoomen (optional)
+  this.map.fitBounds(targetLayer.getBounds());
+}
+
       
 updateSortIcons(activeIndex) {
   const headerCells = this._shadowRoot.querySelectorAll("th .sort-icon");
