@@ -494,7 +494,7 @@ sortTableByColumn(columnIndex) {
       this._sortState.direction === "asc" ? "desc" : "asc";
   } else {
     this._sortState.column = columnIndex;
-    this._sortState.direction = "asc";
+    this._sortState.direction = "desc";
   }
 
   console.log("   SortState NACH Toggle:", this._sortState);
