@@ -605,70 +605,59 @@ if (!this._sortState || !this._sortState.column) {
 
       
 sortTableByColumn(columnIndex) {
-  const columns = ["PLZ", "Gemeinde", "HZ", "Netto-Umsatz", "WK"];
-  const col = columns[columnIndex];
-
-  // Sortierrichtung toggeln
-  if (this._sortState.column === col) {
+  // Richtung toggeln
+  if (this._sortState.column === columnIndex) {
     this._sortState.direction =
       this._sortState.direction === "asc" ? "desc" : "asc";
   } else {
-    this._sortState.column = col;
+    this._sortState.column = columnIndex;
     this._sortState.direction = "asc";
   }
 
   const dir = this._sortState.direction === "asc" ? 1 : -1;
 
-  // Daten in Array umwandeln
   const entries = Object.entries(this.filteredKennwerte);
 
   const sorted = entries.sort(([plzA, a], [plzB, b]) => {
     let valA, valB;
 
-switch (col) {
-  case "PLZ":
-    valA = plzA;
-    valB = plzB;
-    break;
+    switch (columnIndex) {
+      case 0: // PLZ
+        valA = plzA;
+        valB = plzB;
+        break;
 
-  case "Gemeinde":
-    valA = this.geoNotes?.[plzA] || "";
-    valB = this.geoNotes?.[plzB] || "";
-    break;
+      case 1: // Gemeinde
+        valA = this.geoNotes?.[plzA] || "";
+        valB = this.geoNotes?.[plzB] || "";
+        break;
 
-  case "HZ":
-    valA = this.hzFlags[plzA] ? 1 : 0;
-    valB = this.hzFlags[plzB] ? 1 : 0;
-    break;
+      case 2: // HZ
+        valA = this.hzFlags[plzA] ? 1 : 0;
+        valB = this.hzFlags[plzB] ? 1 : 0;
+        break;
 
-  case "Netto-Umsatz":
-    valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
-    valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
-    break;
+      case 3: // Umsatz
+        valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
+        valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
+        break;
 
-  case "WK":
-    valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
-    valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
-    break;
-}
+      case 4: // WK
+        valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
+        valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
+        break;
+    }
 
-
-    // Strings alphabetisch sortieren
     if (typeof valA === "string") {
       return valA.localeCompare(valB) * dir;
     }
 
-    // Zahlen numerisch sortieren
     return (valA - valB) * dir;
   });
 
-  // Zurück in Objekt wandeln
   this.filteredKennwerte = Object.fromEntries(sorted);
 
-  // Sortiersymbole aktualisieren
   this.updateSortIcons(columnIndex);
-
-  // Tabelle neu rendern
   this.renderDataTable(this.filteredKennwerte);
 }
 
