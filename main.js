@@ -353,6 +353,7 @@
         this._resizeObserver = null;
         this._geoLayerVisible = false;
         this._tilesVisible = false;
+        this._sortState = { column: null, direction: "asc" };
       }
 
       connectedCallback() {
@@ -522,6 +523,9 @@ style: feature => {
       th.style.width = width;
       th.style.borderBottom = '1px solid #b41821';
       th.style.borderRight = '1px solid #b41821';
+      
+      th.style.cursor = "pointer"; th.addEventListener("click", () => {             this.sortTableByColumn(i); });
+      
       headerRow.appendChild(th);
     });
 
@@ -586,6 +590,72 @@ note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
     scrollWrapper.appendChild(table);
     container.appendChild(scrollWrapper);
   }
+      
+  sortTableByColumn(columnIndex) {
+  const columns = ["plz", "note", "hz", "umsatz", "wk"];
+
+  const col = columns[columnIndex];
+
+  // Richtung toggeln
+  if (this._sortState.column === col) {
+    this._sortState.direction = this._sortState.direction === "asc" ? "desc" : "asc";
+  } else {
+    this._sortState.column = col;
+    this._sortState.direction = "asc";
+  }
+
+  const dir = this._sortState.direction === "asc" ? 1 : -1;
+
+  // Daten in Array umwandeln
+  const entries = Object.entries(this.filteredKennwerte);
+
+  const sorted = entries.sort(([plzA, a], [plzB, b]) => {
+    let valA, valB;
+
+    switch (col) {
+      case "plz":
+        valA = plzA;
+        valB = plzB;
+        break;
+
+      case "note":
+        valA = this.geoNotes?.[plzA] || "";
+        valB = this.geoNotes?.[plzB] || "";
+        break;
+
+      case "hz":
+        valA = this.hzFlags[plzA] ? 1 : 0;
+        valB = this.hzFlags[plzB] ? 1 : 0;
+        break;
+
+      case "umsatz":
+        valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
+        valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
+        break;
+
+      case "wk":
+        valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
+        valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
+        break;
+    }
+
+    // Strings → localeCompare
+    if (typeof valA === "string") {
+      return valA.localeCompare(valB) * dir;
+    }
+
+    // Zahlen → normaler Vergleich
+    return (valA - valB) * dir;
+  });
+
+  // Zurück in Objekt wandeln
+  this.filteredKennwerte = Object.fromEntries(sorted);
+
+  // Tabelle neu rendern
+  this.renderDataTable(this.filteredKennwerte);
+}
+    
+      
 
 
 
@@ -650,6 +720,10 @@ note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
       this.map.addLayer(this.neighbourGroup);
     }
   }
+      
+      
+      
+      
 createAllMarkers() {
   this.filteredGroup.clearLayers();
   this.allMarkers = [];
