@@ -509,25 +509,30 @@ style: feature => {
       { label: 'WK (%)\nincl. Nachb.', width: '50px' }
     ];
 
-    headers.forEach(({ label, width }) => {
-      const th = document.createElement('th');
-      th.textContent = label;
-      th.style.backgroundColor = '#b41821';
-      th.style.color = 'white';
-      th.style.padding = '8px';
-      th.style.textAlign = 'left';
-      th.style.position = 'sticky';
-      th.style.top = '0';
-      th.style.zIndex = '1';
-      th.style.whiteSpace = 'pre-line';
-      th.style.width = width;
-      th.style.borderBottom = '1px solid #b41821';
-      th.style.borderRight = '1px solid #b41821';
-      
-      th.style.cursor = "pointer"; th.addEventListener("click", () => {             this.sortTableByColumn(i); });
-      
-      headerRow.appendChild(th);
-    });
+headers.forEach(({ label, width }, i) => {
+  const th = document.createElement('th');
+  th.textContent = label;
+  th.style.backgroundColor = '#b41821';
+  th.style.color = 'white';
+  th.style.padding = '8px';
+  th.style.textAlign = 'left';
+  th.style.position = 'sticky';
+  th.style.top = '0';
+  th.style.zIndex = '1';
+  th.style.whiteSpace = 'pre-line';
+  th.style.width = width;
+  th.style.borderBottom = '1px solid #b41821';
+  th.style.borderRight = '1px solid #b41821';
+
+  // Sortierfunktion aktivieren
+  th.style.cursor = "pointer";
+  th.addEventListener("click", () => {
+    this.sortTableByColumn(i);
+  });
+
+  headerRow.appendChild(th);
+});
+
 
     thead.appendChild(headerRow);
     table.appendChild(thead);
