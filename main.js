@@ -471,6 +471,10 @@ style: feature => {
 
 
 renderDataTable(data) {
+  console.log("▶ renderDataTable aufgerufen");
+  console.log("   _sortState beim Render:", this._sortState);
+  console.log("   Anzahl Keys in data:", Object.keys(data || {}).length);
+
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
@@ -541,12 +545,22 @@ renderDataTable(data) {
 
   // 🔹 Variante B: Nur sortieren, wenn NOCH NICHT sortiert wurde
 
-let entries = Object.entries(data);
+  let entries = Object.entries(data);
 
-// Nur sortieren, wenn NOCH KEINE Sortierung aktiv ist
-if (!this._sortState || !this._sortState.column) {
-  entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
-}
+  console.log("   Einträge vor evtl. PLZ-Sortierung, erste 5 PLZ:",
+    entries.slice(0, 5).map(([plz]) => plz)
+  );
+
+  if (!this._sortState || this._sortState.column == null) {
+    console.log("   KEIN SortState aktiv → sortiere nach PLZ");
+    entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
+  } else {
+    console.log("   SortState aktiv → KEINE PLZ-Sortierung mehr");
+  }
+
+  console.log("   Einträge nach evtl. PLZ-Sortierung, erste 5 PLZ:",
+    entries.slice(0, 5).map(([plz]) => plz)
+  );
 
 
   // 🔹 Tabellenzeilen erzeugen
@@ -605,6 +619,12 @@ if (!this._sortState || !this._sortState.column) {
 
       
 sortTableByColumn(columnIndex) {
+  sortTableByColumn(columnIndex) {
+  console.log("▶ sortTableByColumn aufgerufen, columnIndex:", columnIndex);
+  console.log("   SortState VOR Toggle:", this._sortState);
+
+  
+  
   // Richtung toggeln
   if (this._sortState.column === columnIndex) {
     this._sortState.direction =
@@ -613,6 +633,9 @@ sortTableByColumn(columnIndex) {
     this._sortState.column = columnIndex;
     this._sortState.direction = "asc";
   }
+
+  console.log("   SortState NACH Toggle:", this._sortState);
+
 
   const dir = this._sortState.direction === "asc" ? 1 : -1;
 
@@ -647,6 +670,8 @@ sortTableByColumn(columnIndex) {
         valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
         break;
     }
+    
+    console.log(" Erste 5 PLZ nach Sortierung:", sorted.slice(0, 5).map(([plz]) => plz) );
 
     if (typeof valA === "string") {
       return valA.localeCompare(valB) * dir;
