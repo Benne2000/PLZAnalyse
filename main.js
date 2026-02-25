@@ -540,11 +540,14 @@ renderDataTable(data) {
   const fragment = document.createDocumentFragment();
 
   // 🔹 Variante B: Nur sortieren, wenn NOCH NICHT sortiert wurde
-  let entries = Object.entries(data);
 
-  if (!this._sortState || !this._sortState.column) {
-    entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
-  }
+let entries = Object.entries(data);
+
+// Nur sortieren, wenn NOCH KEINE Sortierung aktiv ist
+if (!this._sortState || !this._sortState.column) {
+  entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
+}
+
 
   // 🔹 Tabellenzeilen erzeugen
   entries.forEach(([plz, kennwerte]) => {
