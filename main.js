@@ -20,7 +20,7 @@
       }
 
       .map-container {
-        width: 75%;
+        width: 70%;
         position: relative;
       }
 
@@ -240,7 +240,7 @@
   }
 
   .filter-container {
-    width: 25%;
+    width: 30%;
     padding: 10px;
     box-sizing: border-box;
     font-family: sans-serif;
