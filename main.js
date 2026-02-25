@@ -602,7 +602,7 @@ renderDataTable(data) {
 
       
 sortTableByColumn(columnIndex) {
-  const columns = ["plz", "note", "hz", "umsatz", "wk"];
+  const columns = ["PLZ", "Gemeinde", "HZ", "Netto-Umsatz", "WK"];
   const col = columns[columnIndex];
 
   // Sortierrichtung toggeln
@@ -622,32 +622,33 @@ sortTableByColumn(columnIndex) {
   const sorted = entries.sort(([plzA, a], [plzB, b]) => {
     let valA, valB;
 
-    switch (col) {
-      case "plz":
-        valA = plzA;
-        valB = plzB;
-        break;
+switch (col) {
+  case "PLZ":
+    valA = plzA;
+    valB = plzB;
+    break;
 
-      case "note":
-        valA = this.geoNotes?.[plzA] || "";
-        valB = this.geoNotes?.[plzB] || "";
-        break;
+  case "Gemeinde":
+    valA = this.geoNotes?.[plzA] || "";
+    valB = this.geoNotes?.[plzB] || "";
+    break;
 
-      case "hz":
-        valA = this.hzFlags[plzA] ? 1 : 0;
-        valB = this.hzFlags[plzB] ? 1 : 0;
-        break;
+  case "HZ":
+    valA = this.hzFlags[plzA] ? 1 : 0;
+    valB = this.hzFlags[plzB] ? 1 : 0;
+    break;
 
-      case "umsatz":
-        valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
-        valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
-        break;
+  case "Netto-Umsatz":
+    valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
+    valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
+    break;
 
-      case "wk":
-        valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
-        valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
-        break;
-    }
+  case "WK":
+    valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
+    valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
+    break;
+}
+
 
     // Strings alphabetisch sortieren
     if (typeof valA === "string") {
