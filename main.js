@@ -511,7 +511,7 @@ style: feature => {
 
 headers.forEach(({ label, width }, i) => {
   const th = document.createElement('th');
-  th.textContent = label;
+  th.innerHTML = `${label} <span class="sort-icon"></span>`;
   th.style.backgroundColor = '#b41821';
   th.style.color = 'white';
   th.style.padding = '8px';
@@ -523,15 +523,15 @@ headers.forEach(({ label, width }, i) => {
   th.style.width = width;
   th.style.borderBottom = '1px solid #b41821';
   th.style.borderRight = '1px solid #b41821';
-
-  // Sortierfunktion aktivieren
   th.style.cursor = "pointer";
+
   th.addEventListener("click", () => {
     this.sortTableByColumn(i);
   });
 
   headerRow.appendChild(th);
 });
+
 
 
     thead.appendChild(headerRow);
@@ -596,14 +596,14 @@ note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
     container.appendChild(scrollWrapper);
   }
       
-  sortTableByColumn(columnIndex) {
+sortTableByColumn(columnIndex) {
   const columns = ["plz", "note", "hz", "umsatz", "wk"];
-
   const col = columns[columnIndex];
 
-  // Richtung toggeln
+  // Sortierrichtung toggeln
   if (this._sortState.column === col) {
-    this._sortState.direction = this._sortState.direction === "asc" ? "desc" : "asc";
+    this._sortState.direction =
+      this._sortState.direction === "asc" ? "desc" : "asc";
   } else {
     this._sortState.column = col;
     this._sortState.direction = "asc";
@@ -644,23 +644,38 @@ note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
         break;
     }
 
-    // Strings → localeCompare
+    // Strings alphabetisch sortieren
     if (typeof valA === "string") {
       return valA.localeCompare(valB) * dir;
     }
 
-    // Zahlen → normaler Vergleich
+    // Zahlen numerisch sortieren
     return (valA - valB) * dir;
   });
 
   // Zurück in Objekt wandeln
   this.filteredKennwerte = Object.fromEntries(sorted);
 
+  // Sortiersymbole aktualisieren
+  this.updateSortIcons(columnIndex);
+
   // Tabelle neu rendern
   this.renderDataTable(this.filteredKennwerte);
 }
-    
+
       
+updateSortIcons(activeIndex) {
+  const headerCells = this._shadowRoot.querySelectorAll("th .sort-icon");
+
+  headerCells.forEach((icon, i) => {
+    if (i !== activeIndex) {
+      icon.textContent = ""; // andere Spalten leeren
+      return;
+    }
+
+    icon.textContent = this._sortState.direction === "asc" ? "▲" : "▼";
+  });
+}
 
 
 
