@@ -791,6 +791,29 @@ updateSortIcons(activeIndex) {
   });
 }
 
+// zoomToFilteredPLZ()
+zoomToFilteredPLZ() {
+  if (!this._geoLayer || !this.filteredKennwerte) return;
+
+  const plzList = Object.keys(this.filteredKennwerte);
+  if (plzList.length === 0) return;
+
+  const bounds = L.latLngBounds([]);
+
+  this._geoLayer.eachLayer(layer => {
+    const plz = layer.feature?.properties?.plz;
+    if (plzList.includes(plz)) {
+      bounds.extend(layer.getBounds());
+    }
+  });
+
+  if (bounds.isValid()) {
+    this.map.fitBounds(bounds, {
+      padding: [20, 20],
+      maxZoom: 13
+    });
+  }
+}
 
 
   initializeMapBase() {
@@ -1057,18 +1080,27 @@ createAllMarkers() {
 
 
 
-  applyFilter(erhID, jahr, nummer) {
-    this._activeFilter = { erhID, jahr, nummer };
-    this.updateGeoLayer(); // Nur Layer aktualisieren
+// applyFilter(erhID, jahr, nummer)
+applyFilter(erhID, jahr, nummer) {
+  this._activeFilter = { erhID, jahr, nummer };
+  this.updateGeoLayer(); // Nur Layer aktualisieren
 
-    const filteredData = this.getFilteredData(); // 🔍 Hole gefilterte Daten
-  console.log("Filtered Data",filteredData);
-    const filteredPLZs = filteredData
-      .map(row => row["dimension_plz_0"]?.id?.trim())
-      .filter(plz => plz && plz !== "@NullMember");
-    this.updateMarkers(filteredPLZs);  
-    this.renderDataTable(this.filteredKennwerte); 
-  }
+  const filteredData = this.getFilteredData();
+  console.log("Filtered Data", filteredData);
+
+  const filteredPLZs = filteredData
+    .map(row => row["dimension_plz_0"]?.id?.trim())
+    .filter(plz => plz && plz !== "@NullMember");
+
+  this.updateMarkers(filteredPLZs);
+
+  // Tabelle neu rendern
+  this.renderDataTable(this.filteredKennwerte);
+
+  // 🔥 Jetzt automatisch auf die gefilterten Gebiete zoomen
+  this.zoomToFilteredPLZ();
+}
+
 extractPLZWerte(data) {
   const plzWerte = {};
 
