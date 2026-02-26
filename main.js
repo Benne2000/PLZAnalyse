@@ -289,6 +289,11 @@
     font-size: 0.8rem;
   }
 
+.table-row-selected {
+  background-color: #fff8c4 !important;
+}
+
+
   .table-container th {
     background-color: #f5f5f5;
     font-weight: 600;
@@ -444,13 +449,23 @@ style: feature => {
 }
 ,
 
-      onEachFeature: (feature, layer) => {
-        layer.on("click", (e) => {
-          const plz = e.target.feature.properties.plz?.toString().trim();
-          const kennwerte = this.filteredKennwerte[plz];
-          this.showPopup(e.target.feature, kennwerte);
-        });
-      }
+// onEachFeature(feature, layer)
+onEachFeature: (feature, layer) => {
+  layer.on("click", (e) => {
+    const plz = e.target.feature.properties.plz?.toString().trim();
+    const kennwerte = this.filteredKennwerte[plz];
+
+    // Gebiet highlighten
+    this.highlightMapArea(plz);
+
+    // Popup öffnen
+    this.showPopup(e.target.feature, kennwerte);
+
+    // Tabellenzeile highlighten
+    this.highlightTableRowByPLZ(plz);
+  });
+}
+
     });
 
     this._geoLayer.addTo(this.map);
@@ -623,10 +638,13 @@ entries.forEach(([plz, kennwerte]) => {
 
   // Tabellenzeile klickbar machen
   tr.style.cursor = "pointer";
-  tr.addEventListener("click", () => {
-    this.highlightMapArea(plz);
-    this.openPopupFromTable(plz);
-  });
+// Tabellenklick-Handler
+tr.addEventListener("click", () => {
+  this.highlightMapArea(plz);
+  this.openPopupFromTable(plz);
+  this.highlightTableRow(tr);
+});
+
 
   let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
   note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
@@ -683,30 +701,50 @@ tbody.appendChild(fragment);
   }
 }
       
+// highlightTableRow(rowElement)
+highlightTableRow(rowElement) {
+  if (this._lastHighlightedRow) {
+    this._lastHighlightedRow.classList.remove("table-row-selected");
+  }
+
+  rowElement.classList.add("table-row-selected");
+  this._lastHighlightedRow = rowElement;
+}
+      
+      // highlightTableRowByPLZ(plz)
+highlightTableRowByPLZ(plz) {
+  const container = this._shadowRoot.getElementById("table-container");
+  const rows = container.querySelectorAll("tbody tr");
+
+  rows.forEach(row => {
+    const cellPLZ = row.children[0]?.textContent?.trim();
+    if (cellPLZ === plz) {
+      this.highlightTableRow(row);
+    }
+  });
+}
+
+   
+// openPopupFromTable(plz)
 openPopupFromTable(plz) {
   if (!this._geoLayer) return;
 
   let targetFeature = null;
 
-  // passendes Feature im GeoJSON finden
   this._geoLayer.eachLayer(layer => {
     if (layer.feature?.properties?.plz === plz) {
       targetFeature = layer.feature;
     }
   });
 
-  if (!targetFeature) {
-    console.warn("Kein Feature für PLZ gefunden:", plz);
-    return;
-  }
+  if (!targetFeature) return;
 
   const daten = this.filteredKennwerte?.[plz] || {};
-
-  // dein bestehendes Popup öffnen
   this.showPopup(targetFeature, daten);
 }
 
       
+// highlightMapArea(plz)
 highlightMapArea(plz) {
   if (!this._geoLayer) return;
 
@@ -718,28 +756,22 @@ highlightMapArea(plz) {
     }
   });
 
-  if (!targetLayer) {
-    console.warn("Kein Gebiet für PLZ gefunden:", plz);
-    return;
-  }
+  if (!targetLayer) return;
 
-  // vorheriges Highlight zurücksetzen
   if (this._lastHighlightedLayer) {
     this._lastHighlightedLayer.setStyle(this._lastHighlightedStyle);
   }
 
-  // Originalstil speichern
   this._lastHighlightedStyle = {
     weight: targetLayer.options.weight,
     color: targetLayer.options.color,
     fillOpacity: targetLayer.options.fillOpacity
   };
 
-  // Highlight setzen
   targetLayer.setStyle({
     weight: 4,
     color: "#ffeb3b",
-    fillOpacity: 0.9
+    fillOpacity: targetLayer.options.fillOpacity
   });
 
   this._lastHighlightedLayer = targetLayer;
