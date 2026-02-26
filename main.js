@@ -713,7 +713,7 @@ highlightMapArea(plz) {
   // Highlight setzen
   targetLayer.setStyle({
     weight: 4,
-    color: "#000",
+    color: "#ffeb3b",
     fillOpacity: 0.9
   });
 
@@ -1539,4 +1539,5 @@ prepareMapData(filteredData) {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
+
 
