@@ -618,52 +618,59 @@ sortTableByColumn(columnIndex) {
   const tbody = document.createElement('tbody');
   const fragment = document.createDocumentFragment();
 
-  entries.forEach(([plz, kennwerte]) => {
-    const tr = document.createElement('tr');
+entries.forEach(([plz, kennwerte]) => {
+  const tr = document.createElement('tr');
 
-    tr.addEventListener("click", () => {
+  // 🔥 Tabellenzeile klickbar machen
+  tr.style.cursor = "pointer";
+  tr.addEventListener("click", () => {
+    console.log("Zeile geklickt:", plz);
     this.highlightMapArea(plz);
-    });
-
-    
-    let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
-    note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
-
-    const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
-
-    const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-    const umsatz = typeof umsatzRaw?.raw === "number"
-      ? umsatzRaw.raw.toLocaleString('de-DE')
-      : umsatzRaw === "–"
-        ? '–'
-        : 'Keine Angabe';
-
-    const wkRaw = kennwerte["value_wk_nachbar_0"];
-    const wk = typeof wkRaw?.raw === "number"
-      ? wkRaw.raw.toFixed(1)
-      : wkRaw === "–"
-        ? '–'
-        : 'Keine Angabe';
-
-    const rowValues = [plz, note, hzFlag, umsatz, wk];
-
-    rowValues.forEach((text, i) => {
-      const td = document.createElement('td');
-      td.textContent = text.replace(/\n/g, ' ');
-      td.title = text;
-      td.style.padding = '6px 8px';
-      td.style.borderBottom = '1px solid #b41821';
-      td.style.borderRight = '1px solid #b41821';
-      td.style.fontSize = '0.8rem';
-      td.style.whiteSpace = 'nowrap';
-      td.style.overflow = 'hidden';
-      td.style.textOverflow = 'ellipsis';
-      td.style.width = headers[i].width;
-      tr.appendChild(td);
-    });
-
-    fragment.appendChild(tr);
   });
+
+  let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
+  note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
+
+  const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
+
+  const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
+  const umsatz = typeof umsatzRaw?.raw === "number"
+    ? umsatzRaw.raw.toLocaleString('de-DE')
+    : umsatzRaw === "–"
+      ? '–'
+      : 'Keine Angabe';
+
+  const wkRaw = kennwerte["value_wk_nachbar_0"];
+  const wk = typeof wkRaw?.raw === "number"
+    ? wkRaw.raw.toFixed(1)
+    : wkRaw === "–"
+      ? '–'
+      : 'Keine Angabe';
+
+  const rowValues = [plz, note, hzFlag, umsatz, wk];
+
+  rowValues.forEach((text, i) => {
+    const td = document.createElement('td');
+    td.textContent = text.replace(/\n/g, ' ');
+    td.title = text;
+    td.style.padding = '6px 8px';
+    td.style.borderBottom = '1px solid #b41821';
+    td.style.borderRight = '1px solid #b41821';
+    td.style.fontSize = '0.8rem';
+    td.style.whiteSpace = 'nowrap';
+    td.style.overflow = 'hidden';
+    td.style.textOverflow = 'ellipsis';
+    td.style.width = headers[i].width;
+    tr.appendChild(td);
+  });
+
+  // 🔥 WICHTIG: Zeile in das Fragment einfügen
+  fragment.appendChild(tr);
+});
+
+// 🔥 WICHTIG: Fragment in das tbody einfügen
+tbody.appendChild(fragment);
+
 
   tbody.appendChild(fragment);
   table.appendChild(tbody);
