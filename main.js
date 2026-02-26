@@ -621,11 +621,11 @@ sortTableByColumn(columnIndex) {
 entries.forEach(([plz, kennwerte]) => {
   const tr = document.createElement('tr');
 
-  // 🔥 Tabellenzeile klickbar machen
+  // Tabellenzeile klickbar machen
   tr.style.cursor = "pointer";
   tr.addEventListener("click", () => {
-    console.log("Zeile geklickt:", plz);
     this.highlightMapArea(plz);
+    this.openPopupFromTable(plz);
   });
 
   let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
@@ -664,9 +664,9 @@ entries.forEach(([plz, kennwerte]) => {
     tr.appendChild(td);
   });
 
-  // 🔥 WICHTIG: Zeile in das Fragment einfügen
   fragment.appendChild(tr);
 });
+
 
 // 🔥 WICHTIG: Fragment in das tbody einfügen
 tbody.appendChild(fragment);
@@ -682,6 +682,31 @@ tbody.appendChild(fragment);
     this.updateSortIcons(this._sortState.column);
   }
 }
+      
+openPopupFromTable(plz) {
+  if (!this._geoLayer) return;
+
+  let targetFeature = null;
+
+  // passendes Feature im GeoJSON finden
+  this._geoLayer.eachLayer(layer => {
+    if (layer.feature?.properties?.plz === plz) {
+      targetFeature = layer.feature;
+    }
+  });
+
+  if (!targetFeature) {
+    console.warn("Kein Feature für PLZ gefunden:", plz);
+    return;
+  }
+
+  const daten = this.filteredKennwerte?.[plz] || {};
+
+  // dein bestehendes Popup öffnen
+  this.showPopup(targetFeature, daten);
+}
+
+      
 highlightMapArea(plz) {
   if (!this._geoLayer) return;
 
@@ -1539,5 +1564,4 @@ prepareMapData(filteredData) {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
-
 
