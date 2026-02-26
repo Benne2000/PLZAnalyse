@@ -683,13 +683,12 @@ tbody.appendChild(fragment);
   }
 }
 highlightMapArea(plz) {
-  if (!this.geoJsonLayer) return;
+  if (!this._geoLayer) return;
 
   let targetLayer = null;
 
-  // 1. Das passende Gebiet finden
-  this.geoJsonLayer.eachLayer(layer => {
-    if (layer.feature?.properties?.plz == plz) {
+  this._geoLayer.eachLayer(layer => {
+    if (layer.feature?.properties?.plz === plz) {
       targetLayer = layer;
     }
   });
@@ -699,30 +698,26 @@ highlightMapArea(plz) {
     return;
   }
 
-  // 2. Falls vorher ein anderes Gebiet markiert war → zurücksetzen
+  // vorheriges Highlight zurücksetzen
   if (this._lastHighlightedLayer) {
     this._lastHighlightedLayer.setStyle(this._lastHighlightedStyle);
   }
 
-  // 3. Originalstil des neuen Gebiets speichern
+  // Originalstil speichern
   this._lastHighlightedStyle = {
     weight: targetLayer.options.weight,
     color: targetLayer.options.color,
     fillOpacity: targetLayer.options.fillOpacity
   };
 
-  // 4. Neues Gebiet hervorheben
+  // Highlight setzen
   targetLayer.setStyle({
     weight: 4,
     color: "#000",
     fillOpacity: 0.9
   });
 
-  // 5. Referenz speichern
   this._lastHighlightedLayer = targetLayer;
-
-  // 6. Optional: Karte auf das Gebiet zoomen
-  // this.map.fitBounds(targetLayer.getBounds());
 }
 
       
