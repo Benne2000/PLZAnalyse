@@ -439,7 +439,7 @@ style: feature => {
     weight: 1,
     opacity: 1,
     color: "white",
-    fillOpacity: 0.7
+    fillOpacity: 0.5
   };
 }
 ,
@@ -1138,7 +1138,7 @@ updateGeoLayer() {
 
     layer.setStyle({
       fillColor: this.getColor(value, values.hz),
-      fillOpacity: 0.7
+      fillOpacity: 0.5
     });
 
     // Tooltip aktualisieren (falls vorhanden)
@@ -1539,3 +1539,4 @@ prepareMapData(filteredData) {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
+
