@@ -344,7 +344,7 @@
     <div class="map-container">
       <div id="loading-spinner" class="spinner"></div>
       <div id="radius-slider-container">
-        <label>Radius: <span id="radius-value">40</span> km</label>
+        <label>Radius: <span id="radius-value">35</span> km</label>
         <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
       </div>
 
@@ -1498,6 +1498,9 @@ getPolygonCenter(layer) {
 
 // applyRadiusFilter(radiusKm)
 applyRadiusFilter(radiusKm) {
+  console.log("▶ applyRadiusFilter aufgerufen mit Radius:", radiusKm);
+  console.log("   _geoLayer vorhanden:", !!this._geoLayer);
+  console.log("   nlMarkers vorhanden:", !!this.nlMarkers, "Anzahl:", this.nlMarkers?.length);
   if (!this._geoLayer || !this.nlMarkers) return;
 
   this._geoLayer.eachLayer(layer => {
