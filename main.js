@@ -303,6 +303,18 @@
   .table-container tr:hover {
     background-color: #f0f8ff;
   }
+  #radius-slider-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  z-index: 9999;
+  font-size: 14px;
+}
+
 
     </style>
 
@@ -331,6 +343,11 @@
     <!-- 🗺️ Kartenbereich -->
     <div class="map-container">
       <div id="loading-spinner" class="spinner"></div>
+      <div id="radius-slider-container">
+      <label>Radius: <span id="radius-value">50</span> km</label>
+      <input type="range" id="radius-slider" min="10" max="150" value="50" step="5">
+      </div>
+
       <div id="map"></div>
       <div class="legend" id="legend">...</div>
     </div>
@@ -1083,23 +1100,24 @@ createAllMarkers() {
 // applyFilter(erhID, jahr, nummer)
 applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
-  this.updateGeoLayer(); // Nur Layer aktualisieren
+  this.updateGeoLayer();
 
   const filteredData = this.getFilteredData();
-  console.log("Filtered Data", filteredData);
-
   const filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
   this.updateMarkers(filteredPLZs);
-
-  // Tabelle neu rendern
   this.renderDataTable(this.filteredKennwerte);
 
-  // 🔥 Jetzt automatisch auf die gefilterten Gebiete zoomen
+  // Radiusfilter anwenden (aktueller Sliderwert)
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.applyRadiusFilter(radius);
+
+  // Zoom auf gefilterte PLZ
   this.zoomToFilteredPLZ();
 }
+
 
 extractPLZWerte(data) {
   const plzWerte = {};
@@ -1450,9 +1468,75 @@ prepareMapData(filteredData) {
   });
 }
 
+// getDistanceKm(lat1, lon1, lat2, lon2)
+getDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// getPolygonCenter(layer)
+getPolygonCenter(layer) {
+  return layer.getBounds().getCenter();
+}
+
+      // applyRadiusFilter(radiusKm)
+applyRadiusFilter(radiusKm) {
+  if (!this._geoLayer || !this.nlMarkers) return;
+
+  this._geoLayer.eachLayer(layer => {
+    const plz = layer.feature?.properties?.plz;
+    if (!plz) return;
+
+    const center = this.getPolygonCenter(layer);
+
+    // Entfernung zur nächsten NL
+    const minDist = Math.min(
+      ...this.nlMarkers.map(nl =>
+        this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng)
+      )
+    );
+
+    if (minDist <= radiusKm) {
+      // innerhalb des Radius → normale Farbe
+      const color = this.getColorForPLZ(plz); // deine bestehende Farbskala
+      layer.setStyle({
+        fillColor: color,
+        fillOpacity: 0.7,
+        opacity: 1
+      });
+    } else {
+      // außerhalb → grau/transparent
+      layer.setStyle({
+        fillColor: "#cccccc",
+        fillOpacity: 0.2,
+        opacity: 0.4
+      });
+    }
+  });
+}
 
 
+// initRadiusSlider()
+initRadiusSlider() {
+  const slider = this._shadowRoot.getElementById("radius-slider");
+  const valueLabel = this._shadowRoot.getElementById("radius-value");
 
+  slider.addEventListener("input", () => {
+    const radius = Number(slider.value);
+    valueLabel.textContent = radius;
+
+    this.applyRadiusFilter(radius);
+  });
+}
 
 
 
@@ -1628,4 +1712,3 @@ prepareMapData(filteredData) {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
-
