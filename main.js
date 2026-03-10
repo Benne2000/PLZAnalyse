@@ -1203,10 +1203,16 @@ getFilteredData() {
 
     const match = id === erhID && y === jahr && num === nummer;
 
-    if (match && plz && plz !== "@NullMember") {
-      filteredKennwerte[plz] = row;
-      console.log(`✔️ Match: PLZ ${plz} | HZ=${row["dimension_hzflag_0"]?.id}`);
-    }
+if (match && plz && plz !== "@NullMember") {
+  filteredKennwerte[plz] = {
+    wk: row["value_wk_in_percent_0"]?.raw ?? 0,
+    wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
+    hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
+  };
+
+  console.log(`✔️ Match: PLZ ${plz} | WK=${filteredKennwerte[plz].wk} | WKPot=${filteredKennwerte[plz].wkPot} | HZ=${filteredKennwerte[plz].hz}`);
+}
+
 
     return match;
   });
