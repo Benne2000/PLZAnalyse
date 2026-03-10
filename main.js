@@ -344,9 +344,10 @@
     <div class="map-container">
       <div id="loading-spinner" class="spinner"></div>
       <div id="radius-slider-container">
-      <label>Radius: <span id="radius-value">50</span> km</label>
-      <input type="range" id="radius-slider" min="10" max="150" value="50" step="5">
+        <label>Radius: <span id="radius-value">40</span> km</label>
+        <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
       </div>
+
 
       <div id="map"></div>
       <div class="legend" id="legend">...</div>
@@ -485,15 +486,20 @@ onEachFeature: (feature, layer) => {
 
     });
 
-    this._geoLayer.addTo(this.map);
+this._geoLayer.addTo(this.map);
 
-    // 📍 Automatisch auf die volle Ausdehnung zoomen
-    const bounds = this._geoLayer.getBounds();
-    console.log("Geojson einrahmen");
-    this.map.fitBounds(bounds, {
-      padding: [20, 20],   // Optional: Randabstand
-      maxZoom: 14          // Optional: Maximaler Zoom-Level
-    });
+// 🔥 Radius-Filter direkt nach dem Laden anwenden
+const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+this.applyRadiusFilter(radius);
+
+// 📍 Automatisch auf die volle Ausdehnung zoomen
+const bounds = this._geoLayer.getBounds();
+console.log("Geojson einrahmen");
+this.map.fitBounds(bounds, {
+  padding: [20, 20],
+  maxZoom: 14
+});
+
 
   } catch (error) {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
@@ -858,6 +864,8 @@ zoomToFilteredPLZ() {
 
     // 🔄 Starte das Rendering
     this.render();
+    
+    this.initRadiusSlider();
   }
 
 
@@ -1488,7 +1496,7 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
-      // applyRadiusFilter(radiusKm)
+// applyRadiusFilter(radiusKm)
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers) return;
 
@@ -1498,7 +1506,6 @@ applyRadiusFilter(radiusKm) {
 
     const center = this.getPolygonCenter(layer);
 
-    // Entfernung zur nächsten NL
     const minDist = Math.min(
       ...this.nlMarkers.map(nl =>
         this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng)
@@ -1506,15 +1513,13 @@ applyRadiusFilter(radiusKm) {
     );
 
     if (minDist <= radiusKm) {
-      // innerhalb des Radius → normale Farbe
-      const color = this.getColorForPLZ(plz); // deine bestehende Farbskala
+      const color = this.getColorForPLZ(plz);
       layer.setStyle({
         fillColor: color,
         fillOpacity: 0.7,
         opacity: 1
       });
     } else {
-      // außerhalb → grau/transparent
       layer.setStyle({
         fillColor: "#cccccc",
         fillOpacity: 0.2,
@@ -1525,18 +1530,29 @@ applyRadiusFilter(radiusKm) {
 }
 
 
+
 // initRadiusSlider()
 initRadiusSlider() {
   const slider = this._shadowRoot.getElementById("radius-slider");
   const valueLabel = this._shadowRoot.getElementById("radius-value");
 
+  if (!slider) {
+    console.warn("⚠️ Radius-Slider nicht gefunden!");
+    return;
+  }
+
+  // Standardwert anzeigen
+  valueLabel.textContent = slider.value;
+
   slider.addEventListener("input", () => {
     const radius = Number(slider.value);
     valueLabel.textContent = radius;
 
+    // 🔥 Live Radius-Filter anwenden
     this.applyRadiusFilter(radius);
   });
 }
+
 
 
 
