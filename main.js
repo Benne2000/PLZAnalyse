@@ -1204,20 +1204,28 @@ getFilteredData() {
     const match = id === erhID && y === jahr && num === nummer;
 
 if (match && plz && plz !== "@NullMember") {
-  filteredKennwerte[plz] = {
+
+  // 🔵 1) komplette Datenzeile für Tabelle & Popup
+  filteredKennwerte[plz] = row;
+
+  // 🔵 2) extrahierte Werte für Farben
+  filteredPLZWerte[plz] = {
     wk: row["value_wk_in_percent_0"]?.raw ?? 0,
     wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
     hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
   };
 
-  console.log(`✔️ Match: PLZ ${plz} | WK=${filteredKennwerte[plz].wk} | WKPot=${filteredKennwerte[plz].wkPot} | HZ=${filteredKennwerte[plz].hz}`);
+  console.log(`✔️ Match: PLZ ${plz} | WK=${filteredPLZWerte[plz].wk} | WKPot=${filteredPLZWerte[plz].wkPot} | HZ=${filteredPLZWerte[plz].hz}`);
 }
+
 
 
     return match;
   });
 
-  this.filteredKennwerte = filteredKennwerte;
+this.filteredKennwerte = filteredKennwerte;   // für Tabelle & Popup
+this.filteredPLZWerte = filteredPLZWerte;     // für Farben
+
 
   console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
   console.groupEnd();
@@ -1602,7 +1610,7 @@ initRadiusSlider() {
 }
 
 getColorForPLZ(plz) {
-  const data = this.filteredKennwerte?.[plz];
+  const data = this.filteredPLZWerte?.[plz];
   if (!data) return "#cfd4da";
 
   const wk = data.wk ?? 0;
@@ -1613,6 +1621,7 @@ getColorForPLZ(plz) {
 
   return this.getColor(value, isHZ);
 }
+
 
 
 
