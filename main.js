@@ -345,7 +345,7 @@
       <div id="loading-spinner" class="spinner"></div>
       <div id="radius-slider-container">
         <label>Radius: <span id="radius-value">40</span> km</label>
-        <input type="range" id="radius-slider" min="10" max="100" value="35" step="5">
+        <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
       </div>
 
 
@@ -1581,6 +1581,22 @@ initRadiusSlider() {
     // 🔥 Live Radius-Filter anwenden
     this.applyRadiusFilter(radius);
   });
+}
+
+      getColorForPLZ(plz) {
+  // Werte aus filteredKennwerte holen
+  const data = this.filteredKennwerte?.[plz];
+  if (!data) return "#cfd4da"; // Grau fallback
+
+  // Deine Felder aus updateGeoLayer()
+  const wk = data.wk ?? 0;
+  const wkPot = data.wkPot ?? 0;
+  const isHZ = data.hz === true;
+
+  // HZ → WK, Nicht-HZ → WKPot
+  const value = isHZ ? wk : wkPot;
+
+  return this.getColor(value, isHZ);
 }
 
 
