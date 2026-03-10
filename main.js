@@ -345,7 +345,7 @@
       <div id="loading-spinner" class="spinner"></div>
       <div id="radius-slider-container">
         <label>Radius: <span id="radius-value">40</span> km</label>
-        <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
+        <input type="range" id="radius-slider" min="10" max="100" value="35" step="5">
       </div>
 
 
@@ -1523,25 +1523,34 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
-// applyRadiusFilter(radiusKm)
 applyRadiusFilter(radiusKm) {
-  console.log("▶ applyRadiusFilter aufgerufen mit Radius:", radiusKm);
-  console.log("   _geoLayer vorhanden:", !!this._geoLayer);
-  console.log("   nlMarkers vorhanden:", !!this.nlMarkers, "Anzahl:", this.nlMarkers?.length);
-  if (!this._geoLayer || !this.nlMarkers) return;
+  if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
+
+  const allowedPLZs = new Set(Object.keys(this.filteredKennwerte));
 
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
     if (!plz) return;
 
-    const center = this.getPolygonCenter(layer);
+    // 1) PLZ gehört nicht zur Erhebung → immer grau
+    if (!allowedPLZs.has(plz)) {
+      layer.setStyle({
+        fillColor: "#cfd4da",
+        fillOpacity: 0.2,
+        opacity: 0.4
+      });
+      return;
+    }
 
+    // 2) Entfernung zur nächsten NL
+    const center = this.getPolygonCenter(layer);
     const minDist = Math.min(
       ...this.nlMarkers.map(nl =>
         this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng)
       )
     );
 
+    // 3) Innerhalb des Radius → Originalfarbe
     if (minDist <= radiusKm) {
       const color = this.getColorForPLZ(plz);
       layer.setStyle({
@@ -1549,15 +1558,18 @@ applyRadiusFilter(radiusKm) {
         fillOpacity: 0.7,
         opacity: 1
       });
-    } else {
+    } 
+    // 4) Außerhalb des Radius → grau
+    else {
       layer.setStyle({
-        fillColor: "#cccccc",
+        fillColor: "#cfd4da",
         fillOpacity: 0.2,
         opacity: 0.4
       });
     }
   });
 }
+
 
 
 
@@ -1583,21 +1595,19 @@ initRadiusSlider() {
   });
 }
 
-      getColorForPLZ(plz) {
-  // Werte aus filteredKennwerte holen
+getColorForPLZ(plz) {
   const data = this.filteredKennwerte?.[plz];
-  if (!data) return "#cfd4da"; // Grau fallback
+  if (!data) return "#cfd4da";
 
-  // Deine Felder aus updateGeoLayer()
   const wk = data.wk ?? 0;
   const wkPot = data.wkPot ?? 0;
   const isHZ = data.hz === true;
 
-  // HZ → WK, Nicht-HZ → WKPot
   const value = isHZ ? wk : wkPot;
 
   return this.getColor(value, isHZ);
 }
+
 
 
 
