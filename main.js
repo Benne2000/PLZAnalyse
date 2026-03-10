@@ -514,6 +514,11 @@ renderDataTable(data) {
 
   let entries = Object.entries(data || {});
 
+  // 🔥 Nur PLZs anzeigen, die im Radius liegen
+  if (this.plzImRadius && this.plzImRadius.size > 0) {
+    entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
+  }
+
   // Default: beim ersten Laden nach PLZ sortieren
   if (!this._sortState || this._sortState.column == null) {
     entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
@@ -521,6 +526,7 @@ renderDataTable(data) {
 
   this.renderDataTableFromEntries(entries);
 }
+
 
 
 sortTableByColumn(columnIndex) {
@@ -1132,26 +1138,34 @@ createAllMarkers() {
 
 
 
-// applyFilter(erhID, jahr, nummer)
 applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
-  this.updateGeoLayer();
 
+  // 1) Daten filtern (Erhebung)
   const filteredData = this.getFilteredData();
+
+  // 2) PLZ-Liste extrahieren
   const filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  this.updateMarkers(filteredPLZs);
-  this.renderDataTable(this.filteredKennwerte);
+  // 3) Karte einfärben
+  this.updateGeoLayer();
 
-  // Radiusfilter anwenden (aktueller Sliderwert)
+  // 4) NL-Marker filtern
+  this.updateMarkers(filteredPLZs);
+
+  // 5) Radiusfilter anwenden → setzt this.plzImRadius
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.applyRadiusFilter(radius);
 
-  // Zoom auf gefilterte PLZ
+  // 6) Tabelle NACH Radiusfilter rendern
+  this.renderDataTable(this.filteredKennwerte);
+
+  // 7) Zoom auf sichtbare PLZ
   this.zoomToFilteredPLZ();
 }
+
 
 
 extractPLZWerte(data) {
@@ -1553,26 +1567,26 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
-applyRadiusFilter(radiusKm) {
+      applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-  const allowedPLZs = new Set(Object.keys(this.filteredKennwerte));
+  const allowedPLZs = new Set(Object.keys(this.filteredPLZWerte));
+  const plzImRadius = new Set();   // 🔥 NEU
 
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
     if (!plz) return;
 
-    // 1) PLZ gehört nicht zur Erhebung → immer grau
+    // PLZ gehört nicht zur Erhebung → ausblenden
     if (!allowedPLZs.has(plz)) {
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.2,
-        opacity: 0.4
-      });
+      layer.setStyle({ fillColor: "#ffffff", fillOpacity: 0, opacity: 0 });
+      layer.options.interactive = false;
       return;
     }
 
-    // 2) Entfernung zur nächsten NL
+    layer.options.interactive = true;
+
+    // Entfernung berechnen
     const center = this.getPolygonCenter(layer);
     const minDist = Math.min(
       ...this.nlMarkers.map(nl =>
@@ -1580,24 +1594,19 @@ applyRadiusFilter(radiusKm) {
       )
     );
 
-    // 3) Innerhalb des Radius → Originalfarbe
     if (minDist <= radiusKm) {
+      // 🔥 PLZ ist im Radius → merken
+      plzImRadius.add(plz);
+
       const color = this.getColorForPLZ(plz);
-      layer.setStyle({
-        fillColor: color,
-        fillOpacity: 0.7,
-        opacity: 1
-      });
-    } 
-    // 4) Außerhalb des Radius → grau
-    else {
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.2,
-        opacity: 0.4
-      });
+      layer.setStyle({ fillColor: color, fillOpacity: 0.7, opacity: 1 });
+    } else {
+      layer.setStyle({ fillColor: "#cfd4da", fillOpacity: 0.2, opacity: 0.4 });
     }
   });
+
+  // 🔥 global speichern
+  this.plzImRadius = plzImRadius;
 }
 
 
