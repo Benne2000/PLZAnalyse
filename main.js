@@ -344,8 +344,8 @@
     <div class="map-container">
       <div id="loading-spinner" class="spinner"></div>
       <div id="radius-slider-container">
-        <label>Radius: <span id="radius-value">35</span> km</label>
-        <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
+        <label>Radius: <span id="radius-value">40</span> km</label>
+        <input type="range" id="radius-slider" min="10" max="100" value="35" step="5">
       </div>
 
 
@@ -907,8 +907,12 @@ zoomToFilteredPLZ() {
       
       
 createAllMarkers() {
+  // Alte Marker entfernen
   this.filteredGroup.clearLayers();
   this.allMarkers = [];
+
+  // 🔥 NL-Marker-Liste für Radius-Filter neu anlegen
+  this.nlMarkers = [];
 
   if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
     console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
@@ -922,6 +926,7 @@ createAllMarkers() {
 
   const seen = new Set(); // verhindert doppelte Marker pro NL
 
+  // 🔵 Haupt-Niederlassungen erzeugen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
     const coords = this.nlKoordinaten[nlKey];
     if (!coords) {
@@ -929,26 +934,38 @@ createAllMarkers() {
       return;
     }
 
-    // Jeder NL bekommt genau einen Marker
     if (!seen.has(nlKey)) {
       const icon = this.createMarkerIcon(nlName);
 
       const marker = L.marker([coords.lat, coords.lon], {
         icon,
         title: nlName,
-        plzs: [nlKey] // ← wichtig: echter NL-Name für Filterung
+        plzs: [nlKey] // wichtig für Filterung
       });
 
+      // In globale Marker-Liste
       this.allMarkers.push(marker);
+
+      // In gefilterte Gruppe (Standard: alle sichtbar)
       this.filteredGroup.addLayer(marker);
+
+      // NL als verarbeitet markieren
       seen.add(nlKey);
+
+      // 🔥 NL-Marker für Radius-Filter speichern
+      this.nlMarkers.push({
+        lat: coords.lat,
+        lng: coords.lon,
+        marker
+      });
     }
   });
 
-  // Extra-Niederlassungen hinzufügen (falls vorhanden)
+  // 🔵 Extra-Niederlassungen hinzufügen (falls vorhanden)
   if (Array.isArray(this.extraNLs)) {
     this.extraNLs.forEach(({ nl, lat, lon }) => {
       const icon = this.createMarkerIcon(nl);
+
       const marker = L.marker([lat, lon], {
         icon,
         title: nl,
@@ -957,9 +974,19 @@ createAllMarkers() {
 
       this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
+
+      // 🔥 Extra-NL ebenfalls für Radius-Filter speichern
+      this.nlMarkers.push({
+        lat,
+        lng: lon,
+        marker
+      });
     });
   }
+
+  console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
+
 
 
 
