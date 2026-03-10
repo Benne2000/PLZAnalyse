@@ -1179,7 +1179,6 @@ extractPLZWerte(data) {
   return plzWerte;
 }
 
-
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -1194,7 +1193,10 @@ getFilteredData() {
   console.log("➡️ Jahr:", jahr);
   console.log("➡️ Nummer:", nummer);
 
-  const filteredKennwerte = {};
+  // 🔥 WICHTIG: beide Strukturen initialisieren
+  const filteredKennwerte = {};   // komplette Zeilen → Tabelle & Popup
+  const filteredPLZWerte = {};    // extrahierte Werte → Farben
+
   const filtered = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
@@ -1203,29 +1205,29 @@ getFilteredData() {
 
     const match = id === erhID && y === jahr && num === nummer;
 
-if (match && plz && plz !== "@NullMember") {
+    if (match && plz && plz !== "@NullMember") {
 
-  // 🔵 1) komplette Datenzeile für Tabelle & Popup
-  filteredKennwerte[plz] = row;
+      // 🔵 1) komplette Datenzeile speichern (Popup + Tabelle)
+      filteredKennwerte[plz] = row;
 
-  // 🔵 2) extrahierte Werte für Farben
-  filteredPLZWerte[plz] = {
-    wk: row["value_wk_in_percent_0"]?.raw ?? 0,
-    wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
-    hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
-  };
+      // 🔵 2) extrahierte Werte für Farben speichern
+      filteredPLZWerte[plz] = {
+        wk: row["value_wk_in_percent_0"]?.raw ?? 0,
+        wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
+        hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
+      };
 
-  console.log(`✔️ Match: PLZ ${plz} | WK=${filteredPLZWerte[plz].wk} | WKPot=${filteredPLZWerte[plz].wkPot} | HZ=${filteredPLZWerte[plz].hz}`);
-}
-
-
+      console.log(
+        `✔️ Match: PLZ ${plz} | WK=${filteredPLZWerte[plz].wk} | WKPot=${filteredPLZWerte[plz].wkPot} | HZ=${filteredPLZWerte[plz].hz}`
+      );
+    }
 
     return match;
   });
 
-this.filteredKennwerte = filteredKennwerte;   // für Tabelle & Popup
-this.filteredPLZWerte = filteredPLZWerte;     // für Farben
-
+  // 🔥 Beide Strukturen global speichern
+  this.filteredKennwerte = filteredKennwerte;
+  this.filteredPLZWerte = filteredPLZWerte;
 
   console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
   console.groupEnd();
