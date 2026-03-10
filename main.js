@@ -345,7 +345,7 @@
       <div id="loading-spinner" class="spinner"></div>
       <div id="radius-slider-container">
         <label>Radius: <span id="radius-value">40</span> km</label>
-        <input type="range" id="radius-slider" min="10" max="100" value="35" step="5">
+        <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
       </div>
 
 
@@ -1320,17 +1320,31 @@ updateMarkers() {
       .filter(nl => nl)
   );
 
+  const visibleMarkers = [];
+
   // Marker durchgehen
   this.allMarkers.forEach(marker => {
     const markerNLs = marker.options.plzs || [];
 
+    // Marker gehört zur Erhebung, wenn mindestens eine NL übereinstimmt
     const belongs = markerNLs.some(nl => filteredNLs.has(nl));
 
     if (belongs) {
       this.filteredGroup.addLayer(marker);
+      visibleMarkers.push(marker);
     }
   });
+
+  // 🔥 NL-Marker für Radius-Filter neu berechnen
+  this.nlMarkers = visibleMarkers.map(marker => ({
+    lat: marker.getLatLng().lat,
+    lng: marker.getLatLng().lng,
+    marker
+  }));
+
+  console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
 }
+
 
 
 
