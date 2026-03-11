@@ -1568,26 +1568,31 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
-      applyRadiusFilter(radiusKm) {
+applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
   const allowedPLZs = new Set(Object.keys(this.filteredPLZWerte));
-  const plzImRadius = new Set();   // 🔥 NEU
+  const plzImRadius = new Set();
 
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz;
     if (!plz) return;
 
-    // PLZ gehört nicht zur Erhebung → ausblenden
+    // 1) PLZ gehört NICHT zur Erhebung → sichtbar, aber farblos
     if (!allowedPLZs.has(plz)) {
-      layer.setStyle({ fillColor: "#ffffff", fillOpacity: 0, opacity: 0 });
+      layer.setStyle({
+        fillColor: "#e0e0e0",
+        fillOpacity: 0.2,
+        opacity: 0.5,
+        color: "#999"
+      });
       layer.options.interactive = false;
       return;
     }
 
+    // 2) PLZ gehört zur Erhebung → Radius prüfen
     layer.options.interactive = true;
 
-    // Entfernung berechnen
     const center = this.getPolygonCenter(layer);
     const minDist = Math.min(
       ...this.nlMarkers.map(nl =>
@@ -1596,20 +1601,24 @@ getPolygonCenter(layer) {
     );
 
     if (minDist <= radiusKm) {
-      // 🔥 PLZ ist im Radius → merken
       plzImRadius.add(plz);
-
       const color = this.getColorForPLZ(plz);
-      layer.setStyle({ fillColor: color, fillOpacity: 0.7, opacity: 1 });
+      layer.setStyle({
+        fillColor: color,
+        fillOpacity: 0.7,
+        opacity: 1
+      });
     } else {
-      layer.setStyle({ fillColor: "#cfd4da", fillOpacity: 0.2, opacity: 0.4 });
+      layer.setStyle({
+        fillColor: "#cfd4da",
+        fillOpacity: 0.2,
+        opacity: 0.4
+      });
     }
   });
 
-  // 🔥 global speichern
   this.plzImRadius = plzImRadius;
 }
-
 
 
 
