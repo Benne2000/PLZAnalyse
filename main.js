@@ -1168,6 +1168,7 @@ applyFilter(erhID, jahr, nummer) {
 
 
 
+
 extractPLZWerte(data) {
   const plzWerte = {};
 
