@@ -1613,7 +1613,6 @@ getPolygonCenter(layer) {
 
 
 
-// initRadiusSlider()
 initRadiusSlider() {
   const slider = this._shadowRoot.getElementById("radius-slider");
   const valueLabel = this._shadowRoot.getElementById("radius-value");
@@ -1630,10 +1629,17 @@ initRadiusSlider() {
     const radius = Number(slider.value);
     valueLabel.textContent = radius;
 
-    // 🔥 Live Radius-Filter anwenden
+    // 1) Karte live filtern
     this.applyRadiusFilter(radius);
+
+    // 2) Tabelle live filtern
+    this.renderDataTable(this.filteredKennwerte);
+
+    // 3) Optional: Zoom live aktualisieren
+    // this.zoomToFilteredPLZ();
   });
 }
+
 
 getColorForPLZ(plz) {
   const data = this.filteredPLZWerte?.[plz];
