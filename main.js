@@ -1568,7 +1568,7 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
-      applyRadiusFilter(radiusKm) {
+ applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
   const allowedPLZs = new Set(Object.keys(this.filteredPLZWerte));
@@ -1578,7 +1578,7 @@ getPolygonCenter(layer) {
     const plz = layer.feature?.properties?.plz;
     if (!plz) return;
 
-    // 1) PLZ gehört NICHT zur Erhebung → sichtbar, aber neutral
+    // 1) PLZ gehört NICHT zur Erhebung → neutral wie im ersten Aufriss
     if (!allowedPLZs.has(plz)) {
       layer.setStyle({
         fillColor: "#cfd4da",
@@ -1593,8 +1593,6 @@ getPolygonCenter(layer) {
     }
 
     // 2) PLZ gehört zur Erhebung → Radius prüfen
-    layer.options.interactive = true;
-
     const center = this.getPolygonCenter(layer);
     const minDist = Math.min(
       ...this.nlMarkers.map(nl =>
@@ -1612,14 +1610,19 @@ getPolygonCenter(layer) {
         color: "#ffffff",
         weight: 1
       });
+
+      layer.options.interactive = true;
     } else {
+      // PLZ gehört zur Erhebung, aber liegt außerhalb des Radius
       layer.setStyle({
         fillColor: "#cfd4da",
-        fillOpacity: 0.2,
+        fillOpacity: 0.4,
         opacity: 1,
         color: "#ffffff",
         weight: 1
       });
+
+      layer.options.interactive = false;
     }
   });
 
