@@ -1568,7 +1568,7 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
-applyRadiusFilter(radiusKm) {
+      applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
   const allowedPLZs = new Set(Object.keys(this.filteredPLZWerte));
@@ -1578,14 +1578,16 @@ applyRadiusFilter(radiusKm) {
     const plz = layer.feature?.properties?.plz;
     if (!plz) return;
 
-    // 1) PLZ gehört NICHT zur Erhebung → sichtbar, aber farblos
+    // 1) PLZ gehört NICHT zur Erhebung → sichtbar, aber neutral
     if (!allowedPLZs.has(plz)) {
       layer.setStyle({
-        fillColor: "#e0e0e0",
-        fillOpacity: 0.2,
-        opacity: 0.5,
-        color: "#999"
+        fillColor: "#cfd4da",
+        fillOpacity: 0.4,
+        opacity: 1,
+        color: "#ffffff",
+        weight: 1
       });
+
       layer.options.interactive = false;
       return;
     }
@@ -1606,20 +1608,23 @@ applyRadiusFilter(radiusKm) {
       layer.setStyle({
         fillColor: color,
         fillOpacity: 0.7,
-        opacity: 1
+        opacity: 1,
+        color: "#ffffff",
+        weight: 1
       });
     } else {
       layer.setStyle({
         fillColor: "#cfd4da",
         fillOpacity: 0.2,
-        opacity: 0.4
+        opacity: 1,
+        color: "#ffffff",
+        weight: 1
       });
     }
   });
 
   this.plzImRadius = plzImRadius;
 }
-
 
 
 initRadiusSlider() {
