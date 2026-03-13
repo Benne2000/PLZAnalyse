@@ -1019,7 +1019,10 @@ createAllMarkers() {
     return this.iconCache[nl];
   }
 showPopup(feature) {
-  const plz = feature.properties?.plz?.trim();
+  const plz = String(feature.properties?.plz ?? "")
+  .padStart(5, "0")
+  .trim();
+
   const note = feature.properties?.note || "Keine Notiz";
 
   // 🔥 WICHTIG: Daten der aktiven Erhebung holen
@@ -1224,7 +1227,9 @@ getFilteredData() {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
-    const plz = row["dimension_plz_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ).padStart(5, "0");
+
 
     const match = id === erhID && y === jahr && num === nummer;
 
@@ -1583,7 +1588,10 @@ getPolygonCenter(layer) {
   const plzImRadius = new Set();
 
   this._geoLayer.eachLayer(layer => {
-    const plz = layer.feature?.properties?.plz;
+    const plz = String(layer.feature?.properties?.plz ?? "")
+  .padStart(5, "0")
+  .trim();
+
     if (!plz) return;
 
     // 1) PLZ gehört NICHT zur Erhebung → neutral wie im ersten Aufriss
