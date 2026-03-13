@@ -1018,7 +1018,6 @@ createAllMarkers() {
 
     return this.iconCache[nl];
   }
-
 showPopup(feature) {
   const plz = feature.properties?.plz?.trim();
   const note = feature.properties?.note || "Keine Notiz";
@@ -1030,112 +1029,102 @@ showPopup(feature) {
     console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
   }
 
+  const beschreibungen = {
+    value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
+    value_umsatz_p_hh_0: "Umsatz p. HH",
+    value_wk_in_percent_0: "Werbekosten (%)",
+    value_wk_nachbar_0: "WK (%) incl. Nachb.",
+    value_hz_kosten_0: "HZ-Werbekosten",
+    value_werbeverweigerer_0: "Werbeverweigerer (%)",
+    value_haushalte_0: "Haushalte",
+    value_kaufkraft_0: "BM-Kaufkraft-Idx",
+    value_ums_erhebung_0: "Umsatz",
+    value_kd_erhebung_0: "Anzahl Kunden",
+    value_bon_erhebung_0: "Ø-Bon",
+    value_auflage_0: "Auflage"
+  };
 
-    const beschreibungen = {
-      value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
-      value_umsatz_p_hh_0: "Umsatz p. HH",
-      value_wk_in_percent_0: "Werbekosten (%)",
-      value_wk_nachbar_0: "WK (%) incl. Nachb.",
-      value_hz_kosten_0: "HZ-Werbekosten",
-      value_werbeverweigerer_0: "Werbeverweigerer (%)",
-      value_haushalte_0: "Haushalte",
-      value_kaufkraft_0: "BM-Kaufkraft-Idx",
-      value_ums_erhebung_0: "Umsatz",
-      value_kd_erhebung_0: "Anzahl Kunden",
-      value_bon_erhebung_0: "Ø-Bon",
-      value_auflage_0: "Auflage"
-    };
+  const beschreibungenSide = {
+    value_wk_potentiell_0: "WK in %",
+    value_hz_potentiell_0: "HZ-Werbekosten"
+  };
 
-    const beschreibungenSide = {
-      value_wk_potentiell_0: "WK in %",
-      value_hz_potentiell_0: "HZ-Werbekosten"
-    };
+  let rows = "";
 
-    let rows = "";
+  Object.entries(beschreibungen).forEach(([id, label], index) => {
+    const rawValue = daten?.[id]?.raw;
+    const wert = typeof rawValue === "number"
+      ? rawValue.toLocaleString("de-DE")
+      : "–";
 
-    Object.entries(beschreibungen).forEach(([id, label], index) => {
-      const rawValue = daten?.[id]?.raw;
-      const wert = typeof rawValue === "number"
-        ? rawValue.toLocaleString("de-DE")
-        : "–";
-
-      if (wert === "–") {
-        console.warn(`⚠️ Kennzahl fehlt: ${id} (${label}) für PLZ ${plz}`);
-      }
-
-      if (index === 8) {
-        rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
-      }
-
-      rows += `
-        <tr class="kennzahl-row">
-          <td class="label-cell">${label}</td>
-          <td class="value-cell">${wert}</td>
-        </tr>
-      `;
-    });
-
-    const sidePopup = this._shadowRoot.getElementById('side-popup');
-    sidePopup.innerHTML = `
-      <button class="close-btn">×</button>
-      <table>
-        <thead>
-          <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
-          <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    `;
-
-    // Zusatztabelle bei Nicht-HZ mit Umsatz
-    const isHZ = this.hzFlags?.[plz] === false;
-    const zusatzKennwerte = this.filteredKennwerte?.[plz] || {};
-    const umsatz = zusatzKennwerte.value_hr_n_umsatz_0?.raw;
-
-
-
-
-    
-    if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-      const wkPotentiellRaw = zusatzKennwerte.value_wk_potentiell_0?.raw;
-      const hzPotentiellRaw = zusatzKennwerte.value_hz_potentiell_0?.raw;
-
-      const wkPotentiell = typeof wkPotentiellRaw === "number"
-        ? wkPotentiellRaw.toLocaleString("de-DE")
-        : "–";
-
-      const hzPotentiell = typeof hzPotentiellRaw === "number"
-        ? hzPotentiellRaw.toLocaleString("de-DE")
-        : "–";
-
-      const extraTable = `
-        <table class="extra-table">
-          <thead>
-            <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-              <td class="value-cell">${wkPotentiell}</td>
-            </tr>
-            <tr>
-              <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-              <td class="value-cell">${hzPotentiell}</td>
-            </tr>
-          </tbody>
-        </table>
-      `;
-      sidePopup.insertAdjacentHTML('beforeend', extraTable);
+    if (index === 8) {
+      rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
     }
 
-    void sidePopup.offsetWidth;
-    setTimeout(() => sidePopup.classList.add('show'), 10);
+    rows += `
+      <tr class="kennzahl-row">
+        <td class="label-cell">${label}</td>
+        <td class="value-cell">${wert}</td>
+      </tr>
+    `;
+  });
 
-    const closeBtn = sidePopup.querySelector('.close-btn');
-    closeBtn.addEventListener('click', () => {
-      sidePopup.classList.remove('show');
-    });
+  const sidePopup = this._shadowRoot.getElementById('side-popup');
+  sidePopup.innerHTML = `
+    <button class="close-btn">×</button>
+    <table>
+      <thead>
+        <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
+        <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  // 🔥 Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
+  const isHZ = this.hzFlags?.[plz] === false;
+  const umsatz = daten?.value_hr_n_umsatz_0?.raw;
+
+  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
+    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
+    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
+
+    const wkPotentiell = typeof wkPotentiellRaw === "number"
+      ? wkPotentiellRaw.toLocaleString("de-DE")
+      : "–";
+
+    const hzPotentiell = typeof hzPotentiellRaw === "number"
+      ? hzPotentiellRaw.toLocaleString("de-DE")
+      : "–";
+
+    const extraTable = `
+      <table class="extra-table">
+        <thead>
+          <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
+            <td class="value-cell">${wkPotentiell}</td>
+          </tr>
+          <tr>
+            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
+            <td class="value-cell">${hzPotentiell}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    sidePopup.insertAdjacentHTML('beforeend', extraTable);
   }
+
+  void sidePopup.offsetWidth;
+  setTimeout(() => sidePopup.classList.add('show'), 10);
+
+  const closeBtn = sidePopup.querySelector('.close-btn');
+  closeBtn.addEventListener('click', () => {
+    sidePopup.classList.remove('show');
+  });
+}
 
   updateNeighbours(filteredData) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
