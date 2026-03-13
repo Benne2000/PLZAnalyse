@@ -833,27 +833,34 @@ updateSortIcons(activeIndex) {
 
 // zoomToFilteredPLZ()
 zoomToFilteredPLZ() {
-  if (!this._geoLayer || !this.filteredKennwerte) return;
-
-  const plzList = Object.keys(this.filteredKennwerte);
-  if (plzList.length === 0) return;
+  if (!this._geoLayer || !this.plzImRadius || this.plzImRadius.size === 0) {
+    console.warn("⚠️ Kein Autozoom möglich – keine PLZ im Radius.");
+    return;
+  }
 
   const bounds = L.latLngBounds([]);
 
   this._geoLayer.eachLayer(layer => {
-    const plz = layer.feature?.properties?.plz;
-    if (plzList.includes(plz)) {
-      bounds.extend(layer.getBounds());
+    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+
+    if (this.plzImRadius.has(plz)) {
+      const layerBounds = layer.getBounds?.();
+      if (layerBounds) {
+        bounds.extend(layerBounds);
+      }
     }
   });
 
   if (bounds.isValid()) {
-    this.map.fitBounds(bounds, {
-      padding: [20, 20],
-      maxZoom: 13
+    this._map.fitBounds(bounds, {
+      padding: [30, 30],
+      maxZoom: 12
     });
+  } else {
+    console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
+
 
 
   initializeMapBase() {
