@@ -516,7 +516,11 @@ renderDataTable(data) {
 
   // 🔥 Nur PLZs anzeigen, die im Radius liegen
   if (this.plzImRadius && this.plzImRadius.size > 0) {
-    entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
+    entries = entries.filter(([plz]) => {
+  const norm = String(plz).padStart(5, "0");
+  return this.plzImRadius.has(norm);
+});
+
   }
 
   // Default: beim ersten Laden nach PLZ sortieren
