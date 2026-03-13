@@ -1144,11 +1144,12 @@ const filteredData = this.getFilteredData();
 this.hzFlags = {};
 filteredData.forEach(row => {
   const plz = row["dimension_plz_0"]?.id?.trim();
-  const hz = row["value_hz_flag_0"]?.raw; // Beispiel: dein HZ-Feld
+  const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
   if (plz) {
-    this.hzFlags[plz] = hz === 1; // oder true/false je nach Datenstruktur
+    this.hzFlags[plz] = hz === "X";  // ✔ korrekt
   }
 });
+
 
 
   // 2) PLZ-Liste extrahieren
