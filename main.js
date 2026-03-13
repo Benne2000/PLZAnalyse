@@ -1019,9 +1019,16 @@ createAllMarkers() {
     return this.iconCache[nl];
   }
 
-  showPopup(feature, daten = {}) {
-    const plz = feature.properties?.plz?.trim();
-    const note = feature.properties?.note || "Keine Notiz";
+showPopup(feature) {
+  const plz = feature.properties?.plz?.trim();
+  const note = feature.properties?.note || "Keine Notiz";
+
+  // 🔥 WICHTIG: Daten der aktiven Erhebung holen
+  const daten = this.filteredKennwerte?.[plz];
+
+  if (!daten) {
+    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
+  }
 
 
     const beschreibungen = {
@@ -1142,7 +1149,18 @@ applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
 
   // 1) Daten filtern (Erhebung)
-  const filteredData = this.getFilteredData();
+const filteredData = this.getFilteredData();
+
+// HZ-Flags neu berechnen
+this.hzFlags = {};
+filteredData.forEach(row => {
+  const plz = row["dimension_plz_0"]?.id?.trim();
+  const hz = row["value_hz_flag_0"]?.raw; // Beispiel: dein HZ-Feld
+  if (plz) {
+    this.hzFlags[plz] = hz === 1; // oder true/false je nach Datenstruktur
+  }
+});
+
 
   // 2) PLZ-Liste extrahieren
   const filteredPLZs = filteredData
