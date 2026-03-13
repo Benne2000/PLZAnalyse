@@ -852,7 +852,7 @@ zoomToFilteredPLZ() {
   });
 
   if (bounds.isValid()) {
-    this._map.fitBounds(bounds, {
+    this.map.fitBounds(bounds, {
       padding: [30, 30],
       maxZoom: 12
     });
