@@ -602,6 +602,13 @@ sortTableByColumn(columnIndex) {
       renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
+  // 🔥 Radiusfilter auch hier anwenden (Sortierung ruft diese Methode direkt auf)
+  if (this.plzImRadius && this.plzImRadius.size > 0) {
+    entries = entries.filter(([plz]) => {
+      const norm = String(plz).padStart(5, "0");
+      return this.plzImRadius.has(norm);
+    });
+  }
 
   if (!entries || entries.length === 0) {
     container.textContent = 'Keine Daten verfügbar.';
