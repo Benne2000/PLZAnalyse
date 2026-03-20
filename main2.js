@@ -730,6 +730,13 @@ sortTableByColumn(index) {
   this.updateSortIcons(index);
 }
 renderDataTableFromEntries(entries) {
+  // ❗ Keine Erhebung → NICHTS anzeigen
+  if (!this._activeFilter || !this._activeFilter.erhID) {
+    console.warn("⏳ Tabelle übersprungen: Keine Erhebung aktiv.");
+    this._shadowRoot.getElementById('table-container').innerHTML = "";
+    return;
+  }
+
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
@@ -1147,6 +1154,14 @@ zoomToFilteredPLZ() {
     }
   }
   createAllMarkers() {
+   if (!this._activeFilter || !this._activeFilter.erhID) {
+  console.warn("⏳ createAllMarkers übersprungen: Keine Erhebung aktiv.");
+  this.filteredGroup.clearLayers();
+  this.allMarkers = [];
+  this.nlMarkers = [];
+  return;
+}
+
   if (!this.aggregatedPLZ || Object.keys(this.aggregatedPLZ).length === 0) {
     console.log("⏳ Noch keine Erhebung geladen → keine Marker anzeigen");
     this.filteredGroup.clearLayers();
@@ -1543,6 +1558,12 @@ getFilteredData() {
 
 
 updateGeoLayer() {
+
+  if (!this._activeFilter || !this._activeFilter.erhID) {
+  console.warn("⏳ updateGeoLayer übersprungen: Keine Erhebung aktiv.");
+  return;
+}
+
   if (!this._geoLayer) return;
 
   // Hole gefilterte Daten
