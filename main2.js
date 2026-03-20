@@ -724,12 +724,11 @@ sortTableByColumn(index) {
   // -------------------------
   this.updateSortIcons(index);
 }
-
 renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
-  // 🔥 Radiusfilter anwenden
+  // Radiusfilter
   if (this.plzImRadius instanceof Set && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
   }
@@ -738,6 +737,9 @@ renderDataTableFromEntries(entries) {
     container.textContent = 'Keine Daten verfügbar.';
     return;
   }
+
+  // Prüfen: Aggregat oder Detail?
+  const isDetail = entries.length > 0 && entries[0][1].nl !== undefined;
 
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
@@ -760,13 +762,22 @@ renderDataTableFromEntries(entries) {
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
-  const headers = [
-    { label: 'PLZ', width: '60px' },
-    { label: 'Gemeinde', width: '120px' },
-    { label: 'HZ', width: '40px' },
-    { label: 'Netto-Umsatz', width: '80px' },
-    { label: 'WK (%)', width: '60px' }
-  ];
+  const headers = isDetail
+    ? [
+        { label: 'PLZ', width: '60px' },
+        { label: 'NL', width: '60px' },
+        { label: 'Gemeinde', width: '120px' },
+        { label: 'HZ', width: '40px' },
+        { label: 'Netto-Umsatz', width: '80px' },
+        { label: 'WK (%)', width: '60px' }
+      ]
+    : [
+        { label: 'PLZ', width: '60px' },
+        { label: 'Gemeinde', width: '120px' },
+        { label: 'HZ', width: '40px' },
+        { label: 'Netto-Umsatz', width: '80px' },
+        { label: 'WK (%)', width: '60px' }
+      ];
 
   headers.forEach(({ label, width }) => {
     const th = document.createElement('th');
@@ -797,11 +808,11 @@ renderDataTableFromEntries(entries) {
 
     tr.addEventListener("click", () => {
       this.highlightMapArea(plz);
-      this.openPopupFromTable(plz);
+      if (isDetail) this.openPopupFromTable(plz, row.nl);
+      else this.openPopupFromTable(plz);
       this.highlightTableRow(tr);
     });
 
-    // Gemeinde
     let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
     note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
@@ -809,13 +820,9 @@ renderDataTableFromEntries(entries) {
     const umsatz = typeof row.umsatz === "number" ? row.umsatz.toLocaleString('de-DE') : '–';
     const wk = typeof row.wk === "number" ? row.wk.toFixed(1) : '–';
 
-    const rowValues = [
-      plz,
-      note,
-      hzFlag,
-      umsatz,
-      wk
-    ];
+    const rowValues = isDetail
+      ? [plz, row.nl, note, hzFlag, umsatz, wk]
+      : [plz, note, hzFlag, umsatz, wk];
 
     rowValues.forEach((text, i) => {
       const td = document.createElement('td');
@@ -839,6 +846,7 @@ renderDataTableFromEntries(entries) {
   scrollWrapper.appendChild(table);
   container.appendChild(scrollWrapper);
 }
+
 
       
 // highlightTableRow(rowElement)
