@@ -431,7 +431,7 @@
   }
 
 
-      async loadGeoJson() {
+       async loadGeoJson() {
   if (this._geoLayer) return;
 
   try {
@@ -504,6 +504,29 @@ onEachFeature: (feature, layer) => {
     this.highlightMapArea(plz);
     this.openPopupFromTable(plz);
   });
+}
+
+
+    });
+
+this._geoLayer.addTo(this.map);
+
+// 🔥 Radius-Filter direkt nach dem Laden anwenden
+const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+this.applyRadiusFilter(radius);
+
+// 📍 Automatisch auf die volle Ausdehnung zoomen
+const bounds = this._geoLayer.getBounds();
+console.log("Geojson einrahmen");
+this.map.fitBounds(bounds, {
+  padding: [20, 20],
+  maxZoom: 14
+});
+
+
+  } catch (error) {
+    console.error("❌ Fehler beim Laden der GeoJSON:", error);
+  }
 }
 
 
@@ -1498,7 +1521,7 @@ applyFilter(erhID, jahr, nummer) {
   this.renderDataTable(this.filteredKennwerte);
 
   console.log("▶ applyFilter abgeschlossen");
-}
+
 
 
 
