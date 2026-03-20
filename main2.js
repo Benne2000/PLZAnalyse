@@ -1438,7 +1438,13 @@ applyFilter(erhID, jahr, nummer) {
 
   // ❗ 9) Radiusfilter
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.applyRadiusFilter(radius);
+// ❗ Radiusfilter nur anwenden, wenn die Karte bereit ist
+if (this._currentCenter && this._currentCenter.lat && this._currentCenter.lng) {
+    this.applyRadiusFilter(radius);
+} else {
+    console.warn("⏳ applyFilter: Radiusfilter übersprungen, Karte noch nicht bereit.");
+}
+
 
   // ❗ 10) Tabelle nach Radiusfilter
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
@@ -1839,11 +1845,11 @@ getPolygonCenter(layer) {
 }
 
 applyRadiusFilter(radius) {
-  if (!this._currentCenter) {
+  if (!this._currentCenter || !this._currentCenter.lat || !this._currentCenter.lng) {
     console.warn("⏳ applyRadiusFilter abgebrochen: Kein Kartenmittelpunkt.");
-    this.plzImRadius = new Set(); // NICHT löschen!
-    return;
+    return; // ❗ NICHT plzImRadius löschen!
   }
+
 
   // ❗ Schutz: Keine Kennwerte vorhanden
   if (!this.filteredKennwerte || typeof this.filteredKennwerte !== "object") {
