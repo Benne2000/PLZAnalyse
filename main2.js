@@ -1371,40 +1371,51 @@ filterByNL(plz, nl) {
   this.renderDataTableFromEntries(entries);
 }
 
-
 applyFilter(erhID, jahr, nummer) {
   console.log("▶ applyFilter gestartet", erhID, jahr, nummer);
 
-  // ❗ 1) Ungültige Aufrufe abfangen (SAC feuert mehrfach Events)
-  if (!erhID || !jahr || !nummer) {
-    console.warn("⚠️ applyFilter ohne gültige Parameter → zurücksetzen");
-
-    this._activeNLFilter = null;
-    this.aggregatedPLZ = {};
-    this.detailedPLZ = {};
-    this.hzFlags = {};
-    this.filteredKennwerte = {};
-
-    // Tabelle leeren
-    this.renderDataTableFromEntries([]);
-
-    // Marker leeren
-    this.filteredGroup.clearLayers();
-    this.allMarkers = [];
-    this.nlMarkers = [];
-
-    // Karte neutral einfärben
-    if (this._geoLayer) this.updateGeoLayer();
-
+  // -------------------------------------------------------
+  // 1) Datenquelle bereit?
+  // -------------------------------------------------------
+  if (!this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⏳ applyFilter abgebrochen: Datenquelle noch nicht bereit.");
     return;
   }
 
-  // ❗ 2) Daten holen
-  const filteredData = this.getFilteredData();
-  if (!filteredData || filteredData.length === 0) {
+  // -------------------------------------------------------
+  // 2) Filterparameter setzen – aber NICHT überschreiben,
+  //    wenn SAC applyFilter ohne Parameter aufruft
+  // -------------------------------------------------------
+  if (erhID && jahr && nummer) {
+    this._activeFilter = { erhID, jahr, nummer };
+  }
+
+  const { erhID: fID, jahr: fJahr, nummer: fNum } = this._activeFilter || {};
+
+  if (!fID || !fJahr || !fNum) {
+    console.warn("⚠️ applyFilter: Keine gültigen Filterparameter vorhanden → abbrechen");
+    return;
+  }
+
+  // Ab hier IMMER die stabilen Werte verwenden
+  erhID = fID;
+  jahr = fJahr;
+  nummer = fNum;
+
+  // -------------------------------------------------------
+  // 3) Daten filtern
+  // -------------------------------------------------------
+  const data = this._myDataSource.data;
+  const filteredData = data.filter(row => {
+    const id = row["dimension_erhebung_0"]?.id?.trim();
+    const y = row["dimension_jahr_0"]?.id?.trim();
+    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    return id === erhID && y === jahr && num === nummer;
+  });
+
+  if (filteredData.length === 0) {
     console.warn("⚠️ Keine Daten für Erhebung gefunden.");
 
-    this._activeNLFilter = null;
     this.aggregatedPLZ = {};
     this.detailedPLZ = {};
     this.hzFlags = {};
@@ -1419,7 +1430,9 @@ applyFilter(erhID, jahr, nummer) {
     return;
   }
 
-  // ❗ 3) Datenstrukturen neu aufbauen
+  // -------------------------------------------------------
+  // 4) Aggregat + Detail neu aufbauen
+  // -------------------------------------------------------
   this.aggregatedPLZ = {};
   this.detailedPLZ = {};
   this.hzFlags = {};
@@ -1449,26 +1462,40 @@ applyFilter(erhID, jahr, nummer) {
 
   this.filteredKennwerte = this.aggregatedPLZ;
 
-  // ❗ 4) Tabelle initial anzeigen
+  // -------------------------------------------------------
+  // 5) Tabelle initial rendern
+  // -------------------------------------------------------
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // ❗ 5) Karte einfärben
+  // -------------------------------------------------------
+  // 6) Karte einfärben
+  // -------------------------------------------------------
   this.updateGeoLayer();
 
-  // ❗ 6) Marker erzeugen (erst jetzt!)
+  // -------------------------------------------------------
+  // 7) Marker erzeugen (erst jetzt!)
+  // -------------------------------------------------------
   this.createAllMarkers();
 
-  // ❗ 7) Marker filtern (kein NL → alle)
+  // -------------------------------------------------------
+  // 8) Marker filtern (kein NL → alle)
+  // -------------------------------------------------------
   this.updateMarkers();
 
-  // ❗ 8) Radiusfilter anwenden
+  // -------------------------------------------------------
+  // 9) Radiusfilter anwenden
+  // -------------------------------------------------------
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.applyRadiusFilter(radius);
 
-  // ❗ 9) Tabelle nach Radiusfilter erneut rendern
+  // -------------------------------------------------------
+  // 10) Tabelle nach Radiusfilter erneut rendern
+  // -------------------------------------------------------
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // ❗ 10) Zoom
+  // -------------------------------------------------------
+  // 11) Zoom
+  // -------------------------------------------------------
   this.zoomToFilteredPLZ();
 
   console.log("▶ applyFilter abgeschlossen");
