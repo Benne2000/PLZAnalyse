@@ -1238,83 +1238,79 @@ zoomToFilteredPLZ() {
 
     return this.iconCache[nl];
   }
-showPopup(feature, daten, nl = null) {
-  if (!feature || !daten) return;
-
+showPopup(feature, daten = null, nl = null) {
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
     .trim();
 
-  // Gemeinde-Name
+  // Gemeinde
   let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
   note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
-  // Umsatz
-  const umsatz = typeof daten.umsatz === "number"
-    ? daten.umsatz.toLocaleString("de-DE")
-    : "–";
+  // 🔥 Datenquelle bestimmen
+  const data = daten || this.filteredKennwerte?.[plz];
 
-  // WK
-  const wk = typeof daten.wk === "number"
-    ? daten.wk.toFixed(1)
-    : "–";
+  if (!data) {
+    console.warn(`❌ Keine Daten für PLZ ${plz}`);
+    return;
+  }
 
-  // HZ
-  const hz = daten.hz ? "🟢 Ja" : "🔴 Nein";
-
-  // NL-Anzeige
+  // Popup-Header
   const nlText = nl ? `NL: ${nl}` : "Aggregierte Erhebung";
 
-  // -------------------------
-  // Popup-HTML erzeugen
-  // -------------------------
-  const sidePopup = this._shadowRoot.getElementById("side-popup");
+  // Kennzahlen
+  const beschreibungen = {
+    value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
+    value_umsatz_p_hh_0: "Umsatz p. HH",
+    value_wk_in_percent_0: "Werbekosten (%)",
+    value_wk_nachbar_0: "WK (%) incl. Nachb.",
+    value_hz_kosten_0: "HZ-Werbekosten",
+    value_werbeverweigerer_0: "Werbeverweigerer (%)",
+    value_haushalte_0: "Haushalte",
+    value_kaufkraft_0: "BM-Kaufkraft-Idx",
+    value_ums_erhebung_0: "Umsatz",
+    value_kd_erhebung_0: "Anzahl Kunden",
+    value_bon_erhebung_0: "Ø-Bon",
+    value_auflage_0: "Auflage"
+  };
 
+  let rows = "";
+
+  Object.entries(beschreibungen).forEach(([id, label], index) => {
+    const rawValue = data[id]?.raw;
+    const wert = typeof rawValue === "number"
+      ? rawValue.toLocaleString("de-DE")
+      : "–";
+
+    if (index === 8) {
+      rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
+    }
+
+    rows += `
+      <tr class="kennzahl-row">
+        <td class="label-cell">${label}</td>
+        <td class="value-cell">${wert}</td>
+      </tr>
+    `;
+  });
+
+  // Popup rendern
+  const sidePopup = this._shadowRoot.getElementById("side-popup");
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
-
     <table>
       <thead>
-        <tr>
-          <th colspan="2" class="title-cell" title="${note}">
-            PLZ ${plz} – ${note}
-          </th>
-        </tr>
-        <tr>
-          <th colspan="2" class="subtitle-cell">${nlText}</th>
-        </tr>
+        <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
+        <tr><th colspan="2" class="subtitle-cell">${nlText}</th></tr>
       </thead>
-
-      <tbody>
-        <tr class="kennzahl-row">
-          <td class="label-cell">HZ</td>
-          <td class="value-cell">${hz}</td>
-        </tr>
-
-        <tr class="kennzahl-row">
-          <td class="label-cell">Netto-Umsatz (Jahr)</td>
-          <td class="value-cell">${umsatz}</td>
-        </tr>
-
-        <tr class="kennzahl-row">
-          <td class="label-cell">WK (%) inkl. Nachb.</td>
-          <td class="value-cell">${wk}</td>
-        </tr>
-      </tbody>
+      <tbody>${rows}</tbody>
     </table>
   `;
 
-  // -------------------------
   // Zusatzwerte (nur Aggregat)
-  // -------------------------
   if (!nl) {
-    const wkPot = typeof daten.wkPot === "number"
-      ? daten.wkPot.toLocaleString("de-DE")
-      : "–";
-
-    const hzPot = typeof daten.hzPot === "number"
-      ? daten.hzPot.toLocaleString("de-DE")
-      : "–";
+    const wkPot = data.value_wk_potentiell_0?.raw;
+    const hzPot = data.value_hz_potentiell_0?.raw;
 
     const extraTable = `
       <table class="extra-table">
@@ -1324,11 +1320,11 @@ showPopup(feature, daten, nl = null) {
         <tbody>
           <tr>
             <td class="label-cell">WK in %</td>
-            <td class="value-cell">${wkPot}</td>
+            <td class="value-cell">${wkPot ?? "–"}</td>
           </tr>
           <tr>
             <td class="label-cell">HZ-Werbekosten</td>
-            <td class="value-cell">${hzPot}</td>
+            <td class="value-cell">${hzPot ?? "–"}</td>
           </tr>
         </tbody>
       </table>
@@ -1337,18 +1333,15 @@ showPopup(feature, daten, nl = null) {
     sidePopup.insertAdjacentHTML("beforeend", extraTable);
   }
 
-  // -------------------------
-  // Popup anzeigen
-  // -------------------------
+  // Anzeigen
   void sidePopup.offsetWidth;
   setTimeout(() => sidePopup.classList.add("show"), 10);
 
-  // Schließen
-  const closeBtn = sidePopup.querySelector(".close-btn");
-  closeBtn.addEventListener("click", () => {
+  sidePopup.querySelector(".close-btn").addEventListener("click", () => {
     sidePopup.classList.remove("show");
   });
 }
+
 
 
   updateNeighbours(filteredData) {
