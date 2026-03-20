@@ -489,7 +489,12 @@ this._geoLayer.addTo(this.map);
 
 // 🔥 Radius-Filter direkt nach dem Laden anwenden
 const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-this.applyRadiusFilter(radius);
+
+// ❗ Nur anwenden, wenn Karte bereit
+if (this._currentCenter) {
+  this.applyRadiusFilter(radius);
+}
+
 
 // 📍 Automatisch auf die volle Ausdehnung zoomen
 const bounds = this._geoLayer.getBounds();
@@ -1472,6 +1477,11 @@ extractPLZWerte(data) {
   return plzWerte;
 }
 getFilteredData() {
+  if (!this._activeFilter || !this._activeFilter.erhID) {
+    console.warn("⏳ getFilteredData abgebrochen: Kein aktiver Filter.");
+    return [];
+  }
+
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
     return [];
@@ -1829,6 +1839,12 @@ getPolygonCenter(layer) {
 }
 
 applyRadiusFilter(radius) {
+  if (!this._currentCenter) {
+    console.warn("⏳ applyRadiusFilter abgebrochen: Kein Kartenmittelpunkt.");
+    this.plzImRadius = new Set(); // NICHT löschen!
+    return;
+  }
+
   // ❗ Schutz: Keine Kennwerte vorhanden
   if (!this.filteredKennwerte || typeof this.filteredKennwerte !== "object") {
     console.warn("⏳ applyRadiusFilter: Keine Kennwerte vorhanden.");
