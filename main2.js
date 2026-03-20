@@ -725,17 +725,13 @@ sortTableByColumn(index) {
   this.updateSortIcons(index);
 }
 
-
 renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
   // 🔥 Radiusfilter anwenden
-  if (this.plzImRadius && this.plzImRadius.size > 0) {
-    entries = entries.filter(([plz]) => {
-      const norm = String(plz).padStart(5, "0");
-      return this.plzImRadius.has(norm);
-    });
+  if (this.plzImRadius instanceof Set && this.plzImRadius.size > 0) {
+    entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
   }
 
   if (!entries || entries.length === 0) {
@@ -754,28 +750,27 @@ renderDataTableFromEntries(entries) {
   scrollWrapper.style.borderRadius = '6px';
 
   const table = document.createElement('table');
-  table.setAttribute('role', 'table');
   table.style.width = '100%';
   table.style.borderCollapse = 'collapse';
   table.style.fontFamily = 'sans-serif';
   table.style.tableLayout = 'fixed';
   table.style.border = '1px solid #b41821';
 
+  // HEADER
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
   const headers = [
-    { label: 'PLZ', width: '40px' },
-    { label: 'NL', width: '60px' },
-    { label: 'Gemeinde', width: '90px' },
-    { label: 'HZ', width: '20px' },
-    { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
-    { label: 'WK (%)\nincl. Nachb.', width: '50px' }
+    { label: 'PLZ', width: '60px' },
+    { label: 'Gemeinde', width: '120px' },
+    { label: 'HZ', width: '40px' },
+    { label: 'Netto-Umsatz', width: '80px' },
+    { label: 'WK (%)', width: '60px' }
   ];
 
-  headers.forEach(({ label, width }, i) => {
+  headers.forEach(({ label, width }) => {
     const th = document.createElement('th');
-    th.innerHTML = `${label} <span class="sort-icon"></span>`;
+    th.textContent = label;
     th.style.backgroundColor = '#b41821';
     th.style.color = 'white';
     th.style.padding = '8px';
@@ -783,22 +778,16 @@ renderDataTableFromEntries(entries) {
     th.style.position = 'sticky';
     th.style.top = '0';
     th.style.zIndex = '1';
-    th.style.whiteSpace = 'pre-line';
     th.style.width = width;
     th.style.borderBottom = '1px solid #b41821';
     th.style.borderRight = '1px solid #b41821';
-    th.style.cursor = 'pointer';
-
-    th.addEventListener('click', () => {
-      this.sortTableByColumn(i);
-    });
-
     headerRow.appendChild(th);
   });
 
   thead.appendChild(headerRow);
   table.appendChild(thead);
 
+  // BODY
   const tbody = document.createElement('tbody');
   const fragment = document.createDocumentFragment();
 
@@ -806,39 +795,22 @@ renderDataTableFromEntries(entries) {
     const tr = document.createElement('tr');
     tr.style.cursor = "pointer";
 
-    // Tabellenklick → Map + Popup
     tr.addEventListener("click", () => {
       this.highlightMapArea(plz);
-
-      if (row.nl) {
-        this.openPopupFromTable(plz, row.nl);
-      } else {
-        this.openPopupFromTable(plz);
-      }
-
+      this.openPopupFromTable(plz);
       this.highlightTableRow(tr);
     });
 
-    // Gemeinde-Name
+    // Gemeinde
     let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
     note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
-    // HZ-Flag
     const hzFlag = row.hz ? '🟢' : '🔴';
-
-    // Umsatz
-    const umsatz = typeof row.umsatz === "number"
-      ? row.umsatz.toLocaleString('de-DE')
-      : '–';
-
-    // WK
-    const wk = typeof row.wk === "number"
-      ? row.wk.toFixed(1)
-      : '–';
+    const umsatz = typeof row.umsatz === "number" ? row.umsatz.toLocaleString('de-DE') : '–';
+    const wk = typeof row.wk === "number" ? row.wk.toFixed(1) : '–';
 
     const rowValues = [
       plz,
-      row.nl ?? "–",
       note,
       hzFlag,
       umsatz,
@@ -847,8 +819,7 @@ renderDataTableFromEntries(entries) {
 
     rowValues.forEach((text, i) => {
       const td = document.createElement('td');
-      td.textContent = text.replace(/\n/g, ' ');
-      td.title = text;
+      td.textContent = text;
       td.style.padding = '6px 8px';
       td.style.borderBottom = '1px solid #b41821';
       td.style.borderRight = '1px solid #b41821';
@@ -867,11 +838,6 @@ renderDataTableFromEntries(entries) {
   table.appendChild(tbody);
   scrollWrapper.appendChild(table);
   container.appendChild(scrollWrapper);
-
-  // Sort-Icons aktualisieren
-  if (this._sortState && this._sortState.column != null) {
-    this.updateSortIcons(this._sortState.column);
-  }
 }
 
       
