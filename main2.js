@@ -470,139 +470,268 @@ style: feature => {
 // onEachFeature(feature, layer)
 onEachFeature: (feature, layer) => {
   layer.on("click", (e) => {
-    const plz = e.target.feature.properties.plz?.toString().trim();
-    const kennwerte = this.filteredKennwerte[plz];
+    const plz = String(feature.properties.plz).padStart(5, "0");
 
-    // Gebiet highlighten
+    // 1) Detaildaten holen (alle NL dieser PLZ)
+    const detailRows = this.detailedPLZ?.[plz] || [];
+
+    // 2) Wenn es mehrere NL gibt → NL-Auswahl anzeigen
+    if (detailRows.length > 1) {
+      // Standard: Aggregat anzeigen
+      this.filteredKennwerte = { [plz]: this.aggregatedPLZ[plz] };
+      this.renderDataTableFromEntries([[plz, this.aggregatedPLZ[plz]]]);
+
+      this.highlightMapArea(plz);
+      this.openPopupFromTable(plz); // Aggregat
+      return;
+    }
+
+    // 3) Wenn es nur eine NL gibt → direkt NL-Detail anzeigen
+    if (detailRows.length === 1) {
+      const nl = detailRows[0].nl;
+
+      this.filterByNL(plz, nl);
+      this.highlightMapArea(plz);
+      this.openPopupFromTable(plz, nl);
+      return;
+    }
+
+    // 4) Fallback: keine NL-Daten → Aggregat
+    const agg = this.aggregatedPLZ[plz];
+    this.filteredKennwerte = { [plz]: agg };
+    this.renderDataTableFromEntries([[plz, agg]]);
+
     this.highlightMapArea(plz);
-
-    // Popup öffnen
-    this.showPopup(e.target.feature, kennwerte);
-
-    // Tabellenzeile highlighten
-    this.highlightTableRowByPLZ(plz);
+    this.openPopupFromTable(plz);
   });
 }
 
-    });
-
-this._geoLayer.addTo(this.map);
-
-// 🔥 Radius-Filter direkt nach dem Laden anwenden
-const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-this.applyRadiusFilter(radius);
-
-// 📍 Automatisch auf die volle Ausdehnung zoomen
-const bounds = this._geoLayer.getBounds();
-console.log("Geojson einrahmen");
-this.map.fitBounds(bounds, {
-  padding: [20, 20],
-  maxZoom: 14
-});
-
-
-  } catch (error) {
-    console.error("❌ Fehler beim Laden der GeoJSON:", error);
-  }
-}
 
 
 
 renderDataTable(data) {
-  console.log("▶ renderDataTable aufgerufen");
-  console.log("   _sortState beim Render:", this._sortState);
+  const container = this._shadowRoot.getElementById("table-container");
+  if (!container) return;
 
-  let entries = Object.entries(data || {});
+  container.innerHTML = "";
 
-  // 🔥 Nur PLZs anzeigen, die im Radius liegen
+  // -------------------------
+  // 1) Daten in Entry-Format bringen
+  // -------------------------
+  // Aggregat: { "01234": {umsatz, wk, hz, ...}, ... }
+  // Detail:   { "01234": [ {nl, umsatz, wk, hz}, ... ] }
+
+  let entries = [];
+
+  Object.entries(data).forEach(([plz, value]) => {
+    const normPLZ = String(plz).padStart(5, "0");
+
+    if (Array.isArray(value)) {
+      // DETAILANSICHT (mehrere NL pro PLZ)
+      value.forEach(row => {
+        entries.push([normPLZ, row]);
+      });
+    } else {
+      // AGGREGAT (eine Zeile pro PLZ)
+      entries.push([normPLZ, value]);
+    }
+  });
+
+  // -------------------------
+  // 2) Radiusfilter anwenden (falls aktiv)
+  // -------------------------
   if (this.plzImRadius && this.plzImRadius.size > 0) {
-    entries = entries.filter(([plz]) => {
-  const norm = String(plz).padStart(5, "0");
-  return this.plzImRadius.has(norm);
-});
-
+    entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
   }
 
-  // Default: beim ersten Laden nach PLZ sortieren
-  if (!this._sortState || this._sortState.column == null) {
-    entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
+  // -------------------------
+  // 3) Sortierung anwenden (falls gesetzt)
+  // -------------------------
+  if (this.currentSortColumn) {
+    const col = this.currentSortColumn;
+    const dir = this.currentSortDirection === "asc" ? 1 : -1;
+
+    entries.sort((a, b) => {
+      const rowA = a[1];
+      const rowB = b[1];
+
+      let valA = rowA[col];
+      let valB = rowB[col];
+
+      // numerische Sortierung, wenn möglich
+      if (typeof valA === "number" && typeof valB === "number") {
+        return (valA - valB) * dir;
+      }
+
+      // fallback: string
+      return String(valA).localeCompare(String(valB)) * dir;
+    });
   }
 
-  this.renderDataTableFromEntries(entries);
+  // -------------------------
+  // 4) Tabelle erzeugen
+  // -------------------------
+  const table = document.createElement("table");
+  table.classList.add("plz-table");
+
+  // Header
+  const thead = document.createElement("thead");
+  thead.innerHTML = `
+    <tr>
+      <th data-col="plz">PLZ</th>
+      <th data-col="nl">NL</th>
+      <th data-col="umsatz">Umsatz</th>
+      <th data-col="wk">WK</th>
+      <th data-col="hz">HZ</th>
+    </tr>
+  `;
+  table.appendChild(thead);
+
+  // Body
+  const tbody = document.createElement("tbody");
+
+  entries.forEach(([plz, row]) => {
+    const tr = document.createElement("tr");
+
+    tr.innerHTML = `
+      <td>${plz}</td>
+      <td>${row.nl ?? "–"}</td>
+      <td>${row.umsatz?.toLocaleString("de-DE") ?? "–"}</td>
+      <td>${typeof row.wk === "number" ? row.wk.toFixed(1) : "–"}</td>
+      <td>${row.hz ? "🟢" : "🔴"}</td>
+    `;
+
+    // -------------------------
+    // 5) Tabellenklick → Map + Popup
+    // -------------------------
+    tr.addEventListener("click", () => {
+      this.highlightMapArea(plz);
+
+      if (row.nl) {
+        this.openPopupFromTable(plz, row.nl);
+      } else {
+        this.openPopupFromTable(plz);
+      }
+    });
+
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
 }
 
 
 
-sortTableByColumn(columnIndex) {
-  console.log("▶ sortTableByColumn aufgerufen, columnIndex:", columnIndex);
-  console.log("   SortState VOR Toggle:", this._sortState);
+sortTableByColumn(index) {
+  if (!this._sortState) {
+    this._sortState = { column: null, direction: "asc" };
+  }
 
-  if (this._sortState.column === columnIndex) {
+  // -------------------------
+  // 1) Sortierrichtung bestimmen
+  // -------------------------
+  if (this._sortState.column === index) {
+    // Richtung umdrehen
     this._sortState.direction =
       this._sortState.direction === "asc" ? "desc" : "asc";
   } else {
-    this._sortState.column = columnIndex;
-    this._sortState.direction = "desc";
+    // Neue Spalte → Richtung zurücksetzen
+    this._sortState.column = index;
+    this._sortState.direction = "asc";
   }
-
-  console.log("   SortState NACH Toggle:", this._sortState);
 
   const dir = this._sortState.direction === "asc" ? 1 : -1;
 
-  const entries = Object.entries(this.filteredKennwerte);
-  console.log("   Einträge vor Sortierung:", entries.length);
+  // -------------------------
+  // 2) Datenquelle bestimmen
+  // -------------------------
+  // Aggregat-Modus → filteredKennwerte = aggregatedPLZ
+  // NL-Detail-Modus → filteredKennwerte = detailedPLZ[plz]
+  let entries = [];
 
-  const sorted = entries.sort(([plzA, a], [plzB, b]) => {
-    let valA, valB;
+  Object.entries(this.filteredKennwerte).forEach(([plz, value]) => {
+    const normPLZ = String(plz).padStart(5, "0");
 
-    switch (columnIndex) {
-      case 0: // PLZ
-        valA = plzA;
-        valB = plzB;
-        break;
-
-      case 1: // Gemeinde
-        valA = this.geoNotes?.[plzA] || "";
-        valB = this.geoNotes?.[plzB] || "";
-        break;
-
-      case 2: // HZ
-        valA = this.hzFlags[plzA] ? 1 : 0;
-        valB = this.hzFlags[plzB] ? 1 : 0;
-        break;
-
-      case 3: // Umsatz
-        valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
-        valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
-        break;
-
-      case 4: // WK
-        valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
-        valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
-        break;
+    if (Array.isArray(value)) {
+      // NL-Detail
+      value.forEach(row => entries.push([normPLZ, row]));
+    } else {
+      // Aggregat
+      entries.push([normPLZ, value]);
     }
-
-    if (typeof valA === "string") {
-      return valA.localeCompare(valB) * dir;
-    }
-
-    return (valA - valB) * dir;
   });
 
-  console.log("   Erste 5 PLZ nach Sortierung:",
-    sorted.slice(0, 5).map(([plz]) => plz)
-  );
+  // -------------------------
+  // 3) Radiusfilter anwenden
+  // -------------------------
+  if (this.plzImRadius && this.plzImRadius.size > 0) {
+    entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
+  }
 
-  // Wichtig: wir verlassen uns NICHT mehr auf Objekt-Reihenfolge,
-  // sondern geben das sortierte Array direkt an den Renderer
-  this.renderDataTableFromEntries(sorted);
+  // -------------------------
+  // 4) Sortierung anwenden
+  // -------------------------
+  entries.sort((a, b) => {
+    const rowA = a[1];
+    const rowB = b[1];
+
+    let valA;
+    let valB;
+
+    switch (index) {
+      case 0: // PLZ
+        valA = a[0];
+        valB = b[0];
+        return valA.localeCompare(valB) * dir;
+
+      case 1: // NL
+        valA = rowA.nl ?? "";
+        valB = rowB.nl ?? "";
+        return valA.localeCompare(valB) * dir;
+
+      case 2: // Gemeinde
+        valA = this.geoNotes?.[a[0]] ?? "";
+        valB = this.geoNotes?.[b[0]] ?? "";
+        return valA.localeCompare(valB) * dir;
+
+      case 3: // HZ
+        valA = rowA.hz ? 1 : 0;
+        valB = rowB.hz ? 1 : 0;
+        return (valA - valB) * dir;
+
+      case 4: // Umsatz
+        valA = typeof rowA.umsatz === "number" ? rowA.umsatz : -Infinity;
+        valB = typeof rowB.umsatz === "number" ? rowB.umsatz : -Infinity;
+        return (valA - valB) * dir;
+
+      case 5: // WK
+        valA = typeof rowA.wk === "number" ? rowA.wk : -Infinity;
+        valB = typeof rowB.wk === "number" ? rowB.wk : -Infinity;
+        return (valA - valB) * dir;
+
+      default:
+        return 0;
+    }
+  });
+
+  // -------------------------
+  // 5) Tabelle neu rendern
+  // -------------------------
+  this.renderDataTableFromEntries(entries);
+
+  // -------------------------
+  // 6) Sort-Icons aktualisieren
+  // -------------------------
+  this.updateSortIcons(index);
 }
 
-      
-      renderDataTableFromEntries(entries) {
+
+renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
-  // 🔥 Radiusfilter auch hier anwenden (Sortierung ruft diese Methode direkt auf)
+
+  // 🔥 Radiusfilter anwenden
   if (this.plzImRadius && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => {
       const norm = String(plz).padStart(5, "0");
@@ -638,6 +767,7 @@ sortTableByColumn(columnIndex) {
 
   const headers = [
     { label: 'PLZ', width: '40px' },
+    { label: 'NL', width: '60px' },
     { label: 'Gemeinde', width: '90px' },
     { label: 'HZ', width: '20px' },
     { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
@@ -673,62 +803,66 @@ sortTableByColumn(columnIndex) {
   const tbody = document.createElement('tbody');
   const fragment = document.createDocumentFragment();
 
-entries.forEach(([plz, kennwerte]) => {
-  const tr = document.createElement('tr');
+  entries.forEach(([plz, row]) => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = "pointer";
 
-  // Tabellenzeile klickbar machen
-  tr.style.cursor = "pointer";
-// Tabellenklick-Handler
-tr.addEventListener("click", () => {
-  this.highlightMapArea(plz);
-  this.openPopupFromTable(plz);
-  this.highlightTableRow(tr);
-});
+    // Tabellenklick → Map + Popup
+    tr.addEventListener("click", () => {
+      this.highlightMapArea(plz);
 
+      if (row.nl) {
+        this.openPopupFromTable(plz, row.nl);
+      } else {
+        this.openPopupFromTable(plz);
+      }
 
-  let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
-  note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
+      this.highlightTableRow(tr);
+    });
 
-  const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
+    // Gemeinde-Name
+    let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
+    note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
-  const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-  const umsatz = typeof umsatzRaw?.raw === "number"
-    ? umsatzRaw.raw.toLocaleString('de-DE')
-    : umsatzRaw === "–"
-      ? '–'
-      : 'Keine Angabe';
+    // HZ-Flag
+    const hzFlag = row.hz ? '🟢' : '🔴';
 
-  const wkRaw = kennwerte["value_wk_nachbar_0"];
-  const wk = typeof wkRaw?.raw === "number"
-    ? wkRaw.raw.toFixed(1)
-    : wkRaw === "–"
-      ? '–'
-      : 'Keine Angabe';
+    // Umsatz
+    const umsatz = typeof row.umsatz === "number"
+      ? row.umsatz.toLocaleString('de-DE')
+      : '–';
 
-  const rowValues = [plz, note, hzFlag, umsatz, wk];
+    // WK
+    const wk = typeof row.wk === "number"
+      ? row.wk.toFixed(1)
+      : '–';
 
-  rowValues.forEach((text, i) => {
-    const td = document.createElement('td');
-    td.textContent = text.replace(/\n/g, ' ');
-    td.title = text;
-    td.style.padding = '6px 8px';
-    td.style.borderBottom = '1px solid #b41821';
-    td.style.borderRight = '1px solid #b41821';
-    td.style.fontSize = '0.8rem';
-    td.style.whiteSpace = 'nowrap';
-    td.style.overflow = 'hidden';
-    td.style.textOverflow = 'ellipsis';
-    td.style.width = headers[i].width;
-    tr.appendChild(td);
+    const rowValues = [
+      plz,
+      row.nl ?? "–",
+      note,
+      hzFlag,
+      umsatz,
+      wk
+    ];
+
+    rowValues.forEach((text, i) => {
+      const td = document.createElement('td');
+      td.textContent = text.replace(/\n/g, ' ');
+      td.title = text;
+      td.style.padding = '6px 8px';
+      td.style.borderBottom = '1px solid #b41821';
+      td.style.borderRight = '1px solid #b41821';
+      td.style.fontSize = '0.8rem';
+      td.style.whiteSpace = 'nowrap';
+      td.style.overflow = 'hidden';
+      td.style.textOverflow = 'ellipsis';
+      td.style.width = headers[i].width;
+      tr.appendChild(td);
+    });
+
+    fragment.appendChild(tr);
   });
-
-  fragment.appendChild(tr);
-});
-
-
-// 🔥 WICHTIG: Fragment in das tbody einfügen
-tbody.appendChild(fragment);
-
 
   tbody.appendChild(fragment);
   table.appendChild(tbody);
@@ -740,6 +874,7 @@ tbody.appendChild(fragment);
     this.updateSortIcons(this._sortState.column);
   }
 }
+
       
 // highlightTableRow(rowElement)
 highlightTableRow(rowElement) {
@@ -766,99 +901,206 @@ highlightTableRowByPLZ(plz) {
 
    
 // openPopupFromTable(plz)
-openPopupFromTable(plz) {
+openPopupFromTable(plz, nl = null) {
   if (!this._geoLayer) return;
 
-  let targetFeature = null;
+  const normPLZ = String(plz).padStart(5, "0");
 
+  // 1) GeoJSON-Feature finden
+  let targetFeature = null;
   this._geoLayer.eachLayer(layer => {
-    if (layer.feature?.properties?.plz === plz) {
+    const layerPLZ = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+    if (layerPLZ === normPLZ) {
       targetFeature = layer.feature;
     }
   });
 
-  if (!targetFeature) return;
+  if (!targetFeature) {
+    console.warn("⚠️ Kein GeoJSON-Feature für PLZ:", normPLZ);
+    return;
+  }
 
-  const daten = this.filteredKennwerte?.[plz] || {};
-  this.showPopup(targetFeature, daten);
+  // 2) Datenquelle bestimmen
+  let daten;
+
+  if (nl) {
+    // -------------------------
+    // NL-DETAILANSICHT
+    // -------------------------
+    const rows = this.detailedPLZ[normPLZ] || [];
+    daten = rows.find(r => r.nl === nl);
+
+    if (!daten) {
+      console.warn("⚠️ Keine NL-Daten für Popup:", normPLZ, nl);
+      return;
+    }
+  } else {
+    // -------------------------
+    // STANDARD: AGGREGIERTE PLZ
+    // -------------------------
+    daten = this.aggregatedPLZ[normPLZ];
+
+    if (!daten) {
+      console.warn("⚠️ Keine aggregierten Daten für Popup:", normPLZ);
+      return;
+    }
+  }
+
+  // 3) Popup anzeigen
+  this.showPopup(targetFeature, daten, nl);
 }
 
+
       
-// highlightMapArea(plz)
 highlightMapArea(plz) {
   if (!this._geoLayer) return;
 
+  const normPLZ = String(plz).padStart(5, "0");
+
+  // -------------------------
+  // 1) Vorheriges Highlight entfernen
+  // -------------------------
+  if (this._lastHighlightedLayer) {
+    this._lastHighlightedLayer.setStyle({
+      weight: 1,
+      color: "#666",
+      fillOpacity: 0.4
+    });
+    this._lastHighlightedLayer = null;
+  }
+
+  // -------------------------
+  // 2) Layer mit passender PLZ finden
+  // -------------------------
   let targetLayer = null;
 
   this._geoLayer.eachLayer(layer => {
-    if (layer.feature?.properties?.plz === plz) {
+    const layerPLZ = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+    if (layerPLZ === normPLZ) {
       targetLayer = layer;
     }
   });
 
-  if (!targetLayer) return;
-
-  if (this._lastHighlightedLayer) {
-    this._lastHighlightedLayer.setStyle(this._lastHighlightedStyle);
+  if (!targetLayer) {
+    console.warn("⚠️ Kein GeoJSON-Layer für PLZ:", normPLZ);
+    return;
   }
 
-  this._lastHighlightedStyle = {
-    weight: targetLayer.options.weight,
-    color: targetLayer.options.color,
-    fillOpacity: targetLayer.options.fillOpacity
-  };
-
+  // -------------------------
+  // 3) Highlight setzen
+  // -------------------------
   targetLayer.setStyle({
-    weight: 4,
-    color: "#ffeb3b",
-    fillOpacity: targetLayer.options.fillOpacity
+    weight: 3,
+    color: "#b41821",
+    fillOpacity: 0.6
   });
 
   this._lastHighlightedLayer = targetLayer;
+
+  // -------------------------
+  // 4) Karte auf die PLZ zoomen
+  // -------------------------
+  const bounds = targetLayer.getBounds?.();
+  if (bounds && this.map) {
+    this.map.fitBounds(bounds, {
+      padding: [20, 20],
+      maxZoom: 13
+    });
+  }
 }
 
       
 updateSortIcons(activeIndex) {
-  const headerCells = this._shadowRoot.querySelectorAll("th .sort-icon");
+  const container = this._shadowRoot.getElementById("table-container");
+  if (!container) return;
 
-  headerCells.forEach((icon, i) => {
+  const table = container.querySelector("table");
+  if (!table) return;
+
+  const headers = table.querySelectorAll("th");
+
+  headers.forEach((th, i) => {
+    const icon = th.querySelector(".sort-icon");
+    if (!icon) return;
+
+    // Reset all icons
     if (i !== activeIndex) {
-      icon.textContent = ""; // andere Spalten leeren
+      icon.textContent = "";
       return;
     }
 
-    icon.textContent = this._sortState.direction === "asc" ? "▲" : "▼";
+    // Active column → set icon
+    if (this._sortState.direction === "asc") {
+      icon.textContent = "▲";
+    } else {
+      icon.textContent = "▼";
+    }
   });
 }
 
-// zoomToFilteredPLZ()
+
 zoomToFilteredPLZ() {
-  if (!this._geoLayer || !this.plzImRadius || this.plzImRadius.size === 0) {
-    console.warn("⚠️ Kein Autozoom möglich – keine PLZ im Radius.");
+  if (!this._geoLayer || !this.map) return;
+
+  let plzList = [];
+
+  // -------------------------
+  // 1) Datenquelle bestimmen
+  // -------------------------
+  // Aggregat-Modus → filteredKennwerte = aggregatedPLZ
+  // NL-Detail-Modus → filteredKennwerte = detailedPLZ[plz]
+  Object.keys(this.filteredKennwerte).forEach(plz => {
+    const norm = String(plz).padStart(5, "0");
+    plzList.push(norm);
+  });
+
+  // -------------------------
+  // 2) Radiusfilter anwenden
+  // -------------------------
+  if (this.plzImRadius && this.plzImRadius.size > 0) {
+    plzList = plzList.filter(plz => this.plzImRadius.has(plz));
+  }
+
+  if (plzList.length === 0) {
+    console.warn("⚠️ Keine PLZs zum Zoomen gefunden.");
     return;
   }
 
-  const bounds = L.latLngBounds([]);
+  // -------------------------
+  // 3) Alle passenden GeoJSON-Layer sammeln
+  // -------------------------
+  const boundsList = [];
 
   this._geoLayer.eachLayer(layer => {
-    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+    const layerPLZ = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
 
-    if (this.plzImRadius.has(plz)) {
-      const layerBounds = layer.getBounds?.();
-      if (layerBounds) {
-        bounds.extend(layerBounds);
-      }
+    if (plzList.includes(layerPLZ)) {
+      const b = layer.getBounds?.();
+      if (b) boundsList.push(b);
     }
   });
 
-  if (bounds.isValid()) {
-    this.map.fitBounds(bounds, {
-      padding: [30, 30],
-      maxZoom: 12
-    });
-  } else {
-    console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
+  if (boundsList.length === 0) {
+    console.warn("⚠️ Keine GeoJSON-Bounds für die gefilterten PLZs gefunden.");
+    return;
   }
+
+  // -------------------------
+  // 4) Gesamten Bereich berechnen
+  // -------------------------
+  let combined = boundsList[0];
+
+  for (let i = 1; i < boundsList.length; i++) {
+    combined = combined.extend(boundsList[i]);
+  }
+
+  // -------------------------
+  // 5) Karte auf Bereich zoomen
+  // -------------------------
+  this.map.fitBounds(combined, {
+    padding: [30, 30],
+    maxZoom: 12
+  });
 }
 
 
@@ -1036,86 +1278,82 @@ createAllMarkers() {
 
     return this.iconCache[nl];
   }
-showPopup(feature) {
+showPopup(feature, daten, nl = null) {
+  if (!feature || !daten) return;
+
   const plz = String(feature.properties?.plz ?? "")
-  .padStart(5, "0")
-  .trim();
+    .padStart(5, "0")
+    .trim();
 
-  const note = feature.properties?.note || "Keine Notiz";
+  // Gemeinde-Name
+  let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
+  note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
-  // 🔥 WICHTIG: Daten der aktiven Erhebung holen
-  const daten = this.filteredKennwerte?.[plz];
+  // Umsatz
+  const umsatz = typeof daten.umsatz === "number"
+    ? daten.umsatz.toLocaleString("de-DE")
+    : "–";
 
-  if (!daten) {
-    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
-  }
+  // WK
+  const wk = typeof daten.wk === "number"
+    ? daten.wk.toFixed(1)
+    : "–";
 
-  const beschreibungen = {
-    value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
-    value_umsatz_p_hh_0: "Umsatz p. HH",
-    value_wk_in_percent_0: "Werbekosten (%)",
-    value_wk_nachbar_0: "WK (%) incl. Nachb.",
-    value_hz_kosten_0: "HZ-Werbekosten",
-    value_werbeverweigerer_0: "Werbeverweigerer (%)",
-    value_haushalte_0: "Haushalte",
-    value_kaufkraft_0: "BM-Kaufkraft-Idx",
-    value_ums_erhebung_0: "Umsatz",
-    value_kd_erhebung_0: "Anzahl Kunden",
-    value_bon_erhebung_0: "Ø-Bon",
-    value_auflage_0: "Auflage"
-  };
+  // HZ
+  const hz = daten.hz ? "🟢 Ja" : "🔴 Nein";
 
-  const beschreibungenSide = {
-    value_wk_potentiell_0: "WK in %",
-    value_hz_potentiell_0: "HZ-Werbekosten"
-  };
+  // NL-Anzeige
+  const nlText = nl ? `NL: ${nl}` : "Aggregierte Erhebung";
 
-  let rows = "";
+  // -------------------------
+  // Popup-HTML erzeugen
+  // -------------------------
+  const sidePopup = this._shadowRoot.getElementById("side-popup");
 
-  Object.entries(beschreibungen).forEach(([id, label], index) => {
-    const rawValue = daten?.[id]?.raw;
-    const wert = typeof rawValue === "number"
-      ? rawValue.toLocaleString("de-DE")
-      : "–";
-
-    if (index === 8) {
-      rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
-    }
-
-    rows += `
-      <tr class="kennzahl-row">
-        <td class="label-cell">${label}</td>
-        <td class="value-cell">${wert}</td>
-      </tr>
-    `;
-  });
-
-  const sidePopup = this._shadowRoot.getElementById('side-popup');
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
+
     <table>
       <thead>
-        <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
-        <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
+        <tr>
+          <th colspan="2" class="title-cell" title="${note}">
+            PLZ ${plz} – ${note}
+          </th>
+        </tr>
+        <tr>
+          <th colspan="2" class="subtitle-cell">${nlText}</th>
+        </tr>
       </thead>
-      <tbody>${rows}</tbody>
+
+      <tbody>
+        <tr class="kennzahl-row">
+          <td class="label-cell">HZ</td>
+          <td class="value-cell">${hz}</td>
+        </tr>
+
+        <tr class="kennzahl-row">
+          <td class="label-cell">Netto-Umsatz (Jahr)</td>
+          <td class="value-cell">${umsatz}</td>
+        </tr>
+
+        <tr class="kennzahl-row">
+          <td class="label-cell">WK (%) inkl. Nachb.</td>
+          <td class="value-cell">${wk}</td>
+        </tr>
+      </tbody>
     </table>
   `;
 
-  // 🔥 Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
-  const isHZ = this.hzFlags?.[plz] === false;
-  const umsatz = daten?.value_hr_n_umsatz_0?.raw;
-
-  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
-    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
-
-    const wkPotentiell = typeof wkPotentiellRaw === "number"
-      ? wkPotentiellRaw.toLocaleString("de-DE")
+  // -------------------------
+  // Zusatzwerte (nur Aggregat)
+  // -------------------------
+  if (!nl) {
+    const wkPot = typeof daten.wkPot === "number"
+      ? daten.wkPot.toLocaleString("de-DE")
       : "–";
 
-    const hzPotentiell = typeof hzPotentiellRaw === "number"
-      ? hzPotentiellRaw.toLocaleString("de-DE")
+    const hzPot = typeof daten.hzPot === "number"
+      ? daten.hzPot.toLocaleString("de-DE")
       : "–";
 
     const extraTable = `
@@ -1125,27 +1363,33 @@ showPopup(feature) {
         </thead>
         <tbody>
           <tr>
-            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-            <td class="value-cell">${wkPotentiell}</td>
+            <td class="label-cell">WK in %</td>
+            <td class="value-cell">${wkPot}</td>
           </tr>
           <tr>
-            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-            <td class="value-cell">${hzPotentiell}</td>
+            <td class="label-cell">HZ-Werbekosten</td>
+            <td class="value-cell">${hzPot}</td>
           </tr>
         </tbody>
       </table>
     `;
-    sidePopup.insertAdjacentHTML('beforeend', extraTable);
+
+    sidePopup.insertAdjacentHTML("beforeend", extraTable);
   }
 
+  // -------------------------
+  // Popup anzeigen
+  // -------------------------
   void sidePopup.offsetWidth;
-  setTimeout(() => sidePopup.classList.add('show'), 10);
+  setTimeout(() => sidePopup.classList.add("show"), 10);
 
-  const closeBtn = sidePopup.querySelector('.close-btn');
-  closeBtn.addEventListener('click', () => {
-    sidePopup.classList.remove('show');
+  // Schließen
+  const closeBtn = sidePopup.querySelector(".close-btn");
+  closeBtn.addEventListener("click", () => {
+    sidePopup.classList.remove("show");
   });
 }
+
 
   updateNeighbours(filteredData) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
@@ -1153,23 +1397,109 @@ showPopup(feature) {
   }
 
 
+filterByNL(plz, nl) {
+  console.log("▶ filterByNL:", plz, nl);
+
+  const normPLZ = String(plz).padStart(5, "0");
+
+  // 1) Detaildaten holen
+  const rows = this.detailedPLZ[normPLZ] || [];
+
+  // 2) Nur die gewünschte NL herausfiltern
+  const matching = rows.filter(r => r.nl === nl);
+
+  if (matching.length === 0) {
+    console.warn("⚠️ Keine NL-Daten gefunden für", normPLZ, nl);
+    this.renderDataTable({});
+    return;
+  }
+
+  // 3) Tabelle erwartet Einträge im Format: [plz, row]
+  const entries = matching.map(r => [normPLZ, r]);
+
+  // 4) Tabelle rendern
+  this.renderDataTableFromEntries(entries);
+
+  // 5) Optional: Popup öffnen
+  if (this.openPopupFromTable) {
+    this.openPopupFromTable(normPLZ, nl);
+  }
+}
 
 
 applyFilter(erhID, jahr, nummer) {
+  console.log("▶ applyFilter gestartet");
+
   this._activeFilter = { erhID, jahr, nummer };
 
-  // 1) Daten filtern (Erhebung)
-const filteredData = this.getFilteredData();
-
-// HZ-Flags neu berechnen
-this.hzFlags = {};
-filteredData.forEach(row => {
-  const plz = row["dimension_plz_0"]?.id?.trim();
-  const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
-  if (plz) {
-    this.hzFlags[plz] = hz === "X";  // ✔ korrekt
+  // 1) Daten holen
+  const filteredData = this.getFilteredData();
+  if (!filteredData || filteredData.length === 0) {
+    console.warn("⚠️ Keine Daten für Erhebung gefunden.");
+    this.filteredKennwerte = {};
+    this.renderDataTable({});
+    return;
   }
-});
+
+  // 2) Datenstrukturen vorbereiten
+  this.aggregatedPLZ = {};   // Summe aller NL pro PLZ
+  this.detailedPLZ = {};     // Einzelwerte pro PLZ+NL
+  this.hzFlags = {};         // Aggregiertes HZ pro PLZ
+
+  // 3) Daten durchlaufen
+  filteredData.forEach(row => {
+    const rawPLZ = row["dimension_plz_0"]?.id ?? "";
+    const plz = String(rawPLZ).padStart(5, "0");
+
+    const nl = row["dimension_niederlassung_0"]?.id ?? "UNBEKANNT";
+
+    const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    const wk     = row["value_wk_nachbar_0"]?.raw ?? 0;
+    const hz     = row["dimension_hzflag_0"]?.id === "X";
+
+    // -------------------------
+    // DETAIL: PLZ + NL
+    // -------------------------
+    if (!this.detailedPLZ[plz]) this.detailedPLZ[plz] = [];
+    this.detailedPLZ[plz].push({
+      nl,
+      umsatz,
+      wk,
+      hz
+    });
+
+    // -------------------------
+    // AGGREGIERT: PLZ
+    // -------------------------
+    if (!this.aggregatedPLZ[plz]) {
+      this.aggregatedPLZ[plz] = {
+        umsatz: 0,
+        wk: 0,
+        hz: false,
+        nls: new Set()
+      };
+    }
+
+    this.aggregatedPLZ[plz].umsatz += umsatz;
+    this.aggregatedPLZ[plz].wk += wk; // später ggf. gewichtete Logik
+    this.aggregatedPLZ[plz].hz = this.aggregatedPLZ[plz].hz || hz;
+    this.aggregatedPLZ[plz].nls.add(nl);
+  });
+
+  // 4) HZ-Flags für Karte
+  Object.entries(this.aggregatedPLZ).forEach(([plz, agg]) => {
+    this.hzFlags[plz] = agg.hz;
+  });
+
+  // 5) Standardansicht = Aggregierte Werte
+  this.filteredKennwerte = this.aggregatedPLZ;
+
+  // 6) Tabelle rendern
+  this.renderDataTable(this.filteredKennwerte);
+
+  console.log("▶ applyFilter abgeschlossen");
+}
+
 
 
 
