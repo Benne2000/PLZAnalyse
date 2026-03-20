@@ -473,10 +473,11 @@ onEachFeature: (feature, layer) => {
     const agg = this.aggregatedPLZ[plz];
 
     this.highlightMapArea(plz);
-    this.openPopupFromTable(plz); // Aggregat
+    this.openPopupFromTable(plz);
     this.renderDataTableFromEntries([[plz, agg]]);
   });
 }
+
 
 
 
@@ -1167,6 +1168,14 @@ zoomToFilteredPLZ() {
     }
   }
   createAllMarkers() {
+  if (!this.aggregatedPLZ || Object.keys(this.aggregatedPLZ).length === 0) {
+    console.log("⏳ Noch keine Erhebung geladen → keine Marker anzeigen");
+    this.filteredGroup.clearLayers();
+    this.allMarkers = [];
+    this.nlMarkers = [];
+    return;
+  }
+
   this.filteredGroup.clearLayers();
   this.allMarkers = [];
   this.nlMarkers = [];
@@ -1205,7 +1214,6 @@ zoomToFilteredPLZ() {
     }
   });
 }
-
 
 
   createMarkerIcon(nl) {
@@ -1345,14 +1353,11 @@ showPopup(feature, daten, nl = null) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
     this.neighbours = computeNeighbours(filteredMarkers);
   }
-
 filterByNL(plz, nl) {
   console.log("▶ filterByNL:", plz, nl);
 
-  // NL-Filter aktivieren
   this._activeNLFilter = nl;
 
-  // Alle PLZ dieser NL sammeln
   const entries = [];
 
   Object.entries(this.detailedPLZ).forEach(([plzKey, rows]) => {
@@ -1367,23 +1372,58 @@ filterByNL(plz, nl) {
 }
 
 
-
 applyFilter(erhID, jahr, nummer) {
-  console.log("▶ applyFilter gestartet");
+  console.log("▶ applyFilter gestartet", erhID, jahr, nummer);
 
-  this._activeNLFilter = null; // NL-Filter zurücksetzen
+  // ❗ 1) Ungültige Aufrufe abfangen (SAC feuert mehrfach Events)
+  if (!erhID || !jahr || !nummer) {
+    console.warn("⚠️ applyFilter ohne gültige Parameter → zurücksetzen");
 
-  const filteredData = this.getFilteredData();
-  if (!filteredData || filteredData.length === 0) {
+    this._activeNLFilter = null;
+    this.aggregatedPLZ = {};
+    this.detailedPLZ = {};
+    this.hzFlags = {};
     this.filteredKennwerte = {};
+
+    // Tabelle leeren
     this.renderDataTableFromEntries([]);
+
+    // Marker leeren
+    this.filteredGroup.clearLayers();
+    this.allMarkers = [];
+    this.nlMarkers = [];
+
+    // Karte neutral einfärben
+    if (this._geoLayer) this.updateGeoLayer();
+
     return;
   }
 
-  // Aggregat + Detail aufbauen
+  // ❗ 2) Daten holen
+  const filteredData = this.getFilteredData();
+  if (!filteredData || filteredData.length === 0) {
+    console.warn("⚠️ Keine Daten für Erhebung gefunden.");
+
+    this._activeNLFilter = null;
+    this.aggregatedPLZ = {};
+    this.detailedPLZ = {};
+    this.hzFlags = {};
+    this.filteredKennwerte = {};
+
+    this.renderDataTableFromEntries([]);
+    this.filteredGroup.clearLayers();
+    this.allMarkers = [];
+    this.nlMarkers = [];
+
+    if (this._geoLayer) this.updateGeoLayer();
+    return;
+  }
+
+  // ❗ 3) Datenstrukturen neu aufbauen
   this.aggregatedPLZ = {};
   this.detailedPLZ = {};
   this.hzFlags = {};
+  this._activeNLFilter = null;
 
   filteredData.forEach(row => {
     const plz = String(row["dimension_plz_0"]?.id ?? "").padStart(5, "0");
@@ -1409,25 +1449,26 @@ applyFilter(erhID, jahr, nummer) {
 
   this.filteredKennwerte = this.aggregatedPLZ;
 
-  // Tabelle rendern
-  const entries = Object.entries(this.filteredKennwerte);
-  this.renderDataTableFromEntries(entries);
+  // ❗ 4) Tabelle initial anzeigen
+  this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // Karte aktualisieren
+  // ❗ 5) Karte einfärben
   this.updateGeoLayer();
 
-  // Marker aktualisieren
+  // ❗ 6) Marker erzeugen (erst jetzt!)
+  this.createAllMarkers();
+
+  // ❗ 7) Marker filtern (kein NL → alle)
   this.updateMarkers();
 
-  // Radiusfilter anwenden
+  // ❗ 8) Radiusfilter anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.applyRadiusFilter(radius);
 
-  // Tabelle nach Radiusfilter erneut rendern
-  const entriesAfterRadius = Object.entries(this.filteredKennwerte);
-  this.renderDataTableFromEntries(entriesAfterRadius);
+  // ❗ 9) Tabelle nach Radiusfilter erneut rendern
+  this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // Zoom
+  // ❗ 10) Zoom
   this.zoomToFilteredPLZ();
 
   console.log("▶ applyFilter abgeschlossen");
@@ -1594,7 +1635,14 @@ updateGeoLayer() {
 updateMarkers() {
   this.filteredGroup.clearLayers();
 
-  // Kein NL-Filter → alle Marker anzeigen
+  // ❗ Keine Erhebung → keine Marker
+  if (!this.aggregatedPLZ || Object.keys(this.aggregatedPLZ).length === 0) {
+    console.log("⏳ updateMarkers: Keine Erhebung geladen → keine Marker");
+    this.nlMarkers = [];
+    return;
+  }
+
+  // ❗ Kein NL-Filter → alle Marker anzeigen
   if (!this._activeNLFilter) {
     this.allMarkers.forEach(marker => {
       this.filteredGroup.addLayer(marker);
@@ -1610,7 +1658,7 @@ updateMarkers() {
     return;
   }
 
-  // NL-Filter aktiv → nur Marker dieser NL anzeigen
+  // ❗ NL-Filter aktiv → nur Marker dieser NL
   const nl = this._activeNLFilter;
   const visibleMarkers = [];
 
@@ -1629,6 +1677,7 @@ updateMarkers() {
 
   console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
 }
+
 
 
 
