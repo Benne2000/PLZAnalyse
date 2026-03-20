@@ -470,13 +470,21 @@ style: feature => {
 onEachFeature: (feature, layer) => {
   layer.on("click", () => {
     const plz = String(feature.properties.plz).padStart(5, "0");
+
+    // ❗ KEINE FILTERUNG HIER!
+    // ❗ KEIN filterByNL()
+    // ❗ KEIN applyFilter()
+
     const agg = this.aggregatedPLZ[plz];
 
     this.highlightMapArea(plz);
     this.openPopupFromTable(plz);
+
+    // Tabelle zeigt nur diese eine PLZ
     this.renderDataTableFromEntries([[plz, agg]]);
   });
 }
+
 
 
 
