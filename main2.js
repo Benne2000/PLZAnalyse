@@ -1344,22 +1344,22 @@ filterByNL(plz, nl) {
 
   this.renderDataTableFromEntries(entries);
 }
-
 applyFilter(erhID, jahr, nummer) {
   console.log("▶ applyFilter gestartet", erhID, jahr, nummer);
 
-  // -------------------------------------------------------
-  // 1) Datenquelle bereit?
-  // -------------------------------------------------------
+  // ❗ 1) Initial Load blockieren
+  if (this._isInitialLoad) {
+    console.log("⏳ Initial Load → applyFilter übersprungen");
+    return;
+  }
+
+  // ❗ 2) Datenquelle bereit?
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⏳ applyFilter abgebrochen: Datenquelle noch nicht bereit.");
     return;
   }
 
-  // -------------------------------------------------------
-  // 2) Filterparameter setzen – aber NICHT überschreiben,
-  //    wenn SAC applyFilter ohne Parameter aufruft
-  // -------------------------------------------------------
+  // ❗ 3) Filterparameter setzen – aber NICHT überschreiben, wenn undefined
   if (erhID && jahr && nummer) {
     this._activeFilter = { erhID, jahr, nummer };
   }
@@ -1371,14 +1371,11 @@ applyFilter(erhID, jahr, nummer) {
     return;
   }
 
-  // Ab hier IMMER die stabilen Werte verwenden
   erhID = fID;
   jahr = fJahr;
   nummer = fNum;
 
-  // -------------------------------------------------------
-  // 3) Daten filtern
-  // -------------------------------------------------------
+  // ❗ 4) Daten filtern
   const data = this._myDataSource.data;
   const filteredData = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
@@ -1389,27 +1386,17 @@ applyFilter(erhID, jahr, nummer) {
 
   if (filteredData.length === 0) {
     console.warn("⚠️ Keine Daten für Erhebung gefunden.");
-
     this.aggregatedPLZ = {};
     this.detailedPLZ = {};
-    this.hzFlags = {};
     this.filteredKennwerte = {};
-
     this.renderDataTableFromEntries([]);
     this.filteredGroup.clearLayers();
-    this.allMarkers = [];
-    this.nlMarkers = [];
-
-    if (this._geoLayer) this.updateGeoLayer();
     return;
   }
 
-  // -------------------------------------------------------
-  // 4) Aggregat + Detail neu aufbauen
-  // -------------------------------------------------------
+  // ❗ 5) Aggregation neu aufbauen
   this.aggregatedPLZ = {};
   this.detailedPLZ = {};
-  this.hzFlags = {};
   this._activeNLFilter = null;
 
   filteredData.forEach(row => {
@@ -1420,11 +1407,9 @@ applyFilter(erhID, jahr, nummer) {
     const wk     = row["value_wk_nachbar_0"]?.raw ?? 0;
     const hz     = row["dimension_hzflag_0"]?.id === "X";
 
-    // DETAIL
     if (!this.detailedPLZ[plz]) this.detailedPLZ[plz] = [];
     this.detailedPLZ[plz].push({ nl, umsatz, wk, hz });
 
-    // AGGREGAT
     if (!this.aggregatedPLZ[plz]) {
       this.aggregatedPLZ[plz] = { umsatz: 0, wk: 0, hz: false };
     }
@@ -1436,40 +1421,24 @@ applyFilter(erhID, jahr, nummer) {
 
   this.filteredKennwerte = this.aggregatedPLZ;
 
-  // -------------------------------------------------------
-  // 5) Tabelle initial rendern
-  // -------------------------------------------------------
+  // ❗ 6) Tabelle
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // -------------------------------------------------------
-  // 6) Karte einfärben
-  // -------------------------------------------------------
+  // ❗ 7) Karte
   this.updateGeoLayer();
 
-  // -------------------------------------------------------
-  // 7) Marker erzeugen (erst jetzt!)
-  // -------------------------------------------------------
+  // ❗ 8) Marker
   this.createAllMarkers();
-
-  // -------------------------------------------------------
-  // 8) Marker filtern (kein NL → alle)
-  // -------------------------------------------------------
   this.updateMarkers();
 
-  // -------------------------------------------------------
-  // 9) Radiusfilter anwenden
-  // -------------------------------------------------------
+  // ❗ 9) Radiusfilter
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.applyRadiusFilter(radius);
 
-  // -------------------------------------------------------
-  // 10) Tabelle nach Radiusfilter erneut rendern
-  // -------------------------------------------------------
+  // ❗ 10) Tabelle nach Radiusfilter
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // -------------------------------------------------------
-  // 11) Zoom
-  // -------------------------------------------------------
+  // ❗ 11) Zoom
   this.zoomToFilteredPLZ();
 
   console.log("▶ applyFilter abgeschlossen");
@@ -1859,69 +1828,34 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
- applyRadiusFilter(radiusKm) {
-  if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
+applyRadiusFilter(radius) {
+  // ❗ Schutz: Keine Kennwerte vorhanden
+  if (!this.filteredKennwerte || typeof this.filteredKennwerte !== "object") {
+    console.warn("⏳ applyRadiusFilter: Keine Kennwerte vorhanden.");
+    this.plzImRadius = new Set();
+    return;
+  }
 
-  const allowedPLZs = new Set(Object.keys(this.filteredPLZWerte));
-  const plzImRadius = new Set();
+  const center = this._currentCenter;
+  if (!center) {
+    console.warn("⏳ applyRadiusFilter: Kein Kartenmittelpunkt.");
+    this.plzImRadius = new Set();
+    return;
+  }
 
-  this._geoLayer.eachLayer(layer => {
-    const plz = String(layer.feature?.properties?.plz ?? "")
-  .padStart(5, "0")
-  .trim();
+  const result = new Set();
 
-    if (!plz) return;
+  Object.keys(this.filteredKennwerte).forEach(plz => {
+    const coords = this.plzKoordinaten[plz];
+    if (!coords) return;
 
-    // 1) PLZ gehört NICHT zur Erhebung → neutral wie im ersten Aufriss
-    if (!allowedPLZs.has(plz)) {
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.4,
-        opacity: 1,
-        color: "#ffffff",
-        weight: 1
-      });
-
-      layer.options.interactive = false;
-      return;
-    }
-
-    // 2) PLZ gehört zur Erhebung → Radius prüfen
-    const center = this.getPolygonCenter(layer);
-    const minDist = Math.min(
-      ...this.nlMarkers.map(nl =>
-        this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng)
-      )
-    );
-
-    if (minDist <= radiusKm) {
-      plzImRadius.add(plz);
-      const color = this.getColorForPLZ(plz);
-      layer.setStyle({
-        fillColor: color,
-        fillOpacity: 0.7,
-        opacity: 1,
-        color: "#ffffff",
-        weight: 1
-      });
-
-      layer.options.interactive = true;
-    } else {
-      // PLZ gehört zur Erhebung, aber liegt außerhalb des Radius
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.4,
-        opacity: 1,
-        color: "#ffffff",
-        weight: 1
-      });
-
-      layer.options.interactive = false;
-    }
+    const dist = this._distance(center.lat, center.lng, coords.lat, coords.lon);
+    if (dist <= radius) result.add(plz);
   });
 
-  this.plzImRadius = plzImRadius;
+  this.plzImRadius = result;
 }
+
 
 
 initRadiusSlider() {
