@@ -467,44 +467,40 @@ style: feature => {
 }
 ,
 
-// onEachFeature(feature, layer)
 onEachFeature: (feature, layer) => {
   layer.on("click", (e) => {
     const plz = String(feature.properties.plz).padStart(5, "0");
 
-    // 1) Detaildaten holen (alle NL dieser PLZ)
+    // Detaildaten holen
     const detailRows = this.detailedPLZ?.[plz] || [];
 
-    // 2) Wenn es mehrere NL gibt → NL-Auswahl anzeigen
-    if (detailRows.length > 1) {
-      // Standard: Aggregat anzeigen
-      this.filteredKennwerte = { [plz]: this.aggregatedPLZ[plz] };
-      this.renderDataTableFromEntries([[plz, this.aggregatedPLZ[plz]]]);
+    // Aggregat
+    const agg = this.aggregatedPLZ[plz];
 
+    // Tabelle NICHT überschreiben – nur rendern!
+    if (detailRows.length > 1) {
+      this.renderDataTableFromEntries([[plz, agg]]);
       this.highlightMapArea(plz);
-      this.openPopupFromTable(plz); // Aggregat
+      this.openPopupFromTable(plz);
       return;
     }
 
-    // 3) Wenn es nur eine NL gibt → direkt NL-Detail anzeigen
+    // NL-Detail
     if (detailRows.length === 1) {
       const nl = detailRows[0].nl;
-
       this.filterByNL(plz, nl);
       this.highlightMapArea(plz);
       this.openPopupFromTable(plz, nl);
       return;
     }
 
-    // 4) Fallback: keine NL-Daten → Aggregat
-    const agg = this.aggregatedPLZ[plz];
-    this.filteredKennwerte = { [plz]: agg };
+    // Fallback
     this.renderDataTableFromEntries([[plz, agg]]);
-
     this.highlightMapArea(plz);
     this.openPopupFromTable(plz);
   });
 }
+
 
 
     });
@@ -1193,14 +1189,10 @@ zoomToFilteredPLZ() {
   }
       
       
-      
-      
-createAllMarkers() {
+  createAllMarkers() {
   // Alte Marker entfernen
   this.filteredGroup.clearLayers();
   this.allMarkers = [];
-
-  // 🔥 NL-Marker-Liste für Radius-Filter neu anlegen
   this.nlMarkers = [];
 
   if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
@@ -1213,15 +1205,12 @@ createAllMarkers() {
     return;
   }
 
-  const seen = new Set(); // verhindert doppelte Marker pro NL
+  const seen = new Set();
 
   // 🔵 Haupt-Niederlassungen erzeugen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
     const coords = this.nlKoordinaten[nlKey];
-    if (!coords) {
-      console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
-      return;
-    }
+    if (!coords) return;
 
     if (!seen.has(nlKey)) {
       const icon = this.createMarkerIcon(nlName);
@@ -1229,28 +1218,31 @@ createAllMarkers() {
       const marker = L.marker([coords.lat, coords.lon], {
         icon,
         title: nlName,
-        plzs: [nlKey] // wichtig für Filterung
+        nl: nlKey
       });
 
-      // In globale Marker-Liste
-      this.allMarkers.push(marker);
+      // 🔥 NL-Marker-Klick → PLZs dieser NL filtern
+      marker.on("click", () => {
+        this.filterByNL(null, nlKey);     // Filtert alle PLZ dieser NL
+        this.updateMarkers();             // Zeigt nur Marker dieser NL
+        this.renderDataTable(this.filteredKennwerte);
+        this.zoomToFilteredPLZ();         // Zoom auf PLZ-Gebiete dieser NL
+      });
 
-      // In gefilterte Gruppe (Standard: alle sichtbar)
+      this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
 
-      // NL als verarbeitet markieren
-      seen.add(nlKey);
-
-      // 🔥 NL-Marker für Radius-Filter speichern
       this.nlMarkers.push({
         lat: coords.lat,
         lng: coords.lon,
         marker
       });
+
+      seen.add(nlKey);
     }
   });
 
-  // 🔵 Extra-Niederlassungen hinzufügen (falls vorhanden)
+  // 🔵 Extra-Niederlassungen hinzufügen
   if (Array.isArray(this.extraNLs)) {
     this.extraNLs.forEach(({ nl, lat, lon }) => {
       const icon = this.createMarkerIcon(nl);
@@ -1258,13 +1250,20 @@ createAllMarkers() {
       const marker = L.marker([lat, lon], {
         icon,
         title: nl,
-        plzs: [nl]
+        nl
+      });
+
+      // 🔥 NL-Marker-Klick → PLZs dieser NL filtern
+      marker.on("click", () => {
+        this.filterByNL(null, nl);
+        this.updateMarkers();
+        this.renderDataTable(this.filteredKennwerte);
+        this.zoomToFilteredPLZ();
       });
 
       this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
 
-      // 🔥 Extra-NL ebenfalls für Radius-Filter speichern
       this.nlMarkers.push({
         lat,
         lng: lon,
@@ -1275,7 +1274,6 @@ createAllMarkers() {
 
   console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
-
 
 
 
