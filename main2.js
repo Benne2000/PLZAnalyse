@@ -893,7 +893,6 @@ highlightTableRowByPLZ(plz) {
 }
 
    
-// openPopupFromTable(plz)
 openPopupFromTable(plz, nl = null) {
   if (!this._geoLayer) return;
 
@@ -916,32 +915,28 @@ openPopupFromTable(plz, nl = null) {
   // 2) Datenquelle bestimmen
   let daten;
 
-  if (nl) {
+  if (nl === null) {
     // -------------------------
-    // NL-DETAILANSICHT
+    // AGGREGATMODUS (PLZ-Klick)
+    // -------------------------
+    daten = this.filteredKennwerte?.[normPLZ];
+  } else {
+    // -------------------------
+    // DETAILMODUS (Marker-Klick)
     // -------------------------
     const rows = this.detailedPLZ[normPLZ] || [];
     daten = rows.find(r => r.nl === nl);
+  }
 
-    if (!daten) {
-      console.warn("⚠️ Keine NL-Daten für Popup:", normPLZ, nl);
-      return;
-    }
-  } else {
-    // -------------------------
-    // STANDARD: AGGREGIERTE PLZ
-    // -------------------------
-    daten = this.aggregatedPLZ[normPLZ];
-
-    if (!daten) {
-      console.warn("⚠️ Keine aggregierten Daten für Popup:", normPLZ);
-      return;
-    }
+  if (!daten) {
+    console.warn("⚠️ Keine Daten für Popup:", normPLZ, nl);
+    return;
   }
 
   // 3) Popup anzeigen
   this.showPopup(targetFeature, daten, nl);
 }
+
 
 
       
