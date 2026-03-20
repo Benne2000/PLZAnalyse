@@ -471,35 +471,15 @@ onEachFeature: (feature, layer) => {
   layer.on("click", (e) => {
     const plz = String(feature.properties.plz).padStart(5, "0");
 
-    // Detaildaten holen
-    const detailRows = this.detailedPLZ?.[plz] || [];
-
-    // Aggregat
+    // Nur Popup + Highlight, KEINE Filterung!
     const agg = this.aggregatedPLZ[plz];
 
-    // Tabelle NICHT überschreiben – nur rendern!
-    if (detailRows.length > 1) {
-      this.renderDataTableFromEntries([[plz, agg]]);
-      this.highlightMapArea(plz);
-      this.openPopupFromTable(plz);
-      return;
-    }
-
-    // NL-Detail
-    if (detailRows.length === 1) {
-      const nl = detailRows[0].nl;
-      this.filterByNL(plz, nl);
-      this.highlightMapArea(plz);
-      this.openPopupFromTable(plz, nl);
-      return;
-    }
-
-    // Fallback
-    this.renderDataTableFromEntries([[plz, agg]]);
     this.highlightMapArea(plz);
-    this.openPopupFromTable(plz);
+    this.openPopupFromTable(plz);   // Aggregat-Popup
+    this.renderDataTableFromEntries([[plz, agg]]); // Nur Anzeige, keine Filterung
   });
 }
+
 
 
 
@@ -1188,26 +1168,13 @@ zoomToFilteredPLZ() {
     }
   }
       
-      
   createAllMarkers() {
-  // Alte Marker entfernen
   this.filteredGroup.clearLayers();
   this.allMarkers = [];
   this.nlMarkers = [];
 
-  if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
-    console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
-    return;
-  }
-
-  if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") {
-    console.warn("⚠️ nlKoordinaten ist nicht definiert oder kein Objekt:", this.nlKoordinaten);
-    return;
-  }
-
   const seen = new Set();
 
-  // 🔵 Haupt-Niederlassungen erzeugen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
     const coords = this.nlKoordinaten[nlKey];
     if (!coords) return;
@@ -1221,7 +1188,7 @@ zoomToFilteredPLZ() {
         nl: nlKey
       });
 
-      // 🔥 NL-Marker-Klick → PLZs dieser NL filtern
+      // NL-Marker-Klick → Filterung aktivieren
       marker.on("click", () => {
         this.filterByNL(null, nlKey);     // Filtert alle PLZ dieser NL
         this.updateMarkers();             // Zeigt nur Marker dieser NL
@@ -1242,7 +1209,7 @@ zoomToFilteredPLZ() {
     }
   });
 
-  // 🔵 Extra-Niederlassungen hinzufügen
+  // Extra NLs
   if (Array.isArray(this.extraNLs)) {
     this.extraNLs.forEach(({ nl, lat, lon }) => {
       const icon = this.createMarkerIcon(nl);
@@ -1253,7 +1220,6 @@ zoomToFilteredPLZ() {
         nl
       });
 
-      // 🔥 NL-Marker-Klick → PLZs dieser NL filtern
       marker.on("click", () => {
         this.filterByNL(null, nl);
         this.updateMarkers();
@@ -1271,10 +1237,7 @@ zoomToFilteredPLZ() {
       });
     });
   }
-
-  console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
-
 
 
 
@@ -1421,31 +1384,60 @@ showPopup(feature, daten, nl = null) {
 filterByNL(plz, nl) {
   console.log("▶ filterByNL:", plz, nl);
 
+  // -----------------------------------------
+  // FALL 1: NL-Marker wurde geklickt
+  // plz = null → wir filtern ALLE PLZ dieser NL
+  // -----------------------------------------
+  if (!plz && nl) {
+    const entries = [];
+
+    // Alle PLZ durchgehen, die diese NL haben
+    Object.entries(this.detailedPLZ).forEach(([plzKey, rows]) => {
+      rows.forEach(r => {
+        if (r.nl === nl) {
+          entries.push([plzKey, r]);
+        }
+      });
+    });
+
+    if (entries.length === 0) {
+      console.warn("⚠️ Keine PLZ für NL gefunden:", nl);
+      this.renderDataTableFromEntries([]);
+      return;
+    }
+
+    // Tabelle rendern
+    this.renderDataTableFromEntries(entries);
+
+    return;
+  }
+
+  // -----------------------------------------
+  // FALL 2: PLZ wurde geklickt → KEINE Filterung!
+  // (Popup & Tabelle werden in onEachFeature gemacht)
+  // -----------------------------------------
+  if (plz && !nl) {
+    console.log("ℹ️ PLZ-Klick → keine Filterung");
+    return;
+  }
+
+  // -----------------------------------------
+  // FALL 3: PLZ + NL (z. B. aus Tabelle)
+  // -----------------------------------------
   const normPLZ = String(plz).padStart(5, "0");
-
-  // 1) Detaildaten holen
   const rows = this.detailedPLZ[normPLZ] || [];
-
-  // 2) Nur die gewünschte NL herausfiltern
   const matching = rows.filter(r => r.nl === nl);
 
   if (matching.length === 0) {
     console.warn("⚠️ Keine NL-Daten gefunden für", normPLZ, nl);
-    this.renderDataTable({});
+    this.renderDataTableFromEntries([]);
     return;
   }
 
-  // 3) Tabelle erwartet Einträge im Format: [plz, row]
   const entries = matching.map(r => [normPLZ, r]);
-
-  // 4) Tabelle rendern
   this.renderDataTableFromEntries(entries);
-
-  // 5) Optional: Popup öffnen
-  if (this.openPopupFromTable) {
-    this.openPopupFromTable(normPLZ, nl);
-  }
 }
+
 
 
 applyFilter(erhID, jahr, nummer) {
