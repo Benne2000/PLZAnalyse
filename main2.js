@@ -1502,7 +1502,6 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
-
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -1517,49 +1516,20 @@ getFilteredData() {
   console.log("➡️ Jahr:", jahr);
   console.log("➡️ Nummer:", nummer);
 
-  // 🔥 WICHTIG: beide Strukturen initialisieren
-  const filteredKennwerte = {};   // komplette Zeilen → Tabelle & Popup
-  const filteredPLZWerte = {};    // extrahierte Werte → Farben
-
   const filtered = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
-    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = String(rawPLZ).padStart(5, "0");
-
-
-    const match = id === erhID && y === jahr && num === nummer;
-
-    if (match && plz && plz !== "@NullMember") {
-
-      // 🔵 1) komplette Datenzeile speichern (Popup + Tabelle)
-      filteredKennwerte[plz] = row;
-
-      // 🔵 2) extrahierte Werte für Farben speichern
-      filteredPLZWerte[plz] = {
-        wk: row["value_wk_in_percent_0"]?.raw ?? 0,
-        wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
-        hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
-      };
-
-      console.log(
-        `✔️ Match: PLZ ${plz} | WK=${filteredPLZWerte[plz].wk} | WKPot=${filteredPLZWerte[plz].wkPot} | HZ=${filteredPLZWerte[plz].hz}`
-      );
-    }
-
-    return match;
+    return id === erhID && y === jahr && num === nummer;
   });
 
-  // 🔥 Beide Strukturen global speichern
-  this.filteredKennwerte = filteredKennwerte;
-  this.filteredPLZWerte = filteredPLZWerte;
-
-  console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
+  console.log("📦 Gefilterte PLZs:", filtered.map(r => r["dimension_plz_0"]?.id));
   console.groupEnd();
 
+  // ❗ WICHTIG: NICHTS mehr global überschreiben!
   return filtered;
 }
+
 
 
 
