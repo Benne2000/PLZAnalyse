@@ -1191,7 +1191,7 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
-gprepareMapData(filteredData) {
+prepareMapData(filteredData) {
   const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
