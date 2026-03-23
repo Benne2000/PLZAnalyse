@@ -598,11 +598,10 @@ sortTableByColumn(columnIndex) {
   this.renderDataTableFromEntries(sorted);
 }
 
-      
-      renderDataTableFromEntries(entries) {
+  renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
-  // 🔥 Radiusfilter auch hier anwenden (Sortierung ruft diese Methode direkt auf)
+
   if (this.plzImRadius && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => {
       const norm = String(plz).padStart(5, "0");
@@ -626,12 +625,9 @@ sortTableByColumn(columnIndex) {
   scrollWrapper.style.borderRadius = '6px';
 
   const table = document.createElement('table');
-  table.setAttribute('role', 'table');
   table.style.width = '100%';
   table.style.borderCollapse = 'collapse';
-  table.style.fontFamily = 'sans-serif';
   table.style.tableLayout = 'fixed';
-  table.style.border = '1px solid #b41821';
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -650,20 +646,11 @@ sortTableByColumn(columnIndex) {
     th.style.backgroundColor = '#b41821';
     th.style.color = 'white';
     th.style.padding = '8px';
-    th.style.textAlign = 'left';
-    th.style.position = 'sticky';
-    th.style.top = '0';
-    th.style.zIndex = '1';
+    th.style.cursor = 'pointer';
     th.style.whiteSpace = 'pre-line';
     th.style.width = width;
-    th.style.borderBottom = '1px solid #b41821';
-    th.style.borderRight = '1px solid #b41821';
-    th.style.cursor = 'pointer';
 
-    th.addEventListener('click', () => {
-      this.sortTableByColumn(i);
-    });
-
+    th.addEventListener('click', () => this.sortTableByColumn(i));
     headerRow.appendChild(th);
   });
 
@@ -673,73 +660,56 @@ sortTableByColumn(columnIndex) {
   const tbody = document.createElement('tbody');
   const fragment = document.createDocumentFragment();
 
-entries.forEach(([plz, kennwerte]) => {
-  const tr = document.createElement('tr');
+  entries.forEach(([plz, kennwerte]) => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = "pointer";
 
-  // Tabellenzeile klickbar machen
-  tr.style.cursor = "pointer";
-// Tabellenklick-Handler
-tr.addEventListener("click", () => {
-  this.highlightMapArea(plz);
-  this.openPopupFromTable(plz);
-  this.highlightTableRow(tr);
-});
+    tr.addEventListener("click", () => {
+      this.highlightMapArea(plz);
+      this.openPopupFromTable(plz);
+      this.highlightTableRow(tr);
+    });
 
+    const note = this.geoNotes?.[plz]?.replace(/^\d{4,5}\s*[-–]?\s*/, "") || "Keine PLZ-Bezeichnung";
 
-  let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
-  note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
+    const hzFlag =
+      kennwerte.isCritical ? "⚠️" :
+      kennwerte.isHZ ? "🟢" : "🔴";
 
-  const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
+    const umsatz = kennwerte.sum["value_hr_n_umsatz_0"]
+      ?.toLocaleString("de-DE") ?? "–";
 
-  const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-  const umsatz = typeof umsatzRaw?.raw === "number"
-    ? umsatzRaw.raw.toLocaleString('de-DE')
-    : umsatzRaw === "–"
-      ? '–'
-      : 'Keine Angabe';
+    const wk = kennwerte.sum["value_wk_nachbar_0"]
+      ?.toFixed(1) ?? "–";
 
-  const wkRaw = kennwerte["value_wk_nachbar_0"];
-  const wk = typeof wkRaw?.raw === "number"
-    ? wkRaw.raw.toFixed(1)
-    : wkRaw === "–"
-      ? '–'
-      : 'Keine Angabe';
+    const rowValues = [plz, note, hzFlag, umsatz, wk];
 
-  const rowValues = [plz, note, hzFlag, umsatz, wk];
+    rowValues.forEach((text, i) => {
+      const td = document.createElement('td');
+      td.textContent = text;
+      td.title = text;
+      td.style.padding = '6px 8px';
+      td.style.borderBottom = '1px solid #b41821';
+      td.style.whiteSpace = 'nowrap';
+      td.style.overflow = 'hidden';
+      td.style.textOverflow = 'ellipsis';
+      td.style.width = headers[i].width;
+      tr.appendChild(td);
+    });
 
-  rowValues.forEach((text, i) => {
-    const td = document.createElement('td');
-    td.textContent = text.replace(/\n/g, ' ');
-    td.title = text;
-    td.style.padding = '6px 8px';
-    td.style.borderBottom = '1px solid #b41821';
-    td.style.borderRight = '1px solid #b41821';
-    td.style.fontSize = '0.8rem';
-    td.style.whiteSpace = 'nowrap';
-    td.style.overflow = 'hidden';
-    td.style.textOverflow = 'ellipsis';
-    td.style.width = headers[i].width;
-    tr.appendChild(td);
+    fragment.appendChild(tr);
   });
-
-  fragment.appendChild(tr);
-});
-
-
-// 🔥 WICHTIG: Fragment in das tbody einfügen
-tbody.appendChild(fragment);
-
 
   tbody.appendChild(fragment);
   table.appendChild(tbody);
   scrollWrapper.appendChild(table);
   container.appendChild(scrollWrapper);
 
-  // Sort-Icons aktualisieren
   if (this._sortState && this._sortState.column != null) {
     this.updateSortIcons(this._sortState.column);
   }
 }
+
       
 // highlightTableRow(rowElement)
 highlightTableRow(rowElement) {
@@ -1036,19 +1006,22 @@ createAllMarkers() {
 
     return this.iconCache[nl];
   }
-showPopup(feature) {
+
+  showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
-  .padStart(5, "0")
-  .trim();
+    .padStart(5, "0")
+    .trim();
 
   const note = feature.properties?.note || "Keine Notiz";
 
-  // 🔥 WICHTIG: Daten der aktiven Erhebung holen
   const daten = this.filteredKennwerte?.[plz];
-
   if (!daten) {
-    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
+    console.warn(`❌ Keine aggregierten Daten für PLZ ${plz}`);
+    return;
   }
+
+  const isHZ = daten.isHZ;
+  const isCritical = daten.isCritical;
 
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
@@ -1073,7 +1046,7 @@ showPopup(feature) {
   let rows = "";
 
   Object.entries(beschreibungen).forEach(([id, label], index) => {
-    const rawValue = daten?.[id]?.raw;
+    const rawValue = daten.sum[id];
     const wert = typeof rawValue === "number"
       ? rawValue.toLocaleString("de-DE")
       : "–";
@@ -1091,32 +1064,26 @@ showPopup(feature) {
   });
 
   const sidePopup = this._shadowRoot.getElementById('side-popup');
+
+  const hzClass = isCritical ? "critical" : isHZ ? "hz" : "normal";
+
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
       <thead>
-        <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
+        <tr><th colspan="2" class="title-cell ${hzClass}" title="${note}">${note}</th></tr>
         <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
 
-  // 🔥 Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
-  const isHZ = this.hzFlags?.[plz] === false;
-  const umsatz = daten?.value_hr_n_umsatz_0?.raw;
+  // Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
+  const umsatz = daten.sum["value_hr_n_umsatz_0"];
 
-  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
-    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
-
-    const wkPotentiell = typeof wkPotentiellRaw === "number"
-      ? wkPotentiellRaw.toLocaleString("de-DE")
-      : "–";
-
-    const hzPotentiell = typeof hzPotentiellRaw === "number"
-      ? hzPotentiellRaw.toLocaleString("de-DE")
-      : "–";
+  if (!isHZ && typeof umsatz === "number" && umsatz > 0) {
+    const wkPot = daten.sum["value_wk_potentiell_0"];
+    const hzPot = daten.sum["value_hz_potentiell_0"];
 
     const extraTable = `
       <table class="extra-table">
@@ -1126,15 +1093,16 @@ showPopup(feature) {
         <tbody>
           <tr>
             <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-            <td class="value-cell">${wkPotentiell}</td>
+            <td class="value-cell">${wkPot?.toLocaleString("de-DE") ?? "–"}</td>
           </tr>
           <tr>
             <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-            <td class="value-cell">${hzPotentiell}</td>
+            <td class="value-cell">${hzPot?.toLocaleString("de-DE") ?? "–"}</td>
           </tr>
         </tbody>
       </table>
     `;
+
     sidePopup.insertAdjacentHTML('beforeend', extraTable);
   }
 
@@ -1146,6 +1114,7 @@ showPopup(feature) {
     sidePopup.classList.remove('show');
   });
 }
+
 
   updateNeighbours(filteredData) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
@@ -1222,7 +1191,6 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
-
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -1232,51 +1200,72 @@ getFilteredData() {
   const data = this._myDataSource.data;
   const { erhID, jahr, nummer } = this._activeFilter || {};
 
-  console.group("🔍 Filtervorgang gestartet");
-  console.log("➡️ ErhebungsID:", erhID);
-  console.log("➡️ Jahr:", jahr);
-  console.log("➡️ Nummer:", nummer);
+  const kennzahlenIDs = [
+    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
+    "value_wk_nachbar_0", "value_hz_kosten_0",
+    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
+    "value_ums_erhebung_0", "value_kd_erhebung_0",
+    "value_bon_erhebung_0", "value_auflage_0",
+    "value_wk_potentiell_0", "value_hz_potentiell_0"
+  ];
 
-  // 🔥 WICHTIG: beide Strukturen initialisieren
-  const filteredKennwerte = {};   // komplette Zeilen → Tabelle & Popup
-  const filteredPLZWerte = {};    // extrahierte Werte → Farben
+  const aggregated = {};   // ← NEU: Aggregationsstruktur
+  const filtered = [];
 
-  const filtered = data.filter(row => {
+  data.forEach(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
 
+    if (id !== erhID || y !== jahr || num !== nummer) return;
+    if (!plz || plz === "@NullMember") return;
 
-    const match = id === erhID && y === jahr && num === nummer;
+    filtered.push(row);
 
-    if (match && plz && plz !== "@NullMember") {
-
-      // 🔵 1) komplette Datenzeile speichern (Popup + Tabelle)
-      filteredKennwerte[plz] = row;
-
-      // 🔵 2) extrahierte Werte für Farben speichern
-      filteredPLZWerte[plz] = {
-        wk: row["value_wk_in_percent_0"]?.raw ?? 0,
-        wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
-        hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
+    // --- Aggregation vorbereiten ---
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
+        sum: {},
+        hzCount: 0,
+        rows: []
       };
-
-      console.log(
-        `✔️ Match: PLZ ${plz} | WK=${filteredPLZWerte[plz].wk} | WKPot=${filteredPLZWerte[plz].wkPot} | HZ=${filteredPLZWerte[plz].hz}`
-      );
     }
 
-    return match;
+    aggregated[plz].rows.push(row);
+
+    // --- HZ-Flag zählen ---
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    if (hz) aggregated[plz].hzCount++;
+
+    // --- Kennzahlen summieren ---
+    kennzahlenIDs.forEach(id => {
+      const raw = row[id]?.raw;
+      if (typeof raw === "number") {
+        aggregated[plz].sum[id] = (aggregated[plz].sum[id] || 0) + raw;
+      }
+    });
   });
 
-  // 🔥 Beide Strukturen global speichern
-  this.filteredKennwerte = filteredKennwerte;
-  this.filteredPLZWerte = filteredPLZWerte;
+  // --- HZ-Status ableiten ---
+  Object.values(aggregated).forEach(entry => {
+    entry.isHZ = entry.hzCount > 0;
+    entry.isCritical = entry.hzCount > 1;
+  });
 
-  console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
-  console.groupEnd();
+  // Globale Strukturen setzen
+  this.filteredKennwerte = aggregated;
+
+  // Für Kartenfärbung
+  this.filteredPLZWerte = {};
+  Object.entries(aggregated).forEach(([plz, entry]) => {
+    this.filteredPLZWerte[plz] = {
+      wk: entry.sum["value_wk_in_percent_0"] ?? 0,
+      wkPot: entry.sum["value_wk_potentiell_0"] ?? 0,
+      hz: entry.isHZ
+    };
+  });
 
   return filtered;
 }
@@ -1310,48 +1299,29 @@ getFilteredData() {
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
-  // Hole gefilterte Daten
-  const filteredData = this.getFilteredData();
+  const plzWerte = this.filteredPLZWerte || {};
 
-  // Extrahiere WK, WKPot und HZ-Flag aus den gefilterten Daten
-  const plzWerte = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    if (!plz || plz === "@NullMember") return;
-
-    const wk = row["value_wk_in_percent_0"]?.raw;
-    const wkPot = row["value_wk_potentiell_0"]?.raw;
-    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
-
-    plzWerte[plz] = {
-      wk: typeof wk === "number" ? wk : 0,
-      wkPot: typeof wkPot === "number" ? wkPot : 0,
-      hz: hzFlag
-    };
-  });
-
-  // Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz?.trim();
-
-    // Werte aus gefilterten Daten holen
     const values = plzWerte[plz] || { wk: 0, wkPot: 0, hz: false };
 
-    // HZ → WK in %, Nicht-HZ → WK potentiell
     const value = values.hz ? values.wk : values.wkPot;
 
     layer.setStyle({
       fillColor: this.getColor(value, values.hz),
-      fillOpacity: 0.5
+      fillOpacity: 0.5,
+      color: "white",
+      weight: 1
     });
 
-    // Tooltip aktualisieren (falls vorhanden)
+    // Tooltip aktualisieren
     const note = layer.feature?.properties?.note;
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
   });
 }
+
 
 
 updateMarkers() {
@@ -1696,14 +1666,10 @@ getColorForPLZ(plz) {
   const data = this.filteredPLZWerte?.[plz];
   if (!data) return "#cfd4da";
 
-  const wk = data.wk ?? 0;
-  const wkPot = data.wkPot ?? 0;
-  const isHZ = data.hz === true;
-
-  const value = isHZ ? wk : wkPot;
-
-  return this.getColor(value, isHZ);
+  const value = data.hz ? data.wk : data.wkPot;
+  return this.getColor(value, data.hz);
 }
+
 
 
 
