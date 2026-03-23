@@ -1786,43 +1786,81 @@ set myDataSource(dataBinding) {
     this.render?.();
   }
 }
+
 prepareMapData(filteredData) {
   console.log("📌 prepareMapData() gestartet");
 
-  if (!filteredData || filteredData.length === 0) {
-    console.warn("⚠️ prepareMapData(): Keine Daten übergeben");
-    this.Niederlassung = {};
-    this.nlKoordinaten = {};
-    return;
-  }
+  const rawData = this._myDataSource?.data || [];
+  const geoFeatures = this._geoData?.features || [];
 
+  // Reset
+  this.kennwerte = {};
+  this.hzFlags = {};
   this.Niederlassung = {};
   this.nlKoordinaten = {};
+  this.plzKennwerte = {};
+  this.filteredKennwerte = {};
+  this.extraNLs = [];
 
+  const kennzahlenIDs = [
+    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
+    "value_wk_nachbar_0", "value_hz_kosten_0",
+    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
+    "value_ums_erhebung_0", "value_kd_erhebung_0",
+    "value_bon_erhebung_0", "value_auflage_0"
+  ];
+
+  // Geo-Notes
+  const geoNotes = {};
+  geoFeatures.forEach(f => {
+    const plz = f.properties?.plz?.trim();
+    const note = f.properties?.note?.trim();
+    if (plz) geoNotes[plz] = note || "";
+  });
+
+  // Verarbeitung der gefilterten Daten
   filteredData.forEach(row => {
-    const nl = row["dimension_niederlassung_0"]?.id;
-    const lat = row["value_lat_0"]?.raw;
-    const lng = row["value_lng_0"]?.raw;
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
+    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
 
-    if (!nl) return;
+    // 🔥 WICHTIG: Koordinaten kommen aus DIMENSIONEN
+    const lat = parseFloat(row["dimension_Lat_0"]?.label);
+    const lon = parseFloat(row["dimension_lon_0"]?.label);
 
-    if (!this.Niederlassung[nl]) {
-      this.Niederlassung[nl] = { plz: new Set(), umsatz: 0, wk: 0 };
+    // --- Niederlassung speichern ---
+    if (nlKey) {
+      // Alte Logik: NL = Key
+      this.Niederlassung[nlKey] = nlKey;
+
+      // Koordinaten speichern
+      if (!isNaN(lat) && !isNaN(lon)) {
+        this.nlKoordinaten[nlKey] = { lat, lon };
+      }
     }
 
-    const plz = String(row["dimension_plz_0"]?.id ?? "").padStart(5, "0");
-    this.Niederlassung[nl].plz.add(plz);
+    // --- PLZ-Kennwerte speichern ---
+    if (plz && plz !== "@NullMember") {
+      if (!this.filteredKennwerte[plz]) {
+        this.filteredKennwerte[plz] = {};
+      }
 
-    this.Niederlassung[nl].umsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
-    this.Niederlassung[nl].wk += row["value_wk_nachbar_0"]?.raw ?? 0;
+      this.hzFlags[plz] = hzFlag;
 
-    if (lat && lng) {
-      this.nlKoordinaten[nl] = { lat, lng };
+      kennzahlenIDs.forEach(id => {
+        const raw = row[id]?.raw;
+        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
+      });
+
+      this.filteredKennwerte[plz]["dimension_note_0"] = {
+        label: geoNotes[plz] || ""
+      };
     }
   });
 
   console.log("📌 Niederlassung:", this.Niederlassung);
   console.log("📌 NL-Koordinaten:", this.nlKoordinaten);
+  console.log("📌 filteredKennwerte:", this.filteredKennwerte);
 }
 
 
