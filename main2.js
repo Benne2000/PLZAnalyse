@@ -722,8 +722,7 @@ sortTableByColumn(columnIndex) {
   // sondern geben das sortierte Array direkt an den Renderer
   this.renderDataTableFromEntries(sorted);
 }
-
-  renderDataTableFromEntries(entries) {
+renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
@@ -786,6 +785,13 @@ sortTableByColumn(columnIndex) {
   const fragment = document.createDocumentFragment();
 
   entries.forEach(([plz, kennwerte]) => {
+
+    // ❗ Falls irgendwas fehlt → Zeile überspringen statt crashen
+    if (!kennwerte || !kennwerte["value_hr_n_umsatz_0"]) {
+      console.warn("⚠️ Ungültiger Kennwert-Eintrag für PLZ:", plz, kennwerte);
+      return;
+    }
+
     const tr = document.createElement('tr');
     tr.style.cursor = "pointer";
 
@@ -801,10 +807,10 @@ sortTableByColumn(columnIndex) {
       kennwerte.isCritical ? "⚠️" :
       kennwerte.isHZ ? "🟢" : "🔴";
 
-    const umsatz = kennwerte.sum["value_hr_n_umsatz_0"]
+    const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw
       ?.toLocaleString("de-DE") ?? "–";
 
-    const wk = kennwerte.sum["value_wk_nachbar_0"]
+    const wk = kennwerte["value_wk_nachbar_0"]?.raw
       ?.toFixed(1) ?? "–";
 
     const rowValues = [plz, note, hzFlag, umsatz, wk];
@@ -834,6 +840,7 @@ sortTableByColumn(columnIndex) {
     this.updateSortIcons(this._sortState.column);
   }
 }
+
 
       
 // highlightTableRow(rowElement)
