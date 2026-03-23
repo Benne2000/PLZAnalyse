@@ -1378,41 +1378,24 @@ filterByNL(plz, nl) {
   // 6) Zoom auf gefilterte PLZ
   this.zoomToFilteredPLZ();
 }
-
 applyFilter(erhID, jahr, nummer) {
   console.log("▶ applyFilter gestartet", erhID, jahr, nummer);
 
-  // ❗ Filter unterdrückt? → abbrechen
-  if (this._suppressFilter) {
-    console.log("⏳ applyFilter unterdrückt (Suppress aktiv)");
-    return;
-  }
+  if (this._suppressFilter) return;
+  if (this._isInitialLoad) return;
 
-  // ❗ Initial Load blockieren
-  if (this._isInitialLoad) {
-    console.log("⏳ Initial Load → applyFilter übersprungen");
-    return;
-  }
-
-  // ❗ Datenquelle bereit?
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⏳ applyFilter abgebrochen: Datenquelle noch nicht bereit.");
     return;
   }
 
-  // ❗ Filterparameter setzen
   if (erhID && jahr && nummer) {
     this._activeFilter = { erhID, jahr, nummer };
   }
 
   const { erhID: fID, jahr: fJahr, nummer: fNum } = this._activeFilter || {};
+  if (!fID || !fJahr || !fNum) return;
 
-  if (!fID || !fJahr || !fNum) {
-    console.warn("⚠️ applyFilter: Keine gültigen Filterparameter vorhanden → abbrechen");
-    return;
-  }
-
-  // ❗ Daten filtern
   const data = this._myDataSource.data;
   const filteredData = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
@@ -1422,7 +1405,6 @@ applyFilter(erhID, jahr, nummer) {
   });
 
   if (filteredData.length === 0) {
-    console.warn("⚠️ Keine Daten für Erhebung gefunden.");
     this.aggregatedPLZ = {};
     this.detailedPLZ = {};
     this.filteredKennwerte = {};
@@ -1431,7 +1413,7 @@ applyFilter(erhID, jahr, nummer) {
     return;
   }
 
-  // ❗ Aggregation neu aufbauen
+  // 🔥 Aggregation neu aufbauen
   this.aggregatedPLZ = {};
   this.detailedPLZ = {};
   this._activeNLFilter = null;
@@ -1458,26 +1440,29 @@ applyFilter(erhID, jahr, nummer) {
 
   this.filteredKennwerte = this.aggregatedPLZ;
 
-  // ❗ Tabelle
+  // 🔥 WICHTIG: Map-Daten vorbereiten (setzt Niederlassung, Koordinaten, etc.)
+  this.prepareMapData(filteredData);
+
+  // 🔥 Tabelle
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // ❗ Karte
+  // 🔥 Karte
   this.updateGeoLayer();
 
-  // ❗ Marker
+  // 🔥 Marker
   this.createAllMarkers();
   this.updateMarkers();
 
-  // ❗ Radiusfilter
+  // 🔥 Radiusfilter
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  if (this._currentCenter && this._currentCenter.lat && this._currentCenter.lng) {
+  if (this._currentCenter?.lat && this._currentCenter?.lng) {
     this.applyRadiusFilter(radius);
   }
 
-  // ❗ Tabelle nach Radiusfilter
+  // 🔥 Tabelle nach Radiusfilter
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // ❗ Zoom
+  // 🔥 Zoom
   this.zoomToFilteredPLZ();
 
   console.log("▶ applyFilter abgeschlossen");
