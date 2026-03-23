@@ -1155,41 +1155,85 @@ initializeMapBase() {
   }
 
 createAllMarkers() {
-  console.log("📌 createAllMarkers() gestartet");
-
-  if (!this.map) {
-    console.error("❌ createAllMarkers(): map fehlt");
-    return;
-  }
-
-  if (!this.Niederlassung || !this.nlKoordinaten) {
-    console.error("❌ createAllMarkers(): Datenstrukturen fehlen");
-    return;
-  }
-
+  // Alte Marker entfernen
   this.filteredGroup.clearLayers();
+  this.allMarkers = [];
 
-  for (const [nl, info] of Object.entries(this.Niederlassung)) {
-    const coords = this.nlKoordinaten[nl];
+  // 🔥 NL-Marker-Liste für Radius-Filter neu anlegen
+  this.nlMarkers = [];
+
+  if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
+    console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
+    return;
+  }
+
+  if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") {
+    console.warn("⚠️ nlKoordinaten ist nicht definiert oder kein Objekt:", this.nlKoordinaten);
+    return;
+  }
+
+  const seen = new Set(); // verhindert doppelte Marker pro NL
+
+  // 🔵 Haupt-Niederlassungen erzeugen
+  Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
+    const coords = this.nlKoordinaten[nlKey];
     if (!coords) {
-      console.warn("⚠️ NL ohne Koordinaten:", nl);
-      continue;
+      console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
+      return;
     }
 
-    const marker = L.marker([coords.lat, coords.lng], { title: nl });
+    if (!seen.has(nlKey)) {
+      const icon = this.createMarkerIcon(nlName);
 
-    marker.on("click", () => {
-      console.log("📍 NL angeklickt:", nl);
-      this._activeNLFilter = nl;
-      this.applyNLFilter(nl);
+      const marker = L.marker([coords.lat, coords.lng], {
+        icon,
+        title: nlName,
+        plzs: [nlKey] // wichtig für Filterung
+      });
+
+      // In globale Marker-Liste
+      this.allMarkers.push(marker);
+
+      // In gefilterte Gruppe (Standard: alle sichtbar)
+      this.filteredGroup.addLayer(marker);
+
+      // NL als verarbeitet markieren
+      seen.add(nlKey);
+
+      // 🔥 NL-Marker für Radius-Filter speichern
+      this.nlMarkers.push({
+        lat: coords.lat,
+        lng: coords.lng,
+        marker
+      });
+    }
+  });
+
+  // 🔵 Extra-Niederlassungen hinzufügen (falls vorhanden)
+  if (Array.isArray(this.extraNLs)) {
+    this.extraNLs.forEach(({ nl, lat, lon }) => {
+      const icon = this.createMarkerIcon(nl);
+
+      const marker = L.marker([lat, lon], {
+        icon,
+        title: nl,
+        plzs: [nl]
+      });
+
+      this.allMarkers.push(marker);
+      this.filteredGroup.addLayer(marker);
+
+      // 🔥 Extra-NL ebenfalls für Radius-Filter speichern
+      this.nlMarkers.push({
+        lat,
+        lng: lon,
+        marker
+      });
     });
-
-    this.filteredGroup.addLayer(marker);
   }
 
-  console.log("📌 Marker erzeugt:", this.filteredGroup.getLayers().length);
+  console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
-
 
 
 
