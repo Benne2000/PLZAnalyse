@@ -1191,7 +1191,6 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
-
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -1218,7 +1217,6 @@ getFilteredData() {
 
     if (!aggregated[plz]) {
       aggregated[plz] = {
-        rows: [],
         hzCount: 0,
         sum: {
           umsatzNetto: 0,
@@ -1228,7 +1226,7 @@ getFilteredData() {
           auflage: 0,
           potHzAbs: 0
         },
-        avg: {
+        avgArrays: {
           werbeverweigerer: [],
           haushalte: [],
           kaufkraft: []
@@ -1237,7 +1235,6 @@ getFilteredData() {
     }
 
     const entry = aggregated[plz];
-    entry.rows.push(row);
 
     // HZ-Flag
     const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
@@ -1253,71 +1250,67 @@ getFilteredData() {
 
     // Durchschnitte
     const wv = row["value_werbeverweigerer_0"]?.raw;
-    if (typeof wv === "number") entry.avg.werbeverweigerer.push(wv);
+    if (typeof wv === "number") entry.avgArrays.werbeverweigerer.push(wv);
 
     const hh = row["value_haushalte_0"]?.raw;
-    if (typeof hh === "number") entry.avg.haushalte.push(hh);
+    if (typeof hh === "number") entry.avgArrays.haushalte.push(hh);
 
     const kk = row["value_kaufkraft_0"]?.raw;
-    if (typeof kk === "number") entry.avg.kaufkraft.push(kk);
+    if (typeof kk === "number") entry.avgArrays.kaufkraft.push(kk);
   });
 
-  // Finalisierung
+  const avgOrZero = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+  // Jetzt in die alte Struktur schreiben
+  this.filteredKennwerte = {};
+  this.filteredPLZWerte = {};
+
   Object.entries(aggregated).forEach(([plz, entry]) => {
     const sum = entry.sum;
-    const avg = entry.avg;
+    const avgArr = entry.avgArrays;
 
-    // Durchschnittswerte
-    const avgOrZero = arr => arr.length ? arr.reduce((a,b)=>a+b,0) / arr.length : 0;
+    const avgWerbeverweigerer = avgOrZero(avgArr.werbeverweigerer);
+    const avgHaushalte = avgOrZero(avgArr.haushalte);
+    const avgKaufkraft = avgOrZero(avgArr.kaufkraft);
 
-    const avgWerbeverweigerer = avgOrZero(avg.werbeverweigerer);
-    const avgHaushalte = avgOrZero(avg.haushalte);
-    const avgKaufkraft = avgOrZero(avg.kaufkraft);
-
-    // Berechnete Werte
     const umsatzNetto = sum.umsatzNetto;
     const hzKosten = sum.hzKosten;
 
     const umsatzPHH = avgHaushalte > 0 ? umsatzNetto / avgHaushalte : 0;
     const wkPercent = umsatzNetto > 0 ? hzKosten / umsatzNetto : 0;
-    const wkNachbar = wkPercent; // identisch laut Vorgabe
+    const wkNachbar = wkPercent;
     const bon = sum.kdErhebung > 0 ? sum.umsatzErhebung / sum.kdErhebung : 0;
     const potHzPercent = umsatzNetto > 0 ? sum.potHzAbs / umsatzNetto : 0;
 
-    // HZ-Status
-    entry.isHZ = entry.hzCount > 0;
-    entry.isCritical = entry.hzCount > 1;
+    const isHZ = entry.hzCount > 0;
+    const isCritical = entry.hzCount > 1;
 
-    // Finalisierte Kennwerte speichern
-    entry.final = {
-      plz,
-      umsatzNetto,
-      umsatzPHH,
-      wkPercent,
-      wkNachbar,
-      hzKosten,
-      avgWerbeverweigerer,
-      avgHaushalte,
-      avgKaufkraft,
-      umsatzErhebung: sum.umsatzErhebung,
-      kdErhebung: sum.kdErhebung,
-      bon,
-      auflage: sum.auflage,
-      potHzAbs: sum.potHzAbs,
-      potHzPercent
+    // 👇 Hier schreiben wir in das Format, das dein restlicher Code erwartet
+    this.filteredKennwerte[plz] = {
+      isHZ,
+      isCritical,
+
+      // "Rohdaten"-ähnliche Struktur, aber mit aggregierten Werten
+      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      value_umsatz_p_hh_0: { raw: umsatzPHH },
+      value_wk_in_percent_0: { raw: wkPercent },
+      value_wk_nachbar_0: { raw: wkNachbar },
+      value_hz_kosten_0: { raw: hzKosten },
+      value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
+      value_haushalte_0: { raw: avgHaushalte },
+      value_kaufkraft_0: { raw: avgKaufkraft },
+      value_ums_erhebung_0: { raw: sum.umsatzErhebung },
+      value_kd_erhebung_0: { raw: sum.kdErhebung },
+      value_bon_erhebung_0: { raw: bon },
+      value_auflage_0: { raw: sum.auflage },
+      value_hz_potentiell_0: { raw: sum.potHzAbs },
+      value_wk_potentiell_0: { raw: potHzPercent }
     };
-  });
 
-  // Globale Strukturen setzen
-  this.filteredKennwerte = aggregated;
-
-  // Für Kartenfärbung
-  this.filteredPLZWerte = {};
-  Object.entries(aggregated).forEach(([plz, entry]) => {
     this.filteredPLZWerte[plz] = {
-      wk: entry.final.wkPercent * 100,
-      wkPot: entry.final.potHzPercent * 100,
-      hz: entry.isHZ
+      wk: wkPercent * 100,
+      wkPot: potHzPercent * 100,
+      hz: isHZ
     };
   });
 
@@ -1355,6 +1348,7 @@ updateGeoLayer() {
   if (!this._geoLayer) return;
 
   const plzWerte = this.filteredPLZWerte || {};
+  this.criticalMarkers = this.criticalMarkers || {};
 
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz?.trim();
@@ -1362,6 +1356,7 @@ updateGeoLayer() {
 
     const value = values.hz ? values.wk : values.wkPot;
 
+    // Fläche einfärben
     layer.setStyle({
       fillColor: this.getColor(value, values.hz),
       fillOpacity: 0.5,
@@ -1374,8 +1369,51 @@ updateGeoLayer() {
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
+
+    // --- 🔥 Kritische PLZ markieren ---
+    const isCritical = this.filteredKennwerte?.[plz]?.isCritical === true;
+
+    // Falls kritisch → Marker setzen
+    if (isCritical) {
+      if (!this.criticalMarkers[plz]) {
+        const center = layer.getBounds().getCenter();
+
+        const icon = L.divIcon({
+          html: `<div style="
+            background:#ff0000;
+            color:white;
+            font-weight:bold;
+            width:18px;
+            height:18px;
+            border-radius:50%;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:12px;
+            box-shadow:0 0 4px rgba(0,0,0,0.4);
+          ">!</div>`,
+          className: "",
+          iconSize: [18, 18],
+          iconAnchor: [9, 9]
+        });
+
+        const marker = L.marker(center, {
+          icon,
+          interactive: false
+        }).addTo(this.map);
+
+        this.criticalMarkers[plz] = marker;
+      }
+    } else {
+      // Falls nicht kritisch → Marker entfernen
+      if (this.criticalMarkers[plz]) {
+        this.map.removeLayer(this.criticalMarkers[plz]);
+        delete this.criticalMarkers[plz];
+      }
+    }
   });
 }
+
 
 
 
