@@ -471,17 +471,23 @@ onEachFeature: (feature, layer) => {
   layer.on("click", () => {
     const plz = String(feature.properties.plz).padStart(5, "0");
 
-    // ❗ KEINE FILTERUNG HIER!
-    // ❗ KEIN filterByNL()
-    // ❗ KEIN applyFilter()
+    // ❗ Filter komplett unterdrücken
+    this._suppressFilter = true;
 
-    const agg = this.aggregatedPLZ[plz];
+    // Aggregierte Daten dieser PLZ holen
+    const agg = this.aggregatedPLZ?.[plz];
 
+    // Karte highlighten
     this.highlightMapArea(plz);
+
+    // Popup öffnen (immer Aggregat)
     this.openPopupFromTable(plz);
 
-    // Tabelle zeigt nur diese eine PLZ
+    // Tabelle nur mit dieser einen PLZ
     this.renderDataTableFromEntries([[plz, agg]]);
+
+    // Suppress wieder deaktivieren
+    this._suppressFilter = false;
   });
 }
 
@@ -738,17 +744,18 @@ sortTableByColumn(index) {
   this.updateSortIcons(index);
 }
 renderDataTableFromEntries(entries) {
-  // ❗ Keine Erhebung → NICHTS anzeigen
+  const container = this._shadowRoot.getElementById('table-container');
+  if (!container) return;
+
+  // ❗ Keine Erhebung → keine Tabelle
   if (!this._activeFilter || !this._activeFilter.erhID) {
-    console.warn("⏳ Tabelle übersprungen: Keine Erhebung aktiv.");
-    this._shadowRoot.getElementById('table-container').innerHTML = "";
+    container.innerHTML = "";
     return;
   }
 
-  const container = this._shadowRoot.getElementById('table-container');
-  container.innerHTML = '';
+  container.innerHTML = "";
 
-  // Radiusfilter
+  // ❗ Radiusfilter anwenden
   if (this.plzImRadius instanceof Set && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
   }
@@ -758,8 +765,14 @@ renderDataTableFromEntries(entries) {
     return;
   }
 
-  // Prüfen: Aggregat oder Detail?
-  const isDetail = entries.length > 0 && entries[0][1].nl !== undefined;
+  // ❗ Tabelle immer im Aggregatmodus
+  const headers = [
+    { label: 'PLZ', width: '60px' },
+    { label: 'Gemeinde', width: '120px' },
+    { label: 'HZ', width: '40px' },
+    { label: 'Netto-Umsatz', width: '80px' },
+    { label: 'WK (%)', width: '60px' }
+  ];
 
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
@@ -781,23 +794,6 @@ renderDataTableFromEntries(entries) {
   // HEADER
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-
-  const headers = isDetail
-    ? [
-        { label: 'PLZ', width: '60px' },
-        { label: 'NL', width: '60px' },
-        { label: 'Gemeinde', width: '120px' },
-        { label: 'HZ', width: '40px' },
-        { label: 'Netto-Umsatz', width: '80px' },
-        { label: 'WK (%)', width: '60px' }
-      ]
-    : [
-        { label: 'PLZ', width: '60px' },
-        { label: 'Gemeinde', width: '120px' },
-        { label: 'HZ', width: '40px' },
-        { label: 'Netto-Umsatz', width: '80px' },
-        { label: 'WK (%)', width: '60px' }
-      ];
 
   headers.forEach(({ label, width }) => {
     const th = document.createElement('th');
@@ -828,8 +824,7 @@ renderDataTableFromEntries(entries) {
 
     tr.addEventListener("click", () => {
       this.highlightMapArea(plz);
-      if (isDetail) this.openPopupFromTable(plz, row.nl);
-      else this.openPopupFromTable(plz);
+      this.openPopupFromTable(plz);
       this.highlightTableRow(tr);
     });
 
@@ -840,9 +835,7 @@ renderDataTableFromEntries(entries) {
     const umsatz = typeof row.umsatz === "number" ? row.umsatz.toLocaleString('de-DE') : '–';
     const wk = typeof row.wk === "number" ? row.wk.toFixed(1) : '–';
 
-    const rowValues = isDetail
-      ? [plz, row.nl, note, hzFlag, umsatz, wk]
-      : [plz, note, hzFlag, umsatz, wk];
+    const rowValues = [plz, note, hzFlag, umsatz, wk];
 
     rowValues.forEach((text, i) => {
       const td = document.createElement('td');
@@ -866,6 +859,7 @@ renderDataTableFromEntries(entries) {
   scrollWrapper.appendChild(table);
   container.appendChild(scrollWrapper);
 }
+
 
 
       
@@ -893,7 +887,7 @@ highlightTableRowByPLZ(plz) {
 }
 
    
-openPopupFromTable(plz, nl = null) {
+openPopupFromTable(plz) {
   if (!this._geoLayer) return;
 
   const normPLZ = String(plz).padStart(5, "0");
@@ -912,30 +906,18 @@ openPopupFromTable(plz, nl = null) {
     return;
   }
 
-  // 2) Datenquelle bestimmen
-  let daten;
-
-  if (nl === null) {
-    // -------------------------
-    // AGGREGATMODUS (PLZ-Klick)
-    // -------------------------
-    daten = this.filteredKennwerte?.[normPLZ];
-  } else {
-    // -------------------------
-    // DETAILMODUS (Marker-Klick)
-    // -------------------------
-    const rows = this.detailedPLZ[normPLZ] || [];
-    daten = rows.find(r => r.nl === nl);
-  }
+  // 2) Aggregierte Daten holen (immer aus filteredKennwerte!)
+  const daten = this.filteredKennwerte?.[normPLZ];
 
   if (!daten) {
-    console.warn("⚠️ Keine Daten für Popup:", normPLZ, nl);
+    console.warn("⚠️ Keine aggregierten Daten für Popup:", normPLZ);
     return;
   }
 
-  // 3) Popup anzeigen
-  this.showPopup(targetFeature, daten, nl);
+  // 3) Popup anzeigen (immer Aggregat)
+  this.showPopup(targetFeature, daten, null);
 }
+
 
 
 
@@ -951,8 +933,7 @@ highlightMapArea(plz) {
   if (this._lastHighlightedLayer) {
     this._lastHighlightedLayer.setStyle({
       weight: 1,
-      color: "#666",
-      fillOpacity: 0.4
+      color: "white"   // ursprünglicher Rand
     });
     this._lastHighlightedLayer = null;
   }
@@ -975,27 +956,28 @@ highlightMapArea(plz) {
   }
 
   // -------------------------
-  // 3) Highlight setzen
+  // 3) Highlight setzen (nur Outline!)
   // -------------------------
   targetLayer.setStyle({
-    weight: 3,
-    color: "#b41821",
-    fillOpacity: 0.6
+    weight: 4,
+    color: "#FFFF00",
+    fillOpacity: targetLayer.options.fillOpacity // unverändert lassen
   });
 
   this._lastHighlightedLayer = targetLayer;
 
   // -------------------------
-  // 4) Karte auf die PLZ zoomen
+  // 4) Karte sanft auf die PLZ zoomen
   // -------------------------
   const bounds = targetLayer.getBounds?.();
   if (bounds && this.map) {
     this.map.fitBounds(bounds, {
-      padding: [20, 20],
-      maxZoom: 13
+      padding: [30, 30],
+      maxZoom: 12
     });
   }
 }
+
 
       
 updateSortIcons(activeIndex) {
@@ -1030,33 +1012,24 @@ updateSortIcons(activeIndex) {
 zoomToFilteredPLZ() {
   if (!this._geoLayer || !this.map) return;
 
-  let plzList = [];
+  // 1) PLZ-Liste aus gefilterten Kennwerten
+  let plzList = Object.keys(this.filteredKennwerte || {});
+  if (plzList.length === 0) {
+    console.warn("⚠️ zoomToFilteredPLZ: Keine PLZs gefunden.");
+    return;
+  }
 
-  // -------------------------
-  // 1) Datenquelle bestimmen
-  // -------------------------
-  // Aggregat-Modus → filteredKennwerte = aggregatedPLZ
-  // NL-Detail-Modus → filteredKennwerte = detailedPLZ[plz]
-  Object.keys(this.filteredKennwerte).forEach(plz => {
-    const norm = String(plz).padStart(5, "0");
-    plzList.push(norm);
-  });
-
-  // -------------------------
-  // 2) Radiusfilter anwenden
-  // -------------------------
-  if (this.plzImRadius && this.plzImRadius.size > 0) {
+  // 2) Radiusfilter berücksichtigen
+  if (this.plzImRadius instanceof Set && this.plzImRadius.size > 0) {
     plzList = plzList.filter(plz => this.plzImRadius.has(plz));
   }
 
   if (plzList.length === 0) {
-    console.warn("⚠️ Keine PLZs zum Zoomen gefunden.");
+    console.warn("⚠️ zoomToFilteredPLZ: Keine PLZs im Radius.");
     return;
   }
 
-  // -------------------------
-  // 3) Alle passenden GeoJSON-Layer sammeln
-  // -------------------------
+  // 3) Bounds aller relevanten PLZ sammeln
   const boundsList = [];
 
   this._geoLayer.eachLayer(layer => {
@@ -1069,27 +1042,23 @@ zoomToFilteredPLZ() {
   });
 
   if (boundsList.length === 0) {
-    console.warn("⚠️ Keine GeoJSON-Bounds für die gefilterten PLZs gefunden.");
+    console.warn("⚠️ zoomToFilteredPLZ: Keine GeoJSON-Bounds gefunden.");
     return;
   }
 
-  // -------------------------
   // 4) Gesamten Bereich berechnen
-  // -------------------------
   let combined = boundsList[0];
-
   for (let i = 1; i < boundsList.length; i++) {
     combined = combined.extend(boundsList[i]);
   }
 
-  // -------------------------
-  // 5) Karte auf Bereich zoomen
-  // -------------------------
+  // 5) Karte sanft auf Bereich zoomen
   this.map.fitBounds(combined, {
     padding: [30, 30],
     maxZoom: 12
   });
 }
+
 
 
 
@@ -1156,6 +1125,7 @@ zoomToFilteredPLZ() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
+
   createAllMarkers() {
    if (!this._activeFilter || !this._activeFilter.erhID) {
   console.warn("⏳ createAllMarkers übersprungen: Keine Erhebung aktiv.");
@@ -1192,20 +1162,39 @@ zoomToFilteredPLZ() {
         nl: nlKey
       });
 
-      marker.on("click", () => {
-        this.filterByNL(null, nlKey);
-        this.updateMarkers();
-        this.zoomToFilteredPLZ();
-      });
+marker.on("click", () => {
+  console.log("▶ Marker-Klick auf NL:", nlKey);
 
-      this.allMarkers.push(marker);
-      this.filteredGroup.addLayer(marker);
+  // ❗ Filter unterdrücken während Highlight/Popup
+  this._suppressFilter = true;
 
-      this.nlMarkers.push({
-        lat: coords.lat,
-        lng: coords.lon,
-        marker
-      });
+  // 1) NL-Filter anwenden (aggregiert)
+  this.filterByNL(null, nlKey);
+
+  // 2) PLZ-Liste der NL holen
+  const plzList = Object.keys(this.filteredKennwerte);
+  if (plzList.length === 0) {
+    this._suppressFilter = false;
+    return;
+  }
+
+  // 3) Erste PLZ highlighten
+  const firstPLZ = plzList[0];
+  this.highlightMapArea(firstPLZ);
+
+  // 4) Popup öffnen (immer aggregiert)
+  this.openPopupFromTable(firstPLZ);
+
+  // ❗ Suppress wieder deaktivieren
+  this._suppressFilter = false;
+
+  // 5) Marker aktualisieren (Phantom-Modus)
+  this.updateMarkers();
+
+  // 6) Zoom auf gefilterte PLZ
+  this.zoomToFilteredPLZ();
+});
+
 
       seen.add(nlKey);
     }
@@ -1343,39 +1332,75 @@ showPopup(feature, daten = null, nl = null) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
     this.neighbours = computeNeighbours(filteredMarkers);
   }
+
+
 filterByNL(plz, nl) {
-  console.log("▶ filterByNL:", plz, nl);
+  console.log("▶ filterByNL (NEU): NL =", nl);
+
+  // ❗ Filter unterdrückt? → abbrechen
+  if (this._suppressFilter) return;
 
   this._activeNLFilter = nl;
 
-  const entries = [];
-
+  // 1) Alle PLZ sammeln, die zu dieser NL gehören
+  const plzList = [];
   Object.entries(this.detailedPLZ).forEach(([plzKey, rows]) => {
-    rows.forEach(r => {
-      if (r.nl === nl) {
-        entries.push([plzKey, r]);
-      }
-    });
+    if (rows.some(r => r.nl === nl)) {
+      plzList.push(plzKey);
+    }
   });
 
-  this.renderDataTableFromEntries(entries);
+  // 2) Aggregierte Kennwerte für diese PLZ neu berechnen
+  const agg = {};
+  plzList.forEach(plz => {
+    const rows = this.detailedPLZ[plz].filter(r => r.nl === nl);
+
+    const sumUmsatz = rows.reduce((a, r) => a + (r.umsatz || 0), 0);
+    const sumWK = rows.reduce((a, r) => a + (r.wk || 0), 0);
+    const hz = rows.some(r => r.hz);
+
+    agg[plz] = {
+      umsatz: sumUmsatz,
+      wk: sumWK,
+      hz
+    };
+  });
+
+  // 3) Globale Datenbasis aktualisieren
+  this.filteredKennwerte = agg;
+
+  // 4) Tabelle aktualisieren
+  this.renderDataTableFromEntries(Object.entries(agg));
+
+  // 5) Karte aktualisieren
+  this.updateGeoLayer();
+
+  // 6) Zoom auf gefilterte PLZ
+  this.zoomToFilteredPLZ();
 }
+
 applyFilter(erhID, jahr, nummer) {
   console.log("▶ applyFilter gestartet", erhID, jahr, nummer);
 
-  // ❗ 1) Initial Load blockieren
+  // ❗ Filter unterdrückt? → abbrechen
+  if (this._suppressFilter) {
+    console.log("⏳ applyFilter unterdrückt (Suppress aktiv)");
+    return;
+  }
+
+  // ❗ Initial Load blockieren
   if (this._isInitialLoad) {
     console.log("⏳ Initial Load → applyFilter übersprungen");
     return;
   }
 
-  // ❗ 2) Datenquelle bereit?
+  // ❗ Datenquelle bereit?
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⏳ applyFilter abgebrochen: Datenquelle noch nicht bereit.");
     return;
   }
 
-  // ❗ 3) Filterparameter setzen – aber NICHT überschreiben, wenn undefined
+  // ❗ Filterparameter setzen
   if (erhID && jahr && nummer) {
     this._activeFilter = { erhID, jahr, nummer };
   }
@@ -1387,17 +1412,13 @@ applyFilter(erhID, jahr, nummer) {
     return;
   }
 
-  erhID = fID;
-  jahr = fJahr;
-  nummer = fNum;
-
-  // ❗ 4) Daten filtern
+  // ❗ Daten filtern
   const data = this._myDataSource.data;
   const filteredData = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
-    return id === erhID && y === jahr && num === nummer;
+    return id === fID && y === fJahr && num === fNum;
   });
 
   if (filteredData.length === 0) {
@@ -1410,7 +1431,7 @@ applyFilter(erhID, jahr, nummer) {
     return;
   }
 
-  // ❗ 5) Aggregation neu aufbauen
+  // ❗ Aggregation neu aufbauen
   this.aggregatedPLZ = {};
   this.detailedPLZ = {};
   this._activeNLFilter = null;
@@ -1437,30 +1458,26 @@ applyFilter(erhID, jahr, nummer) {
 
   this.filteredKennwerte = this.aggregatedPLZ;
 
-  // ❗ 6) Tabelle
+  // ❗ Tabelle
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // ❗ 7) Karte
+  // ❗ Karte
   this.updateGeoLayer();
 
-  // ❗ 8) Marker
+  // ❗ Marker
   this.createAllMarkers();
   this.updateMarkers();
 
-  // ❗ 9) Radiusfilter
+  // ❗ Radiusfilter
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-// ❗ Radiusfilter nur anwenden, wenn die Karte bereit ist
-if (this._currentCenter && this._currentCenter.lat && this._currentCenter.lng) {
+  if (this._currentCenter && this._currentCenter.lat && this._currentCenter.lng) {
     this.applyRadiusFilter(radius);
-} else {
-    console.warn("⏳ applyFilter: Radiusfilter übersprungen, Karte noch nicht bereit.");
-}
+  }
 
-
-  // ❗ 10) Tabelle nach Radiusfilter
+  // ❗ Tabelle nach Radiusfilter
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // ❗ 11) Zoom
+  // ❗ Zoom
   this.zoomToFilteredPLZ();
 
   console.log("▶ applyFilter abgeschlossen");
@@ -1554,56 +1571,70 @@ getFilteredData() {
 
 
 updateGeoLayer() {
-
-  if (!this._activeFilter || !this._activeFilter.erhID) {
-  console.warn("⏳ updateGeoLayer übersprungen: Keine Erhebung aktiv.");
-  return;
-}
-
   if (!this._geoLayer) return;
 
-  // Hole gefilterte Daten
-  const filteredData = this.getFilteredData();
-
-  // Extrahiere WK, WKPot und HZ-Flag aus den gefilterten Daten
-  const plzWerte = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    if (!plz || plz === "@NullMember") return;
-
-    const wk = row["value_wk_in_percent_0"]?.raw;
-    const wkPot = row["value_wk_potentiell_0"]?.raw;
-    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
-
-    plzWerte[plz] = {
-      wk: typeof wk === "number" ? wk : 0,
-      wkPot: typeof wkPot === "number" ? wkPot : 0,
-      hz: hzFlag
-    };
-  });
-
-  // Layer aktualisieren
-  this._geoLayer.eachLayer(layer => {
-    const plz = layer.feature?.properties?.plz?.trim();
-
-    // Werte aus gefilterten Daten holen
-    const values = plzWerte[plz] || { wk: 0, wkPot: 0, hz: false };
-
-    // HZ → WK in %, Nicht-HZ → WK potentiell
-    const value = values.hz ? values.wk : values.wkPot;
-
-    layer.setStyle({
-      fillColor: this.getColor(value, values.hz),
-      fillOpacity: 0.5
+  // ❗ Keine Erhebung → alles neutral
+  if (!this._activeFilter || !this._activeFilter.erhID) {
+    this._geoLayer.eachLayer(layer => {
+      layer.setStyle({
+        fillColor: "#cfd4da",
+        fillOpacity: 0.3,
+        color: "white",
+        weight: 1
+      });
     });
+    return;
+  }
 
-    // Tooltip aktualisieren (falls vorhanden)
-    const note = layer.feature?.properties?.note;
-    if (note && layer.setTooltipContent) {
-      layer.setTooltipContent(note);
+  // ❗ Datenbasis = immer aggregierte gefilterte Kennwerte
+  const kennwerte = this.filteredKennwerte || {};
+
+  // ❗ Radiusfilter berücksichtigen
+  const radiusSet = this.plzImRadius instanceof Set ? this.plzImRadius : null;
+
+  this._geoLayer.eachLayer(layer => {
+    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+
+    // PLZ hat keine Daten → grau
+    if (!kennwerte[plz]) {
+      layer.setStyle({
+        fillColor: "#cfd4da",
+        fillOpacity: 0.3,
+        color: "white",
+        weight: 1
+      });
+      return;
     }
+
+    // Radiusfilter aktiv → PLZ außerhalb → grau
+    if (radiusSet && radiusSet.size > 0 && !radiusSet.has(plz)) {
+      layer.setStyle({
+        fillColor: "#cfd4da",
+        fillOpacity: 0.2,
+        color: "white",
+        weight: 1
+      });
+      return;
+    }
+
+    // ❗ Werte holen
+    const data = kennwerte[plz];
+    const isHZ = data.hz === true;
+    const value = isHZ ? data.wk : data.wkPot;
+
+    // ❗ Farbe bestimmen
+    const color = this.getColor(value, isHZ);
+
+    // ❗ Layer einfärben
+    layer.setStyle({
+      fillColor: color,
+      fillOpacity: 0.5,
+      color: "white",
+      weight: 1
+    });
   });
 }
+
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
@@ -1864,9 +1895,9 @@ getPolygonCenter(layer) {
 applyRadiusFilter(radius) {
   if (!this._currentCenter || !this._currentCenter.lat || !this._currentCenter.lng) {
     console.warn("⏳ applyRadiusFilter abgebrochen: Kein Kartenmittelpunkt.");
-    return; // ❗ NICHT plzImRadius löschen!
+    this.plzImRadius = new Set();
+    return;
   }
-
 
   // ❗ Schutz: Keine Kennwerte vorhanden
   if (!this.filteredKennwerte || typeof this.filteredKennwerte !== "object") {
@@ -1876,24 +1907,28 @@ applyRadiusFilter(radius) {
   }
 
   const center = this._currentCenter;
-  if (!center) {
-    console.warn("⏳ applyRadiusFilter: Kein Kartenmittelpunkt.");
-    this.plzImRadius = new Set();
-    return;
-  }
-
   const result = new Set();
 
   Object.keys(this.filteredKennwerte).forEach(plz => {
-    const coords = this.plzKoordinaten[plz];
+    const coords = this.plzKoordinaten?.[plz];
     if (!coords) return;
 
-    const dist = this._distance(center.lat, center.lng, coords.lat, coords.lon);
+    const dist = this.getDistanceKm(center.lat, center.lng, coords.lat, coords.lon);
     if (dist <= radius) result.add(plz);
   });
 
   this.plzImRadius = result;
+
+  // ❗ Karte live aktualisieren
+  this.updateGeoLayer();
+
+  // ❗ Tabelle live aktualisieren
+  const entries = Object.entries(this.filteredKennwerte)
+    .filter(([plz]) => this.plzImRadius.has(plz));
+
+  this.renderDataTableFromEntries(entries);
 }
+
 
 
 
@@ -1913,16 +1948,14 @@ initRadiusSlider() {
     const radius = Number(slider.value);
     valueLabel.textContent = radius;
 
-    // 1) Karte live filtern
+    // 1) Radiusfilter anwenden
     this.applyRadiusFilter(radius);
 
-    // 2) Tabelle live filtern
-    this.renderDataTable(this.filteredKennwerte);
-
-    // 3) Optional: Zoom live aktualisieren
-    // this.zoomToFilteredPLZ();
+    // 2) Marker NICHT filtern — Phantom-Modus bleibt erhalten
+    this.updateMarkers();
   });
 }
+
 
 
 getColorForPLZ(plz) {
@@ -2031,48 +2064,70 @@ getColorForPLZ(plz) {
   }
 
   async render() {
-    if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-      console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-      return;
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+    return;
+  }
+
+  this.showSpinner();
+
+  const rawData = this._myDataSource.data;
+
+  // 🔧 Dropdowns vorbereiten
+  this._erhData = this.buildErhebungsStruktur(rawData);
+  this.setupFilterDropdowns();
+
+  // ❗ 1) Wenn noch keine Erhebung gewählt wurde → NICHTS anzeigen
+  if (!this._activeFilter || !this._activeFilter.erhID) {
+    console.log("⏳ render(): Keine Erhebung gewählt → UI bleibt leer.");
+
+    this.filteredKennwerte = {};
+    this.aggregatedPLZ = {};
+    this.detailedPLZ = {};
+
+    // Tabelle leeren
+    this._shadowRoot.getElementById("table-container").innerHTML = "";
+
+    // Marker entfernen
+    if (this.filteredGroup) this.filteredGroup.clearLayers();
+
+    // Geo-Layer neutral lassen
+    if (this._geoLayer) {
+      this._geoLayer.eachLayer(layer => {
+        layer.setStyle({
+          fillColor: "#cfd4da",
+          fillOpacity: 0.3,
+          color: "white",
+          weight: 1
+        });
+      });
     }
 
-    this.showSpinner();
-
-    const rawData = this._myDataSource.data;
-
-    // 🔧 Filterstruktur & Dropdowns vorbereiten
-    this._erhData = this.buildErhebungsStruktur(rawData);
-    this.setupFilterDropdowns();
-
-    // 🔍 Filter anwenden oder Rohdaten verwenden
-    const isFiltered = !!this._activeFilter;
-    const filteredData = isFiltered ? this.getFilteredData() : rawData;
-
-    // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
-    this.prepareMapData(filteredData);
-
-
-
-    // 🌍 GeoJSON laden & Layer aktualisieren
-    await this.loadGeoJson();
-
-    this.updateGeoLayer();
-      this.createAllMarkers();
-    // 📌 PLZs extrahieren für Marker-Filterung
-    const filteredPLZs = isFiltered
-      ? filteredData
-          .map(d => d["dimension_plz_0"]?.id?.trim())
-          .filter(plz => plz && plz !== "@NullMember")
-      : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
-
-    // 📍 Marker anzeigen (gefiltert oder vollständig)
-    this.updateMarkers(filteredPLZs);
-
-    // 📊 Tabelle aktualisieren
-    this.renderDataTable(this.filteredKennwerte);
-
     this.hideSpinner();
+    return;
   }
+
+  // ❗ 2) Wenn Erhebung gewählt → gefilterte Daten holen
+  const filteredData = this.getFilteredData();
+
+  // 📦 Daten für Karte, Marker, Popup vorbereiten
+  this.prepareMapData(filteredData);
+
+  // 🌍 GeoJSON laden (falls noch nicht geschehen)
+  await this.loadGeoJson();
+
+  // 🎨 PLZ-Färbung aktualisieren
+  this.updateGeoLayer();
+
+  // 📍 Marker erzeugen & anzeigen
+  this.createAllMarkers();
+  this.updateMarkers();
+
+  // 📊 Tabelle anzeigen (aggregiert)
+  this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
+
+  this.hideSpinner();
+}
 
 
 
