@@ -380,19 +380,33 @@
       }
 
 connectedCallback() {
-  // Shadow DOM initialisieren
-  if (!this._shadowRoot) {
-    this._shadowRoot = this.attachShadow({ mode: "open" });
-    this._shadowRoot.innerHTML = this.template();
-  }
+  this.showSpinner();
 
-  // Leaflet laden → erst danach Karte initialisieren
-  this.loadLeaflet(() => {
+  // Leaflet laden INS Shadow DOM
+  if (!window.L) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+
+    script.onload = () => {
+      console.log("Leaflet geladen.");
+      this.initializeMapBase();
+      this.initRadiusSlider();
+      this.render();
+    };
+
+    this._shadowRoot.appendChild(link);
+    this._shadowRoot.appendChild(script);
+  } else {
     this.initializeMapBase();
     this.initRadiusSlider();
-    this.render();   // jetzt ist L DEFINITIV verfügbar
-  });
+    this.render();
+  }
 }
+
 
 
 
@@ -527,26 +541,7 @@ this.map.fitBounds(bounds, {
 
 
 
-loadLeaflet(callback) {
-  if (window.L) {
-    callback();
-    return;
-  }
 
-  const script = document.createElement("script");
-  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-  script.onload = () => {
-    console.log("Leaflet geladen.");
-    callback();
-  };
-  script.onerror = () => console.error("Leaflet konnte nicht geladen werden.");
-  document.head.appendChild(script);
-
-  const css = document.createElement("link");
-  css.rel = "stylesheet";
-  css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-  document.head.appendChild(css);
-}
 
 renderDataTable(data) {
   const container = this._shadowRoot.getElementById("table-container");
