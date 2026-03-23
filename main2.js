@@ -1138,8 +1138,7 @@ createAllMarkers() {
 
     return this.iconCache[nl];
   }
-
-  showPopup(feature) {
+showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
     .trim();
@@ -1154,6 +1153,8 @@ createAllMarkers() {
 
   const isHZ = daten.isHZ;
   const isCritical = daten.isCritical;
+
+  const hzSymbol = isCritical ? "⚠️" : isHZ ? "🟢" : "🔴";
 
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
@@ -1178,7 +1179,7 @@ createAllMarkers() {
   let rows = "";
 
   Object.entries(beschreibungen).forEach(([id, label], index) => {
-    const rawValue = daten.sum[id];
+    const rawValue = daten[id]?.raw;
     const wert = typeof rawValue === "number"
       ? rawValue.toLocaleString("de-DE")
       : "–";
@@ -1197,13 +1198,11 @@ createAllMarkers() {
 
   const sidePopup = this._shadowRoot.getElementById('side-popup');
 
-  const hzClass = isCritical ? "critical" : isHZ ? "hz" : "normal";
-
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
       <thead>
-        <tr><th colspan="2" class="title-cell ${hzClass}" title="${note}">${note}</th></tr>
+        <tr><th colspan="2" class="title-cell">${hzSymbol} ${note}</th></tr>
         <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -1211,11 +1210,11 @@ createAllMarkers() {
   `;
 
   // Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
-  const umsatz = daten.sum["value_hr_n_umsatz_0"];
+  const umsatz = daten["value_hr_n_umsatz_0"]?.raw;
 
   if (!isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPot = daten.sum["value_wk_potentiell_0"];
-    const hzPot = daten.sum["value_hz_potentiell_0"];
+    const wkPot = daten["value_wk_potentiell_0"]?.raw;
+    const hzPot = daten["value_hz_potentiell_0"]?.raw;
 
     const extraTable = `
       <table class="extra-table">
@@ -1436,31 +1435,30 @@ updateGeoLayer() {
       layer.setTooltipContent(note);
     }
 
-    // --- 🔥 Kritische PLZ markieren ---
+    // Nur kritische PLZ markieren
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical === true;
 
-    // Falls kritisch → Marker setzen
     if (isCritical) {
+      // Marker existiert bereits?
       if (!this.criticalMarkers[plz]) {
         const center = layer.getBounds().getCenter();
 
         const icon = L.divIcon({
           html: `<div style="
-            background:#ff0000;
-            color:white;
-            font-weight:bold;
-            width:18px;
-            height:18px;
+            background:#ffffff;
+            border:2px solid #b41821;
             border-radius:50%;
+            width:22px;
+            height:22px;
             display:flex;
             align-items:center;
             justify-content:center;
-            font-size:12px;
-            box-shadow:0 0 4px rgba(0,0,0,0.4);
-          ">!</div>`,
+            font-size:14px;
+            font-weight:bold;
+          ">⚠️</div>`,
           className: "",
-          iconSize: [18, 18],
-          iconAnchor: [9, 9]
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
         });
 
         const marker = L.marker(center, {
@@ -1479,6 +1477,8 @@ updateGeoLayer() {
     }
   });
 }
+
+
 
 
 
