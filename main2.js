@@ -502,6 +502,8 @@ onEachFeature: (feature, layer) => {
 
 
 
+
+
     });
 
 this._geoLayer.addTo(this.map);
@@ -1150,80 +1152,43 @@ initializeMapBase() {
     }
   }
 
-  createAllMarkers() {
-   if (!this._activeFilter || !this._activeFilter.erhID) {
-  console.warn("⏳ createAllMarkers übersprungen: Keine Erhebung aktiv.");
-  this.filteredGroup.clearLayers();
-  this.allMarkers = [];
-  this.nlMarkers = [];
-  return;
-}
+createAllMarkers() {
+  console.log("📌 createAllMarkers() gestartet");
 
-  if (!this.aggregatedPLZ || Object.keys(this.aggregatedPLZ).length === 0) {
-    console.log("⏳ Noch keine Erhebung geladen → keine Marker anzeigen");
-    this.filteredGroup.clearLayers();
-    this.allMarkers = [];
-    this.nlMarkers = [];
+  if (!this.map) {
+    console.error("❌ createAllMarkers(): map fehlt");
+    return;
+  }
+
+  if (!this.Niederlassung || !this.nlKoordinaten) {
+    console.error("❌ createAllMarkers(): Datenstrukturen fehlen");
     return;
   }
 
   this.filteredGroup.clearLayers();
-  this.allMarkers = [];
-  this.nlMarkers = [];
 
-  const seen = new Set();
-
-  Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
-    const coords = this.nlKoordinaten[nlKey];
-    if (!coords) return;
-
-    if (!seen.has(nlKey)) {
-      const icon = this.createMarkerIcon(nlName);
-
-      const marker = L.marker([coords.lat, coords.lon], {
-        icon,
-        title: nlName,
-        nl: nlKey
-      });
-
-marker.on("click", () => {
-  console.log("▶ Marker-Klick auf NL:", nlKey);
-
-  // ❗ Filter unterdrücken während Highlight/Popup
-  this._suppressFilter = true;
-
-  // 1) NL-Filter anwenden (aggregiert)
-  this.filterByNL(null, nlKey);
-
-  // 2) PLZ-Liste der NL holen
-  const plzList = Object.keys(this.filteredKennwerte);
-  if (plzList.length === 0) {
-    this._suppressFilter = false;
-    return;
-  }
-
-  // 3) Erste PLZ highlighten
-  const firstPLZ = plzList[0];
-  this.highlightMapArea(firstPLZ);
-
-  // 4) Popup öffnen (immer aggregiert)
-  this.openPopupFromTable(firstPLZ);
-
-  // ❗ Suppress wieder deaktivieren
-  this._suppressFilter = false;
-
-  // 5) Marker aktualisieren (Phantom-Modus)
-  this.updateMarkers();
-
-  // 6) Zoom auf gefilterte PLZ
-  this.zoomToFilteredPLZ();
-});
-
-
-      seen.add(nlKey);
+  for (const [nl, info] of Object.entries(this.Niederlassung)) {
+    const coords = this.nlKoordinaten[nl];
+    if (!coords) {
+      console.warn("⚠️ NL ohne Koordinaten:", nl);
+      continue;
     }
-  });
+
+    const marker = L.marker([coords.lat, coords.lng], { title: nl });
+
+    marker.on("click", () => {
+      console.log("📍 NL angeklickt:", nl);
+      this._activeNLFilter = nl;
+      this.applyNLFilter(nl);
+    });
+
+    this.filteredGroup.addLayer(marker);
+  }
+
+  console.log("📌 Marker erzeugt:", this.filteredGroup.getLayers().length);
 }
+
+
 
 
   createMarkerIcon(nl) {
@@ -1410,12 +1375,13 @@ applyFilter(erhID, jahr, nummer) {
     return;
   }
 
+  // Aktiven Filter setzen
   this._activeFilter = { erhID, jahr, nummer };
   console.log("📌 Aktiver Filter gesetzt:", this._activeFilter);
 
   const data = this._myDataSource.data;
 
-  // Filter anwenden
+  // Daten filtern
   const filteredData = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
@@ -1456,9 +1422,11 @@ applyFilter(erhID, jahr, nummer) {
 
   console.log("📌 Aggregierte PLZ:", this.aggregatedPLZ);
 
-  this.filteredKennwerte = this.aggregatedPLZ;
+  // WICHTIG: Map-Daten vorbereiten
+  this.prepareMapData(filteredData);
 
   // Tabelle aktualisieren
+  this.filteredKennwerte = this.aggregatedPLZ;
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
   // Karte färben
@@ -1819,70 +1787,46 @@ set myDataSource(dataBinding) {
     this.render?.();
   }
 }
-
 prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
-  const geoFeatures = this._geoData?.features || [];
+  console.log("📌 prepareMapData() gestartet");
 
-  // Reset
-  this.kennwerte = {};
-  this.hzFlags = {};
+  if (!filteredData || filteredData.length === 0) {
+    console.warn("⚠️ prepareMapData(): Keine Daten übergeben");
+    this.Niederlassung = {};
+    this.nlKoordinaten = {};
+    return;
+  }
+
   this.Niederlassung = {};
   this.nlKoordinaten = {};
-  this.plzKennwerte = {};
-  this.filteredKennwerte = {};
-  this.extraNLs = [];
 
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0"
-  ];
-
-  // Geo-Notes
-  const geoNotes = {};
-  geoFeatures.forEach(f => {
-    const plz = f.properties?.plz?.trim();
-    const note = f.properties?.note?.trim();
-    if (plz) geoNotes[plz] = note || "";
-  });
-
-  // Verarbeitung der gefilterten Daten
   filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
-    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    const nl = row["dimension_niederlassung_0"]?.id;
+    const lat = row["value_lat_0"]?.raw;
+    const lng = row["value_lng_0"]?.raw;
 
-    const lat = parseFloat(row["dimension_Lat_0"]?.label);
-    const lon = parseFloat(row["dimension_lon_0"]?.label);
+    if (!nl) return;
 
-    // --- Niederlassung speichern ---
-    if (nlKey) {
-      this.Niederlassung[nlKey] = nlKey;
-
-      if (!isNaN(lat) && !isNaN(lon)) {
-        this.nlKoordinaten[nlKey] = { lat, lon };
-      }
+    if (!this.Niederlassung[nl]) {
+      this.Niederlassung[nl] = { plz: new Set(), umsatz: 0, wk: 0 };
     }
 
-    // --- PLZ-Kennwerte speichern ---
-    if (plz && plz !== "@NullMember") {
-      this.filteredKennwerte[plz] = {};
-      this.hzFlags[plz] = hzFlag;
+    const plz = String(row["dimension_plz_0"]?.id ?? "").padStart(5, "0");
+    this.Niederlassung[nl].plz.add(plz);
 
-      kennzahlenIDs.forEach(id => {
-        const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
-      });
+    this.Niederlassung[nl].umsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    this.Niederlassung[nl].wk += row["value_wk_nachbar_0"]?.raw ?? 0;
 
-      this.filteredKennwerte[plz]["dimension_note_0"] = {
-        label: geoNotes[plz] || ""
-      };
+    if (lat && lng) {
+      this.nlKoordinaten[nl] = { lat, lng };
     }
   });
+
+  console.log("📌 Niederlassung:", this.Niederlassung);
+  console.log("📌 NL-Koordinaten:", this.nlKoordinaten);
 }
+
+
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
 getDistanceKm(lat1, lon1, lat2, lon2) {
