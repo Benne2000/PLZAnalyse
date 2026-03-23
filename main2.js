@@ -380,10 +380,14 @@
       }
 
 connectedCallback() {
+  console.log("📌 connectedCallback() gestartet");
+
   this.showSpinner();
 
-  // Leaflet laden INS Shadow DOM
+  // Prüfen, ob Leaflet bereits geladen ist
   if (!window.L) {
+    console.log("🌍 Leaflet noch nicht geladen → lade Script + CSS");
+
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
@@ -392,20 +396,20 @@ connectedCallback() {
     script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
 
     script.onload = () => {
-      console.log("Leaflet geladen.");
+      console.log("✅ Leaflet erfolgreich geladen");
       this.initializeMapBase();
-      this.initRadiusSlider();
-      this.render();
     };
 
     this._shadowRoot.appendChild(link);
     this._shadowRoot.appendChild(script);
+
   } else {
+    console.log("🌍 Leaflet bereits vorhanden");
     this.initializeMapBase();
-    this.initRadiusSlider();
-    this.render();
   }
 }
+
+
 
 
 
@@ -481,30 +485,16 @@ style: feature => {
   };
 }
 ,
-
 onEachFeature: (feature, layer) => {
   layer.on("click", () => {
     const plz = String(feature.properties.plz).padStart(5, "0");
+    console.log("🖱️ PLZ angeklickt:", plz);
 
-    // ❗ Filter komplett unterdrücken
-    this._suppressFilter = true;
-
-    // Aggregierte Daten dieser PLZ holen
-    const agg = this.aggregatedPLZ?.[plz];
-
-    // Karte highlighten
     this.highlightMapArea(plz);
-
-    // Popup öffnen (immer Aggregat)
     this.openPopupFromTable(plz);
-
-    // Tabelle nur mit dieser einen PLZ
-    this.renderDataTableFromEntries([[plz, agg]]);
-
-    // Suppress wieder deaktivieren
-    this._suppressFilter = false;
   });
 }
+
 
 
 
@@ -1079,33 +1069,49 @@ zoomToFilteredPLZ() {
 
 
 initializeMapBase() {
+  console.log("📌 initializeMapBase() gestartet");
+
   const mapContainer = this._shadowRoot.getElementById('map');
-  if (!mapContainer) return;
+  if (!mapContainer) {
+    console.error("❌ Kein #map Container im Shadow DOM gefunden!");
+    return;
+  }
 
   // Karte erzeugen
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
+  console.log("🗺️ Leaflet Map erzeugt:", this.map);
 
   // Tiles NICHT automatisch laden
   this._tilesVisible = false;
+  console.log("🧱 Tiles initial unsichtbar");
 
   // Marker-Gruppen
   this.filteredGroup = L.layerGroup().addTo(this.map);
   this.neighbourGroup = L.layerGroup();
+  console.log("📌 Marker-Gruppen initialisiert");
 
   // Resize-Handling
   if (!this._resizeObserver) {
     this._resizeObserver = new ResizeObserver(() => {
-      if (this.map) this.map.invalidateSize();
+      if (this.map) {
+        console.log("📐 ResizeObserver → invalidateSize()");
+        this.map.invalidateSize();
+      }
     });
     this._resizeObserver.observe(this._shadowRoot.host);
   }
 
   // GeoJSON laden
+  console.log("🌐 Lade GeoJSON…");
   this.loadGeoJson();
 
   // Radius-Slider initialisieren
   this.initRadiusSlider();
+
+  this.hideSpinner();
+  console.log("📌 initializeMapBase() abgeschlossen");
 }
+
 
 
 
@@ -1397,91 +1403,70 @@ filterByNL(plz, nl) {
   this.zoomToFilteredPLZ();
 }
 applyFilter(erhID, jahr, nummer) {
-  console.log("▶ applyFilter gestartet", erhID, jahr, nummer);
-
-  if (this._suppressFilter) return;
-  if (this._isInitialLoad) return;
+  console.log("▶ applyFilter gestartet:", erhID, jahr, nummer);
 
   if (!this._myDataSource || this._myDataSource.state !== "success") {
-    console.warn("⏳ applyFilter abgebrochen: Datenquelle noch nicht bereit.");
+    console.warn("⏳ applyFilter abgebrochen: Datenquelle nicht bereit.");
     return;
   }
 
-  if (erhID && jahr && nummer) {
-    this._activeFilter = { erhID, jahr, nummer };
-  }
-
-  const { erhID: fID, jahr: fJahr, nummer: fNum } = this._activeFilter || {};
-  if (!fID || !fJahr || !fNum) return;
+  this._activeFilter = { erhID, jahr, nummer };
+  console.log("📌 Aktiver Filter gesetzt:", this._activeFilter);
 
   const data = this._myDataSource.data;
+
+  // Filter anwenden
   const filteredData = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
-    return id === fID && y === fJahr && num === fNum;
+    return id === erhID && y === jahr && num === nummer;
   });
 
+  console.log("📊 Anzahl gefilterter Zeilen:", filteredData.length);
+
   if (filteredData.length === 0) {
-    this.aggregatedPLZ = {};
-    this.detailedPLZ = {};
+    console.warn("⚠️ Keine Daten für diesen Filter gefunden!");
     this.filteredKennwerte = {};
     this.renderDataTableFromEntries([]);
-    this.filteredGroup.clearLayers();
     return;
   }
 
-  // 🔥 Aggregation neu aufbauen
+  // Aggregation
   this.aggregatedPLZ = {};
-  this.detailedPLZ = {};
-  this._activeNLFilter = null;
+  this.hzFlags = {};
 
   filteredData.forEach(row => {
     const plz = String(row["dimension_plz_0"]?.id ?? "").padStart(5, "0");
-    const nl  = row["dimension_niederlassung_0"]?.id ?? "UNBEKANNT";
-
     const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
-    const wk     = row["value_wk_nachbar_0"]?.raw ?? 0;
-    const hz     = row["dimension_hzflag_0"]?.id === "X";
-
-    if (!this.detailedPLZ[plz]) this.detailedPLZ[plz] = [];
-    this.detailedPLZ[plz].push({ nl, umsatz, wk, hz });
+    const wk = row["value_wk_nachbar_0"]?.raw ?? 0;
+    const hz = row["dimension_hzflag_0"]?.id === "X";
 
     if (!this.aggregatedPLZ[plz]) {
-      this.aggregatedPLZ[plz] = { umsatz: 0, wk: 0, hz: false };
+      this.aggregatedPLZ[plz] = { umsatz: 0, wk: 0, wkPot: 0, hz: false };
     }
 
     this.aggregatedPLZ[plz].umsatz += umsatz;
     this.aggregatedPLZ[plz].wk += wk;
+    this.aggregatedPLZ[plz].wkPot += wk;
     this.aggregatedPLZ[plz].hz = this.aggregatedPLZ[plz].hz || hz;
+
+    this.hzFlags[plz] = this.aggregatedPLZ[plz].hz;
   });
+
+  console.log("📌 Aggregierte PLZ:", this.aggregatedPLZ);
 
   this.filteredKennwerte = this.aggregatedPLZ;
 
-  // 🔥 WICHTIG: Map-Daten vorbereiten (setzt Niederlassung, Koordinaten, etc.)
-  this.prepareMapData(filteredData);
-
-  // 🔥 Tabelle
+  // Tabelle aktualisieren
   this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
 
-  // 🔥 Karte
+  // Karte färben
   this.updateGeoLayer();
 
-  // 🔥 Marker
+  // Marker erzeugen
   this.createAllMarkers();
   this.updateMarkers();
-
-  // 🔥 Radiusfilter
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  if (this._currentCenter?.lat && this._currentCenter?.lng) {
-    this.applyRadiusFilter(radius);
-  }
-
-  // 🔥 Tabelle nach Radiusfilter
-  this.renderDataTableFromEntries(Object.entries(this.filteredKennwerte));
-
-  // 🔥 Zoom
-  this.zoomToFilteredPLZ();
 
   console.log("▶ applyFilter abgeschlossen");
 }
@@ -1796,21 +1781,45 @@ updateMarkers() {
         }
       }
 
-      set myDataSource(dataBinding) {
-        this._myDataSource = dataBinding;
+set myDataSource(dataBinding) {
+  console.log("📌 set myDataSource() aufgerufen:", dataBinding);
 
-        if (!this.map) {
-          const waitForMap = setInterval(() => {
-            if (this.map) {
-              clearInterval(waitForMap);
-              this.render();
-            }
-          }, 100);
-          return;
-        }
+  // 1) Binding merken
+  this._myDataSource = dataBinding;
 
-        this.render();
-      }
+  // 2) Wenn gar kein Binding da ist → nichts tun
+  if (!dataBinding) {
+    console.warn("⚠️ myDataSource ist NULL oder undefined.");
+    return;
+  }
+
+  // 3) Warten, bis das Binding wirklich Daten hat
+  if (dataBinding.state !== "success") {
+    console.warn("⏳ myDataSource noch nicht im Status 'success':", dataBinding.state);
+    return;
+  }
+
+  console.log("✅ Datenquelle bereit. Zeilen:", dataBinding.data?.length);
+
+  // 4) Erhebungsstruktur aus den Rohdaten bauen (für Dropdowns)
+  this.erhebungsStruktur = this.buildErhebungsStruktur(dataBinding.data);
+  console.log("📊 ErhebungsStruktur:", this.erhebungsStruktur);
+
+  // 5) Dropdowns befüllen (Erhebung / Jahr / Nummer)
+  this.populateDropdowns?.();
+
+  // 6) Wenn bereits ein Filter gesetzt ist → direkt anwenden
+  if (this._activeFilter && this._activeFilter.erhID && this._activeFilter.jahr && this._activeFilter.nummer) {
+    console.log("🔄 Wende bestehenden Filter erneut an:", this._activeFilter);
+    const { erhID, jahr, nummer } = this._activeFilter;
+    this.applyFilter(erhID, jahr, nummer);
+  } else {
+    // 7) Kein aktiver Filter → nur neutrales Rendern (z.B. leere Tabelle, graue PLZ)
+    console.log("ℹ️ Kein aktiver Filter → neutrales render()");
+    this.render?.();
+  }
+}
+
 prepareMapData(filteredData) {
   const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
