@@ -490,10 +490,12 @@ onEachFeature: (feature, layer) => {
     const plz = String(feature.properties.plz).padStart(5, "0");
     console.log("🖱️ PLZ angeklickt:", plz);
 
+    // Kein Filter, kein Tabellen-Override, kein Zoom
     this.highlightMapArea(plz);
     this.openPopupFromTable(plz);
   });
 }
+
 
 
 
@@ -1375,13 +1377,10 @@ applyFilter(erhID, jahr, nummer) {
     return;
   }
 
-  // Aktiven Filter setzen
   this._activeFilter = { erhID, jahr, nummer };
-  console.log("📌 Aktiver Filter gesetzt:", this._activeFilter);
 
   const data = this._myDataSource.data;
 
-  // Daten filtern
   const filteredData = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
@@ -1422,7 +1421,7 @@ applyFilter(erhID, jahr, nummer) {
 
   console.log("📌 Aggregierte PLZ:", this.aggregatedPLZ);
 
-  // WICHTIG: Map-Daten vorbereiten
+  // 🔥 WICHTIG: Map-Daten vorbereiten
   this.prepareMapData(filteredData);
 
   // Tabelle aktualisieren
@@ -1825,6 +1824,7 @@ prepareMapData(filteredData) {
   console.log("📌 Niederlassung:", this.Niederlassung);
   console.log("📌 NL-Koordinaten:", this.nlKoordinaten);
 }
+
 
 
 
