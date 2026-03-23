@@ -1191,6 +1191,7 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
+
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -1200,16 +1201,7 @@ getFilteredData() {
   const data = this._myDataSource.data;
   const { erhID, jahr, nummer } = this._activeFilter || {};
 
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0",
-    "value_wk_potentiell_0", "value_hz_potentiell_0"
-  ];
-
-  const aggregated = {};   // ← NEU: Aggregationsstruktur
+  const aggregated = {};
   const filtered = [];
 
   data.forEach(row => {
@@ -1224,34 +1216,96 @@ getFilteredData() {
 
     filtered.push(row);
 
-    // --- Aggregation vorbereiten ---
     if (!aggregated[plz]) {
       aggregated[plz] = {
-        sum: {},
+        rows: [],
         hzCount: 0,
-        rows: []
+        sum: {
+          umsatzNetto: 0,
+          hzKosten: 0,
+          umsatzErhebung: 0,
+          kdErhebung: 0,
+          auflage: 0,
+          potHzAbs: 0
+        },
+        avg: {
+          werbeverweigerer: [],
+          haushalte: [],
+          kaufkraft: []
+        }
       };
     }
 
-    aggregated[plz].rows.push(row);
+    const entry = aggregated[plz];
+    entry.rows.push(row);
 
-    // --- HZ-Flag zählen ---
+    // HZ-Flag
     const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
-    if (hz) aggregated[plz].hzCount++;
+    if (hz) entry.hzCount++;
 
-    // --- Kennzahlen summieren ---
-    kennzahlenIDs.forEach(id => {
-      const raw = row[id]?.raw;
-      if (typeof raw === "number") {
-        aggregated[plz].sum[id] = (aggregated[plz].sum[id] || 0) + raw;
-      }
-    });
+    // Summen
+    entry.sum.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    entry.sum.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+    entry.sum.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
+    entry.sum.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
+    entry.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
+    entry.sum.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
+
+    // Durchschnitte
+    const wv = row["value_werbeverweigerer_0"]?.raw;
+    if (typeof wv === "number") entry.avg.werbeverweigerer.push(wv);
+
+    const hh = row["value_haushalte_0"]?.raw;
+    if (typeof hh === "number") entry.avg.haushalte.push(hh);
+
+    const kk = row["value_kaufkraft_0"]?.raw;
+    if (typeof kk === "number") entry.avg.kaufkraft.push(kk);
   });
 
-  // --- HZ-Status ableiten ---
-  Object.values(aggregated).forEach(entry => {
+  // Finalisierung
+  Object.entries(aggregated).forEach(([plz, entry]) => {
+    const sum = entry.sum;
+    const avg = entry.avg;
+
+    // Durchschnittswerte
+    const avgOrZero = arr => arr.length ? arr.reduce((a,b)=>a+b,0) / arr.length : 0;
+
+    const avgWerbeverweigerer = avgOrZero(avg.werbeverweigerer);
+    const avgHaushalte = avgOrZero(avg.haushalte);
+    const avgKaufkraft = avgOrZero(avg.kaufkraft);
+
+    // Berechnete Werte
+    const umsatzNetto = sum.umsatzNetto;
+    const hzKosten = sum.hzKosten;
+
+    const umsatzPHH = avgHaushalte > 0 ? umsatzNetto / avgHaushalte : 0;
+    const wkPercent = umsatzNetto > 0 ? hzKosten / umsatzNetto : 0;
+    const wkNachbar = wkPercent; // identisch laut Vorgabe
+    const bon = sum.kdErhebung > 0 ? sum.umsatzErhebung / sum.kdErhebung : 0;
+    const potHzPercent = umsatzNetto > 0 ? sum.potHzAbs / umsatzNetto : 0;
+
+    // HZ-Status
     entry.isHZ = entry.hzCount > 0;
     entry.isCritical = entry.hzCount > 1;
+
+    // Finalisierte Kennwerte speichern
+    entry.final = {
+      plz,
+      umsatzNetto,
+      umsatzPHH,
+      wkPercent,
+      wkNachbar,
+      hzKosten,
+      avgWerbeverweigerer,
+      avgHaushalte,
+      avgKaufkraft,
+      umsatzErhebung: sum.umsatzErhebung,
+      kdErhebung: sum.kdErhebung,
+      bon,
+      auflage: sum.auflage,
+      potHzAbs: sum.potHzAbs,
+      potHzPercent
+    };
   });
 
   // Globale Strukturen setzen
@@ -1261,14 +1315,15 @@ getFilteredData() {
   this.filteredPLZWerte = {};
   Object.entries(aggregated).forEach(([plz, entry]) => {
     this.filteredPLZWerte[plz] = {
-      wk: entry.sum["value_wk_in_percent_0"] ?? 0,
-      wkPot: entry.sum["value_wk_potentiell_0"] ?? 0,
+      wk: entry.final.wkPercent * 100,
+      wkPot: entry.final.potHzPercent * 100,
       hz: entry.isHZ
     };
   });
 
   return filtered;
 }
+
 
 
 
