@@ -531,6 +531,131 @@ renderDataTable(data) {
   this.renderDataTableFromEntries(entries);
 }
 
+getFilteredData() {
+  if (!this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
+    return [];
+  }
+
+  const data = this._myDataSource.data;
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  const aggregated = {};
+  const filtered = [];
+
+  data.forEach(row => {
+    const id = row["dimension_erhebung_0"]?.id?.trim();
+    const y = row["dimension_jahr_0"]?.id?.trim();
+    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ).padStart(5, "0");
+
+    if (id !== erhID || y !== jahr || num !== nummer) return;
+    if (!plz || plz === "@NullMember") return;
+
+    filtered.push(row);
+
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
+        hzCount: 0,
+        sum: {
+          umsatzNetto: 0,
+          hzKosten: 0,
+          umsatzErhebung: 0,
+          kdErhebung: 0,
+          auflage: 0,
+          potHzAbs: 0
+        },
+        avgArrays: {
+          werbeverweigerer: [],
+          haushalte: [],
+          kaufkraft: []
+        }
+      };
+    }
+
+    const entry = aggregated[plz];
+
+    // HZ-Flag
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    if (hz) entry.hzCount++;
+
+    // Summen
+    entry.sum.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    entry.sum.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+    entry.sum.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
+    entry.sum.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
+    entry.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
+    entry.sum.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
+
+    // Durchschnitte
+    const wv = row["value_werbeverweigerer_0"]?.raw;
+    if (typeof wv === "number") entry.avgArrays.werbeverweigerer.push(wv);
+
+    const hh = row["value_haushalte_0"]?.raw;
+    if (typeof hh === "number") entry.avgArrays.haushalte.push(hh);
+
+    const kk = row["value_kaufkraft_0"]?.raw;
+    if (typeof kk === "number") entry.avgArrays.kaufkraft.push(kk);
+  });
+
+  const avgOrZero = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+  // Jetzt in die alte Struktur schreiben
+  this.filteredKennwerte = {};
+  this.filteredPLZWerte = {};
+
+  Object.entries(aggregated).forEach(([plz, entry]) => {
+    const sum = entry.sum;
+    const avgArr = entry.avgArrays;
+
+    const avgWerbeverweigerer = avgOrZero(avgArr.werbeverweigerer);
+    const avgHaushalte = avgOrZero(avgArr.haushalte);
+    const avgKaufkraft = avgOrZero(avgArr.kaufkraft);
+
+    const umsatzNetto = sum.umsatzNetto;
+    const hzKosten = sum.hzKosten;
+
+    const umsatzPHH = avgHaushalte > 0 ? umsatzNetto / avgHaushalte : 0;
+    const wkPercent = umsatzNetto > 0 ? hzKosten / umsatzNetto : 0;
+    const wkNachbar = wkPercent;
+    const bon = sum.kdErhebung > 0 ? sum.umsatzErhebung / sum.kdErhebung : 0;
+    const potHzPercent = umsatzNetto > 0 ? sum.potHzAbs / umsatzNetto : 0;
+
+    const isHZ = entry.hzCount > 0;
+    const isCritical = entry.hzCount > 1;
+
+    // 👇 Hier schreiben wir in das Format, das dein restlicher Code erwartet
+    this.filteredKennwerte[plz] = {
+      isHZ,
+      isCritical,
+
+      // "Rohdaten"-ähnliche Struktur, aber mit aggregierten Werten
+      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      value_umsatz_p_hh_0: { raw: umsatzPHH },
+      value_wk_in_percent_0: { raw: wkPercent },
+      value_wk_nachbar_0: { raw: wkNachbar },
+      value_hz_kosten_0: { raw: hzKosten },
+      value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
+      value_haushalte_0: { raw: avgHaushalte },
+      value_kaufkraft_0: { raw: avgKaufkraft },
+      value_ums_erhebung_0: { raw: sum.umsatzErhebung },
+      value_kd_erhebung_0: { raw: sum.kdErhebung },
+      value_bon_erhebung_0: { raw: bon },
+      value_auflage_0: { raw: sum.auflage },
+      value_hz_potentiell_0: { raw: sum.potHzAbs },
+      value_wk_potentiell_0: { raw: potHzPercent }
+    };
+
+    this.filteredPLZWerte[plz] = {
+      wk: wkPercent * 100,
+      wkPot: potHzPercent * 100,
+      hz: isHZ
+    };
+  });
+
+  return filtered;
+}
 
 
 sortTableByColumn(columnIndex) {
