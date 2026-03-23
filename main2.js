@@ -386,15 +386,14 @@ connectedCallback() {
     this._shadowRoot.innerHTML = this.template();
   }
 
-  // Karte IMMER sofort initialisieren
-  this.initializeMapBase();
-
-  // Radius-Slider initialisieren
-  this.initRadiusSlider();
-
-  // Erst danach darf render() laufen
-  this.render();
+  // Leaflet laden → erst danach Karte initialisieren
+  this.loadLeaflet(() => {
+    this.initializeMapBase();
+    this.initRadiusSlider();
+    this.render();   // jetzt ist L DEFINITIV verfügbar
+  });
 }
+
 
 
 
@@ -528,6 +527,26 @@ this.map.fitBounds(bounds, {
 
 
 
+loadLeaflet(callback) {
+  if (window.L) {
+    callback();
+    return;
+  }
+
+  const script = document.createElement("script");
+  script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
+  script.onload = () => {
+    console.log("Leaflet geladen.");
+    callback();
+  };
+  script.onerror = () => console.error("Leaflet konnte nicht geladen werden.");
+  document.head.appendChild(script);
+
+  const css = document.createElement("link");
+  css.rel = "stylesheet";
+  css.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+  document.head.appendChild(css);
+}
 
 renderDataTable(data) {
   const container = this._shadowRoot.getElementById("table-container");
