@@ -1078,15 +1078,15 @@ zoomToFilteredPLZ() {
 
 
 
-  initializeMapBase() {
+initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById('map');
   if (!mapContainer) return;
 
   // Karte erzeugen
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
-  // Tiles laden
-  this.initializeMapTiles();
+  // Tiles NICHT automatisch laden
+  this._tilesVisible = false;
 
   // Marker-Gruppen
   this.filteredGroup = L.layerGroup().addTo(this.map);
@@ -1100,15 +1100,13 @@ zoomToFilteredPLZ() {
     this._resizeObserver.observe(this._shadowRoot.host);
   }
 
-  // GeoJSON laden (PLZ-Gebiete)
+  // GeoJSON laden
   this.loadGeoJson();
 
   // Radius-Slider initialisieren
   this.initRadiusSlider();
-
-  // Erstes Rendern
-  this.render();
 }
+
 
 
 
