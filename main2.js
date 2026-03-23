@@ -379,23 +379,25 @@
         this._sortState = { column: null, direction: "asc" };
       }
 
-      connectedCallback() {
-        this.showSpinner();
+connectedCallback() {
+  // Shadow DOM initialisieren
+  if (!this._shadowRoot) {
+    this._shadowRoot = this.attachShadow({ mode: "open" });
+    this._shadowRoot.innerHTML = this.template();
+  }
 
-        if (!window.L) {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-          const script = document.createElement('script');
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          script.onload = () => this.initializeMapBase();
-          this._shadowRoot.appendChild(link);
-          this._shadowRoot.appendChild(script);
-        } else {
-          this.initializeMapBase();
-        }
+  // Karte IMMER sofort initialisieren
+  this.initializeMapBase();
 
-      }
+  // Radius-Slider initialisieren
+  this.initRadiusSlider();
+
+  // Erst danach darf render() laufen
+  this.render();
+}
+
+
+
   showSpinner() {
     const spinner = this._shadowRoot.getElementById('loading-spinner');
     if (spinner) spinner.classList.remove('hidden');
