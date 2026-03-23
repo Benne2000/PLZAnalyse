@@ -1079,33 +1079,37 @@ zoomToFilteredPLZ() {
 
 
   initializeMapBase() {
-    const mapContainer = this._shadowRoot.getElementById('map');
-    this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
+  const mapContainer = this._shadowRoot.getElementById('map');
+  if (!mapContainer) return;
 
-    // 🧭 Events für Marker-Notizen
-    this.map.on('zoomend', () => this.showNotesOnMap());
-    this.map.on('moveend', () => this.showNotesOnMap());
+  // Karte erzeugen
+  this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
-    // 🧱 Initialisiere Marker-Gruppen und Marker
-    this.filteredGroup = L.layerGroup().addTo(this.map);
-    this.neighbourGroup = L.layerGroup();
+  // Tiles laden
+  this.initializeMapTiles();
 
+  // Marker-Gruppen
+  this.filteredGroup = L.layerGroup().addTo(this.map);
+  this.neighbourGroup = L.layerGroup();
 
-    // 📐 Resize-Handling
-    if (!this._resizeObserver) {
-      this._resizeObserver = new ResizeObserver(() => {
-        if (this.map) {
-          this.map.invalidateSize();
-        }
-      });
-      this._resizeObserver.observe(this._shadowRoot.host);
-    }
-
-    // 🔄 Starte das Rendering
-    this.render();
-    
-    this.initRadiusSlider();
+  // Resize-Handling
+  if (!this._resizeObserver) {
+    this._resizeObserver = new ResizeObserver(() => {
+      if (this.map) this.map.invalidateSize();
+    });
+    this._resizeObserver.observe(this._shadowRoot.host);
   }
+
+  // GeoJSON laden (PLZ-Gebiete)
+  this.loadGeoJson();
+
+  // Radius-Slider initialisieren
+  this.initRadiusSlider();
+
+  // Erstes Rendern
+  this.render();
+}
+
 
 
       initializeMapTiles() {
