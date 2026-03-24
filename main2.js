@@ -1323,27 +1323,6 @@ applyFilter(erhID, jahr, nummer) {
 
 
 
-  // 2) PLZ-Liste extrahieren
-  const filteredPLZs = filteredData
-    .map(row => row["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember");
-
-  // 3) Karte einfärben
-  this.updateGeoLayer();
-
-
-
-  // 5) Radiusfilter anwenden → setzt this.plzImRadius
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.applyRadiusFilter(radius);
-
-  // 6) Tabelle NACH Radiusfilter rendern
-  this.renderDataTable(this.filteredKennwerte);
-
-  // 7) Zoom auf sichtbare PLZ
-  this.zoomToFilteredPLZ();
-}
-
 
 
 
