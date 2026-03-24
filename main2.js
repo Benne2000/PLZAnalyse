@@ -1317,16 +1317,29 @@ showPopup(feature) {
   }
 
 
-
 applyFilter(erhID, jahr, nummer) {
   console.log("🟡 applyFilter() start:", { erhID, jahr, nummer });
 
+  // 1️⃣ Erhebungswechsel erkennen → NL-Auswahl zurücksetzen
+  const isNewErhebung =
+    !this._activeFilter ||
+    this._activeFilter.erhID !== erhID ||
+    this._activeFilter.jahr !== jahr ||
+    this._activeFilter.nummer !== nummer;
+
+  if (isNewErhebung) {
+    console.log("🔄 Neue Erhebung gewählt → NL-Auswahl zurücksetzen");
+    this._selectedNLs = new Set();
+  }
+
+  // 2️⃣ Filter speichern
   this._activeFilter = { erhID, jahr, nummer };
 
+  // 3️⃣ Daten filtern
   const filteredData = this.getFilteredData() || [];
   console.log("📊 applyFilter(): filteredData length:", filteredData.length);
 
-  // HZ-Flags
+  // 4️⃣ HZ-Flags setzen
   this.hzFlags = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
@@ -1336,30 +1349,34 @@ applyFilter(erhID, jahr, nummer) {
     }
   });
 
-  // PLZ-Liste
+  // 5️⃣ PLZ-Liste
   const filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
+
   console.log("📌 applyFilter(): filteredPLZs length:", filteredPLZs.length);
 
-  // Geo-Layer einfärben
+  // 6️⃣ Geo-Layer einfärben
   this.updateGeoLayer();
 
-  // ❗ HIER: Marker neu erzeugen und dann filtern
+  // 7️⃣ Marker neu erzeugen (alle NLs + Phantom-NLs)
   this.createAllMarkers();
+
+  // 8️⃣ Marker filtern + Phantom-Logik anwenden
   this.updateMarkers(filteredPLZs);
 
-  // Radiusfilter
+  // 9️⃣ Radiusfilter anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   console.log("📏 applyFilter(): radius =", radius);
   this.applyRadiusFilter(radius);
 
-  // Tabelle + Zoom
+  // 🔟 Tabelle + Zoom aktualisieren
   this.renderDataTable(this.filteredKennwerte);
   this.zoomToFilteredPLZ();
 
   console.log("🟢 applyFilter() end");
 }
+
 
 
 
@@ -1544,7 +1561,6 @@ updateGeoLayer() {
 
 
 
-
 updateMarkers(filteredPLZs = []) {
   console.log("🟡 updateMarkers() start, filteredPLZs length:", filteredPLZs.length);
 
@@ -1558,29 +1574,42 @@ updateMarkers(filteredPLZs = []) {
   const filteredData = this.getFilteredData() || [];
   console.log("📊 updateMarkers(): filteredData length:", filteredData.length);
 
-  // 🔥 NLs, die in der Erhebung vorkommen
+  // 1️⃣ NLs, die in der Erhebung vorkommen
   const filteredNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(nl => nl)
   );
-  console.log("📌 updateMarkers(): filteredNLs size:", filteredNLs.size);
-  console.log("📌 updateMarkers(): _selectedNLs size:", this._selectedNLs?.size);
+
+  // 2️⃣ Phantom-NLs (NLs ohne Daten, aber im Radius)
+  const phantomNLs = new Set(
+    Object.keys(this.allMarkers).filter(nlKey => !filteredNLs.has(nlKey))
+  );
+
+  console.log("📌 filteredNLs:", filteredNLs.size);
+  console.log("📌 phantomNLs:", phantomNLs.size);
+  console.log("📌 selectedNLs:", this._selectedNLs.size);
 
   const radiusRelevantMarkers = [];
 
   Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
     const isInErhebung = filteredNLs.has(nlKey);
+    const isPhantom = phantomNLs.has(nlKey);
 
-    // 1️⃣ Sichtbarkeit: Nur NLs der Erhebung anzeigen
-    if (isInErhebung) {
+    // 1️⃣ Sichtbarkeit:
+    //    - NLs der Erhebung → anzeigen
+    //    - Phantom-NLs → anzeigen
+    //    - alle anderen → ausblenden
+    if (isInErhebung || isPhantom) {
       this.filteredGroup.addLayer(marker);
     } else {
       this.filteredGroup.removeLayer(marker);
-      return; // ❗ WICHTIG: Nicht weiter verarbeiten
+      return;
     }
 
-    // 2️⃣ Radius-Relevanz
+    // 2️⃣ Radius-Relevanz:
+    //    - Wenn keine NL ausgewählt → nur echte NLs der Erhebung
+    //    - Wenn NLs ausgewählt → nur diese NLs
     const isRadiusRelevant =
       (this._selectedNLs.size === 0 && isInErhebung) ||
       (this._selectedNLs.size > 0 && this._selectedNLs.has(nlKey));
@@ -1597,13 +1626,14 @@ updateMarkers(filteredPLZs = []) {
     marker
   }));
 
-  console.log("🔥 updateMarkers(): Radius-relevante NL-Marker:", this.nlMarkers.length);
+  console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
 
-  // 4️⃣ Style (normal vs. Phantom)
+  // 4️⃣ Style anwenden (normal vs. phantom)
   this.updateNLMarkerStyles();
 
   console.log("🟢 updateMarkers() end");
 }
+
 
 
 
