@@ -1239,33 +1239,6 @@ showPopup(feature) {
 
   const note = feature.properties?.note || "Keine Notiz";
 
-  // 🔍 1) Prüfen, ob PLZ Teil der Erhebung ist
-  const isInErhebung = this.filteredPLZs?.has(plz);
-
-  const sidePopup = this._shadowRoot.getElementById('side-popup');
-
-  // ❌ 2) Wenn PLZ NICHT in der Erhebung vorkommt → abgespecktes Popup
-  if (!isInErhebung) {
-    sidePopup.innerHTML = `
-      <button class="close-btn">×</button>
-      <div class="popup-note">
-        <strong>PLZ ${plz}</strong><br>
-        Diese PLZ ist <b>nicht Teil der aktuellen Erhebung</b>.
-      </div>
-    `;
-
-    void sidePopup.offsetWidth;
-    setTimeout(() => sidePopup.classList.add('show'), 10);
-
-    const closeBtn = sidePopup.querySelector('.close-btn');
-    closeBtn.addEventListener('click', () => {
-      sidePopup.classList.remove('show');
-    });
-
-    return; // ⛔ WICHTIG: Keine weiteren Daten anzeigen
-  }
-
-  // ✔ 3) Wenn PLZ Teil der Erhebung ist → normale Logik
   const daten = this.filteredKennwerte?.[plz];
   if (!daten) {
     console.warn(`❌ Keine aggregierten Daten für PLZ ${plz}`);
@@ -1317,6 +1290,8 @@ showPopup(feature) {
     `;
   });
 
+  const sidePopup = this._shadowRoot.getElementById('side-popup');
+
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
@@ -1328,7 +1303,7 @@ showPopup(feature) {
     </table>
   `;
 
-  // ➕ Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
+  // Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
   const umsatz = daten["value_hr_n_umsatz_0"]?.raw;
 
   if (!isHZ && typeof umsatz === "number" && umsatz > 0) {
@@ -1356,7 +1331,6 @@ showPopup(feature) {
     sidePopup.insertAdjacentHTML('beforeend', extraTable);
   }
 
-  // Popup anzeigen
   void sidePopup.offsetWidth;
   setTimeout(() => sidePopup.classList.add('show'), 10);
 
@@ -1365,7 +1339,6 @@ showPopup(feature) {
     sidePopup.classList.remove('show');
   });
 }
-
 
 
   updateNeighbours(filteredData) {
