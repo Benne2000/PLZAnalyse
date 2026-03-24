@@ -1160,26 +1160,23 @@ createAllMarkers() {
     });
 
     // Hover-Highlight
-    marker.on("mouseover", () => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
-        el.style.filter = "brightness(1.35)";
-        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-        el.style.background = "transparent";
-        el.style.zIndex = 9999;
-      }
-    });
+marker.on("mouseover", () => {
+  const el = marker.getElement()?.firstChild;
+  if (el) {
+    el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
+    el.style.filter = "brightness(1.35)";
+    el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+  }
+});
 
-    marker.on("mouseout", () => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.filter = "brightness(1)";
-        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-        el.style.background = "transparent";
-        el.style.zIndex = "";
-      }
-    });
+marker.on("mouseout", () => {
+  const el = marker.getElement()?.firstChild;
+  if (el) {
+    el.style.filter = "brightness(1)";
+    el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+  }
+});
+
 
     marker.on("click", () => this.onNLMarkerClick(nlKey));
 
@@ -2001,6 +1998,8 @@ updateNLMarkerStyles() {
 
 
 
+
+
 createPhantomMarkerIcon(nl) {
   if (!this.phantomIconCache) this.phantomIconCache = {};
 
@@ -2009,9 +2008,7 @@ createPhantomMarkerIcon(nl) {
       <div style="
         width:30px;
         height:30px;
-        background: transparent; /* verhindert sichtbares Quadrat */
-        border-radius:50% 50% 50% 0;
-        transform:rotate(-45deg);
+        background: transparent;
         display:flex;
         align-items:center;
         justify-content:center;
@@ -2023,13 +2020,12 @@ createPhantomMarkerIcon(nl) {
         <div style="
           width:100%;
           height:100%;
-          background-color: rgba(138,138,138,0.75); /* dunkleres Grau + saubere Transparenz */
-          border-radius:50% 50% 50% 0;
+          background-color: rgba(138,138,138,0.8); /* Grau + 0.8 Sichtbarkeit */
+          border-radius:50%; /* gleiche Form wie aktiver Marker */
           box-shadow:-1px 1px 4px rgba(0,0,0,.3);
           display:flex;
           align-items:center;
           justify-content:center;
-          transform:rotate(45deg);
         ">
           ${nl}
         </div>
