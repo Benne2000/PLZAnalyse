@@ -1066,32 +1066,42 @@ zoomToFilteredPLZ() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-      
- createAllMarkers() {
+   createAllMarkers() {
   console.log("🟡 createAllMarkers() start");
 
   this.filteredGroup.clearLayers();
   this.allMarkers = {};
   this.nlMarkers = [];
 
-  // 1️⃣ Erhebungsdaten holen
   const filteredData = this.getFilteredData() || [];
 
-  // 2️⃣ NLs, die in der Erhebung vorkommen
+  // 1️⃣ NLs der Erhebung
   const filteredNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(nl => nl)
   );
 
-  console.log("📌 createAllMarkers(): filteredNLs =", [...filteredNLs]);
+  console.log("📌 filteredNLs =", [...filteredNLs]);
 
-  // 3️⃣ Phantom-NLs bestimmen
-  const phantomNLs = Object.keys(this.Niederlassung)
-    .filter(nlKey => !filteredNLs.has(nlKey))
-    .filter(nlKey => this.nlKoordinaten[nlKey]);
+  // 2️⃣ PLZs der Erhebung
+  const filteredPLZs = new Set(
+    filteredData
+      .map(row => row["dimension_plz_0"]?.id?.trim())
+      .filter(plz => plz && plz !== "@NullMember")
+  );
 
-  console.log("📌 createAllMarkers(): phantomNLs =", phantomNLs);
+  // 3️⃣ Phantom-NLs = NLs, die diese PLZs ebenfalls bedienen
+  const phantomNLs = new Set();
+
+  filteredPLZs.forEach(plz => {
+    const nl = this.PLZzuNL?.[plz]; // deine PLZ→NL Zuordnung
+    if (nl && !filteredNLs.has(nl)) {
+      phantomNLs.add(nl);
+    }
+  });
+
+  console.log("📌 phantomNLs =", [...phantomNLs]);
 
   // 4️⃣ Nur diese NLs erzeugen
   const nlKeysToCreate = [...filteredNLs, ...phantomNLs];
@@ -1100,10 +1110,7 @@ zoomToFilteredPLZ() {
     const nlName = this.Niederlassung[nlKey];
     const coords = this.nlKoordinaten[nlKey];
 
-    if (!coords) {
-      console.warn("⚠️ Keine Koordinaten für NL:", nlKey);
-      return;
-    }
+    if (!coords) return;
 
     const icon = this.createMarkerIcon(nlName);
 
@@ -1114,28 +1121,26 @@ zoomToFilteredPLZ() {
     });
 
     // Hover-Highlight
-// Hover-Highlight ohne Springen
-marker.on("mouseover", () => {
-  const el = marker.getElement();
-  if (el) {
-    el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
-    el.style.filter = "brightness(1.35)";
-    el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-    el.style.zIndex = 9999;
-    el.style.background = "transparent";   // 👈 verhindert das Quadrat
-  }
-});
+    marker.on("mouseover", () => {
+      const el = marker.getElement();
+      if (el) {
+        el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
+        el.style.filter = "brightness(1.35)";
+        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+        el.style.background = "transparent";
+        el.style.zIndex = 9999;
+      }
+    });
 
-marker.on("mouseout", () => {
-  const el = marker.getElement();
-  if (el) {
-    el.style.filter = "brightness(1)";
-    el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-    el.style.zIndex = "";
-    el.style.background = "transparent";   // 👈 auch hier
-  }
-});
-
+    marker.on("mouseout", () => {
+      const el = marker.getElement();
+      if (el) {
+        el.style.filter = "brightness(1)";
+        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+        el.style.background = "transparent";
+        el.style.zIndex = "";
+      }
+    });
 
     marker.on("click", () => this.onNLMarkerClick(nlKey));
 
@@ -1149,13 +1154,14 @@ marker.on("mouseout", () => {
     });
   });
 
-  console.log("📌 createAllMarkers(): allMarkers keys:", Object.keys(this.allMarkers));
-  console.log("📌 createAllMarkers(): nlMarkers length:", this.nlMarkers.length);
+  console.log("📌 allMarkers keys:", Object.keys(this.allMarkers));
+  console.log("📌 nlMarkers length:", this.nlMarkers.length);
 
   this.updateNLMarkerStyles();
 
   console.log("🟢 createAllMarkers() end");
 }
+
 
 
 
@@ -1962,9 +1968,8 @@ createPhantomMarkerIcon(nl) {
       <div style="
         width:30px;
         height:30px;
-        background-color:#b5b5b5; /* hellgrau */
+        background: transparent; /* verhindert sichtbares Quadrat */
         border-radius:50% 50% 50% 0;
-        box-shadow:-1px 1px 4px rgba(0,0,0,.3);
         transform:rotate(-45deg);
         display:flex;
         align-items:center;
@@ -1973,9 +1978,20 @@ createPhantomMarkerIcon(nl) {
         font-weight:bold;
         color:white;
         font-family:sans-serif;
-        opacity:0.8; /* leicht transparent */
       ">
-        <div style="transform:rotate(45deg);">${nl}</div>
+        <div style="
+          width:100%;
+          height:100%;
+          background-color: rgba(138,138,138,0.75); /* dunkleres Grau + saubere Transparenz */
+          border-radius:50% 50% 50% 0;
+          box-shadow:-1px 1px 4px rgba(0,0,0,.3);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          transform:rotate(45deg);
+        ">
+          ${nl}
+        </div>
       </div>
     `;
 
@@ -1989,6 +2005,7 @@ createPhantomMarkerIcon(nl) {
 
   return this.phantomIconCache[nl];
 }
+
 
 
 
