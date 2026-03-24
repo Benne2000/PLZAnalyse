@@ -1879,44 +1879,54 @@ updateNLMarkerStyles() {
       this._selectedNLs.size === 0 || this._selectedNLs.has(nlKey);
 
     if (isSelected) {
-      // Normales Icon
-      const icon = this.createMarkerIcon(nlKey);
-      marker.setIcon(icon);
+      marker.setIcon(this.createMarkerIcon(nlKey));
       marker.setOpacity(1);
     } else {
-      // Phantom-Icon (grau + transparent)
-      const icon = this.createPhantomMarkerIcon(nlKey);
-      marker.setIcon(icon);
-      marker.setOpacity(0.4);
+      marker.setIcon(this.createPhantomMarkerIcon(nlKey));
+      marker.setOpacity(1); // Opacity kommt aus dem Icon selbst
     }
   });
 }
 
 
 
-createPhantomMarkerIcon(label) {
-  return L.divIcon({
-    html: `
+
+createPhantomMarkerIcon(nl) {
+  if (!this.phantomIconCache) this.phantomIconCache = {};
+
+  if (!this.phantomIconCache[nl]) {
+    const markerHtml = `
       <div style="
-        background: #d0d0d0;
-        border: 2px solid #999;
-        border-radius: 50%;
-        width: 28px;
-        height: 28px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        color: #555;
+        width:30px;
+        height:30px;
+        background-color:#b5b5b5; /* hellgrau */
+        border-radius:50% 50% 50% 0;
+        box-shadow:-1px 1px 4px rgba(0,0,0,.3);
+        transform:rotate(-45deg);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:10px;
+        font-weight:bold;
+        color:white;
+        font-family:sans-serif;
+        opacity:0.55; /* leicht transparent */
       ">
-        ${label}
+        <div style="transform:rotate(45deg);">${nl}</div>
       </div>
-    `,
-    className: "",
-    iconSize: [28, 28],
-    iconAnchor: [14, 14]
-  });
+    `;
+
+    this.phantomIconCache[nl] = L.divIcon({
+      html: markerHtml,
+      className: '',
+      iconSize: [30, 30],
+      iconAnchor: [15, 30]
+    });
+  }
+
+  return this.phantomIconCache[nl];
 }
+
 
 
 
