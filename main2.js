@@ -1516,51 +1516,31 @@ updateGeoLayer() {
 updateMarkers(filteredPLZs = []) {
   console.log("🟡 updateMarkers() start, filteredPLZs length:", filteredPLZs.length);
 
+  // ❗ Wenn keine Marker existieren → abbrechen
   if (!this.allMarkers || Object.keys(this.allMarkers).length === 0) {
-    console.warn("⚠️ updateMarkers: Keine Marker vorhanden. allMarkers =", this.allMarkers);
+    console.warn("⚠️ updateMarkers: Keine Marker vorhanden.");
     return;
   }
 
-  this.filteredGroup.clearLayers();
+  // ❗ WICHTIG:
+  // NL-Marker werden NICHT gefiltert.
+  // Sie bleiben IMMER sichtbar, damit Phantom-Stile funktionieren.
+  // Nur PLZ-Polygone werden gefiltert (in updateGeoLayer), nicht die NL-Marker.
 
-  const filteredData = this.getFilteredData() || [];
-  console.log("📊 updateMarkers(): filteredData length:", filteredData.length);
+  // 🔥 Phantom-Stile anwenden (sichtbar bleiben alle Marker)
+  this.updateNLMarkerStyles();
 
-  const filteredNLs = new Set(
-    filteredData
-      .map(row => row["dimension_niederlassung_0"]?.id?.trim())
-      .filter(nl => nl)
-  );
-  console.log("📌 updateMarkers(): filteredNLs size:", filteredNLs.size);
-  console.log("📌 updateMarkers(): _selectedNLs size:", this._selectedNLs?.size);
-
-  const visibleMarkers = [];
-
- Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
-  const belongs =
-    this._selectedNLs.size === 0 || this._selectedNLs.has(nlKey);
-
-  if (belongs) {
-    this.filteredGroup.addLayer(marker);
-    visibleMarkers.push(marker);
-  }
-});
-
-
-  console.log("📌 updateMarkers(): visibleMarkers length:", visibleMarkers.length);
-
-  this.nlMarkers = visibleMarkers.map(marker => ({
+  // 🔥 Radius-Marker aktualisieren (nur für den Radiusfilter)
+  this.nlMarkers = Object.values(this.allMarkers).map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
     marker
   }));
 
   console.log("🔥 updateMarkers(): Radius-relevante NL-Marker:", this.nlMarkers.length);
-
-  this.updateNLMarkerStyles();
-
   console.log("🟢 updateMarkers() end");
 }
+
 
 
 
