@@ -1884,10 +1884,44 @@ updateNLMarkerStyles() {
     const isSelected =
       this._selectedNLs.size === 0 || this._selectedNLs.has(nlKey);
 
-    marker.setOpacity(isSelected ? 1 : 0.3);
+    if (isSelected) {
+      // Normales Icon
+      const icon = this.createMarkerIcon(nlKey);
+      marker.setIcon(icon);
+      marker.setOpacity(1);
+    } else {
+      // Phantom-Icon
+      const icon = this.createPhantomMarkerIcon(nlKey);
+      marker.setIcon(icon);
+      marker.setOpacity(0.4);
+    }
   });
 }
 
+
+createPhantomMarkerIcon(label) {
+  return L.divIcon({
+    html: `
+      <div style="
+        background: #d0d0d0;
+        border: 2px solid #999;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        color: #555;
+      ">
+        ${label}
+      </div>
+    `,
+    className: "",
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  });
+}
 
 
 
@@ -2006,7 +2040,10 @@ updateNLMarkerStyles() {
     await this.loadGeoJson();
 
     this.updateGeoLayer();
-      this.createAllMarkers();
+    if (isFiltered) {
+    this.createAllMarkers();
+    }
+
     // 📌 PLZs extrahieren für Marker-Filterung
     const filteredPLZs = isFiltered
       ? filteredData
