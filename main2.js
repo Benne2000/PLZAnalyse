@@ -1107,22 +1107,26 @@ const marker = L.marker([coords.lat, coords.lon], {
 });
 
 // Hover-Highlight
+// Hover-Highlight ohne Springen
 marker.on("mouseover", () => {
   const el = marker.getElement();
   if (el) {
-    el.style.transition = "transform 0.15s ease, box-shadow 0.15s ease";
-    el.style.transform = "scale(1.2) rotate(-45deg)";
-    el.style.boxShadow = "0 0 8px rgba(0,0,0,0.7)";
+    el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
+    el.style.filter = "brightness(1.35)";
+    el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+    el.style.zIndex = 9999; // Marker nach vorne holen
   }
 });
 
 marker.on("mouseout", () => {
   const el = marker.getElement();
   if (el) {
-    el.style.transform = "rotate(-45deg)";
+    el.style.filter = "brightness(1)";
     el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+    el.style.zIndex = ""; // zurücksetzen
   }
 });
+
 
 
       marker.on("click", () => this.onNLMarkerClick(nlKey));
