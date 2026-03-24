@@ -1261,7 +1261,8 @@ showPopup(feature) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
     this.neighbours = computeNeighbours(filteredMarkers);
   }
-resetMapState() {
+
+ resetMapState() {
   console.log("🧹 resetMapState(): Map wird vollständig zurückgesetzt");
 
   // Marker entfernen
@@ -1297,13 +1298,8 @@ resetMapState() {
   // NL-Auswahl zurücksetzen
   this._selectedNLs = new Set();
 
-  // Radius zurücksetzen
-  const radiusSlider = this._shadowRoot.getElementById("radius-slider");
-  radiusSlider.value = 0;
-  this.currentRadius = 0;
-  this.plzImRadius = new Set();
-
-  console.log("🔄 Radiusfilter zurückgesetzt");
+  // ❌ Radius NICHT hier zurücksetzen!
+  // Das passiert nur im Erhebungsfilter.
 }
 
 
@@ -1321,11 +1317,16 @@ applyFilter(erhID, jahr, nummer, { type = "erhebung" } = {}) {
   this.resetMapState();
   this._activeFilter = { erhID, jahr, nummer };
 
+  // Radius nur hier setzen
+  const radiusSlider = this._shadowRoot.getElementById("radius-slider");
+  radiusSlider.value = 40;
+  this.currentRadius = 40;
+
+  console.log("🔄 Radiusfilter auf 40 gesetzt (Erhebungswechsel)");
+
   // Daten neu aggregieren
   const filteredData = this.getFilteredData({ type: "erhebung" });
   this.filteredData = filteredData;
-
-  console.log("📊 applyFilter(): filteredData length:", filteredData.length);
 
   // PLZ extrahieren
   this.filteredPLZs = filteredData
@@ -1342,7 +1343,7 @@ applyFilter(erhID, jahr, nummer, { type = "erhebung" } = {}) {
   this.updateMarkers();
 
   // Radius anwenden
-  this.applyRadiusFilter(0);
+  this.applyRadiusFilter(40);
 
   // Tabelle rendern
   this.renderDataTable(this.filteredKennwerte);
@@ -1352,6 +1353,7 @@ applyFilter(erhID, jahr, nummer, { type = "erhebung" } = {}) {
 
   console.log("🟢 applyFilter() end");
 }
+
 
 
 
