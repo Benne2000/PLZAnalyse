@@ -616,11 +616,33 @@ getFilteredData() {
     const umsatzNetto = sum.umsatzNetto;
     const hzKosten = sum.hzKosten;
 
-    const umsatzPHH = avgHaushalte > 0 ? umsatzNetto / avgHaushalte : 0;
-    const wkPercent = umsatzNetto > 0 ? hzKosten / umsatzNetto : 0;
-    const wkNachbar = wkPercent;
-    const bon = sum.kdErhebung > 0 ? sum.umsatzErhebung / sum.kdErhebung : 0;
-    const potHzPercent = umsatzNetto > 0 ? sum.potHzAbs / umsatzNetto : 0;
+// Umsatz pro Haushalt → 2 Nachkommastellen
+const umsatzPHH =
+  avgHaushalte > 0
+    ? Number((umsatzNetto / avgHaushalte).toFixed(2))
+    : 0;
+
+// WK % → (HZ-Kosten / Umsatz Netto) * 100 → 1 Nachkommastelle
+const wkPercent =
+  umsatzNetto > 0
+    ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
+    : 0;
+
+// WK Nachbar → identisch
+const wkNachbar = wkPercent;
+
+// Bon → Umsatz Erhebung / KD Erhebung → 2 Nachkommastellen
+const bon =
+  sum.kdErhebung > 0
+    ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2))
+    : 0;
+
+// Potentieller WK % → (potHzAbs / Umsatz Netto) * 100 → 1 Nachkommastelle
+const potHzPercent =
+  umsatzNetto > 0
+    ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1))
+    : 0;
+
 
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
