@@ -1161,8 +1161,11 @@ createAllMarkers() {
 
     // Hover-Highlight
 marker.on("mouseover", () => {
-  const el = marker.getElement()?.firstChild;
-  if (!el) return; // verhindert Fehler
+  const root = marker.getElement();
+  if (!root) return;
+
+  const el = root.firstElementChild; // sicherer als firstChild
+  if (!el) return;
 
   el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
   el.style.filter = "brightness(1.35)";
@@ -1170,12 +1173,16 @@ marker.on("mouseover", () => {
 });
 
 marker.on("mouseout", () => {
-  const el = marker.getElement()?.firstChild;
-  if (!el) return; // verhindert Fehler
+  const root = marker.getElement();
+  if (!root) return;
+
+  const el = root.firstElementChild;
+  if (!el) return;
 
   el.style.filter = "brightness(1)";
   el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
 });
+
 
 
 
