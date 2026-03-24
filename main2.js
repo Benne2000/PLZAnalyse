@@ -1973,7 +1973,7 @@ createPhantomMarkerIcon(nl) {
         font-weight:bold;
         color:white;
         font-family:sans-serif;
-        opacity:0.55; /* leicht transparent */
+        opacity:0.8; /* leicht transparent */
       ">
         <div style="transform:rotate(45deg);">${nl}</div>
       </div>
