@@ -532,13 +532,8 @@ renderDataTable(data) {
 
   this.renderDataTableFromEntries(entries);
 }
-getFilteredData({ type = "erhebung" } = {}) {
-  // 👉 NL-Filter? Dann NICHT neu filtern
-  if (type === "nl") {
-    console.log("⏭️ getFilteredData(): NL-Filter → gebe bestehende Erhebungsdaten zurück");
-    return this.filteredData || [];
-  }
 
+getFilteredData({ type = "erhebung" } = {}) {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
     return [];
@@ -548,9 +543,7 @@ getFilteredData({ type = "erhebung" } = {}) {
   const { erhID, jahr, nummer } = this._activeFilter || {};
 
   if (!erhID || !jahr || !nummer) {
-    console.log("ℹ️ getFilteredData: Kein aktiver Erhebungsfilter, gebe leeres Ergebnis zurück.");
-    this.filteredKennwerte = {};
-    this.filteredPLZWerte = {};
+    console.log("ℹ️ getFilteredData: Kein aktiver Erhebungsfilter.");
     return [];
   }
 
@@ -561,13 +554,19 @@ getFilteredData({ type = "erhebung" } = {}) {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
 
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = rawPLZ == null ? "" : String(rawPLZ).padStart(5, "0");
 
-    // 👉 Nur Erhebungsfilter
+    // Erhebungsfilter
     if (id !== erhID || y !== jahr || num !== nummer) return;
     if (!plz || plz === "@NullMember") return;
+
+    // NL-Filter aktiv?
+    if (type === "nl" && this._selectedNLs.size > 0) {
+      if (!this._selectedNLs.has(nl)) return;
+    }
 
     filtered.push(row);
 
@@ -615,9 +614,7 @@ getFilteredData({ type = "erhebung" } = {}) {
     if (typeof kk === "number") entry.avgArrays.kaufkraft.push(kk);
   });
 
-  const avgOrZero = arr =>
-    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-
+  // Aggregation wie bisher …
   this.filteredKennwerte = {};
   this.filteredPLZWerte = {};
 
@@ -625,34 +622,22 @@ getFilteredData({ type = "erhebung" } = {}) {
     const sum = entry.sum;
     const avgArr = entry.avgArrays;
 
-    const avgWerbeverweigerer = avgOrZero(avgArr.werbeverweigerer);
-    const avgHaushalte = avgOrZero(avgArr.haushalte);
-    const avgKaufkraft = avgOrZero(avgArr.kaufkraft);
+    const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
+    const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
+    const avgHaushalte = avg(avgArr.haushalte);
+    const avgKaufkraft = avg(avgArr.kaufkraft);
 
     const umsatzNetto = sum.umsatzNetto;
     const hzKosten = sum.hzKosten;
 
-    const umsatzPHH =
-      avgHaushalte > 0
-        ? Number((umsatzNetto / avgHaushalte).toFixed(2))
-        : 0;
+    const umsatzPHH = avgHaushalte > 0 ? Number((umsatzNetto / avgHaushalte).toFixed(2)) : 0;
 
-    const wkPercent =
-      umsatzNetto > 0
-        ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
-        : 0;
+    const wkPercent = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
 
-    const wkNachbar = wkPercent;
+    const bon = sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0;
 
-    const bon =
-      sum.kdErhebung > 0
-        ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2))
-        : 0;
-
-    const potHzPercent =
-      umsatzNetto > 0
-        ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1))
-        : 0;
+    const potHzPercent = umsatzNetto > 0 ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1)) : 0;
 
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
@@ -660,11 +645,9 @@ getFilteredData({ type = "erhebung" } = {}) {
     this.filteredKennwerte[plz] = {
       isHZ,
       isCritical,
-
       value_hr_n_umsatz_0: { raw: umsatzNetto },
       value_umsatz_p_hh_0: { raw: umsatzPHH },
       value_wk_in_percent_0: { raw: wkPercent },
-      value_wk_nachbar_0: { raw: wkNachbar },
       value_hz_kosten_0: { raw: hzKosten },
       value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
       value_haushalte_0: { raw: avgHaushalte },
@@ -1755,20 +1738,35 @@ updateMarkers(filteredPLZs = []) {
       });
     }
   }
+
+  
 applyNLFilter(selectedNLs) {
   console.log("🟡 applyNLFilter():", selectedNLs);
 
   this._selectedNLs = new Set(selectedNLs);
 
-  // Marker aktualisieren
+  // 1️⃣ Daten neu aggregieren — nur für diese NLs
+  const filteredDataNL = this.getFilteredData({ type: "nl" });
+  this.filteredData = filteredDataNL;
+
+  // 2️⃣ PLZs extrahieren
+  this.filteredPLZs = filteredDataNL
+    .map(row => row["dimension_plz_0"]?.id?.trim())
+    .filter(plz => plz && plz !== "@NullMember");
+
+  // 3️⃣ Geo-Layer einfärben
+  this.updateGeoLayer();
+
+  // 4️⃣ Marker aktualisieren
   this.updateMarkers();
 
-  // Radius anwenden
+  // 5️⃣ Radius anwenden
   this.applyRadiusFilter(this.currentRadius);
 
-  // Tabelle aktualisieren
+  // 6️⃣ Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
 }
+
 
 
 
