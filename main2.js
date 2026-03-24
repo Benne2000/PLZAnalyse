@@ -1165,6 +1165,19 @@ zoomToFilteredPLZ() {
         el.style.zIndex = "";
       }
     });
+marker.on("click", () => {
+  console.log("🟡 NL-Klick:", nlKey);
+
+  // NL toggeln
+  if (this._selectedNLs.has(nlKey)) {
+    this._selectedNLs.delete(nlKey);
+  } else {
+    this._selectedNLs.add(nlKey);
+  }
+
+  // NL-Filter anwenden
+  this.applyNLFilter([...this._selectedNLs]);
+});
 
     this.allMarkers[nlKey] = marker;
   });
@@ -1582,7 +1595,6 @@ updateGeoLayer() {
   });
 }
 
-
 updateMarkers(filteredPLZs = []) {
   console.log("🟡 updateMarkers() start, filteredPLZs length:", filteredPLZs.length);
 
@@ -1594,7 +1606,6 @@ updateMarkers(filteredPLZs = []) {
   this.filteredGroup.clearLayers();
 
   const filteredData = this.filteredData || [];
-  console.log("📊 updateMarkers(): filteredData length:", filteredData.length);
 
   const filteredNLs = new Set(
     filteredData
@@ -1603,7 +1614,7 @@ updateMarkers(filteredPLZs = []) {
   );
 
   const phantomNLs = new Set(
-    Object.keys(this.allMarkers).filter(nlKey => !filteredNLs.has(nlKey))
+    [...this.initialErhebungsNLs].filter(nl => !filteredNLs.has(nl))
   );
 
   console.log("📌 filteredNLs:", filteredNLs.size);
@@ -1616,6 +1627,7 @@ updateMarkers(filteredPLZs = []) {
     const isInErhebung = filteredNLs.has(nlKey);
     const isPhantom = phantomNLs.has(nlKey);
 
+    // Sichtbarkeit: ALLE NLs der Erhebung anzeigen (inkl. Phantom)
     if (isInErhebung || isPhantom) {
       this.filteredGroup.addLayer(marker);
     } else {
@@ -1623,9 +1635,16 @@ updateMarkers(filteredPLZs = []) {
       return;
     }
 
-    const isRadiusRelevant =
-      (this._selectedNLs.size === 0 && isInErhebung) ||
-      (this._selectedNLs.size > 0 && this._selectedNLs.has(nlKey));
+    // Radius-Relevanz:
+    let isRadiusRelevant = false;
+
+    if (this._selectedNLs.size === 0) {
+      // Keine NL ausgewählt → alle NLs der Erhebung + Phantom
+      isRadiusRelevant = true;
+    } else {
+      // NL ausgewählt → nur diese NLs radius-relevant
+      isRadiusRelevant = this._selectedNLs.has(nlKey);
+    }
 
     if (isRadiusRelevant) {
       radiusRelevantMarkers.push(marker);
@@ -1736,7 +1755,6 @@ updateMarkers(filteredPLZs = []) {
       });
     }
   }
-
 applyNLFilter(selectedNLs) {
   console.log("🟡 applyNLFilter():", selectedNLs);
 
