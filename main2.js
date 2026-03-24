@@ -1494,44 +1494,50 @@ updateGeoLayer() {
       weight: 1
     });
 
-    const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
+const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
-    // Kritische PLZ nur im Radius anzeigen
-    if (isCritical && this.plzImRadius.has(plz)) {
-      if (!this.criticalMarkers[plz]) {
-        const center = layer.getBounds().getCenter();
+// Sicherstellen, dass plzImRadius existiert
+const inRadius =
+  this.plzImRadius instanceof Set
+    ? this.plzImRadius.has(plz)
+    : true; // Ohne Radiusfilter → alle PLZs gelten als im Radius
 
-        const icon = L.divIcon({
-          html: `<div style="
-            background:#ffffff;
-            border:2px solid #b41821;
-            border-radius:50%;
-            width:22px;
-            height:22px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:14px;
-            font-weight:bold;
-          ">⚠️</div>`,
-          className: "",
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
-        });
+if (isCritical && inRadius) {
+  if (!this.criticalMarkers[plz]) {
+    const center = layer.getBounds().getCenter();
 
-        const marker = L.marker(center, {
-          icon,
-          interactive: false
-        }).addTo(this.map);
+    const icon = L.divIcon({
+      html: `<div style="
+        background:#ffffff;
+        border:2px solid #b41821;
+        border-radius:50%;
+        width:22px;
+        height:22px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:14px;
+        font-weight:bold;
+      ">⚠️</div>`,
+      className: "",
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
 
-        this.criticalMarkers[plz] = marker;
-      }
-    } else {
-      if (this.criticalMarkers[plz]) {
-        this.map.removeLayer(this.criticalMarkers[plz]);
-        delete this.criticalMarkers[plz];
-      }
-    }
+    const marker = L.marker(center, {
+      icon,
+      interactive: false
+    }).addTo(this.map);
+
+    this.criticalMarkers[plz] = marker;
+  }
+} else {
+  if (this.criticalMarkers[plz]) {
+    this.map.removeLayer(this.criticalMarkers[plz]);
+    delete this.criticalMarkers[plz];
+  }
+}
+
   });
 }
 
