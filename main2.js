@@ -1284,7 +1284,6 @@ showPopup(feature) {
 
 
 
-
 applyFilter(erhID, jahr, nummer) {
   console.log("🟡 applyFilter() start:", { erhID, jahr, nummer });
 
@@ -1293,6 +1292,7 @@ applyFilter(erhID, jahr, nummer) {
   const filteredData = this.getFilteredData() || [];
   console.log("📊 applyFilter(): filteredData length:", filteredData.length);
 
+  // HZ-Flags
   this.hzFlags = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
@@ -1301,19 +1301,26 @@ applyFilter(erhID, jahr, nummer) {
       this.hzFlags[plz] = hz === "X";
     }
   });
-  console.log("📌 applyFilter(): hzFlags PLZ count:", Object.keys(this.hzFlags).length);
 
+  // PLZ-Liste
   const filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
   console.log("📌 applyFilter(): filteredPLZs length:", filteredPLZs.length);
 
+  // Geo-Layer einfärben
   this.updateGeoLayer();
 
+  // ❗ HIER: Marker neu erzeugen und dann filtern
+  this.createAllMarkers();
+  this.updateMarkers(filteredPLZs);
+
+  // Radiusfilter
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   console.log("📏 applyFilter(): radius =", radius);
   this.applyRadiusFilter(radius);
 
+  // Tabelle + Zoom
   this.renderDataTable(this.filteredKennwerte);
   this.zoomToFilteredPLZ();
 
@@ -2039,8 +2046,6 @@ async render() {
   this.setupFilterDropdowns();
 
   const isFiltered = !!this._activeFilter;
-  console.log("🔍 isFiltered:", isFiltered);
-
   const filteredData = isFiltered ? this.getFilteredData() : rawData;
   console.log("📊 filteredData length:", filteredData?.length);
 
@@ -2049,38 +2054,15 @@ async render() {
   await this.loadGeoJson();
   this.updateGeoLayer();
 
-  if (isFiltered) {
-    console.log("📌 render(): createAllMarkers() aufrufen");
-    this.createAllMarkers();
-    console.log("📌 render(): allMarkers keys nach createAllMarkers:", Object.keys(this.allMarkers || {}));
-  } else {
-    console.log("📌 render(): kein Filter aktiv → keine Marker erzeugen");
-  }
-
-  let filteredPLZs = [];
-
-  if (isFiltered) {
-    filteredPLZs = filteredData
-      .map(d => d["dimension_plz_0"]?.id?.trim())
-      .filter(plz => plz && plz !== "@NullMember");
-    console.log("📌 render(): filteredPLZs (isFiltered) length:", filteredPLZs.length);
-  } else {
-    filteredPLZs = this.allMarkers ? Object.keys(this.allMarkers) : [];
-    console.log("📌 render(): filteredPLZs (unfiltered) length:", filteredPLZs.length);
-  }
-
-  if (this.allMarkers && Object.keys(this.allMarkers).length > 0) {
-    console.log("📍 render(): updateMarkers() aufrufen, allMarkers size:", Object.keys(this.allMarkers).length);
-    this.updateMarkers(filteredPLZs);
-  } else {
-    console.warn("⚠️ render(): allMarkers leer oder undefined, updateMarkers() wird nicht aufgerufen");
-  }
+  // ❗ KEINE Marker-Erzeugung hier
+  // Marker kommen nur über applyFilter()
 
   this.renderDataTable(this.filteredKennwerte);
 
   this.hideSpinner();
   console.log("🟢 render() end");
 }
+
 
 
 
