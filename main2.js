@@ -1057,16 +1057,15 @@ zoomToFilteredPLZ() {
   }
       
       
-      
-     createAllMarkers() {
-  // Alte Marker entfernen
+  createAllMarkers() {
+  console.log("🟡 createAllMarkers() start");
+
   this.filteredGroup.clearLayers();
-
-  // WICHTIG: Map statt Array, damit wir per NL-Key zugreifen können
   this.allMarkers = {};
-
-  // NL-Marker-Liste für Radius-Filter neu anlegen
   this.nlMarkers = [];
+
+  console.log("📌 createAllMarkers(): Niederlassung keys:", Object.keys(this.Niederlassung || {}));
+  console.log("📌 createAllMarkers(): nlKoordinaten keys:", Object.keys(this.nlKoordinaten || {}));
 
   if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
     console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
@@ -1078,9 +1077,8 @@ zoomToFilteredPLZ() {
     return;
   }
 
-  const seen = new Set(); // verhindert doppelte Marker pro NL
+  const seen = new Set();
 
-  // 🔵 Haupt-Niederlassungen erzeugen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
     const coords = this.nlKoordinaten[nlKey];
     if (!coords) {
@@ -1097,19 +1095,13 @@ zoomToFilteredPLZ() {
         plzs: [nlKey]
       });
 
-      // 🔥 Klick-Event für NL-Filter
       marker.on("click", () => this.onNLMarkerClick(nlKey));
 
-      // In globale Marker-Liste (Map)
       this.allMarkers[nlKey] = marker;
-
-      // In gefilterte Gruppe (Standard: alle sichtbar)
       this.filteredGroup.addLayer(marker);
 
-      // NL als verarbeitet markieren
       seen.add(nlKey);
 
-      // 🔥 NL-Marker für Radius-Filter speichern
       this.nlMarkers.push({
         lat: coords.lat,
         lng: coords.lon,
@@ -1118,8 +1110,8 @@ zoomToFilteredPLZ() {
     }
   });
 
-  // 🔵 Extra-Niederlassungen hinzufügen (falls vorhanden)
   if (Array.isArray(this.extraNLs)) {
+    console.log("📌 createAllMarkers(): extraNLs length:", this.extraNLs.length);
     this.extraNLs.forEach(({ nl, lat, lon }) => {
       const icon = this.createMarkerIcon(nl);
 
@@ -1129,16 +1121,11 @@ zoomToFilteredPLZ() {
         plzs: [nl]
       });
 
-      // Klick-Event registrieren
       marker.on("click", () => this.onNLMarkerClick(nl));
 
-      // In globale Marker-Liste
       this.allMarkers[nl] = marker;
-
-      // In gefilterte Gruppe
       this.filteredGroup.addLayer(marker);
 
-      // Extra-NL ebenfalls für Radius-Filter speichern
       this.nlMarkers.push({
         lat,
         lng: lon,
@@ -1147,11 +1134,14 @@ zoomToFilteredPLZ() {
     });
   }
 
-  console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
+  console.log("📌 createAllMarkers(): allMarkers keys:", Object.keys(this.allMarkers));
+  console.log("📌 createAllMarkers(): nlMarkers length:", this.nlMarkers.length);
 
-  // 🔥 Phantom-Stile anwenden (falls NLs bereits ausgewählt sind)
   this.updateNLMarkerStyles();
+
+  console.log("🟢 createAllMarkers() end");
 }
+
 
 
 
@@ -1296,20 +1286,40 @@ showPopup(feature) {
 
 
 applyFilter(erhID, jahr, nummer) {
+  console.log("🟡 applyFilter() start:", { erhID, jahr, nummer });
+
   this._activeFilter = { erhID, jahr, nummer };
 
-  // 1) Daten filtern (Erhebung)
-const filteredData = this.getFilteredData();
+  const filteredData = this.getFilteredData() || [];
+  console.log("📊 applyFilter(): filteredData length:", filteredData.length);
 
-// HZ-Flags neu berechnen
-this.hzFlags = {};
-filteredData.forEach(row => {
-  const plz = row["dimension_plz_0"]?.id?.trim();
-  const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
-  if (plz) {
-    this.hzFlags[plz] = hz === "X";  // ✔ korrekt
-  }
-});
+  this.hzFlags = {};
+  filteredData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    const hz = row["dimension_hzflag_0"]?.id?.trim();
+    if (plz) {
+      this.hzFlags[plz] = hz === "X";
+    }
+  });
+  console.log("📌 applyFilter(): hzFlags PLZ count:", Object.keys(this.hzFlags).length);
+
+  const filteredPLZs = filteredData
+    .map(row => row["dimension_plz_0"]?.id?.trim())
+    .filter(plz => plz && plz !== "@NullMember");
+  console.log("📌 applyFilter(): filteredPLZs length:", filteredPLZs.length);
+
+  this.updateGeoLayer();
+
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  console.log("📏 applyFilter(): radius =", radius);
+  this.applyRadiusFilter(radius);
+
+  this.renderDataTable(this.filteredKennwerte);
+  this.zoomToFilteredPLZ();
+
+  console.log("🟢 applyFilter() end");
+}
+
 
 
 
@@ -1517,33 +1527,34 @@ updateGeoLayer() {
 
 
 
-
 updateMarkers(filteredPLZs = []) {
-  // ❗ Wenn keine Marker existieren → abbrechen
+  console.log("🟡 updateMarkers() start, filteredPLZs length:", filteredPLZs.length);
+
   if (!this.allMarkers || Object.keys(this.allMarkers).length === 0) {
-    console.warn("⚠️ updateMarkers: Keine Marker vorhanden.");
+    console.warn("⚠️ updateMarkers: Keine Marker vorhanden. allMarkers =", this.allMarkers);
     return;
   }
 
   this.filteredGroup.clearLayers();
 
   const filteredData = this.getFilteredData() || [];
+  console.log("📊 updateMarkers(): filteredData length:", filteredData.length);
 
-  // Alle NLs, die im Filter vorkommen
   const filteredNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(nl => nl)
   );
+  console.log("📌 updateMarkers(): filteredNLs size:", filteredNLs.size);
+  console.log("📌 updateMarkers(): _selectedNLs size:", this._selectedNLs?.size);
 
   const visibleMarkers = [];
 
-  // Marker durchgehen
-  Object.values(this.allMarkers).forEach(marker => {
+  Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
     const markerNLs = marker.options.plzs || [];
-    const belongs =
-  this._selectedNLs.size === 0 || markerNLs.some(nl => filteredNLs.has(nl));
 
+    const belongs =
+      this._selectedNLs.size === 0 || markerNLs.some(nl => filteredNLs.has(nl));
 
     if (belongs) {
       this.filteredGroup.addLayer(marker);
@@ -1551,17 +1562,19 @@ updateMarkers(filteredPLZs = []) {
     }
   });
 
-  // Radius-Marker aktualisieren
+  console.log("📌 updateMarkers(): visibleMarkers length:", visibleMarkers.length);
+
   this.nlMarkers = visibleMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
     marker
   }));
 
-  console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
+  console.log("🔥 updateMarkers(): Radius-relevante NL-Marker:", this.nlMarkers.length);
 
-  // Phantom-Stile anwenden
   this.updateNLMarkerStyles();
+
+  console.log("🟢 updateMarkers() end");
 }
 
 
@@ -2031,6 +2044,8 @@ createPhantomMarkerIcon(label) {
   }
 
 async render() {
+  console.log("🟡 render() start, _activeFilter =", this._activeFilter);
+
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
     return;
@@ -2039,51 +2054,55 @@ async render() {
   this.showSpinner();
 
   const rawData = this._myDataSource.data;
+  console.log("📊 rawData length:", rawData?.length);
 
-  // 🔧 Filterstruktur & Dropdowns vorbereiten
   this._erhData = this.buildErhebungsStruktur(rawData);
   this.setupFilterDropdowns();
 
-  // 🔍 Filter anwenden oder Rohdaten verwenden
   const isFiltered = !!this._activeFilter;
-  const filteredData = isFiltered ? this.getFilteredData() : rawData;
+  console.log("🔍 isFiltered:", isFiltered);
 
-  // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+  const filteredData = isFiltered ? this.getFilteredData() : rawData;
+  console.log("📊 filteredData length:", filteredData?.length);
+
   this.prepareMapData(filteredData);
 
-  // 🌍 GeoJSON laden & Layer aktualisieren
   await this.loadGeoJson();
   this.updateGeoLayer();
 
-  // ❗ Marker NUR erzeugen, wenn eine Erhebung ausgewählt wurde
   if (isFiltered) {
+    console.log("📌 render(): createAllMarkers() aufrufen");
     this.createAllMarkers();
+    console.log("📌 render(): allMarkers keys nach createAllMarkers:", Object.keys(this.allMarkers || {}));
+  } else {
+    console.log("📌 render(): kein Filter aktiv → keine Marker erzeugen");
   }
 
-  // 📌 PLZs extrahieren für Marker-Filterung
   let filteredPLZs = [];
 
   if (isFiltered) {
     filteredPLZs = filteredData
       .map(d => d["dimension_plz_0"]?.id?.trim())
       .filter(plz => plz && plz !== "@NullMember");
+    console.log("📌 render(): filteredPLZs (isFiltered) length:", filteredPLZs.length);
   } else {
-    // ❗ Nur wenn Marker existieren
-    filteredPLZs = this.allMarkers
-      ? Object.keys(this.allMarkers)
-      : [];
+    filteredPLZs = this.allMarkers ? Object.keys(this.allMarkers) : [];
+    console.log("📌 render(): filteredPLZs (unfiltered) length:", filteredPLZs.length);
   }
 
-  // 📍 Marker anzeigen (nur wenn Marker existieren)
   if (this.allMarkers && Object.keys(this.allMarkers).length > 0) {
+    console.log("📍 render(): updateMarkers() aufrufen, allMarkers size:", Object.keys(this.allMarkers).length);
     this.updateMarkers(filteredPLZs);
+  } else {
+    console.warn("⚠️ render(): allMarkers leer oder undefined, updateMarkers() wird nicht aufgerufen");
   }
 
-  // 📊 Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
 
   this.hideSpinner();
+  console.log("🟢 render() end");
 }
+
 
 
 
