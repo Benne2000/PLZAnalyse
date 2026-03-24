@@ -1114,24 +1114,28 @@ zoomToFilteredPLZ() {
     });
 
     // Hover-Highlight
-    marker.on("mouseover", () => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
-        el.style.filter = "brightness(1.35)";
-        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-        el.style.zIndex = 9999;
-      }
-    });
+// Hover-Highlight ohne Springen
+marker.on("mouseover", () => {
+  const el = marker.getElement();
+  if (el) {
+    el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
+    el.style.filter = "brightness(1.35)";
+    el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+    el.style.zIndex = 9999;
+    el.style.background = "transparent";   // 👈 verhindert das Quadrat
+  }
+});
 
-    marker.on("mouseout", () => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.filter = "brightness(1)";
-        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-        el.style.zIndex = "";
-      }
-    });
+marker.on("mouseout", () => {
+  const el = marker.getElement();
+  if (el) {
+    el.style.filter = "brightness(1)";
+    el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+    el.style.zIndex = "";
+    el.style.background = "transparent";   // 👈 auch hier
+  }
+});
+
 
     marker.on("click", () => this.onNLMarkerClick(nlKey));
 
