@@ -1533,8 +1533,8 @@ updateMarkers() {
 
   const visibleMarkers = [];
 
-  // Marker durchgehen
-  this.allMarkers.forEach(marker => {
+  // Marker durchgehen (Map → Object.values)
+  Object.values(this.allMarkers).forEach(marker => {
     const markerNLs = marker.options.plzs || [];
 
     // Marker gehört zur Erhebung, wenn mindestens eine NL übereinstimmt
@@ -1555,6 +1555,7 @@ updateMarkers() {
 
   console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
 }
+
 
 
 
