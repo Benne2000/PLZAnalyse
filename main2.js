@@ -532,6 +532,7 @@ renderDataTable(data) {
 
   this.renderDataTableFromEntries(entries);
 }
+
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -540,6 +541,14 @@ getFilteredData() {
 
   const data = this._myDataSource.data;
   const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  // Wenn noch keine Erhebung gewählt ist → nichts anzeigen
+  if (!erhID || !jahr || !nummer) {
+    console.log("ℹ️ getFilteredData: Kein aktiver Erhebungsfilter, gebe leeres Ergebnis zurück.");
+    this.filteredKennwerte = {};
+    this.filteredPLZWerte = {};
+    return [];
+  }
 
   const aggregated = {};
   const filtered = [];
@@ -551,14 +560,16 @@ getFilteredData() {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
 
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = String(rawPLZ).padStart(5, "0");
+    const plz = rawPLZ == null ? "" : String(rawPLZ).padStart(5, "0");
 
-    // Erhebungsfilter
+    // 🔹 Erhebungsfilter
     if (id !== erhID || y !== jahr || num !== nummer) return;
 
-    // NL-Filter
+    // 🔹 NL-Filter (Phantom-/NL-Auswahl)
     const matchNL =
-      this._selectedNLs.size === 0 || this._selectedNLs.has(nl);
+      this._selectedNLs && this._selectedNLs.size > 0
+        ? this._selectedNLs.has(nl)
+        : true;
 
     if (!matchNL) return;
 
@@ -627,7 +638,6 @@ getFilteredData() {
     const umsatzNetto = sum.umsatzNetto;
     const hzKosten = sum.hzKosten;
 
-    // Formatierte Kennzahlen
     const umsatzPHH =
       avgHaushalte > 0
         ? Number((umsatzNetto / avgHaushalte).toFixed(2))
@@ -682,6 +692,7 @@ getFilteredData() {
 
   return filtered;
 }
+
 
 
 
@@ -1089,11 +1100,30 @@ zoomToFilteredPLZ() {
     if (!seen.has(nlKey)) {
       const icon = this.createMarkerIcon(nlName);
 
-      const marker = L.marker([coords.lat, coords.lon], {
-        icon,
-        title: nlName,
-        plzs: [nlKey]
-      });
+const marker = L.marker([coords.lat, coords.lon], {
+  icon,
+  title: nlName,
+  plzs: [nlKey]
+});
+
+// Hover-Highlight
+marker.on("mouseover", () => {
+  const el = marker.getElement();
+  if (el) {
+    el.style.transition = "transform 0.15s ease, box-shadow 0.15s ease";
+    el.style.transform = "scale(1.2) rotate(-45deg)";
+    el.style.boxShadow = "0 0 8px rgba(0,0,0,0.7)";
+  }
+});
+
+marker.on("mouseout", () => {
+  const el = marker.getElement();
+  if (el) {
+    el.style.transform = "rotate(-45deg)";
+    el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+  }
+});
+
 
       marker.on("click", () => this.onNLMarkerClick(nlKey));
 
@@ -1517,26 +1547,53 @@ updateMarkers(filteredPLZs = []) {
   console.log("🟡 updateMarkers() start, filteredPLZs length:", filteredPLZs.length);
 
   if (!this.allMarkers || Object.keys(this.allMarkers).length === 0) {
-    console.warn("⚠️ updateMarkers: Keine Marker vorhanden.");
+    console.warn("⚠️ updateMarkers: Keine Marker vorhanden. allMarkers =", this.allMarkers);
     return;
   }
 
-  // ❗ NL-Marker NICHT filtern!
-  // Sie bleiben immer sichtbar, damit Phantom-Stile funktionieren.
+  this.filteredGroup.clearLayers();
 
-  // 🔥 Phantom-Stile anwenden
-  this.updateNLMarkerStyles();
+  const filteredData = this.getFilteredData() || [];
+  console.log("📊 updateMarkers(): filteredData length:", filteredData.length);
 
-  // 🔥 Radius-Marker aktualisieren (für Radiusfilter)
-  this.nlMarkers = Object.values(this.allMarkers).map(marker => ({
+  const filteredNLs = new Set(
+    filteredData
+      .map(row => row["dimension_niederlassung_0"]?.id?.trim())
+      .filter(nl => nl)
+  );
+  console.log("📌 updateMarkers(): filteredNLs size:", filteredNLs.size);
+  console.log("📌 updateMarkers(): _selectedNLs size:", this._selectedNLs?.size);
+
+  const visibleMarkers = [];
+
+  Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
+    const belongsToErhebung = filteredNLs.has(nlKey);
+    const belongsToSelection =
+      !this._selectedNLs || this._selectedNLs.size === 0 || this._selectedNLs.has(nlKey);
+
+    const belongs = belongsToErhebung && belongsToSelection;
+
+    if (belongs) {
+      this.filteredGroup.addLayer(marker);
+      visibleMarkers.push(marker);
+    }
+  });
+
+  console.log("📌 updateMarkers(): visibleMarkers length:", visibleMarkers.length);
+
+  this.nlMarkers = visibleMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
     marker
   }));
 
   console.log("🔥 updateMarkers(): Radius-relevante NL-Marker:", this.nlMarkers.length);
+
+  this.updateNLMarkerStyles();
+
   console.log("🟢 updateMarkers() end");
 }
+
 
 
   setupFilterDropdowns() {
