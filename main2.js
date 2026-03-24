@@ -1068,109 +1068,90 @@ zoomToFilteredPLZ() {
   }
       
       
-  createAllMarkers() {
+createAllMarkers() {
   console.log("🟡 createAllMarkers() start");
 
   this.filteredGroup.clearLayers();
   this.allMarkers = {};
   this.nlMarkers = [];
 
-  console.log("📌 createAllMarkers(): Niederlassung keys:", Object.keys(this.Niederlassung || {}));
-  console.log("📌 createAllMarkers(): nlKoordinaten keys:", Object.keys(this.nlKoordinaten || {}));
+  // 1️⃣ Erhebungsdaten holen
+  const filteredData = this.getFilteredData() || [];
 
-  if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
-    console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
-    return;
-  }
+  // 2️⃣ NLs, die in der Erhebung vorkommen
+  const filteredNLs = new Set(
+    filteredData
+      .map(row => row["dimension_niederlassung_0"]?.id?.trim())
+      .filter(nl => nl)
+  );
 
-  if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") {
-    console.warn("⚠️ nlKoordinaten ist nicht definiert oder kein Objekt:", this.nlKoordinaten);
-    return;
-  }
+  console.log("📌 createAllMarkers(): filteredNLs =", [...filteredNLs]);
 
-  const seen = new Set();
+  // 3️⃣ Phantom-NLs bestimmen
+  //    → alle NLs, die NICHT in der Erhebung vorkommen,
+  //      aber Koordinaten haben
+  const phantomNLs = Object.keys(this.Niederlassung)
+    .filter(nlKey => !filteredNLs.has(nlKey))
+    .filter(nlKey => this.nlKoordinaten[nlKey]);
 
-  Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
+  console.log("📌 createAllMarkers(): phantomNLs =", phantomNLs);
+
+  // 4️⃣ Nur diese NLs erzeugen
+  const nlKeysToCreate = [...filteredNLs, ...phantomNLs];
+
+  nlKeysToCreate.forEach(nlKey => {
+    const nlName = this.Niederlassung[nlKey];
     const coords = this.nlKoordinaten[nlKey];
+
     if (!coords) {
-      console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
+      console.warn("⚠️ Keine Koordinaten für NL:", nlKey);
       return;
     }
 
-    if (!seen.has(nlKey)) {
-      const icon = this.createMarkerIcon(nlName);
+    const icon = this.createMarkerIcon(nlName);
 
-const marker = L.marker([coords.lat, coords.lon], {
-  icon,
-  title: nlName,
-  plzs: [nlKey]
-});
-
-// Hover-Highlight
-// Hover-Highlight ohne Springen
-marker.on("mouseover", () => {
-  const el = marker.getElement();
-  if (el) {
-    el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
-    el.style.filter = "brightness(1.35)";
-    el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-    el.style.zIndex = 9999; // Marker nach vorne holen
-  }
-});
-
-marker.on("mouseout", () => {
-  const el = marker.getElement();
-  if (el) {
-    el.style.filter = "brightness(1)";
-    el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-    el.style.zIndex = ""; // zurücksetzen
-  }
-});
-
-
-
-      marker.on("click", () => this.onNLMarkerClick(nlKey));
-
-      this.allMarkers[nlKey] = marker;
-      this.filteredGroup.addLayer(marker);
-
-      seen.add(nlKey);
-
-      this.nlMarkers.push({
-        lat: coords.lat,
-        lng: coords.lon,
-        marker
-      });
-    }
-  });
-
-  if (Array.isArray(this.extraNLs)) {
-    console.log("📌 createAllMarkers(): extraNLs length:", this.extraNLs.length);
-    this.extraNLs.forEach(({ nl, lat, lon }) => {
-      const icon = this.createMarkerIcon(nl);
-
-      const marker = L.marker([lat, lon], {
-        icon,
-        title: nl,
-        plzs: [nl]
-      });
-
-      marker.on("click", () => this.onNLMarkerClick(nl));
-
-      this.allMarkers[nl] = marker;
-      this.filteredGroup.addLayer(marker);
-
-      this.nlMarkers.push({
-        lat,
-        lng: lon,
-        marker
-      });
+    const marker = L.marker([coords.lat, coords.lon], {
+      icon,
+      title: nlName,
+      plzs: [nlKey]
     });
-  }
+
+    // Hover-Highlight
+    marker.on("mouseover", () => {
+      const el = marker.getElement();
+      if (el) {
+        el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
+        el.style.filter = "brightness(1.35)";
+        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+        el.style.zIndex = 9999;
+      }
+    });
+
+    marker.on("mouseout", () => {
+      const el = marker.getElement();
+      if (el) {
+        el.style.filter = "brightness(1)";
+        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+        el.style.zIndex = "";
+      }
+    });
+
+    marker.on("click", () => this.onNLMarkerClick(nlKey));
+
+    this.allMarkers[nlKey] = marker;
+    this.filteredGroup.addLayer(marker);
+
+    this.nlMarkers.push({
+      lat: coords.lat,
+      lng: coords.lon,
+      marker
+    });
+  });
 
   console.log("📌 createAllMarkers(): allMarkers keys:", Object.keys(this.allMarkers));
   console.log("📌 createAllMarkers(): nlMarkers length:", this.nlMarkers.length);
 
+  // 5️⃣ Style anwenden (normal vs. phantom)
   this.updateNLMarkerStyles();
 
   console.log("🟢 createAllMarkers() end");
