@@ -1907,18 +1907,27 @@ initRadiusSlider() {
 
   slider.addEventListener("input", () => {
     const radius = Number(slider.value);
+    this.currentRadius = radius;
+
+    // Live-Anzeige aktualisieren
     valueLabel.textContent = radius;
 
-    // 1) Karte live filtern
+    console.log("🎚 Live-Radius geändert:", radius);
+
+    // 1️⃣ Radiusfilter sofort anwenden
     this.applyRadiusFilter(radius);
 
-    // 2) Tabelle live filtern
+    // 2️⃣ Geo-Layer aktualisieren (kritische PLZs)
+    this.updateGeoLayer();
+
+    // 3️⃣ Tabelle live aktualisieren
     this.renderDataTable(this.filteredKennwerte);
 
-    // 3) Optional: Zoom live aktualisieren
+    // 4️⃣ Optional: Zoom live aktualisieren
     // this.zoomToFilteredPLZ();
   });
 }
+
 
 
 getColorForPLZ(plz) {
