@@ -1516,21 +1516,18 @@ updateGeoLayer() {
 updateMarkers(filteredPLZs = []) {
   console.log("🟡 updateMarkers() start, filteredPLZs length:", filteredPLZs.length);
 
-  // ❗ Wenn keine Marker existieren → abbrechen
   if (!this.allMarkers || Object.keys(this.allMarkers).length === 0) {
     console.warn("⚠️ updateMarkers: Keine Marker vorhanden.");
     return;
   }
 
-  // ❗ WICHTIG:
-  // NL-Marker werden NICHT gefiltert.
-  // Sie bleiben IMMER sichtbar, damit Phantom-Stile funktionieren.
-  // Nur PLZ-Polygone werden gefiltert (in updateGeoLayer), nicht die NL-Marker.
+  // ❗ NL-Marker NICHT filtern!
+  // Sie bleiben immer sichtbar, damit Phantom-Stile funktionieren.
 
-  // 🔥 Phantom-Stile anwenden (sichtbar bleiben alle Marker)
+  // 🔥 Phantom-Stile anwenden
   this.updateNLMarkerStyles();
 
-  // 🔥 Radius-Marker aktualisieren (nur für den Radiusfilter)
+  // 🔥 Radius-Marker aktualisieren (für Radiusfilter)
   this.nlMarkers = Object.values(this.allMarkers).map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
@@ -1540,20 +1537,6 @@ updateMarkers(filteredPLZs = []) {
   console.log("🔥 updateMarkers(): Radius-relevante NL-Marker:", this.nlMarkers.length);
   console.log("🟢 updateMarkers() end");
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
   setupFilterDropdowns() {
@@ -1883,10 +1866,11 @@ updateNLMarkerStyles() {
       marker.setOpacity(1);
     } else {
       marker.setIcon(this.createPhantomMarkerIcon(nlKey));
-      marker.setOpacity(1); // Opacity kommt aus dem Icon selbst
+      marker.setOpacity(1); // Transparenz kommt aus dem Icon
     }
   });
 }
+
 
 
 
