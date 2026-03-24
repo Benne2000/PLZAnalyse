@@ -376,6 +376,8 @@
         this._resizeObserver = null;
         this._geoLayerVisible = false;
         this._tilesVisible = false;
+        this._selectedNLs = new Set();
+
         this._sortState = { column: null, direction: "asc" };
       }
 
@@ -530,7 +532,6 @@ renderDataTable(data) {
 
   this.renderDataTableFromEntries(entries);
 }
-
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -547,10 +548,20 @@ getFilteredData() {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
 
+    // Erhebungsfilter
     if (id !== erhID || y !== jahr || num !== nummer) return;
+
+    // NL-Filter
+    const matchNL =
+      this._selectedNLs.size === 0 || this._selectedNLs.has(nl);
+
+    if (!matchNL) return;
+
     if (!plz || plz === "@NullMember") return;
 
     filtered.push(row);
@@ -599,9 +610,9 @@ getFilteredData() {
     if (typeof kk === "number") entry.avgArrays.kaufkraft.push(kk);
   });
 
-  const avgOrZero = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+  const avgOrZero = arr =>
+    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-  // Jetzt in die alte Struktur schreiben
   this.filteredKennwerte = {};
   this.filteredPLZWerte = {};
 
@@ -616,43 +627,36 @@ getFilteredData() {
     const umsatzNetto = sum.umsatzNetto;
     const hzKosten = sum.hzKosten;
 
-// Umsatz pro Haushalt → 2 Nachkommastellen
-const umsatzPHH =
-  avgHaushalte > 0
-    ? Number((umsatzNetto / avgHaushalte).toFixed(2))
-    : 0;
+    // Formatierte Kennzahlen
+    const umsatzPHH =
+      avgHaushalte > 0
+        ? Number((umsatzNetto / avgHaushalte).toFixed(2))
+        : 0;
 
-// WK % → (HZ-Kosten / Umsatz Netto) * 100 → 1 Nachkommastelle
-const wkPercent =
-  umsatzNetto > 0
-    ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
-    : 0;
+    const wkPercent =
+      umsatzNetto > 0
+        ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
+        : 0;
 
-// WK Nachbar → identisch
-const wkNachbar = wkPercent;
+    const wkNachbar = wkPercent;
 
-// Bon → Umsatz Erhebung / KD Erhebung → 2 Nachkommastellen
-const bon =
-  sum.kdErhebung > 0
-    ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2))
-    : 0;
+    const bon =
+      sum.kdErhebung > 0
+        ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2))
+        : 0;
 
-// Potentieller WK % → (potHzAbs / Umsatz Netto) * 100 → 1 Nachkommastelle
-const potHzPercent =
-  umsatzNetto > 0
-    ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1))
-    : 0;
-
+    const potHzPercent =
+      umsatzNetto > 0
+        ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1))
+        : 0;
 
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
 
-    // 👇 Hier schreiben wir in das Format, das dein restlicher Code erwartet
     this.filteredKennwerte[plz] = {
       isHZ,
       isCritical,
 
-      // "Rohdaten"-ähnliche Struktur, aber mit aggregierten Werten
       value_hr_n_umsatz_0: { raw: umsatzNetto },
       value_umsatz_p_hh_0: { raw: umsatzPHH },
       value_wk_in_percent_0: { raw: wkPercent },
@@ -670,14 +674,15 @@ const potHzPercent =
     };
 
     this.filteredPLZWerte[plz] = {
-      wk: wkPercent * 100,
-      wkPot: potHzPercent * 100,
+      wk: wkPercent,
+      wkPot: potHzPercent,
       hz: isHZ
     };
   });
 
   return filtered;
 }
+
 
 
 sortTableByColumn(columnIndex) {
@@ -1443,7 +1448,6 @@ updateGeoLayer() {
 
     const value = values.hz ? values.wk : values.wkPot;
 
-    // Fläche einfärben
     layer.setStyle({
       fillColor: this.getColor(value, values.hz),
       fillOpacity: 0.5,
@@ -1451,17 +1455,14 @@ updateGeoLayer() {
       weight: 1
     });
 
-    // Tooltip aktualisieren
     const note = layer.feature?.properties?.note;
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
 
-    // Nur kritische PLZ markieren
-    const isCritical = this.filteredKennwerte?.[plz]?.isCritical === true;
+    const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
     if (isCritical) {
-      // Marker existiert bereits?
       if (!this.criticalMarkers[plz]) {
         const center = layer.getBounds().getCenter();
 
@@ -1491,7 +1492,6 @@ updateGeoLayer() {
         this.criticalMarkers[plz] = marker;
       }
     } else {
-      // Falls nicht kritisch → Marker entfernen
       if (this.criticalMarkers[plz]) {
         this.map.removeLayer(this.criticalMarkers[plz]);
         delete this.criticalMarkers[plz];
@@ -1499,6 +1499,7 @@ updateGeoLayer() {
     }
   });
 }
+
 
 
 
@@ -1851,7 +1852,32 @@ getColorForPLZ(plz) {
   return this.getColor(value, data.hz);
 }
 
+onNLMarkerClick(nlKey) {
+  // NL toggeln
+  if (this._selectedNLs.has(nlKey)) {
+    this._selectedNLs.delete(nlKey);
+  } else {
+    this._selectedNLs.add(nlKey);
+  }
 
+  // Marker-Transparenz aktualisieren
+  this.updateNLMarkerStyles();
+
+  // Filter neu anwenden
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+  this.applyFilter(erhID, jahr, nummer);
+}
+
+updateNLMarkerStyles() {
+  if (!this.allMarkers) return;
+
+  Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
+    const isSelected =
+      this._selectedNLs.size === 0 || this._selectedNLs.has(nlKey);
+
+    marker.setOpacity(isSelected ? 1 : 0.3);
+  });
+}
 
 
 
