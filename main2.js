@@ -1066,13 +1066,16 @@ zoomToFilteredPLZ() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-   createAllMarkers() {
+ 
+ 
+ createAllMarkers() {
   console.log("🟡 createAllMarkers() start");
 
   this.filteredGroup.clearLayers();
   this.allMarkers = {};
   this.nlMarkers = [];
 
+  const rawData = this._myDataSource?.data || [];
   const filteredData = this.getFilteredData() || [];
 
   // 1️⃣ NLs der Erhebung
@@ -1091,12 +1094,18 @@ zoomToFilteredPLZ() {
       .filter(plz => plz && plz !== "@NullMember")
   );
 
-  // 3️⃣ Phantom-NLs = NLs, die diese PLZs ebenfalls bedienen
+  // 3️⃣ Phantom-NLs aus *ungefilterten* Daten bestimmen
   const phantomNLs = new Set();
 
-  filteredPLZs.forEach(plz => {
-    const nl = this.PLZzuNL?.[plz]; // deine PLZ→NL Zuordnung
-    if (nl && !filteredNLs.has(nl)) {
+  rawData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+
+    if (!plz || !nl) return;
+
+    // Wenn PLZ in der Erhebung vorkommt,
+    // aber NL nicht → Phantom
+    if (filteredPLZs.has(plz) && !filteredNLs.has(nl)) {
       phantomNLs.add(nl);
     }
   });
@@ -1161,6 +1170,7 @@ zoomToFilteredPLZ() {
 
   console.log("🟢 createAllMarkers() end");
 }
+
 
 
 
