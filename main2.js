@@ -1058,13 +1058,14 @@ zoomToFilteredPLZ() {
       
       
       
-      
-createAllMarkers() {
+     createAllMarkers() {
   // Alte Marker entfernen
   this.filteredGroup.clearLayers();
-  this.allMarkers = [];
 
-  // 🔥 NL-Marker-Liste für Radius-Filter neu anlegen
+  // WICHTIG: Map statt Array, damit wir per NL-Key zugreifen können
+  this.allMarkers = {};
+
+  // NL-Marker-Liste für Radius-Filter neu anlegen
   this.nlMarkers = [];
 
   if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
@@ -1093,11 +1094,14 @@ createAllMarkers() {
       const marker = L.marker([coords.lat, coords.lon], {
         icon,
         title: nlName,
-        plzs: [nlKey] // wichtig für Filterung
+        plzs: [nlKey]
       });
 
-      // In globale Marker-Liste
-      this.allMarkers.push(marker);
+      // 🔥 Klick-Event für NL-Filter
+      marker.on("click", () => this.onNLMarkerClick(nlKey));
+
+      // In globale Marker-Liste (Map)
+      this.allMarkers[nlKey] = marker;
 
       // In gefilterte Gruppe (Standard: alle sichtbar)
       this.filteredGroup.addLayer(marker);
@@ -1125,10 +1129,16 @@ createAllMarkers() {
         plzs: [nl]
       });
 
-      this.allMarkers.push(marker);
+      // Klick-Event registrieren
+      marker.on("click", () => this.onNLMarkerClick(nl));
+
+      // In globale Marker-Liste
+      this.allMarkers[nl] = marker;
+
+      // In gefilterte Gruppe
       this.filteredGroup.addLayer(marker);
 
-      // 🔥 Extra-NL ebenfalls für Radius-Filter speichern
+      // Extra-NL ebenfalls für Radius-Filter speichern
       this.nlMarkers.push({
         lat,
         lng: lon,
@@ -1138,6 +1148,9 @@ createAllMarkers() {
   }
 
   console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
+
+  // 🔥 Phantom-Stile anwenden (falls NLs bereits ausgewählt sind)
+  this.updateNLMarkerStyles();
 }
 
 
