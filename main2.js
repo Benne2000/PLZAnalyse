@@ -1536,17 +1536,16 @@ updateMarkers(filteredPLZs = []) {
 
   const visibleMarkers = [];
 
-  Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
-    const markerNLs = marker.options.plzs || [];
+ Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
+  const belongs =
+    this._selectedNLs.size === 0 || this._selectedNLs.has(nlKey);
 
-    const belongs =
-      this._selectedNLs.size === 0 || markerNLs.some(nl => filteredNLs.has(nl));
+  if (belongs) {
+    this.filteredGroup.addLayer(marker);
+    visibleMarkers.push(marker);
+  }
+});
 
-    if (belongs) {
-      this.filteredGroup.addLayer(marker);
-      visibleMarkers.push(marker);
-    }
-  });
 
   console.log("📌 updateMarkers(): visibleMarkers length:", visibleMarkers.length);
 
