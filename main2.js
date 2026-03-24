@@ -1067,8 +1067,7 @@ zoomToFilteredPLZ() {
     }
   }
       
-      
-createAllMarkers() {
+ createAllMarkers() {
   console.log("🟡 createAllMarkers() start");
 
   this.filteredGroup.clearLayers();
@@ -1088,8 +1087,6 @@ createAllMarkers() {
   console.log("📌 createAllMarkers(): filteredNLs =", [...filteredNLs]);
 
   // 3️⃣ Phantom-NLs bestimmen
-  //    → alle NLs, die NICHT in der Erhebung vorkommen,
-  //      aber Koordinaten haben
   const phantomNLs = Object.keys(this.Niederlassung)
     .filter(nlKey => !filteredNLs.has(nlKey))
     .filter(nlKey => this.nlKoordinaten[nlKey]);
@@ -1151,7 +1148,6 @@ createAllMarkers() {
   console.log("📌 createAllMarkers(): allMarkers keys:", Object.keys(this.allMarkers));
   console.log("📌 createAllMarkers(): nlMarkers length:", this.nlMarkers.length);
 
-  // 5️⃣ Style anwenden (normal vs. phantom)
   this.updateNLMarkerStyles();
 
   console.log("🟢 createAllMarkers() end");
