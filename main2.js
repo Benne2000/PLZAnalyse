@@ -1546,7 +1546,6 @@ updateGeoLayer() {
 
 
 
-
 updateMarkers(filteredPLZs = []) {
   console.log("🟡 updateMarkers() start, filteredPLZs length:", filteredPLZs.length);
 
@@ -1569,23 +1568,28 @@ updateMarkers(filteredPLZs = []) {
   console.log("📌 updateMarkers(): _selectedNLs size:", this._selectedNLs?.size);
 
   const visibleMarkers = [];
+  const radiusRelevantMarkers = [];
 
   Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
-    const belongsToErhebung = filteredNLs.has(nlKey);
-    const belongsToSelection =
-      !this._selectedNLs || this._selectedNLs.size === 0 || this._selectedNLs.has(nlKey);
+    // 1) Sichtbarkeit: alle Marker immer anzeigen (inkl. Phantom)
+    this.filteredGroup.addLayer(marker);
+    visibleMarkers.push(marker);
 
-    const belongs = belongsToErhebung && belongsToSelection;
+    // 2) Radius-relevante NL-Marker:
+    //    - Wenn nichts ausgewählt: nur NLs, die in den gefilterten Daten vorkommen
+    //    - Wenn NLs ausgewählt: nur diese ausgewählten NLs
+    const isRadiusRelevant =
+      (this._selectedNLs.size === 0 && filteredNLs.has(nlKey)) ||
+      (this._selectedNLs.size > 0 && this._selectedNLs.has(nlKey));
 
-    if (belongs) {
-      this.filteredGroup.addLayer(marker);
-      visibleMarkers.push(marker);
+    if (isRadiusRelevant) {
+      radiusRelevantMarkers.push(marker);
     }
   });
 
   console.log("📌 updateMarkers(): visibleMarkers length:", visibleMarkers.length);
 
-  this.nlMarkers = visibleMarkers.map(marker => ({
+  this.nlMarkers = radiusRelevantMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
     marker
@@ -1593,6 +1597,7 @@ updateMarkers(filteredPLZs = []) {
 
   console.log("🔥 updateMarkers(): Radius-relevante NL-Marker:", this.nlMarkers.length);
 
+  // Styles (normal vs. Phantom, Hover, Transparenz) werden hier entschieden
   this.updateNLMarkerStyles();
 
   console.log("🟢 updateMarkers() end");
