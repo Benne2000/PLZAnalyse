@@ -1520,7 +1520,7 @@ updateGeoLayer() {
 
 
 updateMarkers(filteredPLZs = []) {
-  // ❗ Wenn keine Marker existieren → einfach abbrechen
+  // ❗ Wenn keine Marker existieren → abbrechen
   if (!this.allMarkers || Object.keys(this.allMarkers).length === 0) {
     console.warn("⚠️ updateMarkers: Keine Marker vorhanden.");
     return;
@@ -1528,7 +1528,7 @@ updateMarkers(filteredPLZs = []) {
 
   this.filteredGroup.clearLayers();
 
-  const filteredData = this.getFilteredData();
+  const filteredData = this.getFilteredData() || [];
 
   // Alle NLs, die im Filter vorkommen
   const filteredNLs = new Set(
@@ -1539,11 +1539,9 @@ updateMarkers(filteredPLZs = []) {
 
   const visibleMarkers = [];
 
-  // Marker durchgehen (Map → Object.values)
+  // Marker durchgehen
   Object.values(this.allMarkers).forEach(marker => {
     const markerNLs = marker.options.plzs || [];
-
-    // Marker gehört zur Erhebung, wenn mindestens eine NL übereinstimmt
     const belongs = markerNLs.some(nl => filteredNLs.has(nl));
 
     if (belongs) {
@@ -1552,7 +1550,7 @@ updateMarkers(filteredPLZs = []) {
     }
   });
 
-  // 🔥 Radius-relevante NL-Marker neu berechnen
+  // Radius-Marker aktualisieren
   this.nlMarkers = visibleMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
@@ -1561,9 +1559,10 @@ updateMarkers(filteredPLZs = []) {
 
   console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
 
-  // 🔥 Phantom-Stile anwenden
+  // Phantom-Stile anwenden
   this.updateNLMarkerStyles();
 }
+
 
 
 
