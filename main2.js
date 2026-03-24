@@ -1068,7 +1068,7 @@ zoomToFilteredPLZ() {
   }
  
  
- createAllMarkers() {
+createAllMarkers() {
   console.log("🟡 createAllMarkers() start");
 
   this.filteredGroup.clearLayers();
@@ -1078,7 +1078,7 @@ zoomToFilteredPLZ() {
   const rawData = this._myDataSource?.data || [];
   const filteredData = this.getFilteredData() || [];
 
-  // 1️⃣ NLs der Erhebung
+  // 1️⃣ NLs der aktuellen Filterung
   const filteredNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
@@ -1087,33 +1087,60 @@ zoomToFilteredPLZ() {
 
   console.log("📌 filteredNLs =", [...filteredNLs]);
 
-  // 2️⃣ PLZs der Erhebung
+  // 2️⃣ Beim ersten Aufruf der Erhebung: NLs speichern
+  if (!this.initialErhebungsNLs) {
+    console.log("🔄 Speichere initialErhebungsNLs");
+    this.initialErhebungsNLs = new Set(filteredNLs);
+  }
+
+  // 3️⃣ PLZs der aktuellen Filterung
   const filteredPLZs = new Set(
     filteredData
       .map(row => row["dimension_plz_0"]?.id?.trim())
       .filter(plz => plz && plz !== "@NullMember")
   );
 
-  // 3️⃣ Phantom-NLs aus *ungefilterten* Daten bestimmen
-  const phantomNLs = new Set();
+  // 4️⃣ PLZ → NL Mapping innerhalb der Erhebung (ungefiltert!)
+  const plzToNLs = {};
 
   rawData.forEach(row => {
+    const erh = row["dimension_erhebung_0"]?.id?.trim();
+    const jahr = row["dimension_jahr_0"]?.id?.trim();
+    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+
+    // Nur Zeilen der aktuellen Erhebung
+    if (erh !== this._activeFilter.erhID ||
+        jahr !== this._activeFilter.jahr ||
+        num !== this._activeFilter.nummer) return;
+
     const plz = row["dimension_plz_0"]?.id?.trim();
-    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    const nl  = row["dimension_niederlassung_0"]?.id?.trim();
 
     if (!plz || !nl) return;
 
-    // Wenn PLZ in der Erhebung vorkommt,
-    // aber NL nicht → Phantom
-    if (filteredPLZs.has(plz) && !filteredNLs.has(nl)) {
-      phantomNLs.add(nl);
-    }
+    if (!plzToNLs[plz]) plzToNLs[plz] = new Set();
+    plzToNLs[plz].add(nl);
+  });
+
+  // 5️⃣ Phantom-NLs = NLs der Erhebung, die dieselben PLZs bedienen,
+  //     aber nicht im aktuellen Filterergebnis sind
+  const phantomNLs = new Set();
+
+  filteredPLZs.forEach(plz => {
+    const nls = plzToNLs[plz];
+    if (!nls) return;
+
+    nls.forEach(nl => {
+      if (!filteredNLs.has(nl)) {
+        phantomNLs.add(nl);
+      }
+    });
   });
 
   console.log("📌 phantomNLs =", [...phantomNLs]);
 
-  // 4️⃣ Nur diese NLs erzeugen
-  const nlKeysToCreate = [...filteredNLs, ...phantomNLs];
+  // 6️⃣ Nur NLs der Erhebung erzeugen (echte + Phantom)
+  const nlKeysToCreate = [...this.initialErhebungsNLs];
 
   nlKeysToCreate.forEach(nlKey => {
     const nlName = this.Niederlassung[nlKey];
@@ -1121,7 +1148,10 @@ zoomToFilteredPLZ() {
 
     if (!coords) return;
 
-    const icon = this.createMarkerIcon(nlName);
+    const isPhantom = phantomNLs.has(nlKey);
+    const icon = isPhantom
+      ? this.createPhantomMarkerIcon(nlKey)
+      : this.createMarkerIcon(nlName);
 
     const marker = L.marker([coords.lat, coords.lon], {
       icon,
@@ -1170,6 +1200,7 @@ zoomToFilteredPLZ() {
 
   console.log("🟢 createAllMarkers() end");
 }
+
 
 
 
