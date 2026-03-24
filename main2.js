@@ -1321,8 +1321,7 @@ filteredData.forEach(row => {
   // 3) Karte einfärben
   this.updateGeoLayer();
 
-  // 4) NL-Marker filtern
-  this.updateMarkers(filteredPLZs);
+
 
   // 5) Radiusfilter anwenden → setzt this.plzImRadius
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
@@ -1542,7 +1541,9 @@ updateMarkers(filteredPLZs = []) {
   // Marker durchgehen
   Object.values(this.allMarkers).forEach(marker => {
     const markerNLs = marker.options.plzs || [];
-    const belongs = markerNLs.some(nl => filteredNLs.has(nl));
+    const belongs =
+  this._selectedNLs.size === 0 || markerNLs.some(nl => filteredNLs.has(nl));
+
 
     if (belongs) {
       this.filteredGroup.addLayer(marker);
