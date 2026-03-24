@@ -532,7 +532,6 @@ renderDataTable(data) {
 
   this.renderDataTableFromEntries(entries);
 }
-
 getFilteredData({ type = "erhebung" } = {}) {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -563,7 +562,7 @@ getFilteredData({ type = "erhebung" } = {}) {
     if (id !== erhID || y !== jahr || num !== nummer) return;
     if (!plz || plz === "@NullMember") return;
 
-    // NL-Filter aktiv?
+    // NL-Filter
     if (type === "nl" && this._selectedNLs.size > 0) {
       if (!this._selectedNLs.has(nl)) return;
     }
@@ -614,15 +613,14 @@ getFilteredData({ type = "erhebung" } = {}) {
     if (typeof kk === "number") entry.avgArrays.kaufkraft.push(kk);
   });
 
-  // Aggregation wie bisher …
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
   this.filteredKennwerte = {};
   this.filteredPLZWerte = {};
 
   Object.entries(aggregated).forEach(([plz, entry]) => {
     const sum = entry.sum;
     const avgArr = entry.avgArrays;
-
-    const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
 
     const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
     const avgHaushalte = avg(avgArr.haushalte);
@@ -1061,57 +1059,15 @@ zoomToFilteredPLZ() {
       .filter(nl => nl)
   );
 
-  console.log("📌 filteredNLs =", [...filteredNLs]);
-
   if (!this.initialErhebungsNLs) {
-    console.log("🔄 Speichere initialErhebungsNLs");
     this.initialErhebungsNLs = new Set(filteredNLs);
   }
 
-  const filteredPLZs = new Set(
-    filteredData
-      .map(row => row["dimension_plz_0"]?.id?.trim())
-      .filter(plz => plz && plz !== "@NullMember")
+  const phantomNLs = new Set(
+    [...this.initialErhebungsNLs].filter(nl => !filteredNLs.has(nl))
   );
 
-  const plzToNLs = {};
-
-  rawData.forEach(row => {
-    const erh = row["dimension_erhebung_0"]?.id?.trim();
-    const jahr = row["dimension_jahr_0"]?.id?.trim();
-    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
-
-    if (erh !== this._activeFilter.erhID ||
-        jahr !== this._activeFilter.jahr ||
-        num !== this._activeFilter.nummer) return;
-
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const nl  = row["dimension_niederlassung_0"]?.id?.trim();
-
-    if (!plz || !nl) return;
-
-    if (!plzToNLs[plz]) plzToNLs[plz] = new Set();
-    plzToNLs[plz].add(nl);
-  });
-
-  const phantomNLs = new Set();
-
-  filteredPLZs.forEach(plz => {
-    const nls = plzToNLs[plz];
-    if (!nls) return;
-
-    nls.forEach(nl => {
-      if (!filteredNLs.has(nl)) {
-        phantomNLs.add(nl);
-      }
-    });
-  });
-
-  console.log("📌 phantomNLs =", [...phantomNLs]);
-
-  const nlKeysToCreate = [...this.initialErhebungsNLs];
-
-  nlKeysToCreate.forEach(nlKey => {
+  [...this.initialErhebungsNLs].forEach(nlKey => {
     const nlName = this.Niederlassung[nlKey];
     const coords = this.nlKoordinaten[nlKey];
 
@@ -1124,18 +1080,15 @@ zoomToFilteredPLZ() {
 
     const marker = L.marker([coords.lat, coords.lon], {
       icon,
-      title: nlName,
-      plzs: [nlKey]
+      title: nlName
     });
 
+    // Hover
     marker.on("mouseover", () => {
       const el = marker.getElement();
       if (el) {
-        el.style.transition = "filter 0.15s ease, box-shadow 0.15s ease";
         el.style.filter = "brightness(1.35)";
         el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-        el.style.background = "transparent";
-        el.style.zIndex = 9999;
       }
     });
 
@@ -1144,23 +1097,21 @@ zoomToFilteredPLZ() {
       if (el) {
         el.style.filter = "brightness(1)";
         el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-        el.style.background = "transparent";
-        el.style.zIndex = "";
       }
     });
-marker.on("click", () => {
-  console.log("🟡 NL-Klick:", nlKey);
 
-  // NL toggeln
-  if (this._selectedNLs.has(nlKey)) {
-    this._selectedNLs.delete(nlKey);
-  } else {
-    this._selectedNLs.add(nlKey);
-  }
+    // Klick → NL-Filter
+    marker.on("click", () => {
+      console.log("🟡 NL-Klick:", nlKey);
 
-  // NL-Filter anwenden
-  this.applyNLFilter([...this._selectedNLs]);
-});
+      if (this._selectedNLs.has(nlKey)) {
+        this._selectedNLs.delete(nlKey);
+      } else {
+        this._selectedNLs.add(nlKey);
+      }
+
+      this.applyNLFilter([...this._selectedNLs]);
+    });
 
     this.allMarkers[nlKey] = marker;
   });
@@ -1310,7 +1261,6 @@ showPopup(feature) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
     this.neighbours = computeNeighbours(filteredMarkers);
   }
-
 resetMapState() {
   console.log("🧹 resetMapState(): Map wird vollständig zurückgesetzt");
 
@@ -1325,6 +1275,12 @@ resetMapState() {
   this.nlMarkers = [];
   this.initialErhebungsNLs = null;
 
+  // Kritische Marker entfernen
+  if (this.criticalMarkers) {
+    Object.values(this.criticalMarkers).forEach(m => this.map.removeLayer(m));
+  }
+  this.criticalMarkers = {};
+
   // PLZ-Layer zurücksetzen
   if (this._geoLayer) {
     this._geoLayer.eachLayer(layer => {
@@ -1334,6 +1290,7 @@ resetMapState() {
         color: "#ffffff",
         weight: 1
       });
+      layer.options.interactive = false;
     });
   }
 
@@ -1341,29 +1298,30 @@ resetMapState() {
   this._selectedNLs = new Set();
 
   // Radius zurücksetzen
+  const radiusSlider = this._shadowRoot.getElementById("radius-slider");
+  radiusSlider.value = 0;
+  this.currentRadius = 0;
   this.plzImRadius = new Set();
+
+  console.log("🔄 Radiusfilter zurückgesetzt");
 }
 
 
 applyFilter(erhID, jahr, nummer, { type = "erhebung" } = {}) {
   console.log("🟡 applyFilter() start:", { erhID, jahr, nummer, type });
 
-  // 👉 NL-Filter? Dann KEINE Erhebungslogik
+  // 👉 NL-Filter? Dann abbrechen
   if (type === "nl") {
     console.log("⏭️ applyFilter(): NL-Filter → keine Erhebungslogik");
-    this.updateMarkers();
-    this.applyRadiusFilter(this.currentRadius);
-    this.renderDataTable(this.filteredKennwerte);
+    this.applyNLFilter([...this._selectedNLs]);
     return;
   }
 
-  // 👉 Ab hier: echter Erhebungsfilter
-  console.log("🔄 Erhebungsfilter aktiv → Map wird zurückgesetzt");
+  // 👉 Erhebungsfilter
   this.resetMapState();
-
   this._activeFilter = { erhID, jahr, nummer };
 
-  // Daten filtern
+  // Daten neu aggregieren
   const filteredData = this.getFilteredData({ type: "erhebung" });
   this.filteredData = filteredData;
 
@@ -1381,19 +1339,20 @@ applyFilter(erhID, jahr, nummer, { type = "erhebung" } = {}) {
   this.createAllMarkers();
 
   // Marker filtern
-  this.updateMarkers(this.filteredPLZs);
+  this.updateMarkers();
 
   // Radius anwenden
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.currentRadius = radius;
-  this.applyRadiusFilter(radius);
+  this.applyRadiusFilter(0);
 
-  // Tabelle + Zoom
+  // Tabelle rendern
   this.renderDataTable(this.filteredKennwerte);
+
+  // Zoom
   this.zoomToFilteredPLZ();
 
   console.log("🟢 applyFilter() end");
 }
+
 
 
 
@@ -1513,7 +1472,6 @@ prepareMapData(filteredData) {
   }
   }
 
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -1526,6 +1484,7 @@ updateGeoLayer() {
 
     const value = values.hz ? values.wk : values.wkPot;
 
+    // Normale Färbung
     layer.setStyle({
       fillColor: this.getColor(value, values.hz),
       fillOpacity: 0.5,
@@ -1533,14 +1492,10 @@ updateGeoLayer() {
       weight: 1
     });
 
-    const note = layer.feature?.properties?.note;
-    if (note && layer.setTooltipContent) {
-      layer.setTooltipContent(note);
-    }
-
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
-    if (isCritical) {
+    // Kritische PLZ nur im Radius anzeigen
+    if (isCritical && this.plzImRadius.has(plz)) {
       if (!this.criticalMarkers[plz]) {
         const center = layer.getBounds().getCenter();
 
@@ -1578,8 +1533,8 @@ updateGeoLayer() {
   });
 }
 
-updateMarkers(filteredPLZs = []) {
-  console.log("🟡 updateMarkers() start, filteredPLZs length:", filteredPLZs.length);
+updateMarkers() {
+  console.log("🟡 updateMarkers() start");
 
   if (!this.allMarkers || Object.keys(this.allMarkers).length === 0) {
     console.warn("⚠️ updateMarkers: Keine Marker vorhanden.");
@@ -1600,17 +1555,13 @@ updateMarkers(filteredPLZs = []) {
     [...this.initialErhebungsNLs].filter(nl => !filteredNLs.has(nl))
   );
 
-  console.log("📌 filteredNLs:", filteredNLs.size);
-  console.log("📌 phantomNLs:", phantomNLs.size);
-  console.log("📌 selectedNLs:", this._selectedNLs.size);
-
   const radiusRelevantMarkers = [];
 
   Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
     const isInErhebung = filteredNLs.has(nlKey);
     const isPhantom = phantomNLs.has(nlKey);
 
-    // Sichtbarkeit: ALLE NLs der Erhebung anzeigen (inkl. Phantom)
+    // Sichtbarkeit: alle NLs der Erhebung anzeigen
     if (isInErhebung || isPhantom) {
       this.filteredGroup.addLayer(marker);
     } else {
@@ -1618,14 +1569,12 @@ updateMarkers(filteredPLZs = []) {
       return;
     }
 
-    // Radius-Relevanz:
+    // Radius-Relevanz
     let isRadiusRelevant = false;
 
     if (this._selectedNLs.size === 0) {
-      // Keine NL ausgewählt → alle NLs der Erhebung + Phantom
-      isRadiusRelevant = true;
+      isRadiusRelevant = true; // alle NLs radius-relevant
     } else {
-      // NL ausgewählt → nur diese NLs radius-relevant
       isRadiusRelevant = this._selectedNLs.has(nlKey);
     }
 
@@ -1739,8 +1688,7 @@ updateMarkers(filteredPLZs = []) {
     }
   }
 
-  
-applyNLFilter(selectedNLs) {
+  applyNLFilter(selectedNLs) {
   console.log("🟡 applyNLFilter():", selectedNLs);
 
   this._selectedNLs = new Set(selectedNLs);
@@ -1766,6 +1714,7 @@ applyNLFilter(selectedNLs) {
   // 6️⃣ Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
 }
+
 
 
 
