@@ -982,21 +982,35 @@ zoomToFilteredPLZ() {
       this.applyNLFilter([...this._selectedNLs]);
     });
 
-    marker.on("mouseover", () => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.filter = "brightness(1.35)";
-        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-      }
-    });
+marker.on("mouseover", () => {
+  const nl = marker.options.plzs?.[0];
+  const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
+  const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
 
-    marker.on("mouseout", () => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.filter = "brightness(1)";
-        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-      }
-    });
+  // Phantom-NL nicht highlighten
+  if (!isSelected) return;
+
+  const el = marker.getElement();
+  if (el) {
+    el.style.filter = "brightness(1.35)";
+    el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+  }
+});
+
+marker.on("mouseout", () => {
+  const nl = marker.options.plzs?.[0];
+  const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
+  const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
+
+  if (!isSelected) return;
+
+  const el = marker.getElement();
+  if (el) {
+    el.style.filter = "brightness(1)";
+    el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+  }
+});
+
 
     this.allMarkers.push(marker);
     this.filteredGroup.addLayer(marker);
@@ -1452,7 +1466,6 @@ updateGeoLayer() {
     }
   });
 }
-
 updateMarkers() {
   this.filteredGroup.clearLayers();
 
@@ -1463,7 +1476,6 @@ updateMarkers() {
     return;
   }
 
-  // NLs, die in der Erhebung vorkommen
   const erhNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
@@ -1471,43 +1483,29 @@ updateMarkers() {
   );
 
   const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
-
   const activeMarkers = [];
 
   this.allMarkers.forEach(marker => {
     const markerNLs = marker.options.plzs || [];
-    const nl = markerNLs[0]; // 1 NL pro Marker
+    const nl = markerNLs[0];
 
     const inErhebung = nl && erhNLs.has(nl);
-    if (!inErhebung) {
-      // Marker gehört nicht zur aktuellen Erhebung → komplett ausblenden
-      return;
-    }
+    if (!inErhebung) return;
 
-    // Marker immer in LayerGroup
     this.filteredGroup.addLayer(marker);
-
-    const el = marker.getElement();
-    if (!el) return;
 
     const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
     if (isSelected) {
-      // aktive NL
       marker.setOpacity(1);
       marker.setZIndexOffset(1000);
-      el.style.filter = "brightness(1)";
-      el.style.transform = "scale(1)";
       activeMarkers.push(marker);
     } else {
-      // Phantom-NL: in Erhebung, aber nicht im NL-Filter
+      // Phantom
       marker.setOpacity(0.35);
       marker.setZIndexOffset(100);
-      el.style.filter = "grayscale(1) brightness(0.9)";
-      el.style.transform = "scale(0.9)";
     }
   });
 
-  // Radius-relevante NL-Marker = nur die aktiven
   this.nlMarkers = activeMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
