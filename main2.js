@@ -1149,7 +1149,6 @@ applyNLFilter(selectedNLs) {
 
 
 
-
 createMarkerIcon(nl, isPhantom = false) {
   if (!this.iconCache) this.iconCache = {};
 
@@ -1157,11 +1156,13 @@ createMarkerIcon(nl, isPhantom = false) {
 
   if (!this.iconCache[key]) {
     const color = isPhantom ? "#9a9a9a" : "#ed1f34";
+    const opacity = isPhantom ? 0.8 : 1;
 
     const markerHtml = `
       <div style="
         width:30px;height:30px;
         background-color:${color};
+        opacity:${opacity};
         border-radius:50% 50% 50% 0;
         box-shadow:-1px 1px 4px rgba(0,0,0,.5);
         transform:rotate(-45deg);
@@ -1186,6 +1187,7 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
+
 
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
@@ -1554,7 +1556,6 @@ updateGeoLayer() {
     }
   });
 }
-
 updateMarkers() {
   this.filteredGroup.clearLayers();
 
@@ -1581,12 +1582,34 @@ updateMarkers() {
 
     const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
 
+    // 🔥 Icon setzen
+    marker.setIcon(this.createMarkerIcon(nl, !isSelected));
+
+    // 🔥 Hover-Effekt für beide Marker-Typen
+    marker.off("mouseover");
+    marker.off("mouseout");
+
+    marker.on("mouseover", () => {
+      const el = marker.getElement();
+      if (el) {
+        el.style.filter = "brightness(1.35)";
+        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+      }
+    });
+
+    marker.on("mouseout", () => {
+      const el = marker.getElement();
+      if (el) {
+        el.style.filter = "brightness(1)";
+        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+      }
+    });
+
+    // 🔥 Z‑Index
     if (isSelected) {
-      marker.setIcon(this.createMarkerIcon(nl, false));
       marker.setZIndexOffset(1000);
       activeMarkers.push(marker);
     } else {
-      marker.setIcon(this.createMarkerIcon(nl, true));
       marker.setZIndexOffset(100);
     }
   });
@@ -1597,6 +1620,7 @@ updateMarkers() {
     marker
   }));
 }
+
 
 
 
