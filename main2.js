@@ -559,21 +559,21 @@ renderDataTable(data) {
   // 🔥 Sticky-Footer aktualisieren
   const box = this._shadowRoot.getElementById("streuverlust-box");
   if (box && this.streuverlust) {
-    box.innerHTML = `
-      <div style="
-        position: sticky;
-        bottom: 0;
-        background: white;
-        padding: 10px;
-        border-top: 2px solid #b41821;
-        font-size: 0.85rem;
-        z-index: 10;">
-        <strong>Streuverlust:</strong><br>
-        Umsatz außerhalb Radius: ${this.streuverlust.umsatz.toLocaleString("de-DE")} €<br>
-        Anteil an Erhebung: ${(this.streuverlust.anteil * 100).toFixed(1)} %
-      </div>
-    `;
-  }
+  box.innerHTML = `
+    <div style="
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 10px;
+      border-top: 2px solid #b41821;
+      font-size: 0.85rem;
+      z-index: 10;">
+      <strong>Streuverlust:</strong>
+      ${this.streuverlust.umsatz.toLocaleString("de-DE")} €,
+      ${(this.streuverlust.anteil * 100).toFixed(1)} %
+    </div>
+  `;
+}
 }
 
 
@@ -1905,14 +1905,14 @@ getColorForPLZ(plz) {
 
   return this.getColor(value, isHZ);
 }
-
 getFilteredDataWithRadius() {
   if (!this.filteredData) return [];
 
   const result = [];
   const aggregated = {};
+
+  // 🔥 Streuverlust-Struktur
   const streuverlust = {
-    hzCount: 0,
     sum: {
       umsatzNetto: 0,
       hzKosten: 0,
@@ -1933,16 +1933,17 @@ getFilteredDataWithRadius() {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = rawPLZ == null ? "" : String(rawPLZ).padStart(5, "0");
 
-    // 1️⃣ NL-Filter
-    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
+    // 1️⃣ NL-Filter: Nur Daten der ausgewählten NLs berücksichtigen
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) {
+      return; // komplett ignorieren
+    }
 
-// 2️⃣ Radiusfilter
-const isInRadius = this.plzImRadius instanceof Set
-  ? this.plzImRadius.has(plz)
-  : true;
+    // 2️⃣ Radiusfilter
+    const isInRadius = this.plzImRadius instanceof Set
+      ? this.plzImRadius.has(plz)
+      : true;
 
-
-    // 3️⃣ Wenn PLZ NICHT im Radius → Streuverlust
+    // 3️⃣ Streuverlust (PLZ gehört zur NL, aber liegt außerhalb Radius)
     if (!isInRadius) {
       streuverlust.sum.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
       streuverlust.sum.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
@@ -1960,7 +1961,7 @@ const isInRadius = this.plzImRadius instanceof Set
       const kk = row["value_kaufkraft_0"]?.raw;
       if (typeof kk === "number") streuverlust.avgArrays.kaufkraft.push(kk);
 
-      return; // NICHT in reguläre Aggregation aufnehmen
+      return; // nicht aggregieren
     }
 
     // 4️⃣ Reguläre Radius-PLZ
@@ -1997,23 +1998,22 @@ const isInRadius = this.plzImRadius instanceof Set
     entry.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
     entry.sum.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
 
-    const wv = row["value_werbeverweigerer_0"]?.raw;
-    if (typeof wv === "number") entry.avgArrays.werbeverweigerer.push(wv);
+    const wv2 = row["value_werbeverweigerer_0"]?.raw;
+    if (typeof wv2 === "number") entry.avgArrays.werbeverweigerer.push(wv2);
 
-    const hh = row["value_haushalte_0"]?.raw;
-    if (typeof hh === "number") entry.avgArrays.haushalte.push(hh);
+    const hh2 = row["value_haushalte_0"]?.raw;
+    if (typeof hh2 === "number") entry.avgArrays.haushalte.push(hh2);
 
-    const kk = row["value_kaufkraft_0"]?.raw;
-    if (typeof kk === "number") entry.avgArrays.kaufkraft.push(kk);
+    const kk2 = row["value_kaufkraft_0"]?.raw;
+    if (typeof kk2 === "number") entry.avgArrays.kaufkraft.push(kk2);
   });
 
-  // 5️⃣ Aggregation wie gewohnt
-  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+  // 5️⃣ Aggregation
+  const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
   this.filteredKennwerte = {};
   this.filteredPLZWerte = {};
 
-  // Reguläre Radius-PLZs
   Object.entries(aggregated).forEach(([plz, entry]) => {
     const sum = entry.sum;
     const avgArr = entry.avgArrays;
@@ -2026,11 +2026,8 @@ const isInRadius = this.plzImRadius instanceof Set
     const hzKosten = sum.hzKosten;
 
     const umsatzPHH = avgHaushalte > 0 ? Number((umsatzNetto / avgHaushalte).toFixed(2)) : 0;
-
     const wkPercent = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
-
     const bon = sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0;
-
     const potHzPercent = umsatzNetto > 0 ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1)) : 0;
 
     const isHZ = entry.hzCount > 0;
@@ -2061,13 +2058,13 @@ const isInRadius = this.plzImRadius instanceof Set
     };
   });
 
-
+  // 6️⃣ Streuverlust final berechnen
   this.streuverlust = {
-  umsatz: streuverlust.sum.umsatzNetto,
-  anteil: streuverlust.sum.umsatzErhebung > 0
-    ? streuverlust.sum.umsatzNetto / streuverlust.sum.umsatzErhebung
-    : 0
-};
+    umsatz: streuverlust.sum.umsatzNetto,
+    anteil: streuverlust.sum.umsatzErhebung > 0
+      ? streuverlust.sum.umsatzNetto / streuverlust.sum.umsatzErhebung
+      : 0
+  };
 
   return result;
 }
