@@ -1225,6 +1225,12 @@ showPopup(feature) {
 applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
 
+  // 🔄 NL-Auswahl zurücksetzen
+  if (!this._selectedNLs) {
+    this._selectedNLs = new Set();
+  } else {
+    this._selectedNLs.clear();
+  }
   // 1) Daten filtern (Erhebung)
   const filteredData = this.getFilteredData();
 
@@ -1450,7 +1456,6 @@ updateGeoLayer() {
 }
 
 
-
 updateMarkers() {
   this.filteredGroup.clearLayers();
 
@@ -1461,6 +1466,7 @@ updateMarkers() {
     return;
   }
 
+  // Alle NLs, die im aktuellen Filter vorkommen (Erhebung + ggf. NL-Filter)
   const filteredNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
@@ -1473,17 +1479,40 @@ updateMarkers() {
     const markerNLs = marker.options.plzs || [];
     const belongs = markerNLs.some(nl => filteredNLs.has(nl));
 
+    // Marker immer in die LayerGroup packen
+    this.filteredGroup.addLayer(marker);
+    visibleMarkers.push(marker);
+
+    // Styling je nach Zugehörigkeit
+    const el = marker.getElement();
+    if (!el) return;
+
     if (belongs) {
-      this.filteredGroup.addLayer(marker);
-      visibleMarkers.push(marker);
+      // aktive NL
+      marker.setOpacity(1);
+      marker.setZIndexOffset(1000);
+      el.style.filter = "brightness(1)";
+      el.style.transform = "scale(1)";
+    } else {
+      // Phantom-NL
+      marker.setOpacity(0.35);
+      marker.setZIndexOffset(100);
+      el.style.filter = "grayscale(1) brightness(0.9)";
+      el.style.transform = "scale(0.9)";
     }
   });
 
-  this.nlMarkers = visibleMarkers.map(marker => ({
-    lat: marker.getLatLng().lat,
-    lng: marker.getLatLng().lng,
-    marker
-  }));
+  // Radius-relevante NL-Marker: nur die aktiven
+  this.nlMarkers = visibleMarkers
+    .filter(marker => {
+      const markerNLs = marker.options.plzs || [];
+      return markerNLs.some(nl => filteredNLs.has(nl));
+    })
+    .map(marker => ({
+      lat: marker.getLatLng().lat,
+      lng: marker.getLatLng().lng,
+      marker
+    }));
 
   console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
 }
