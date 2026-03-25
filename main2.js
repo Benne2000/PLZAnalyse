@@ -1318,9 +1318,7 @@ getFilteredData() {
         hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
       };
 
-      console.log(
-        `✔️ Match: PLZ ${plz} | WK=${filteredPLZWerte[plz].wk} | WKPot=${filteredPLZWerte[plz].wkPot} | HZ=${filteredPLZWerte[plz].hz}`
-      );
+
     }
 
     return match;
