@@ -567,24 +567,32 @@ renderDataTable(data) {
 
   // 🔥 Sticky-Footer aktualisieren
   const box = this._shadowRoot.getElementById("streuverlust-box");
-  if (box && this.streuverlust) {
+  this.updateStreuverlustFooter();
+
+}
+
+updateStreuverlustFooter() {
+  const box = this._shadowRoot.getElementById("streuverlust-box");
+  if (!box) return;
+
+  if (!this.streuverlust) {
+    box.innerHTML = "";
+    return;
+  }
+
   box.innerHTML = `
     <div style="
-      position: sticky;
-      bottom: 0;
       background: white;
       padding: 10px;
       border-top: 2px solid #b41821;
       font-size: 0.85rem;
-      z-index: 10;">
+    ">
       <strong>Streuverlust:</strong>
       ${this.streuverlust.umsatz.toLocaleString("de-DE")} €,
       ${(this.streuverlust.anteil * 100).toFixed(1)} %
     </div>
   `;
 }
-}
-
 
 
 
@@ -773,6 +781,8 @@ renderDataTableFromEntries(entries) {
   if (this._sortState?.column != null) {
     this.updateSortIcons(this._sortState.column);
   }
+  this.updateStreuverlustFooter();
+
 }
 
 
