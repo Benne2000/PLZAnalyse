@@ -273,7 +273,7 @@
     border-radius: 8px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     font-family: sans-serif;
-    overflow-x: auto;
+    overflow: visible;
   }
 
   .table-container table {
@@ -669,9 +669,9 @@ renderDataTableFromEntries(entries) {
   }
 
   // Scrollbarer Tabellenbereich
-  const scrollWrapper = document.createElement('div');
-  scrollWrapper.style.flex = '1';
-  scrollWrapper.style.overflowY = 'auto';
+const scrollWrapper = document.createElement("div");
+scrollWrapper.classList.add("table-scroll");
+
   scrollWrapper.style.border = '1px solid #b41821';
   scrollWrapper.style.borderRadius = '6px';
   scrollWrapper.style.background = 'white';
@@ -1824,6 +1824,8 @@ getPolygonCenter(layer) {
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
+  this.streuverlust = null;
+
   console.log("🎚 applyRadiusFilter():", radiusKm);
 
   const plzImRadius = new Set();
@@ -2059,26 +2061,13 @@ const isInRadius = this.plzImRadius instanceof Set
     };
   });
 
-  // 6️⃣ Streuverlust hinzufügen (PLZ 00000)
-  this.filteredKennwerte["00000"] = {
-    isHZ: false,
-    isCritical: false,
-    value_hr_n_umsatz_0: { raw: streuverlust.sum.umsatzNetto },
-    value_hz_kosten_0: { raw: streuverlust.sum.hzKosten },
-    value_ums_erhebung_0: { raw: streuverlust.sum.umsatzErhebung },
-    value_kd_erhebung_0: { raw: streuverlust.sum.kdErhebung },
-    value_auflage_0: { raw: streuverlust.sum.auflage },
-    value_hz_potentiell_0: { raw: streuverlust.sum.potHzAbs },
-    value_werbeverweigerer_0: { raw: avg(streuverlust.avgArrays.werbeverweigerer) },
-    value_haushalte_0: { raw: avg(streuverlust.avgArrays.haushalte) },
-    value_kaufkraft_0: { raw: avg(streuverlust.avgArrays.kaufkraft) }
-  };
 
-  this.filteredPLZWerte["00000"] = {
-    wk: 0,
-    wkPot: 0,
-    hz: false
-  };
+  this.streuverlust = {
+  umsatz: streuverlust.sum.umsatzNetto,
+  anteil: streuverlust.sum.umsatzErhebung > 0
+    ? streuverlust.sum.umsatzNetto / streuverlust.sum.umsatzErhebung
+    : 0
+};
 
   return result;
 }
