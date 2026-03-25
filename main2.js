@@ -1136,7 +1136,9 @@ applyNLFilter(selectedNLs) {
   this.updateMarkers();
 
   // 3️⃣ Radius erneut anwenden
-  this.applyRadiusFilter(this.currentRadius || 0);
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.currentRadius = radius;
+  this.applyRadiusFilter(radius);
 }
 
 
