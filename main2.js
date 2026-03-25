@@ -1268,7 +1268,7 @@ showPopup(feature) {
       <thead>
         <tr>
           <th colspan="2" class="title-cell" title="${note}">
-            ${symbol} ${plz} – ${note}
+            ${symbol} ${note}
           </th>
         </tr>
         <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
