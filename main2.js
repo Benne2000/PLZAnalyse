@@ -740,12 +740,20 @@ renderDataTableFromEntries(entries) {
     let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
     note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
-    const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
+   let symbol = "🔴"; // Standard
+
+if (this.filteredKennwerte[plz]?.isCritical) {
+  symbol = "⚠️";
+} else if (this.filteredKennwerte[plz]?.isHZ) {
+  symbol = "🟢";
+}
+
 
     const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
     const wk = kennwerte["value_wk_nachbar_0"]?.raw?.toFixed(1) ?? '–';
 
-    const rowValues = [plz, note, hzFlag, umsatz, wk];
+const rowValues = [plz, note, symbol, umsatz, wk];
+
 
     rowValues.forEach((text, i) => {
       const td = document.createElement('td');
@@ -1186,18 +1194,27 @@ createMarkerIcon(nl, isPhantom = false) {
 
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
-  .padStart(5, "0")
-  .trim();
+    .padStart(5, "0")
+    .trim();
 
   const note = feature.properties?.note || "Keine Notiz";
 
-  // 🔥 WICHTIG: Daten der aktiven Erhebung holen
+  // 🔥 Daten der aktiven Erhebung holen
   const daten = this.filteredKennwerte?.[plz];
 
   if (!daten) {
     console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
   }
 
+  // 🔥 Symbol bestimmen (kritisch > HZ > normal)
+  let symbol = "🔴";
+  if (daten?.isCritical) {
+    symbol = "⚠️";
+  } else if (daten?.isHZ) {
+    symbol = "🟢";
+  }
+
+  // Beschriftungen für Haupttabelle
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
     value_umsatz_p_hh_0: "Umsatz p. HH",
@@ -1213,11 +1230,13 @@ showPopup(feature) {
     value_auflage_0: "Auflage"
   };
 
+  // Beschriftungen für Zusatzwerte
   const beschreibungenSide = {
     value_wk_potentiell_0: "WK in %",
     value_hz_potentiell_0: "HZ-Werbekosten"
   };
 
+  // 🔥 Haupttabelle aufbauen
   let rows = "";
 
   Object.entries(beschreibungen).forEach(([id, label], index) => {
@@ -1226,6 +1245,7 @@ showPopup(feature) {
       ? rawValue.toLocaleString("de-DE")
       : "–";
 
+    // Abschnittstrenner
     if (index === 8) {
       rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
     }
@@ -1238,12 +1258,19 @@ showPopup(feature) {
     `;
   });
 
+  // 🔥 Popup-Container holen
   const sidePopup = this._shadowRoot.getElementById('side-popup');
+
+  // 🔥 Popup-Hauptinhalt setzen (inkl. Symbol + PLZ + Note)
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
       <thead>
-        <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
+        <tr>
+          <th colspan="2" class="title-cell" title="${note}">
+            ${symbol} ${plz} – ${note}
+          </th>
+        </tr>
         <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
       </thead>
       <tbody>${rows}</tbody>
@@ -1251,7 +1278,7 @@ showPopup(feature) {
   `;
 
   // 🔥 Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
-  const isHZ = this.hzFlags?.[plz] === false;
+  const isHZ = daten?.isHZ === false;
   const umsatz = daten?.value_hr_n_umsatz_0?.raw;
 
   if (isHZ && typeof umsatz === "number" && umsatz > 0) {
@@ -1286,9 +1313,11 @@ showPopup(feature) {
     sidePopup.insertAdjacentHTML('beforeend', extraTable);
   }
 
+  // Animation triggern
   void sidePopup.offsetWidth;
   setTimeout(() => sidePopup.classList.add('show'), 10);
 
+  // Close-Button
   const closeBtn = sidePopup.querySelector('.close-btn');
   closeBtn.addEventListener('click', () => {
     sidePopup.classList.remove('show');
