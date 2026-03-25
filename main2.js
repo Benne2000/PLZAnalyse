@@ -1467,52 +1467,80 @@ updateGeoLayer() {
   });
 }
 updateMarkers() {
+  console.group("📍 updateMarkers() gestartet");
+
   this.filteredGroup.clearLayers();
 
   const filteredData = this.filteredData || [];
   if (!filteredData.length) {
     console.warn("⚠️ updateMarkers(): Keine filteredData vorhanden.");
     this.nlMarkers = [];
+    console.groupEnd();
     return;
   }
 
+  // NLs, die in der Erhebung vorkommen
   const erhNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(nl => nl)
   );
 
+  console.log("📌 NLs in Erhebung:", [...erhNLs]);
+
   const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
+  console.log("🎛 Aktiver NL-Filter:", hasNLFilter ? [...this._selectedNLs] : "Keiner");
+
   const activeMarkers = [];
+  let phantomCount = 0;
+  let activeCount = 0;
+  let hiddenCount = 0;
 
   this.allMarkers.forEach(marker => {
     const markerNLs = marker.options.plzs || [];
     const nl = markerNLs[0];
 
     const inErhebung = nl && erhNLs.has(nl);
-    if (!inErhebung) return;
+    if (!inErhebung) {
+      hiddenCount++;
+      return;
+    }
 
+    // Marker immer sichtbar
     this.filteredGroup.addLayer(marker);
 
     const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
+
     if (isSelected) {
       marker.setOpacity(1);
       marker.setZIndexOffset(1000);
       activeMarkers.push(marker);
+      activeCount++;
+
+      console.log(`✔️ Aktiv: NL ${nl}`);
     } else {
-      // Phantom
       marker.setOpacity(0.35);
       marker.setZIndexOffset(100);
+      phantomCount++;
+
+      console.log(`🫥 Phantom: NL ${nl}`);
     }
   });
 
+  // Radius-relevante NL-Marker = nur die aktiven
   this.nlMarkers = activeMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
     marker
   }));
 
-  console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
+  console.log("📊 Zusammenfassung:");
+  console.log("   ✔️ Aktive NL:", activeCount);
+  console.log("   🫥 Phantom NL:", phantomCount);
+  console.log("   ❌ Nicht in Erhebung:", hiddenCount);
+  console.log("   🎯 Radius-relevante NL-Marker:", this.nlMarkers.length);
+
+  console.groupEnd();
 }
 
 
