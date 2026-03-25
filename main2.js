@@ -514,21 +514,42 @@ renderDataTable(data) {
 
   let entries = Object.entries(data || {});
 
-  // 🔥 Nur PLZs anzeigen, die im Radius liegen
+  // 🔥 PLZ 00000 (Streuverlust) entfernen
+  entries = entries.filter(([plz]) => plz !== "00000");
+
+  // 🔥 Radiusfilter anwenden
   if (this.plzImRadius && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => {
-  const norm = String(plz).padStart(5, "0");
-  return this.plzImRadius.has(norm);
-});
-
+      const norm = String(plz).padStart(5, "0");
+      return this.plzImRadius.has(norm);
+    });
   }
 
-  // Default: beim ersten Laden nach PLZ sortieren
+  // Standard-Sortierung nach PLZ, wenn keine Sortierung aktiv ist
   if (!this._sortState || this._sortState.column == null) {
     entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
   }
 
+  // Tabelle rendern
   this.renderDataTableFromEntries(entries);
+
+  // 🔥 Streuverlust-Box aktualisieren
+  const box = this._shadowRoot.getElementById("streuverlust-box");
+  if (box && this.streuverlust) {
+    box.innerHTML = `
+      <div style="
+        margin-top:10px;
+        padding:8px;
+        border:1px solid #b41821;
+        border-radius:6px;
+        background:white;
+        font-size:0.85rem;">
+        <strong>Streuverlust:</strong><br>
+        Umsatz außerhalb Radius: ${this.streuverlust.umsatz.toLocaleString("de-DE")} €<br>
+        Anteil an Erhebung: ${(this.streuverlust.anteil * 100).toFixed(1)} %
+      </div>
+    `;
+  }
 }
 
 
@@ -598,11 +619,14 @@ sortTableByColumn(columnIndex) {
   this.renderDataTableFromEntries(sorted);
 }
 
-      
-      renderDataTableFromEntries(entries) {
+  renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
-  // 🔥 Radiusfilter auch hier anwenden (Sortierung ruft diese Methode direkt auf)
+
+  // 🔥 PLZ 00000 entfernen
+  entries = entries.filter(([plz]) => plz !== "00000");
+
+  // 🔥 Radiusfilter anwenden
   if (this.plzImRadius && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => {
       const norm = String(plz).padStart(5, "0");
@@ -673,62 +697,50 @@ sortTableByColumn(columnIndex) {
   const tbody = document.createElement('tbody');
   const fragment = document.createDocumentFragment();
 
-entries.forEach(([plz, kennwerte]) => {
-  const tr = document.createElement('tr');
+  entries.forEach(([plz, kennwerte]) => {
+    const tr = document.createElement('tr');
+    tr.style.cursor = "pointer";
 
-  // Tabellenzeile klickbar machen
-  tr.style.cursor = "pointer";
-// Tabellenklick-Handler
-tr.addEventListener("click", () => {
-  this.highlightMapArea(plz);
-  this.openPopupFromTable(plz);
-  this.highlightTableRow(tr);
-});
+    tr.addEventListener("click", () => {
+      this.highlightMapArea(plz);
+      this.openPopupFromTable(plz);
+      this.highlightTableRow(tr);
+    });
 
+    let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
+    note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
-  let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
-  note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
+    const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
-  const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
+    const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
+    const umsatz = typeof umsatzRaw?.raw === "number"
+      ? umsatzRaw.raw.toLocaleString('de-DE')
+      : '–';
 
-  const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-  const umsatz = typeof umsatzRaw?.raw === "number"
-    ? umsatzRaw.raw.toLocaleString('de-DE')
-    : umsatzRaw === "–"
-      ? '–'
-      : 'Keine Angabe';
+    const wkRaw = kennwerte["value_wk_nachbar_0"];
+    const wk = typeof wkRaw?.raw === "number"
+      ? wkRaw.raw.toFixed(1)
+      : '–';
 
-  const wkRaw = kennwerte["value_wk_nachbar_0"];
-  const wk = typeof wkRaw?.raw === "number"
-    ? wkRaw.raw.toFixed(1)
-    : wkRaw === "–"
-      ? '–'
-      : 'Keine Angabe';
+    const rowValues = [plz, note, hzFlag, umsatz, wk];
 
-  const rowValues = [plz, note, hzFlag, umsatz, wk];
+    rowValues.forEach((text, i) => {
+      const td = document.createElement('td');
+      td.textContent = text.replace(/\n/g, ' ');
+      td.title = text;
+      td.style.padding = '6px 8px';
+      td.style.borderBottom = '1px solid #b41821';
+      td.style.borderRight = '1px solid #b41821';
+      td.style.fontSize = '0.8rem';
+      td.style.whiteSpace = 'nowrap';
+      td.style.overflow = 'hidden';
+      td.style.textOverflow = 'ellipsis';
+      td.style.width = headers[i].width;
+      tr.appendChild(td);
+    });
 
-  rowValues.forEach((text, i) => {
-    const td = document.createElement('td');
-    td.textContent = text.replace(/\n/g, ' ');
-    td.title = text;
-    td.style.padding = '6px 8px';
-    td.style.borderBottom = '1px solid #b41821';
-    td.style.borderRight = '1px solid #b41821';
-    td.style.fontSize = '0.8rem';
-    td.style.whiteSpace = 'nowrap';
-    td.style.overflow = 'hidden';
-    td.style.textOverflow = 'ellipsis';
-    td.style.width = headers[i].width;
-    tr.appendChild(td);
+    fragment.appendChild(tr);
   });
-
-  fragment.appendChild(tr);
-});
-
-
-// 🔥 WICHTIG: Fragment in das tbody einfügen
-tbody.appendChild(fragment);
-
 
   tbody.appendChild(fragment);
   table.appendChild(tbody);
@@ -740,6 +752,7 @@ tbody.appendChild(fragment);
     this.updateSortIcons(this._sortState.column);
   }
 }
+
       
 // highlightTableRow(rowElement)
 highlightTableRow(rowElement) {
@@ -1402,12 +1415,32 @@ updateGeoLayer() {
 
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+
+    const hasValues = plzWerte[plz] !== undefined;
     const values = plzWerte[plz] || { wk: 0, wkPot: 0, hz: false };
     const value = values.hz ? values.wk : values.wkPot;
 
     const inRadius = !hasRadius || this.plzImRadius.has(plz);
 
-    // Färbung
+    // 🔥 PLZ ohne Werte → immer grau, nicht interaktiv
+    if (!hasValues) {
+      layer.setStyle({
+        fillColor: "#cfd4da",
+        fillOpacity: inRadius ? 0.5 : 0.3,
+        color: "#ffffff",
+        weight: 1
+      });
+      layer.options.interactive = false;
+
+      // Critical-Marker ggf. entfernen
+      if (this.criticalMarkers[plz]) {
+        this.map.removeLayer(this.criticalMarkers[plz]);
+        delete this.criticalMarkers[plz];
+      }
+      return;
+    }
+
+    // 🎨 Färbung nach Radius + WK/WKPot
     if (inRadius) {
       layer.setStyle({
         fillColor: this.getColor(value, values.hz),
@@ -1426,6 +1459,7 @@ updateGeoLayer() {
       layer.options.interactive = false;
     }
 
+    // ⚠️ Critical-Marker
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
     const showCritical = isCritical && inRadius;
 
@@ -1466,6 +1500,8 @@ updateGeoLayer() {
     }
   });
 }
+
+
 updateMarkers() {
   console.group("📍 updateMarkers() gestartet");
 
@@ -1479,69 +1515,45 @@ updateMarkers() {
     return;
   }
 
-  // NLs, die in der Erhebung vorkommen
   const erhNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(nl => nl)
   );
 
-  console.log("📌 NLs in Erhebung:", [...erhNLs]);
-
   const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
-  console.log("🎛 Aktiver NL-Filter:", hasNLFilter ? [...this._selectedNLs] : "Keiner");
 
   const activeMarkers = [];
-  let phantomCount = 0;
-  let activeCount = 0;
-  let hiddenCount = 0;
 
   this.allMarkers.forEach(marker => {
-    const markerNLs = marker.options.plzs || [];
-    const nl = markerNLs[0];
-
+    const nl = marker.options.plzs?.[0];
     const inErhebung = nl && erhNLs.has(nl);
-    if (!inErhebung) {
-      hiddenCount++;
-      return;
-    }
 
-    // Marker immer sichtbar
+    if (!inErhebung) return;
+
     this.filteredGroup.addLayer(marker);
 
     const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
 
     if (isSelected) {
-      marker.setOpacity(1);
+      marker.setIcon(this.createMarkerIcon(nl, false));
       marker.setZIndexOffset(1000);
       activeMarkers.push(marker);
-      activeCount++;
-
-      console.log(`✔️ Aktiv: NL ${nl}`);
     } else {
-      marker.setOpacity(0.35);
+      marker.setIcon(this.createMarkerIcon(nl, true));
       marker.setZIndexOffset(100);
-      phantomCount++;
-
-      console.log(`🫥 Phantom: NL ${nl}`);
     }
   });
 
-  // Radius-relevante NL-Marker = nur die aktiven
   this.nlMarkers = activeMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
     marker
   }));
 
-  console.log("📊 Zusammenfassung:");
-  console.log("   ✔️ Aktive NL:", activeCount);
-  console.log("   🫥 Phantom NL:", phantomCount);
-  console.log("   ❌ Nicht in Erhebung:", hiddenCount);
-  console.log("   🎯 Radius-relevante NL-Marker:", this.nlMarkers.length);
-
   console.groupEnd();
 }
+
 
 
 
