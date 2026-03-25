@@ -1058,18 +1058,28 @@ applyNLFilter(selectedNLs) {
 
   console.log("🔵 applyNLFilter():", [...this._selectedNLs]);
 
-  // 1️⃣ NL-basiert aggregieren
-  const filteredDataNL = this.getFilteredData({ type: "nl" });
-  this.filteredData = filteredDataNL;
+  // ❗ WICHTIG:
+  // NICHT erneut getFilteredData() aufrufen!
+  // Wir filtern nur die bereits erhobenen Daten weiter.
 
-  // 2️⃣ PLZ-Liste aktualisieren
-  this.filteredPLZs = filteredDataNL
+  if (!this.filteredData || this.filteredData.length === 0) {
+    console.warn("⚠️ applyNLFilter(): Keine Erhebungsdaten vorhanden!");
+    return;
+  }
+
+  // 1️⃣ PLZ-Liste aus bereits erhobenen Daten aktualisieren
+  this.filteredPLZs = this.filteredData
+    .filter(row => {
+      const nl = row["dimension_niederlassung_0"]?.id?.trim();
+      return this._selectedNLs.size === 0 || this._selectedNLs.has(nl);
+    })
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  // 3️⃣ Radius erneut anwenden (inkl. Streuverlust + kritische PLZ)
+  // 2️⃣ Radius erneut anwenden (inkl. Streuverlust + kritische PLZ)
   this.applyRadiusFilter(this.currentRadius || 0);
 }
+
 
 
 
