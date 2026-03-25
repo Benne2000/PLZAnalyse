@@ -928,9 +928,11 @@ zoomToFilteredPLZ() {
   }
       
       
-      
-  createAllMarkers() {
+      createAllMarkers() {
   console.log("📌 createAllMarkers() gestartet");
+
+  // Sicherstellen, dass _selectedNLs existiert
+  if (!this._selectedNLs) this._selectedNLs = new Set();
 
   // Alte Marker entfernen
   this.filteredGroup.clearLayers();
@@ -952,10 +954,7 @@ zoomToFilteredPLZ() {
   // 🔵 Haupt-Niederlassungen erzeugen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
     const coords = this.nlKoordinaten[nlKey];
-    if (!coords) {
-      console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
-      return;
-    }
+    if (!coords) return;
 
     if (seen.has(nlKey)) return;
 
@@ -967,12 +966,12 @@ zoomToFilteredPLZ() {
       plzs: [nlKey]
     });
 
-    // 🔥 Marker IMMER über PLZ-Layer halten
     marker.setZIndexOffset(1000);
 
-    // 🔥 Klick-Handler für NL-Filter
     marker.on("click", () => {
       console.log("🟡 NL-Klick:", nlKey);
+
+      if (!this._selectedNLs) this._selectedNLs = new Set();
 
       if (this._selectedNLs.has(nlKey)) {
         this._selectedNLs.delete(nlKey);
@@ -983,7 +982,6 @@ zoomToFilteredPLZ() {
       this.applyNLFilter([...this._selectedNLs]);
     });
 
-    // Hover-Effekt
     marker.on("mouseover", () => {
       const el = marker.getElement();
       if (el) {
@@ -1000,11 +998,9 @@ zoomToFilteredPLZ() {
       }
     });
 
-    // 🔥 Marker in Gruppen einfügen
     this.allMarkers.push(marker);
     this.filteredGroup.addLayer(marker);
 
-    // 🔥 Für Radiusfilter speichern
     this.nlMarkers.push({
       lat: coords.lat,
       lng: coords.lon,
@@ -1030,6 +1026,8 @@ zoomToFilteredPLZ() {
       marker.on("click", () => {
         console.log("🟡 NL-Klick:", nl);
 
+        if (!this._selectedNLs) this._selectedNLs = new Set();
+
         if (this._selectedNLs.has(nl)) {
           this._selectedNLs.delete(nl);
         } else {
@@ -1053,8 +1051,12 @@ zoomToFilteredPLZ() {
   console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
 
+
 applyNLFilter(selectedNLs) {
+  if (!this._selectedNLs) this._selectedNLs = new Set();
   this._selectedNLs = new Set(selectedNLs);
+
+  console.log("🔵 applyNLFilter():", [...this._selectedNLs]);
 
   // 1️⃣ NL-basiert aggregieren
   const filteredDataNL = this.getFilteredData({ type: "nl" });
@@ -1068,6 +1070,7 @@ applyNLFilter(selectedNLs) {
   // 3️⃣ Radius erneut anwenden (inkl. Streuverlust + kritische PLZ)
   this.applyRadiusFilter(this.currentRadius || 0);
 }
+
 
 
 
@@ -1399,6 +1402,7 @@ updateGeoLayer() {
     if (showCritical) {
       if (!this.criticalMarkers[plz]) {
         const center = layer.getBounds().getCenter();
+
         const icon = L.divIcon({
           html: `<div style="
             background:#ffffff;
@@ -1416,7 +1420,12 @@ updateGeoLayer() {
           iconSize: [22, 22],
           iconAnchor: [11, 11]
         });
-        const marker = L.marker(center, { icon, interactive: false }).addTo(this.map);
+
+        const marker = L.marker(center, {
+          icon,
+          interactive: false
+        }).addTo(this.map);
+
         this.criticalMarkers[plz] = marker;
       }
     } else {
@@ -1679,6 +1688,8 @@ getPolygonCenter(layer) {
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
+  console.log("🎚 applyRadiusFilter():", radiusKm);
+
   const plzImRadius = new Set();
 
   this._geoLayer.eachLayer(layer => {
@@ -1703,15 +1714,16 @@ applyRadiusFilter(radiusKm) {
 
   this.plzImRadius = plzImRadius;
 
-  // 🔥 Kennzahlen + Streuverlust neu auf Basis Radius berechnen
+  // 🔥 Radius-Kennzahlen neu berechnen (inkl. Streuverlust)
   this.getFilteredDataWithRadius();
 
-  // 🔥 Karte neu einfärben (inkl. kritische PLZ)
+  // 🔥 Karte neu einfärben
   this.updateGeoLayer();
 
   // 🔥 Tabelle neu rendern
   this.renderDataTable(this.filteredKennwerte);
 }
+
 
 
 
