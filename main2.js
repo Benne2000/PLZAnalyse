@@ -342,49 +342,45 @@
 
 
 
-  <div class="layout">
-    <!-- 🔍 Filterbereich -->
-    <div class="filter-container">
-      <label for="erhebung-select">ErhebungsID:</label>
-      <select id="erhebung-select"></select>
+<div class="layout">
+  <!-- 🔍 Filterbereich -->
+  <div class="filter-container">
+    <label for="erhebung-select">ErhebungsID:</label>
+    <select id="erhebung-select"></select>
 
-      <label for="jahr-select">Jahr:</label>
-      <select id="jahr-select" disabled></select>
+    <label for="jahr-select">Jahr:</label>
+    <select id="jahr-select" disabled></select>
 
-      <label for="nummer-select">Erhebungsnummer:</label>
-      <select id="nummer-select" disabled></select>
+    <label for="nummer-select">Erhebungsnummer:</label>
+    <select id="nummer-select" disabled></select>
 
-      <button id="filter-button">Anzeigen</button>
+    <button id="filter-button">Anzeigen</button>
 
-<div class="table-container">
-  <div class="table-wrapper" id="table-container">
-    <!-- Tabelle + Sticky-Footer werden dynamisch eingefügt -->
-  </div>
-
-  <!-- 🔥 Sticky-Footer-Box -->
-  <div id="streuverlust-box"></div>
-</div>
-
-</div>
-
-    </div>
-
-    <!-- 🗺️ Kartenbereich -->
-    <div class="map-container">
-      <div id="loading-spinner" class="spinner"></div>
-      <div id="radius-slider-container">
-        <label>Radius: <span id="radius-value">40</span> km</label>
-        <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
+    <div class="table-container">
+      <div class="table-wrapper" id="table-container">
+        <!-- Tabelle + Sticky-Footer werden dynamisch eingefügt -->
       </div>
 
+      <!-- 🔥 Sticky-Footer-Box -->
+      <div id="streuverlust-box"></div>
+    </div>
+  </div> <!-- ✔ korrekt geschlossen -->
 
-      <div id="map"></div>
-      <div class="legend" id="legend">...</div>
+  <!-- 🗺️ Kartenbereich -->
+  <div class="map-container">
+    <div id="loading-spinner" class="spinner"></div>
+    <div id="radius-slider-container">
+      <label>Radius: <span id="radius-value">40</span> km</label>
+      <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
     </div>
 
-    <!-- 📌 Popup für Details -->
-    <div id="side-popup"></div>
+    <div id="map"></div>
+    <div class="legend" id="legend">...</div>
   </div>
+
+  <!-- 📌 Popup für Details -->
+  <div id="side-popup"></div>
+</div>
 
 
 
