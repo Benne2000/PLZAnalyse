@@ -314,14 +314,12 @@
   z-index: 9999;
   font-size: 14px;
 }
-/* Wrapper für Tabelle + Sticky-Footer */
 .table-wrapper {
   display: flex;
   flex-direction: column;
   height: 100%;
 }
 
-/* Scrollbarer Tabellenbereich */
 .table-scroll {
   flex: 1;
   overflow-y: auto;
@@ -330,7 +328,6 @@
   background: white;
 }
 
-/* Sticky-Footer */
 #streuverlust-box {
   position: sticky;
   bottom: 0;
@@ -359,11 +356,15 @@
 
       <button id="filter-button">Anzeigen</button>
 
-      <!-- 📊 Tabelle jetzt innerhalb der Filtermaske -->
 <div class="table-container">
   <div class="table-wrapper" id="table-container">
     <!-- Tabelle + Sticky-Footer werden dynamisch eingefügt -->
   </div>
+
+  <!-- 🔥 Sticky-Footer-Box -->
+  <div id="streuverlust-box"></div>
+</div>
+
 </div>
 
     </div>
