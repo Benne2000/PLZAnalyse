@@ -376,8 +376,6 @@
         this._resizeObserver = null;
         this._geoLayerVisible = false;
         this._tilesVisible = false;
-        this._selectedNLs = new Set();
-
         this._sortState = { column: null, direction: "asc" };
       }
 
@@ -532,143 +530,6 @@ renderDataTable(data) {
 
   this.renderDataTableFromEntries(entries);
 }
-getFilteredData({ type = "erhebung" } = {}) {
-  if (!this._myDataSource || this._myDataSource.state !== "success") {
-    console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
-    return [];
-  }
-
-  const data = this._myDataSource.data;
-  const { erhID, jahr, nummer } = this._activeFilter || {};
-
-  if (!erhID || !jahr || !nummer) {
-    console.log("ℹ️ getFilteredData: Kein aktiver Erhebungsfilter.");
-    return [];
-  }
-
-  const aggregated = {};
-  const filtered = [];
-
-  data.forEach(row => {
-    const id = row["dimension_erhebung_0"]?.id?.trim();
-    const y = row["dimension_jahr_0"]?.id?.trim();
-    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
-    const nl = row["dimension_niederlassung_0"]?.id?.trim();
-
-    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = rawPLZ == null ? "" : String(rawPLZ).padStart(5, "0");
-
-    // Erhebungsfilter
-    if (id !== erhID || y !== jahr || num !== nummer) return;
-    if (!plz || plz === "@NullMember") return;
-
-    // NL-Filter
-    if (type === "nl" && this._selectedNLs.size > 0) {
-      if (!this._selectedNLs.has(nl)) return;
-    }
-
-    filtered.push(row);
-
-    if (!aggregated[plz]) {
-      aggregated[plz] = {
-        hzCount: 0,
-        sum: {
-          umsatzNetto: 0,
-          hzKosten: 0,
-          umsatzErhebung: 0,
-          kdErhebung: 0,
-          auflage: 0,
-          potHzAbs: 0
-        },
-        avgArrays: {
-          werbeverweigerer: [],
-          haushalte: [],
-          kaufkraft: []
-        }
-      };
-    }
-
-    const entry = aggregated[plz];
-
-    // HZ-Flag
-    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
-    if (hz) entry.hzCount++;
-
-    // Summen
-    entry.sum.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
-    entry.sum.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
-    entry.sum.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
-    entry.sum.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
-    entry.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
-    entry.sum.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
-
-    // Durchschnitte
-    const wv = row["value_werbeverweigerer_0"]?.raw;
-    if (typeof wv === "number") entry.avgArrays.werbeverweigerer.push(wv);
-
-    const hh = row["value_haushalte_0"]?.raw;
-    if (typeof hh === "number") entry.avgArrays.haushalte.push(hh);
-
-    const kk = row["value_kaufkraft_0"]?.raw;
-    if (typeof kk === "number") entry.avgArrays.kaufkraft.push(kk);
-  });
-
-  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
-
-  this.filteredKennwerte = {};
-  this.filteredPLZWerte = {};
-
-  Object.entries(aggregated).forEach(([plz, entry]) => {
-    const sum = entry.sum;
-    const avgArr = entry.avgArrays;
-
-    const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
-    const avgHaushalte = avg(avgArr.haushalte);
-    const avgKaufkraft = avg(avgArr.kaufkraft);
-
-    const umsatzNetto = sum.umsatzNetto;
-    const hzKosten = sum.hzKosten;
-
-    const umsatzPHH = avgHaushalte > 0 ? Number((umsatzNetto / avgHaushalte).toFixed(2)) : 0;
-
-    const wkPercent = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
-
-    const bon = sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0;
-
-    const potHzPercent = umsatzNetto > 0 ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1)) : 0;
-
-    const isHZ = entry.hzCount > 0;
-    const isCritical = entry.hzCount > 1;
-
-    this.filteredKennwerte[plz] = {
-      isHZ,
-      isCritical,
-      value_hr_n_umsatz_0: { raw: umsatzNetto },
-      value_umsatz_p_hh_0: { raw: umsatzPHH },
-      value_wk_in_percent_0: { raw: wkPercent },
-      value_hz_kosten_0: { raw: hzKosten },
-      value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
-      value_haushalte_0: { raw: avgHaushalte },
-      value_kaufkraft_0: { raw: avgKaufkraft },
-      value_ums_erhebung_0: { raw: sum.umsatzErhebung },
-      value_kd_erhebung_0: { raw: sum.kdErhebung },
-      value_bon_erhebung_0: { raw: bon },
-      value_auflage_0: { raw: sum.auflage },
-      value_hz_potentiell_0: { raw: sum.potHzAbs },
-      value_wk_potentiell_0: { raw: potHzPercent }
-    };
-
-    this.filteredPLZWerte[plz] = {
-      wk: wkPercent,
-      wkPot: potHzPercent,
-      hz: isHZ
-    };
-  });
-
-  return filtered;
-}
-
-
 
 
 
@@ -736,10 +597,12 @@ sortTableByColumn(columnIndex) {
   // sondern geben das sortierte Array direkt an den Renderer
   this.renderDataTableFromEntries(sorted);
 }
-renderDataTableFromEntries(entries) {
+
+      
+      renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
-
+  // 🔥 Radiusfilter auch hier anwenden (Sortierung ruft diese Methode direkt auf)
   if (this.plzImRadius && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => {
       const norm = String(plz).padStart(5, "0");
@@ -763,9 +626,12 @@ renderDataTableFromEntries(entries) {
   scrollWrapper.style.borderRadius = '6px';
 
   const table = document.createElement('table');
+  table.setAttribute('role', 'table');
   table.style.width = '100%';
   table.style.borderCollapse = 'collapse';
+  table.style.fontFamily = 'sans-serif';
   table.style.tableLayout = 'fixed';
+  table.style.border = '1px solid #b41821';
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -784,11 +650,20 @@ renderDataTableFromEntries(entries) {
     th.style.backgroundColor = '#b41821';
     th.style.color = 'white';
     th.style.padding = '8px';
-    th.style.cursor = 'pointer';
+    th.style.textAlign = 'left';
+    th.style.position = 'sticky';
+    th.style.top = '0';
+    th.style.zIndex = '1';
     th.style.whiteSpace = 'pre-line';
     th.style.width = width;
+    th.style.borderBottom = '1px solid #b41821';
+    th.style.borderRight = '1px solid #b41821';
+    th.style.cursor = 'pointer';
 
-    th.addEventListener('click', () => this.sortTableByColumn(i));
+    th.addEventListener('click', () => {
+      this.sortTableByColumn(i);
+    });
+
     headerRow.appendChild(th);
   });
 
@@ -798,64 +673,73 @@ renderDataTableFromEntries(entries) {
   const tbody = document.createElement('tbody');
   const fragment = document.createDocumentFragment();
 
-  entries.forEach(([plz, kennwerte]) => {
+entries.forEach(([plz, kennwerte]) => {
+  const tr = document.createElement('tr');
 
-    // ❗ Falls irgendwas fehlt → Zeile überspringen statt crashen
-    if (!kennwerte || !kennwerte["value_hr_n_umsatz_0"]) {
-      console.warn("⚠️ Ungültiger Kennwert-Eintrag für PLZ:", plz, kennwerte);
-      return;
-    }
+  // Tabellenzeile klickbar machen
+  tr.style.cursor = "pointer";
+// Tabellenklick-Handler
+tr.addEventListener("click", () => {
+  this.highlightMapArea(plz);
+  this.openPopupFromTable(plz);
+  this.highlightTableRow(tr);
+});
 
-    const tr = document.createElement('tr');
-    tr.style.cursor = "pointer";
 
-    tr.addEventListener("click", () => {
-      this.highlightMapArea(plz);
-      this.openPopupFromTable(plz);
-      this.highlightTableRow(tr);
-    });
+  let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
+  note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
-    const note = this.geoNotes?.[plz]?.replace(/^\d{4,5}\s*[-–]?\s*/, "") || "Keine PLZ-Bezeichnung";
+  const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
-    const hzFlag =
-      kennwerte.isCritical ? "⚠️" :
-      kennwerte.isHZ ? "🟢" : "🔴";
+  const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
+  const umsatz = typeof umsatzRaw?.raw === "number"
+    ? umsatzRaw.raw.toLocaleString('de-DE')
+    : umsatzRaw === "–"
+      ? '–'
+      : 'Keine Angabe';
 
-    const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw
-      ?.toLocaleString("de-DE") ?? "–";
+  const wkRaw = kennwerte["value_wk_nachbar_0"];
+  const wk = typeof wkRaw?.raw === "number"
+    ? wkRaw.raw.toFixed(1)
+    : wkRaw === "–"
+      ? '–'
+      : 'Keine Angabe';
 
-    const wk = kennwerte["value_wk_nachbar_0"]?.raw
-      ?.toFixed(1) ?? "–";
+  const rowValues = [plz, note, hzFlag, umsatz, wk];
 
-    const rowValues = [plz, note, hzFlag, umsatz, wk];
-
-    rowValues.forEach((text, i) => {
-      const td = document.createElement('td');
-      td.textContent = text;
-      td.title = text;
-      td.style.padding = '6px 8px';
-      td.style.borderBottom = '1px solid #b41821';
-      td.style.whiteSpace = 'nowrap';
-      td.style.overflow = 'hidden';
-      td.style.textOverflow = 'ellipsis';
-      td.style.width = headers[i].width;
-      tr.appendChild(td);
-    });
-
-    fragment.appendChild(tr);
+  rowValues.forEach((text, i) => {
+    const td = document.createElement('td');
+    td.textContent = text.replace(/\n/g, ' ');
+    td.title = text;
+    td.style.padding = '6px 8px';
+    td.style.borderBottom = '1px solid #b41821';
+    td.style.borderRight = '1px solid #b41821';
+    td.style.fontSize = '0.8rem';
+    td.style.whiteSpace = 'nowrap';
+    td.style.overflow = 'hidden';
+    td.style.textOverflow = 'ellipsis';
+    td.style.width = headers[i].width;
+    tr.appendChild(td);
   });
+
+  fragment.appendChild(tr);
+});
+
+
+// 🔥 WICHTIG: Fragment in das tbody einfügen
+tbody.appendChild(fragment);
+
 
   tbody.appendChild(fragment);
   table.appendChild(tbody);
   scrollWrapper.appendChild(table);
   container.appendChild(scrollWrapper);
 
+  // Sort-Icons aktualisieren
   if (this._sortState && this._sortState.column != null) {
     this.updateSortIcons(this._sortState.column);
   }
 }
-
-
       
 // highlightTableRow(rowElement)
 highlightTableRow(rowElement) {
@@ -1042,86 +926,90 @@ zoomToFilteredPLZ() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
- 
- createAllMarkers() {
-  console.log("🟡 createAllMarkers() start");
-
+      
+      
+      
+      
+createAllMarkers() {
+  // Alte Marker entfernen
   this.filteredGroup.clearLayers();
-  this.allMarkers = {};
+  this.allMarkers = [];
+
+  // 🔥 NL-Marker-Liste für Radius-Filter neu anlegen
   this.nlMarkers = [];
 
-  const rawData = this._myDataSource?.data || [];
-  const filteredData = this.filteredData || [];
-
-  const filteredNLs = new Set(
-    filteredData
-      .map(row => row["dimension_niederlassung_0"]?.id?.trim())
-      .filter(nl => nl)
-  );
-
-  if (!this.initialErhebungsNLs) {
-    this.initialErhebungsNLs = new Set(filteredNLs);
+  if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
+    console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
+    return;
   }
 
-  const phantomNLs = new Set(
-    [...this.initialErhebungsNLs].filter(nl => !filteredNLs.has(nl))
-  );
+  if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") {
+    console.warn("⚠️ nlKoordinaten ist nicht definiert oder kein Objekt:", this.nlKoordinaten);
+    return;
+  }
 
-  [...this.initialErhebungsNLs].forEach(nlKey => {
-    const nlName = this.Niederlassung[nlKey];
+  const seen = new Set(); // verhindert doppelte Marker pro NL
+
+  // 🔵 Haupt-Niederlassungen erzeugen
+  Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
     const coords = this.nlKoordinaten[nlKey];
+    if (!coords) {
+      console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
+      return;
+    }
 
-    if (!coords) return;
+    if (!seen.has(nlKey)) {
+      const icon = this.createMarkerIcon(nlName);
 
-    const isPhantom = phantomNLs.has(nlKey);
-    const icon = isPhantom
-      ? this.createPhantomMarkerIcon(nlKey)
-      : this.createMarkerIcon(nlName);
+      const marker = L.marker([coords.lat, coords.lon], {
+        icon,
+        title: nlName,
+        plzs: [nlKey] // wichtig für Filterung
+      });
 
-    const marker = L.marker([coords.lat, coords.lon], {
-      icon,
-      title: nlName
-    });
+      // In globale Marker-Liste
+      this.allMarkers.push(marker);
 
-    // Hover
-    marker.on("mouseover", () => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.filter = "brightness(1.35)";
-        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-      }
-    });
+      // In gefilterte Gruppe (Standard: alle sichtbar)
+      this.filteredGroup.addLayer(marker);
 
-    marker.on("mouseout", () => {
-      const el = marker.getElement();
-      if (el) {
-        el.style.filter = "brightness(1)";
-        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-      }
-    });
+      // NL als verarbeitet markieren
+      seen.add(nlKey);
 
-    // Klick → NL-Filter
-    marker.on("click", () => {
-      console.log("🟡 NL-Klick:", nlKey);
-
-      if (this._selectedNLs.has(nlKey)) {
-        this._selectedNLs.delete(nlKey);
-      } else {
-        this._selectedNLs.add(nlKey);
-      }
-
-      this.applyNLFilter([...this._selectedNLs]);
-    });
-
-    this.allMarkers[nlKey] = marker;
+      // 🔥 NL-Marker für Radius-Filter speichern
+      this.nlMarkers.push({
+        lat: coords.lat,
+        lng: coords.lon,
+        marker
+      });
+    }
   });
 
-  console.log("🟢 createAllMarkers() end");
+  // 🔵 Extra-Niederlassungen hinzufügen (falls vorhanden)
+  if (Array.isArray(this.extraNLs)) {
+    this.extraNLs.forEach(({ nl, lat, lon }) => {
+      const icon = this.createMarkerIcon(nl);
+
+      const marker = L.marker([lat, lon], {
+        icon,
+        title: nl,
+        plzs: [nl]
+      });
+
+      this.allMarkers.push(marker);
+      this.filteredGroup.addLayer(marker);
+
+      // 🔥 Extra-NL ebenfalls für Radius-Filter speichern
+      this.nlMarkers.push({
+        lat,
+        lng: lon,
+        marker
+      });
+    });
+  }
+
+  console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
-
-
-
-
 
 
 
@@ -1150,21 +1038,17 @@ zoomToFilteredPLZ() {
   }
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
-    .padStart(5, "0")
-    .trim();
+  .padStart(5, "0")
+  .trim();
 
   const note = feature.properties?.note || "Keine Notiz";
 
+  // 🔥 WICHTIG: Daten der aktiven Erhebung holen
   const daten = this.filteredKennwerte?.[plz];
+
   if (!daten) {
-    console.warn(`❌ Keine aggregierten Daten für PLZ ${plz}`);
-    return;
+    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
   }
-
-  const isHZ = daten.isHZ;
-  const isCritical = daten.isCritical;
-
-  const hzSymbol = isCritical ? "⚠️" : isHZ ? "🟢" : "🔴";
 
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
@@ -1189,7 +1073,7 @@ showPopup(feature) {
   let rows = "";
 
   Object.entries(beschreibungen).forEach(([id, label], index) => {
-    const rawValue = daten[id]?.raw;
+    const rawValue = daten?.[id]?.raw;
     const wert = typeof rawValue === "number"
       ? rawValue.toLocaleString("de-DE")
       : "–";
@@ -1207,24 +1091,32 @@ showPopup(feature) {
   });
 
   const sidePopup = this._shadowRoot.getElementById('side-popup');
-
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
       <thead>
-        <tr><th colspan="2" class="title-cell">${hzSymbol} ${note}</th></tr>
+        <tr><th colspan="2" class="title-cell" title="${note}">${note}</th></tr>
         <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
 
-  // Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
-  const umsatz = daten["value_hr_n_umsatz_0"]?.raw;
+  // 🔥 Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
+  const isHZ = this.hzFlags?.[plz] === false;
+  const umsatz = daten?.value_hr_n_umsatz_0?.raw;
 
-  if (!isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPot = daten["value_wk_potentiell_0"]?.raw;
-    const hzPot = daten["value_hz_potentiell_0"]?.raw;
+  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
+    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
+    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
+
+    const wkPotentiell = typeof wkPotentiellRaw === "number"
+      ? wkPotentiellRaw.toLocaleString("de-DE")
+      : "–";
+
+    const hzPotentiell = typeof hzPotentiellRaw === "number"
+      ? hzPotentiellRaw.toLocaleString("de-DE")
+      : "–";
 
     const extraTable = `
       <table class="extra-table">
@@ -1234,16 +1126,15 @@ showPopup(feature) {
         <tbody>
           <tr>
             <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-            <td class="value-cell">${wkPot?.toLocaleString("de-DE") ?? "–"}</td>
+            <td class="value-cell">${wkPotentiell}</td>
           </tr>
           <tr>
             <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-            <td class="value-cell">${hzPot?.toLocaleString("de-DE") ?? "–"}</td>
+            <td class="value-cell">${hzPotentiell}</td>
           </tr>
         </tbody>
       </table>
     `;
-
     sidePopup.insertAdjacentHTML('beforeend', extraTable);
   }
 
@@ -1256,110 +1147,53 @@ showPopup(feature) {
   });
 }
 
-
   updateNeighbours(filteredData) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
     this.neighbours = computeNeighbours(filteredMarkers);
   }
 
- resetMapState() {
-  console.log("🧹 resetMapState(): Map wird vollständig zurückgesetzt");
-
-  // Marker entfernen
-  if (this.allMarkers) {
-    Object.values(this.allMarkers).forEach(marker => {
-      this.map.removeLayer(marker);
-    });
-  }
-
-  this.allMarkers = {};
-  this.nlMarkers = [];
-  this.initialErhebungsNLs = null;
-
-  // Kritische Marker entfernen
-  if (this.criticalMarkers) {
-    Object.values(this.criticalMarkers).forEach(m => this.map.removeLayer(m));
-  }
-  this.criticalMarkers = {};
-
-  // PLZ-Layer zurücksetzen
-  if (this._geoLayer) {
-    this._geoLayer.eachLayer(layer => {
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.4,
-        color: "#ffffff",
-        weight: 1
-      });
-      layer.options.interactive = false;
-    });
-  }
-
-  // NL-Auswahl zurücksetzen
-  this._selectedNLs = new Set();
-
-  // ❌ Radius NICHT hier zurücksetzen!
-  // Das passiert nur im Erhebungsfilter.
-}
 
 
-applyFilter(erhID, jahr, nummer, { type = "erhebung" } = {}) {
-  console.log("🟡 applyFilter() start:", { erhID, jahr, nummer, type });
 
-  // 👉 NL-Filter? Dann abbrechen
-  if (type === "nl") {
-    console.log("⏭️ applyFilter(): NL-Filter → keine Erhebungslogik");
-    this.applyNLFilter([...this._selectedNLs]);
-    return;
-  }
-
-  // 👉 Erhebungsfilter
-  this.resetMapState();
+applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
 
-  // Radius nur hier setzen
-  const radiusSlider = this._shadowRoot.getElementById("radius-slider");
-  radiusSlider.value = 40;
-  this.currentRadius = 40;
+  // 1) Daten filtern (Erhebung)
+const filteredData = this.getFilteredData();
 
-  console.log("🔄 Radiusfilter auf 40 gesetzt (Erhebungswechsel)");
+// HZ-Flags neu berechnen
+this.hzFlags = {};
+filteredData.forEach(row => {
+  const plz = row["dimension_plz_0"]?.id?.trim();
+  const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
+  if (plz) {
+    this.hzFlags[plz] = hz === "X";  // ✔ korrekt
+  }
+});
 
-  // Daten neu aggregieren
-  const filteredData = this.getFilteredData({ type: "erhebung" });
-  this.filteredData = filteredData;
 
-  // PLZ extrahieren
-  this.filteredPLZs = filteredData
+
+  // 2) PLZ-Liste extrahieren
+  const filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  // Geo-Layer einfärben
+  // 3) Karte einfärben
   this.updateGeoLayer();
 
-  // Marker erzeugen
-  this.createAllMarkers();
+  // 4) NL-Marker filtern
+  this.updateMarkers(filteredPLZs);
 
-  // Marker filtern
-  this.updateMarkers();
+  // 5) Radiusfilter anwenden → setzt this.plzImRadius
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.applyRadiusFilter(radius);
 
-  // Radius anwenden
-  this.applyRadiusFilter(40);
-
-  // Tabelle rendern
+  // 6) Tabelle NACH Radiusfilter rendern
   this.renderDataTable(this.filteredKennwerte);
 
-  // Zoom
+  // 7) Zoom auf sichtbare PLZ
   this.zoomToFilteredPLZ();
-
-  console.log("🟢 applyFilter() end");
 }
-
-
-
-
-
-
-
 
 
 
@@ -1388,66 +1222,64 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
-prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
-  const geoFeatures = this._geoData?.features || [];
 
-  // Reset – aber filteredKennwerte NICHT mehr anfassen
-  this.kennwerte = {};
-  this.hzFlags = {};
-  this.Niederlassung = {};
-  this.nlKoordinaten = {};
-  this.plzKennwerte = {};
-  // this.filteredKennwerte = {};   // ❌ raus
-  this.extraNLs = [];
+getFilteredData() {
+  if (!this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
+    return [];
+  }
 
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0"
-  ];
+  const data = this._myDataSource.data;
+  const { erhID, jahr, nummer } = this._activeFilter || {};
 
-  const geoNotes = {};
-  geoFeatures.forEach(f => {
-    const plz = f.properties?.plz?.trim();
-    const note = f.properties?.note?.trim();
-    if (plz) geoNotes[plz] = note || "";
-  });
+  console.group("🔍 Filtervorgang gestartet");
+  console.log("➡️ ErhebungsID:", erhID);
+  console.log("➡️ Jahr:", jahr);
+  console.log("➡️ Nummer:", nummer);
 
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
-    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
+  // 🔥 WICHTIG: beide Strukturen initialisieren
+  const filteredKennwerte = {};   // komplette Zeilen → Tabelle & Popup
+  const filteredPLZWerte = {};    // extrahierte Werte → Farben
 
-    const lat = parseFloat(row["dimension_Lat_0"]?.label);
-    const lon = parseFloat(row["dimension_lon_0"]?.label);
+  const filtered = data.filter(row => {
+    const id = row["dimension_erhebung_0"]?.id?.trim();
+    const y = row["dimension_jahr_0"]?.id?.trim();
+    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ).padStart(5, "0");
 
-    if (nlKey) {
-      this.Niederlassung[nlKey] = nlKey;
-      if (!isNaN(lat) && !isNaN(lon)) {
-        this.nlKoordinaten[nlKey] = { lat, lon };
-      }
-    }
 
-    if (plz && plz !== "@NullMember") {
-      // ❗ hier NICHT mehr this.filteredKennwerte[plz] neu anlegen
-      this.hzFlags[plz] = hzFlag;
+    const match = id === erhID && y === jahr && num === nummer;
 
-      this.plzKennwerte[plz] = this.plzKennwerte[plz] || {};
-      kennzahlenIDs.forEach(id => {
-        const raw = row[id]?.raw;
-        this.plzKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
-      });
+    if (match && plz && plz !== "@NullMember") {
 
-      this.plzKennwerte[plz]["dimension_note_0"] = {
-        label: geoNotes[plz] || ""
+      // 🔵 1) komplette Datenzeile speichern (Popup + Tabelle)
+      filteredKennwerte[plz] = row;
+
+      // 🔵 2) extrahierte Werte für Farben speichern
+      filteredPLZWerte[plz] = {
+        wk: row["value_wk_in_percent_0"]?.raw ?? 0,
+        wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
+        hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
       };
-    }
-  });
-}
 
+      console.log(
+        `✔️ Match: PLZ ${plz} | WK=${filteredPLZWerte[plz].wk} | WKPot=${filteredPLZWerte[plz].wkPot} | HZ=${filteredPLZWerte[plz].hz}`
+      );
+    }
+
+    return match;
+  });
+
+  // 🔥 Beide Strukturen global speichern
+  this.filteredKennwerte = filteredKennwerte;
+  this.filteredPLZWerte = filteredPLZWerte;
+
+  console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
+  console.groupEnd();
+
+  return filtered;
+}
 
 
 
@@ -1474,135 +1306,96 @@ prepareMapData(filteredData) {
   }
   }
 
+
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
-  const plzWerte = this.filteredPLZWerte || {};
-  this.criticalMarkers = this.criticalMarkers || {};
+  // Hole gefilterte Daten
+  const filteredData = this.getFilteredData();
 
+  // Extrahiere WK, WKPot und HZ-Flag aus den gefilterten Daten
+  const plzWerte = {};
+  filteredData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    if (!plz || plz === "@NullMember") return;
+
+    const wk = row["value_wk_in_percent_0"]?.raw;
+    const wkPot = row["value_wk_potentiell_0"]?.raw;
+    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
+
+    plzWerte[plz] = {
+      wk: typeof wk === "number" ? wk : 0,
+      wkPot: typeof wkPot === "number" ? wkPot : 0,
+      hz: hzFlag
+    };
+  });
+
+  // Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz?.trim();
+
+    // Werte aus gefilterten Daten holen
     const values = plzWerte[plz] || { wk: 0, wkPot: 0, hz: false };
 
+    // HZ → WK in %, Nicht-HZ → WK potentiell
     const value = values.hz ? values.wk : values.wkPot;
 
-    // Normale Färbung
     layer.setStyle({
       fillColor: this.getColor(value, values.hz),
-      fillOpacity: 0.5,
-      color: "white",
-      weight: 1
+      fillOpacity: 0.5
     });
 
-const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
-
-// Sicherstellen, dass plzImRadius existiert
-const inRadius =
-  this.plzImRadius instanceof Set
-    ? this.plzImRadius.has(plz)
-    : true; // Ohne Radiusfilter → alle PLZs gelten als im Radius
-
-if (isCritical && inRadius) {
-  if (!this.criticalMarkers[plz]) {
-    const center = layer.getBounds().getCenter();
-
-    const icon = L.divIcon({
-      html: `<div style="
-        background:#ffffff;
-        border:2px solid #b41821;
-        border-radius:50%;
-        width:22px;
-        height:22px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:14px;
-        font-weight:bold;
-      ">⚠️</div>`,
-      className: "",
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
-    });
-
-    const marker = L.marker(center, {
-      icon,
-      interactive: false
-    }).addTo(this.map);
-
-    this.criticalMarkers[plz] = marker;
-  }
-} else {
-  if (this.criticalMarkers[plz]) {
-    this.map.removeLayer(this.criticalMarkers[plz]);
-    delete this.criticalMarkers[plz];
-  }
-}
-
+    // Tooltip aktualisieren (falls vorhanden)
+    const note = layer.feature?.properties?.note;
+    if (note && layer.setTooltipContent) {
+      layer.setTooltipContent(note);
+    }
   });
 }
 
+
 updateMarkers() {
-  console.log("🟡 updateMarkers() start");
-
-  if (!this.allMarkers || Object.keys(this.allMarkers).length === 0) {
-    console.warn("⚠️ updateMarkers: Keine Marker vorhanden.");
-    return;
-  }
-
   this.filteredGroup.clearLayers();
 
-  const filteredData = this.filteredData || [];
+  const filteredData = this.getFilteredData();
 
+  // Alle NLs, die im Filter vorkommen
   const filteredNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(nl => nl)
   );
 
-  const phantomNLs = new Set(
-    [...this.initialErhebungsNLs].filter(nl => !filteredNLs.has(nl))
-  );
+  const visibleMarkers = [];
 
-  const radiusRelevantMarkers = [];
+  // Marker durchgehen
+  this.allMarkers.forEach(marker => {
+    const markerNLs = marker.options.plzs || [];
 
-  Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
-    const isInErhebung = filteredNLs.has(nlKey);
-    const isPhantom = phantomNLs.has(nlKey);
+    // Marker gehört zur Erhebung, wenn mindestens eine NL übereinstimmt
+    const belongs = markerNLs.some(nl => filteredNLs.has(nl));
 
-    // Sichtbarkeit: alle NLs der Erhebung anzeigen
-    if (isInErhebung || isPhantom) {
+    if (belongs) {
       this.filteredGroup.addLayer(marker);
-    } else {
-      this.filteredGroup.removeLayer(marker);
-      return;
-    }
-
-    // Radius-Relevanz
-    let isRadiusRelevant = false;
-
-    if (this._selectedNLs.size === 0) {
-      isRadiusRelevant = true; // alle NLs radius-relevant
-    } else {
-      isRadiusRelevant = this._selectedNLs.has(nlKey);
-    }
-
-    if (isRadiusRelevant) {
-      radiusRelevantMarkers.push(marker);
+      visibleMarkers.push(marker);
     }
   });
 
-  this.nlMarkers = radiusRelevantMarkers.map(marker => ({
+  // 🔥 NL-Marker für Radius-Filter neu berechnen
+  this.nlMarkers = visibleMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
     marker
   }));
 
   console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
-
-  this.updateNLMarkerStyles();
-
-  console.log("🟢 updateMarkers() end");
 }
+
+
+
+
+
+
 
 
 
@@ -1695,34 +1488,6 @@ updateMarkers() {
       });
     }
   }
-
-  applyNLFilter(selectedNLs) {
-  console.log("🟡 applyNLFilter():", selectedNLs);
-
-  this._selectedNLs = new Set(selectedNLs);
-
-  // 1️⃣ Daten neu aggregieren — nur für diese NLs
-  const filteredDataNL = this.getFilteredData({ type: "nl" });
-  this.filteredData = filteredDataNL;
-
-  // 2️⃣ PLZs extrahieren
-  this.filteredPLZs = filteredDataNL
-    .map(row => row["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember");
-
-  // 3️⃣ Geo-Layer einfärben
-  this.updateGeoLayer();
-
-  // 4️⃣ Marker aktualisieren
-  this.updateMarkers();
-
-  // 5️⃣ Radius anwenden
-  this.applyRadiusFilter(this.currentRadius);
-
-  // 6️⃣ Tabelle aktualisieren
-  this.renderDataTable(this.filteredKennwerte);
-}
-
 
 
 
@@ -1833,36 +1598,20 @@ getDistanceKm(lat1, lon1, lat2, lon2) {
 getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
-
- applyRadiusFilter(radiusKm) {
+applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-  const allowedPLZs = new Set(Object.keys(this.filteredPLZWerte));
   const plzImRadius = new Set();
 
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "")
-  .padStart(5, "0")
-  .trim();
+      .padStart(5, "0")
+      .trim();
 
     if (!plz) return;
 
-    // 1) PLZ gehört NICHT zur Erhebung → neutral wie im ersten Aufriss
-    if (!allowedPLZs.has(plz)) {
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.4,
-        opacity: 1,
-        color: "#ffffff",
-        weight: 1
-      });
-
-      layer.options.interactive = false;
-      return;
-    }
-
-    // 2) PLZ gehört zur Erhebung → Radius prüfen
     const center = this.getPolygonCenter(layer);
+
     const minDist = Math.min(
       ...this.nlMarkers.map(nl =>
         this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng)
@@ -1871,32 +1620,18 @@ getPolygonCenter(layer) {
 
     if (minDist <= radiusKm) {
       plzImRadius.add(plz);
-      const color = this.getColorForPLZ(plz);
-      layer.setStyle({
-        fillColor: color,
-        fillOpacity: 0.7,
-        opacity: 1,
-        color: "#ffffff",
-        weight: 1
-      });
-
-      layer.options.interactive = true;
-    } else {
-      // PLZ gehört zur Erhebung, aber liegt außerhalb des Radius
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.4,
-        opacity: 1,
-        color: "#ffffff",
-        weight: 1
-      });
-
-      layer.options.interactive = false;
     }
   });
 
   this.plzImRadius = plzImRadius;
+
+  // 🔥 Radius-Kennzahlen neu berechnen
+  this.getFilteredDataWithRadius();
+
+  // 🔥 Geo-Layer neu färben
+  this.updateGeoLayer();
 }
+
 
 
 initRadiusSlider() {
@@ -1913,109 +1648,208 @@ initRadiusSlider() {
 
   slider.addEventListener("input", () => {
     const radius = Number(slider.value);
-    this.currentRadius = radius;
-
-    // Live-Anzeige aktualisieren
     valueLabel.textContent = radius;
 
-    console.log("🎚 Live-Radius geändert:", radius);
-
-    // 1️⃣ Radiusfilter sofort anwenden
+    // 1) Karte live filtern
     this.applyRadiusFilter(radius);
 
-    // 2️⃣ Geo-Layer aktualisieren (kritische PLZs)
-    this.updateGeoLayer();
-
-    // 3️⃣ Tabelle live aktualisieren
+    // 2) Tabelle live filtern
     this.renderDataTable(this.filteredKennwerte);
 
-    // 4️⃣ Optional: Zoom live aktualisieren
+    // 3) Optional: Zoom live aktualisieren
     // this.zoomToFilteredPLZ();
   });
 }
-
 
 
 getColorForPLZ(plz) {
   const data = this.filteredPLZWerte?.[plz];
   if (!data) return "#cfd4da";
 
-  const value = data.hz ? data.wk : data.wkPot;
-  return this.getColor(value, data.hz);
+  const wk = data.wk ?? 0;
+  const wkPot = data.wkPot ?? 0;
+  const isHZ = data.hz === true;
+
+  const value = isHZ ? wk : wkPot;
+
+  return this.getColor(value, isHZ);
 }
 
-onNLMarkerClick(nlKey) {
-  // NL toggeln
-  if (this._selectedNLs.has(nlKey)) {
-    this._selectedNLs.delete(nlKey);
-  } else {
-    this._selectedNLs.add(nlKey);
-  }
+getFilteredDataWithRadius() {
+  if (!this.filteredData) return [];
 
-  // Marker-Transparenz aktualisieren
-  this.updateNLMarkerStyles();
-
-  // Filter neu anwenden
-  const { erhID, jahr, nummer } = this._activeFilter || {};
-  this.applyFilter(erhID, jahr, nummer);
-}
-
-updateNLMarkerStyles() {
-  if (!this.allMarkers) return;
-
-  Object.entries(this.allMarkers).forEach(([nlKey, marker]) => {
-    const isSelected =
-      this._selectedNLs.size === 0 || this._selectedNLs.has(nlKey);
-
-    if (isSelected) {
-      marker.setIcon(this.createMarkerIcon(nlKey));
-      marker.setOpacity(1);
-    } else {
-      marker.setIcon(this.createPhantomMarkerIcon(nlKey));
-      marker.setOpacity(1); // Transparenz kommt aus dem Icon
+  const result = [];
+  const aggregated = {};
+  const streuverlust = {
+    hzCount: 0,
+    sum: {
+      umsatzNetto: 0,
+      hzKosten: 0,
+      umsatzErhebung: 0,
+      kdErhebung: 0,
+      auflage: 0,
+      potHzAbs: 0
+    },
+    avgArrays: {
+      werbeverweigerer: [],
+      haushalte: [],
+      kaufkraft: []
     }
+  };
+
+  this.filteredData.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = rawPLZ == null ? "" : String(rawPLZ).padStart(5, "0");
+
+    // 1️⃣ NL-Filter
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
+
+    // 2️⃣ Radiusfilter
+    const isInRadius = this.plzImRadius.has(plz);
+
+    // 3️⃣ Wenn PLZ NICHT im Radius → Streuverlust
+    if (!isInRadius) {
+      streuverlust.sum.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+      streuverlust.sum.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+      streuverlust.sum.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
+      streuverlust.sum.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
+      streuverlust.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
+      streuverlust.sum.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
+
+      const wv = row["value_werbeverweigerer_0"]?.raw;
+      if (typeof wv === "number") streuverlust.avgArrays.werbeverweigerer.push(wv);
+
+      const hh = row["value_haushalte_0"]?.raw;
+      if (typeof hh === "number") streuverlust.avgArrays.haushalte.push(hh);
+
+      const kk = row["value_kaufkraft_0"]?.raw;
+      if (typeof kk === "number") streuverlust.avgArrays.kaufkraft.push(kk);
+
+      return; // NICHT in reguläre Aggregation aufnehmen
+    }
+
+    // 4️⃣ Reguläre Radius-PLZ
+    result.push(row);
+
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
+        hzCount: 0,
+        sum: {
+          umsatzNetto: 0,
+          hzKosten: 0,
+          umsatzErhebung: 0,
+          kdErhebung: 0,
+          auflage: 0,
+          potHzAbs: 0
+        },
+        avgArrays: {
+          werbeverweigerer: [],
+          haushalte: [],
+          kaufkraft: []
+        }
+      };
+    }
+
+    const entry = aggregated[plz];
+
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    if (hz) entry.hzCount++;
+
+    entry.sum.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    entry.sum.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+    entry.sum.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
+    entry.sum.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
+    entry.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
+    entry.sum.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
+
+    const wv = row["value_werbeverweigerer_0"]?.raw;
+    if (typeof wv === "number") entry.avgArrays.werbeverweigerer.push(wv);
+
+    const hh = row["value_haushalte_0"]?.raw;
+    if (typeof hh === "number") entry.avgArrays.haushalte.push(hh);
+
+    const kk = row["value_kaufkraft_0"]?.raw;
+    if (typeof kk === "number") entry.avgArrays.kaufkraft.push(kk);
   });
+
+  // 5️⃣ Aggregation wie gewohnt
+  const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : 0;
+
+  this.filteredKennwerte = {};
+  this.filteredPLZWerte = {};
+
+  // Reguläre Radius-PLZs
+  Object.entries(aggregated).forEach(([plz, entry]) => {
+    const sum = entry.sum;
+    const avgArr = entry.avgArrays;
+
+    const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
+    const avgHaushalte = avg(avgArr.haushalte);
+    const avgKaufkraft = avg(avgArr.kaufkraft);
+
+    const umsatzNetto = sum.umsatzNetto;
+    const hzKosten = sum.hzKosten;
+
+    const umsatzPHH = avgHaushalte > 0 ? Number((umsatzNetto / avgHaushalte).toFixed(2)) : 0;
+
+    const wkPercent = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
+
+    const bon = sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0;
+
+    const potHzPercent = umsatzNetto > 0 ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1)) : 0;
+
+    const isHZ = entry.hzCount > 0;
+    const isCritical = entry.hzCount > 1;
+
+    this.filteredKennwerte[plz] = {
+      isHZ,
+      isCritical,
+      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      value_umsatz_p_hh_0: { raw: umsatzPHH },
+      value_wk_in_percent_0: { raw: wkPercent },
+      value_hz_kosten_0: { raw: hzKosten },
+      value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
+      value_haushalte_0: { raw: avgHaushalte },
+      value_kaufkraft_0: { raw: avgKaufkraft },
+      value_ums_erhebung_0: { raw: sum.umsatzErhebung },
+      value_kd_erhebung_0: { raw: sum.kdErhebung },
+      value_bon_erhebung_0: { raw: bon },
+      value_auflage_0: { raw: sum.auflage },
+      value_hz_potentiell_0: { raw: sum.potHzAbs },
+      value_wk_potentiell_0: { raw: potHzPercent }
+    };
+
+    this.filteredPLZWerte[plz] = {
+      wk: wkPercent,
+      wkPot: potHzPercent,
+      hz: isHZ
+    };
+  });
+
+  // 6️⃣ Streuverlust hinzufügen (PLZ 00000)
+  this.filteredKennwerte["00000"] = {
+    isHZ: false,
+    isCritical: false,
+    value_hr_n_umsatz_0: { raw: streuverlust.sum.umsatzNetto },
+    value_hz_kosten_0: { raw: streuverlust.sum.hzKosten },
+    value_ums_erhebung_0: { raw: streuverlust.sum.umsatzErhebung },
+    value_kd_erhebung_0: { raw: streuverlust.sum.kdErhebung },
+    value_auflage_0: { raw: streuverlust.sum.auflage },
+    value_hz_potentiell_0: { raw: streuverlust.sum.potHzAbs },
+    value_werbeverweigerer_0: { raw: avg(streuverlust.avgArrays.werbeverweigerer) },
+    value_haushalte_0: { raw: avg(streuverlust.avgArrays.haushalte) },
+    value_kaufkraft_0: { raw: avg(streuverlust.avgArrays.kaufkraft) }
+  };
+
+  this.filteredPLZWerte["00000"] = {
+    wk: 0,
+    wkPot: 0,
+    hz: false
+  };
+
+  return result;
 }
-
-
-
-
-
-createPhantomMarkerIcon(nl) {
-  if (!this.phantomIconCache) this.phantomIconCache = {};
-
-  if (!this.phantomIconCache[nl]) {
-    const markerHtml = `
-      <div style="
-        width:30px;
-        height:30px;
-        background-color: rgba(138,138,138,0.8); /* Grau + 0.8 Transparenz */
-        border-radius:50% 50% 50% 0;             /* gleiche Tropfenform */
-        box-shadow:-1px 1px 4px rgba(0,0,0,.5);  /* gleicher Schatten */
-        transform:rotate(-45deg);                /* gleiche Rotation */
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:10px;
-        font-weight:bold;
-        color:white;
-        font-family:sans-serif;
-      ">
-        <div style="transform:rotate(45deg);">${nl}</div>
-      </div>
-    `;
-
-    this.phantomIconCache[nl] = L.divIcon({
-      html: markerHtml,
-      className: '',
-      iconSize: [30, 30],
-      iconAnchor: [15, 30]
-    });
-  }
-
-  return this.phantomIconCache[nl];
-}
-
 
 
 
@@ -2108,41 +1942,49 @@ createPhantomMarkerIcon(nl) {
     }
   }
 
-async render() {
-  console.log("🟡 render() start, _activeFilter =", this._activeFilter);
+  async render() {
+    if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+      console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+      return;
+    }
 
-  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-    return;
+    this.showSpinner();
+
+    const rawData = this._myDataSource.data;
+
+    // 🔧 Filterstruktur & Dropdowns vorbereiten
+    this._erhData = this.buildErhebungsStruktur(rawData);
+    this.setupFilterDropdowns();
+
+    // 🔍 Filter anwenden oder Rohdaten verwenden
+    const isFiltered = !!this._activeFilter;
+    const filteredData = isFiltered ? this.getFilteredData() : rawData;
+
+    // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+    this.prepareMapData(filteredData);
+
+
+
+    // 🌍 GeoJSON laden & Layer aktualisieren
+    await this.loadGeoJson();
+
+    this.updateGeoLayer();
+      this.createAllMarkers();
+    // 📌 PLZs extrahieren für Marker-Filterung
+    const filteredPLZs = isFiltered
+      ? filteredData
+          .map(d => d["dimension_plz_0"]?.id?.trim())
+          .filter(plz => plz && plz !== "@NullMember")
+      : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
+
+    // 📍 Marker anzeigen (gefiltert oder vollständig)
+    this.updateMarkers(filteredPLZs);
+
+    // 📊 Tabelle aktualisieren
+    this.renderDataTable(this.filteredKennwerte);
+
+    this.hideSpinner();
   }
-
-  this.showSpinner();
-
-  const rawData = this._myDataSource.data;
-  console.log("📊 rawData length:", rawData?.length);
-
-  this._erhData = this.buildErhebungsStruktur(rawData);
-  this.setupFilterDropdowns();
-
-  const isFiltered = !!this._activeFilter;
-  const filteredData = isFiltered ? this.getFilteredData() : rawData;
-  console.log("📊 filteredData length:", filteredData?.length);
-
-  this.prepareMapData(filteredData);
-
-  await this.loadGeoJson();
-  this.updateGeoLayer();
-
-  // ❗ KEINE Marker-Erzeugung hier
-  // Marker kommen nur über applyFilter()
-
-  this.renderDataTable(this.filteredKennwerte);
-
-  this.hideSpinner();
-  console.log("🟢 render() end");
-}
-
-
 
 
 
