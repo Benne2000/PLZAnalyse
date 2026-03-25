@@ -1222,27 +1222,27 @@ showPopup(feature) {
 
 
 
-
 applyFilter(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
 
   // 1) Daten filtern (Erhebung)
-const filteredData = this.getFilteredData();
+  const filteredData = this.getFilteredData();
 
-// HZ-Flags neu berechnen
-this.hzFlags = {};
-filteredData.forEach(row => {
-  const plz = row["dimension_plz_0"]?.id?.trim();
-  const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
-  if (plz) {
-    this.hzFlags[plz] = hz === "X";  // ✔ korrekt
-  }
-});
+  // 🔥 WICHTIG: global merken, damit applyNLFilter() darauf arbeiten kann
+  this.filteredData = filteredData;
 
-
+  // HZ-Flags neu berechnen
+  this.hzFlags = {};
+  filteredData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
+    if (plz) {
+      this.hzFlags[plz] = hz === "X";
+    }
+  });
 
   // 2) PLZ-Liste extrahieren
-  const filteredPLZs = filteredData
+  this.filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
@@ -1250,18 +1250,20 @@ filteredData.forEach(row => {
   this.updateGeoLayer();
 
   // 4) NL-Marker filtern
-  this.updateMarkers(filteredPLZs);
+  this.updateMarkers();
 
-  // 5) Radiusfilter anwenden → setzt this.plzImRadius
+  // 5) Radius merken + anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.currentRadius = radius;
   this.applyRadiusFilter(radius);
 
-  // 6) Tabelle NACH Radiusfilter rendern
+  // 6) Tabelle nach Radiusfilter
   this.renderDataTable(this.filteredKennwerte);
 
-  // 7) Zoom auf sichtbare PLZ
+  // 7) Zoom
   this.zoomToFilteredPLZ();
 }
+
 
 
 
@@ -1449,13 +1451,16 @@ updateGeoLayer() {
 
 
 
-
 updateMarkers() {
   this.filteredGroup.clearLayers();
 
-  const filteredData = this.getFilteredData();
+  const filteredData = this.filteredData || [];
+  if (!filteredData.length) {
+    console.warn("⚠️ updateMarkers(): Keine filteredData vorhanden.");
+    this.nlMarkers = [];
+    return;
+  }
 
-  // Alle NLs, die im Filter vorkommen
   const filteredNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
@@ -1464,11 +1469,8 @@ updateMarkers() {
 
   const visibleMarkers = [];
 
-  // Marker durchgehen
   this.allMarkers.forEach(marker => {
     const markerNLs = marker.options.plzs || [];
-
-    // Marker gehört zur Erhebung, wenn mindestens eine NL übereinstimmt
     const belongs = markerNLs.some(nl => filteredNLs.has(nl));
 
     if (belongs) {
@@ -1477,7 +1479,6 @@ updateMarkers() {
     }
   });
 
-  // 🔥 NL-Marker für Radius-Filter neu berechnen
   this.nlMarkers = visibleMarkers.map(marker => ({
     lat: marker.getLatLng().lat,
     lng: marker.getLatLng().lng,
@@ -1808,8 +1809,11 @@ getFilteredDataWithRadius() {
     // 1️⃣ NL-Filter
     if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
 
-    // 2️⃣ Radiusfilter
-    const isInRadius = this.plzImRadius.has(plz);
+// 2️⃣ Radiusfilter
+const isInRadius = this.plzImRadius instanceof Set
+  ? this.plzImRadius.has(plz)
+  : true;
+
 
     // 3️⃣ Wenn PLZ NICHT im Radius → Streuverlust
     if (!isInRadius) {
