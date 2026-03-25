@@ -1051,23 +1051,18 @@ zoomToFilteredPLZ() {
   console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
 
-
 applyNLFilter(selectedNLs) {
   if (!this._selectedNLs) this._selectedNLs = new Set();
   this._selectedNLs = new Set(selectedNLs);
 
   console.log("🔵 applyNLFilter():", [...this._selectedNLs]);
 
-  // ❗ WICHTIG:
-  // NICHT erneut getFilteredData() aufrufen!
-  // Wir filtern nur die bereits erhobenen Daten weiter.
-
   if (!this.filteredData || this.filteredData.length === 0) {
     console.warn("⚠️ applyNLFilter(): Keine Erhebungsdaten vorhanden!");
     return;
   }
 
-  // 1️⃣ PLZ-Liste aus bereits erhobenen Daten aktualisieren
+  // 1️⃣ PLZ-Liste nach NL-Filter
   this.filteredPLZs = this.filteredData
     .filter(row => {
       const nl = row["dimension_niederlassung_0"]?.id?.trim();
@@ -1076,7 +1071,10 @@ applyNLFilter(selectedNLs) {
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  // 2️⃣ Radius erneut anwenden (inkl. Streuverlust + kritische PLZ)
+  // 2️⃣ Marker aktualisieren (aktive vs. Phantom)
+  this.updateMarkers();
+
+  // 3️⃣ Radius erneut anwenden
   this.applyRadiusFilter(this.currentRadius || 0);
 }
 
@@ -1455,7 +1453,6 @@ updateGeoLayer() {
   });
 }
 
-
 updateMarkers() {
   this.filteredGroup.clearLayers();
 
@@ -1466,35 +1463,43 @@ updateMarkers() {
     return;
   }
 
-  // Alle NLs, die im aktuellen Filter vorkommen (Erhebung + ggf. NL-Filter)
-  const filteredNLs = new Set(
+  // NLs, die in der Erhebung vorkommen
+  const erhNLs = new Set(
     filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(nl => nl)
   );
 
-  const visibleMarkers = [];
+  const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
+
+  const activeMarkers = [];
 
   this.allMarkers.forEach(marker => {
     const markerNLs = marker.options.plzs || [];
-    const belongs = markerNLs.some(nl => filteredNLs.has(nl));
+    const nl = markerNLs[0]; // 1 NL pro Marker
 
-    // Marker immer in die LayerGroup packen
+    const inErhebung = nl && erhNLs.has(nl);
+    if (!inErhebung) {
+      // Marker gehört nicht zur aktuellen Erhebung → komplett ausblenden
+      return;
+    }
+
+    // Marker immer in LayerGroup
     this.filteredGroup.addLayer(marker);
-    visibleMarkers.push(marker);
 
-    // Styling je nach Zugehörigkeit
     const el = marker.getElement();
     if (!el) return;
 
-    if (belongs) {
+    const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
+    if (isSelected) {
       // aktive NL
       marker.setOpacity(1);
       marker.setZIndexOffset(1000);
       el.style.filter = "brightness(1)";
       el.style.transform = "scale(1)";
+      activeMarkers.push(marker);
     } else {
-      // Phantom-NL
+      // Phantom-NL: in Erhebung, aber nicht im NL-Filter
       marker.setOpacity(0.35);
       marker.setZIndexOffset(100);
       el.style.filter = "grayscale(1) brightness(0.9)";
@@ -1502,17 +1507,12 @@ updateMarkers() {
     }
   });
 
-  // Radius-relevante NL-Marker: nur die aktiven
-  this.nlMarkers = visibleMarkers
-    .filter(marker => {
-      const markerNLs = marker.options.plzs || [];
-      return markerNLs.some(nl => filteredNLs.has(nl));
-    })
-    .map(marker => ({
-      lat: marker.getLatLng().lat,
-      lng: marker.getLatLng().lng,
-      marker
-    }));
+  // Radius-relevante NL-Marker = nur die aktiven
+  this.nlMarkers = activeMarkers.map(marker => ({
+    lat: marker.getLatLng().lat,
+    lng: marker.getLatLng().lng,
+    marker
+  }));
 
   console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
 }
