@@ -1903,11 +1903,15 @@ getColorForPLZ(plz) {
 
   return this.getColor(value, isHZ);
 }
+
 getFilteredDataWithRadius() {
   if (!this.filteredData) return [];
 
   const result = [];
   const aggregated = {};
+
+  // 🔥 Gesamtumsatz der Erhebung (nach NL-Filter, unabhängig vom Radius)
+  let totalErhebungUmsatz = 0;
 
   // 🔥 Streuverlust-Struktur
   const streuverlust = {
@@ -1931,10 +1935,13 @@ getFilteredDataWithRadius() {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = rawPLZ == null ? "" : String(rawPLZ).padStart(5, "0");
 
-    // 1️⃣ NL-Filter: Nur Daten der ausgewählten NLs berücksichtigen
+    // 1️⃣ NL-Filter
     if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) {
-      return; // komplett ignorieren
+      return;
     }
+
+    // 🔥 Gesamtumsatz der Erhebung (für diese NLs, unabhängig vom Radius)
+    totalErhebungUmsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
 
     // 2️⃣ Radiusfilter
     const isInRadius = this.plzImRadius instanceof Set
@@ -2059,8 +2066,8 @@ getFilteredDataWithRadius() {
   // 6️⃣ Streuverlust final berechnen
   this.streuverlust = {
     umsatz: streuverlust.sum.umsatzNetto,
-    anteil: streuverlust.sum.umsatzErhebung > 0
-      ? streuverlust.sum.umsatzNetto / streuverlust.sum.umsatzErhebung
+    anteil: totalErhebungUmsatz > 0
+      ? streuverlust.sum.umsatzNetto / totalErhebungUmsatz
       : 0
   };
 
