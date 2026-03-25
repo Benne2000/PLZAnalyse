@@ -266,15 +266,18 @@
     font-size: 0.9rem;
   }
 
-  .table-container {
-    margin-top: 1rem;
-    padding: 1rem;
-    background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    font-family: sans-serif;
-    overflow: visible;
-  }
+.table-container {
+  margin-top: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-family: sans-serif;
+  overflow: hidden; /* WICHTIG */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0; /* WICHTIG */
+}
 
   .table-container table {
     width: 100%;
@@ -314,10 +317,13 @@
   z-index: 9999;
   font-size: 14px;
 }
+
+
 .table-wrapper {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 0; /* WICHTIG für Scrollen */
 }
 
 .table-scroll {
@@ -326,6 +332,8 @@
   border: 1px solid #b41821;
   border-radius: 6px;
   background: white;
+  min-height: 0; /* WICHTIG */
+  margin-bottom: 8px; /* Abstand zum Footer */
 }
 
 #streuverlust-box {
@@ -336,6 +344,7 @@
   border-top: 2px solid #b41821;
   z-index: 10;
 }
+
 
 
     </style>
@@ -643,48 +652,35 @@ sortTableByColumn(columnIndex) {
   // sondern geben das sortierte Array direkt an den Renderer
   this.renderDataTableFromEntries(sorted);
 }
+
+
+
 renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
-  // Layout für Wrapper
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
   container.style.height = '100%';
+  container.style.minHeight = '0';
 
-  // 🔥 PLZ 00000 entfernen
   entries = entries.filter(([plz]) => plz !== "00000");
 
-  // 🔥 Radiusfilter anwenden
   if (this.plzImRadius && this.plzImRadius.size > 0) {
-    entries = entries.filter(([plz]) => {
-      const norm = String(plz).padStart(5, "0");
-      return this.plzImRadius.has(norm);
-    });
+    entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
   }
 
-  if (!entries || entries.length === 0) {
+  if (!entries.length) {
     container.textContent = 'Keine Daten verfügbar.';
     return;
   }
 
-  // Scrollbarer Tabellenbereich
   const scrollWrapper = document.createElement("div");
   scrollWrapper.classList.add("table-scroll");
 
-  scrollWrapper.style.flex = "1";
-  scrollWrapper.style.overflowY = "auto";
-  scrollWrapper.style.background = "white";
-  scrollWrapper.style.border = "1px solid #b41821";
-  scrollWrapper.style.borderRadius = "6px";
-  scrollWrapper.style.padding = "0";
-  scrollWrapper.style.marginBottom = "8px"; // Abstand zum Footer
-
   const table = document.createElement('table');
-  table.setAttribute('role', 'table');
   table.style.width = '100%';
   table.style.borderCollapse = 'collapse';
-  table.style.fontFamily = 'sans-serif';
   table.style.tableLayout = 'fixed';
 
   const thead = document.createElement('thead');
@@ -704,7 +700,6 @@ renderDataTableFromEntries(entries) {
     th.style.backgroundColor = '#b41821';
     th.style.color = 'white';
     th.style.padding = '8px';
-    th.style.textAlign = 'left';
     th.style.position = 'sticky';
     th.style.top = '0';
     th.style.zIndex = '2';
@@ -714,9 +709,7 @@ renderDataTableFromEntries(entries) {
     th.style.borderRight = '1px solid #b41821';
     th.style.cursor = 'pointer';
 
-    th.addEventListener('click', () => {
-      this.sortTableByColumn(i);
-    });
+    th.addEventListener('click', () => this.sortTableByColumn(i));
 
     headerRow.appendChild(th);
   });
@@ -725,7 +718,6 @@ renderDataTableFromEntries(entries) {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  const fragment = document.createDocumentFragment();
 
   entries.forEach(([plz, kennwerte]) => {
     const tr = document.createElement('tr');
@@ -742,22 +734,14 @@ renderDataTableFromEntries(entries) {
 
     const hzFlag = this.hzFlags[plz] ? '🟢' : '🔴';
 
-    const umsatzRaw = kennwerte["value_hr_n_umsatz_0"];
-    const umsatz = typeof umsatzRaw?.raw === "number"
-      ? umsatzRaw.raw.toLocaleString('de-DE')
-      : '–';
-
-    const wkRaw = kennwerte["value_wk_nachbar_0"];
-    const wk = typeof wkRaw?.raw === "number"
-      ? wkRaw.raw.toFixed(1)
-      : '–';
+    const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
+    const wk = kennwerte["value_wk_nachbar_0"]?.raw?.toFixed(1) ?? '–';
 
     const rowValues = [plz, note, hzFlag, umsatz, wk];
 
     rowValues.forEach((text, i) => {
       const td = document.createElement('td');
-      td.textContent = text.replace(/\n/g, ' ');
-      td.title = text;
+      td.textContent = text;
       td.style.padding = '6px 8px';
       td.style.borderBottom = '1px solid #b41821';
       td.style.borderRight = '1px solid #b41821';
@@ -769,31 +753,28 @@ renderDataTableFromEntries(entries) {
       tr.appendChild(td);
     });
 
-    fragment.appendChild(tr);
+    tbody.appendChild(tr);
   });
 
-  tbody.appendChild(fragment);
   table.appendChild(tbody);
   scrollWrapper.appendChild(table);
-
-  // Scrollbereich einfügen
   container.appendChild(scrollWrapper);
 
-  // Sticky-Footer-Platzhalter
   const footer = document.createElement("div");
   footer.id = "streuverlust-box";
   footer.style.position = "sticky";
   footer.style.bottom = "0";
   footer.style.background = "white";
-  footer.style.zIndex = "5";
-  footer.style.padding = "10px 0 5px 0"; // ✔ nach oben geschoben
+  footer.style.padding = "10px";
+  footer.style.borderTop = "2px solid #b41821";
+  footer.style.zIndex = "10";
   container.appendChild(footer);
 
-  // Sort-Icons aktualisieren
-  if (this._sortState && this._sortState.column != null) {
+  if (this._sortState?.column != null) {
     this.updateSortIcons(this._sortState.column);
   }
 }
+
 
 
       
