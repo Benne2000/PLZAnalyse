@@ -314,6 +314,31 @@
   z-index: 9999;
   font-size: 14px;
 }
+/* Wrapper für Tabelle + Sticky-Footer */
+.table-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Scrollbarer Tabellenbereich */
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #b41821;
+  border-radius: 6px;
+  background: white;
+}
+
+/* Sticky-Footer */
+#streuverlust-box {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 10px;
+  border-top: 2px solid #b41821;
+  z-index: 10;
+}
 
 
     </style>
@@ -335,9 +360,12 @@
       <button id="filter-button">Anzeigen</button>
 
       <!-- 📊 Tabelle jetzt innerhalb der Filtermaske -->
-      <div class="table-container" id="table-container">
-        <!-- Die Tabelle wird hier dynamisch eingefügt -->
-      </div>
+<div class="table-container">
+  <div class="table-wrapper" id="table-container">
+    <!-- Tabelle + Sticky-Footer werden dynamisch eingefügt -->
+  </div>
+</div>
+
     </div>
 
     <!-- 🗺️ Kartenbereich -->
@@ -506,8 +534,6 @@ this.map.fitBounds(bounds, {
   }
 }
 
-
-
 renderDataTable(data) {
   console.log("▶ renderDataTable aufgerufen");
   console.log("   _sortState beim Render:", this._sortState);
@@ -533,17 +559,18 @@ renderDataTable(data) {
   // Tabelle rendern
   this.renderDataTableFromEntries(entries);
 
-  // 🔥 Streuverlust-Box aktualisieren
+  // 🔥 Sticky-Footer aktualisieren
   const box = this._shadowRoot.getElementById("streuverlust-box");
   if (box && this.streuverlust) {
     box.innerHTML = `
       <div style="
-        margin-top:10px;
-        padding:8px;
-        border:1px solid #b41821;
-        border-radius:6px;
-        background:white;
-        font-size:0.85rem;">
+        position: sticky;
+        bottom: 0;
+        background: white;
+        padding: 10px;
+        border-top: 2px solid #b41821;
+        font-size: 0.85rem;
+        z-index: 10;">
         <strong>Streuverlust:</strong><br>
         Umsatz außerhalb Radius: ${this.streuverlust.umsatz.toLocaleString("de-DE")} €<br>
         Anteil an Erhebung: ${(this.streuverlust.anteil * 100).toFixed(1)} %
@@ -551,6 +578,7 @@ renderDataTable(data) {
     `;
   }
 }
+
 
 
 
@@ -618,10 +646,14 @@ sortTableByColumn(columnIndex) {
   // sondern geben das sortierte Array direkt an den Renderer
   this.renderDataTableFromEntries(sorted);
 }
-
-  renderDataTableFromEntries(entries) {
+renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
+
+  // Container-Layout vorbereiten
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column';
+  container.style.height = '100%';
 
   // 🔥 PLZ 00000 entfernen
   entries = entries.filter(([plz]) => plz !== "00000");
@@ -639,15 +671,13 @@ sortTableByColumn(columnIndex) {
     return;
   }
 
-  container.style.display = 'flex';
-  container.style.flexDirection = 'column';
-  container.style.height = '100%';
-
+  // Scrollbarer Tabellenbereich
   const scrollWrapper = document.createElement('div');
   scrollWrapper.style.flex = '1';
   scrollWrapper.style.overflowY = 'auto';
   scrollWrapper.style.border = '1px solid #b41821';
   scrollWrapper.style.borderRadius = '6px';
+  scrollWrapper.style.background = 'white';
 
   const table = document.createElement('table');
   table.setAttribute('role', 'table');
@@ -655,7 +685,6 @@ sortTableByColumn(columnIndex) {
   table.style.borderCollapse = 'collapse';
   table.style.fontFamily = 'sans-serif';
   table.style.tableLayout = 'fixed';
-  table.style.border = '1px solid #b41821';
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
@@ -677,7 +706,7 @@ sortTableByColumn(columnIndex) {
     th.style.textAlign = 'left';
     th.style.position = 'sticky';
     th.style.top = '0';
-    th.style.zIndex = '1';
+    th.style.zIndex = '2';
     th.style.whiteSpace = 'pre-line';
     th.style.width = width;
     th.style.borderBottom = '1px solid #b41821';
@@ -745,7 +774,19 @@ sortTableByColumn(columnIndex) {
   tbody.appendChild(fragment);
   table.appendChild(tbody);
   scrollWrapper.appendChild(table);
+
+  // Scrollbereich einfügen
   container.appendChild(scrollWrapper);
+
+  // Sticky-Footer-Platzhalter
+  const footer = document.createElement("div");
+  footer.id = "streuverlust-box";
+  footer.style.position = "sticky";
+  footer.style.bottom = "0";
+  footer.style.background = "white";
+  footer.style.zIndex = "5";
+  footer.style.padding = "0";
+  container.appendChild(footer);
 
   // Sort-Icons aktualisieren
   if (this._sortState && this._sortState.column != null) {
@@ -1109,26 +1150,43 @@ applyNLFilter(selectedNLs) {
 
 
 
-  createMarkerIcon(nl) {
-    if (!this.iconCache) this.iconCache = {};
+createMarkerIcon(nl, isPhantom = false) {
+  if (!this.iconCache) this.iconCache = {};
 
-    if (!this.iconCache[nl]) {
-      const markerHtml = `
-        <div style="width:30px;height:30px;background-color:#ed1f34;border-radius:50% 50% 50% 0;box-shadow:-1px 1px 4px rgba(0,0,0,.5);transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:bold;color:white;font-family:sans-serif;">
-          <div style="transform:rotate(45deg);">${nl}</div>
-        </div>
-      `;
+  const key = nl + (isPhantom ? "_phantom" : "_active");
 
-      this.iconCache[nl] = L.divIcon({
-        html: markerHtml,
-        className: '',
-        iconSize: [30, 30],
-        iconAnchor: [15, 30]
-      });
-    }
+  if (!this.iconCache[key]) {
+    const color = isPhantom ? "#9a9a9a" : "#ed1f34";
 
-    return this.iconCache[nl];
+    const markerHtml = `
+      <div style="
+        width:30px;height:30px;
+        background-color:${color};
+        border-radius:50% 50% 50% 0;
+        box-shadow:-1px 1px 4px rgba(0,0,0,.5);
+        transform:rotate(-45deg);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:10px;
+        font-weight:bold;
+        color:white;
+        font-family:sans-serif;">
+        <div style="transform:rotate(45deg);">${nl}</div>
+      </div>
+    `;
+
+    this.iconCache[key] = L.divIcon({
+      html: markerHtml,
+      className: "",
+      iconSize: [30, 30],
+      iconAnchor: [15, 30]
+    });
   }
+
+  return this.iconCache[key];
+}
+
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
   .padStart(5, "0")
@@ -1404,7 +1462,6 @@ getFilteredData() {
                             "#cfd4da";    // Grau
   }
   }
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -1422,48 +1479,47 @@ updateGeoLayer() {
 
     const inRadius = !hasRadius || this.plzImRadius.has(plz);
 
-    // 🔥 PLZ ohne Werte → immer grau, nicht interaktiv
-    if (!hasValues) {
+    // 🔥 Einheitliches Grau für ALLE irrelevanten PLZs
+    const setGrey = () => {
       layer.setStyle({
         fillColor: "#cfd4da",
-        fillOpacity: inRadius ? 0.5 : 0.3,
+        fillOpacity: 0.45,
         color: "#ffffff",
         weight: 1
       });
       layer.options.interactive = false;
 
-      // Critical-Marker ggf. entfernen
       if (this.criticalMarkers[plz]) {
         this.map.removeLayer(this.criticalMarkers[plz]);
         delete this.criticalMarkers[plz];
       }
+    };
+
+    // 1️⃣ PLZ ohne Werte → grau
+    if (!hasValues) {
+      setGrey();
       return;
     }
 
-    // 🎨 Färbung nach Radius + WK/WKPot
-    if (inRadius) {
-      layer.setStyle({
-        fillColor: this.getColor(value, values.hz),
-        fillOpacity: 0.7,
-        color: "#ffffff",
-        weight: 1
-      });
-      layer.options.interactive = true;
-    } else {
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.3,
-        color: "#ffffff",
-        weight: 1
-      });
-      layer.options.interactive = false;
+    // 2️⃣ PLZ außerhalb Radius → grau
+    if (!inRadius) {
+      setGrey();
+      return;
     }
 
-    // ⚠️ Critical-Marker
-    const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
-    const showCritical = isCritical && inRadius;
+    // 3️⃣ PLZ im Radius → farbig
+    layer.setStyle({
+      fillColor: this.getColor(value, values.hz),
+      fillOpacity: 0.7,
+      color: "#ffffff",
+      weight: 1
+    });
+    layer.options.interactive = true;
 
-    if (showCritical) {
+    // ⚠️ Critical Marker
+    const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
+
+    if (isCritical) {
       if (!this.criticalMarkers[plz]) {
         const center = layer.getBounds().getCenter();
 
@@ -1485,12 +1541,10 @@ updateGeoLayer() {
           iconAnchor: [11, 11]
         });
 
-        const marker = L.marker(center, {
+        this.criticalMarkers[plz] = L.marker(center, {
           icon,
           interactive: false
         }).addTo(this.map);
-
-        this.criticalMarkers[plz] = marker;
       }
     } else {
       if (this.criticalMarkers[plz]) {
@@ -1501,19 +1555,11 @@ updateGeoLayer() {
   });
 }
 
-
 updateMarkers() {
-  console.group("📍 updateMarkers() gestartet");
-
   this.filteredGroup.clearLayers();
 
   const filteredData = this.filteredData || [];
-  if (!filteredData.length) {
-    console.warn("⚠️ updateMarkers(): Keine filteredData vorhanden.");
-    this.nlMarkers = [];
-    console.groupEnd();
-    return;
-  }
+  if (!filteredData.length) return;
 
   const erhNLs = new Set(
     filteredData
@@ -1550,16 +1596,7 @@ updateMarkers() {
     lng: marker.getLatLng().lng,
     marker
   }));
-
-  console.groupEnd();
 }
-
-
-
-
-
-
-
 
 
 
