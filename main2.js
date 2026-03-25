@@ -647,7 +647,7 @@ renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
-  // Container-Layout vorbereiten
+  // Layout für Wrapper
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
   container.style.height = '100%';
@@ -669,12 +669,16 @@ renderDataTableFromEntries(entries) {
   }
 
   // Scrollbarer Tabellenbereich
-const scrollWrapper = document.createElement("div");
-scrollWrapper.classList.add("table-scroll");
+  const scrollWrapper = document.createElement("div");
+  scrollWrapper.classList.add("table-scroll");
 
-  scrollWrapper.style.border = '1px solid #b41821';
-  scrollWrapper.style.borderRadius = '6px';
-  scrollWrapper.style.background = 'white';
+  scrollWrapper.style.flex = "1";
+  scrollWrapper.style.overflowY = "auto";
+  scrollWrapper.style.background = "white";
+  scrollWrapper.style.border = "1px solid #b41821";
+  scrollWrapper.style.borderRadius = "6px";
+  scrollWrapper.style.padding = "0";
+  scrollWrapper.style.marginBottom = "8px"; // Abstand zum Footer
 
   const table = document.createElement('table');
   table.setAttribute('role', 'table');
@@ -782,7 +786,7 @@ scrollWrapper.classList.add("table-scroll");
   footer.style.bottom = "0";
   footer.style.background = "white";
   footer.style.zIndex = "5";
-  footer.style.padding = "0";
+  footer.style.padding = "10px 0 5px 0"; // ✔ nach oben geschoben
   container.appendChild(footer);
 
   // Sort-Icons aktualisieren
@@ -790,6 +794,7 @@ scrollWrapper.classList.add("table-scroll");
     this.updateSortIcons(this._sortState.column);
   }
 }
+
 
       
 // highlightTableRow(rowElement)
