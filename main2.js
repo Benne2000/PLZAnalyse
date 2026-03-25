@@ -1053,6 +1053,21 @@ zoomToFilteredPLZ() {
   console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
 
+applyNLFilter(selectedNLs) {
+  this._selectedNLs = new Set(selectedNLs);
+
+  // 1️⃣ NL-basiert aggregieren
+  const filteredDataNL = this.getFilteredData({ type: "nl" });
+  this.filteredData = filteredDataNL;
+
+  // 2️⃣ PLZ-Liste aktualisieren
+  this.filteredPLZs = filteredDataNL
+    .map(row => row["dimension_plz_0"]?.id?.trim())
+    .filter(plz => plz && plz !== "@NullMember");
+
+  // 3️⃣ Radius erneut anwenden (inkl. Streuverlust + kritische PLZ)
+  this.applyRadiusFilter(this.currentRadius || 0);
+}
 
 
 
@@ -1361,6 +1376,7 @@ updateGeoLayer() {
 
     const inRadius = !hasRadius || this.plzImRadius.has(plz);
 
+    // Färbung
     if (inRadius) {
       layer.setStyle({
         fillColor: this.getColor(value, values.hz),
@@ -1380,13 +1396,11 @@ updateGeoLayer() {
     }
 
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
-
     const showCritical = isCritical && inRadius;
 
     if (showCritical) {
       if (!this.criticalMarkers[plz]) {
         const center = layer.getBounds().getCenter();
-
         const icon = L.divIcon({
           html: `<div style="
             background:#ffffff;
@@ -1404,12 +1418,7 @@ updateGeoLayer() {
           iconSize: [22, 22],
           iconAnchor: [11, 11]
         });
-
-        const marker = L.marker(center, {
-          icon,
-          interactive: false
-        }).addTo(this.map);
-
+        const marker = L.marker(center, { icon, interactive: false }).addTo(this.map);
         this.criticalMarkers[plz] = marker;
       }
     } else {
@@ -1420,6 +1429,7 @@ updateGeoLayer() {
     }
   });
 }
+
 
 
 
