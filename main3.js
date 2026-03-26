@@ -2394,6 +2394,8 @@ async render() {
   this.showSpinner();
 
   const rawData = this._myDataSource.data;
+console.log("🧪 RAW DATASOURCE SAMPLE:", rawData[0]);
+
 
   // 🔧 Filterstruktur & Dropdowns vorbereiten
   this._erhData = this.buildErhebungsStruktur(rawData);
