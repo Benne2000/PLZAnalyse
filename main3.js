@@ -666,6 +666,8 @@ sortTableByColumn(columnIndex) {
 
 
 renderDataTableFromEntries(entries) {
+  if (this._infoMaskActive) return;
+
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
@@ -832,6 +834,7 @@ restoreDropdownSelections() {
   if (selJahr && this._lastJahr) selJahr.value = this._lastJahr;
   if (selNum && this._lastNummer) selNum.value = this._lastNummer;
 }
+
 
    
 // openPopupFromTable(plz)
@@ -2394,9 +2397,8 @@ prepareErhebungsInfo() {
 }
 
 
-
 renderErhebungsInfo() {
-  this._infoMaskActive = true;
+  this._infoMaskActive = true; // Marker/PLZ-Klicks blockieren
 
   const container = this._shadowRoot.querySelector(".filter-container");
   if (!container) return;
@@ -2410,46 +2412,33 @@ renderErhebungsInfo() {
   wrapper.innerHTML = `
     <h3 style="margin-top:0;color:#b41821;">Erhebungsübersicht</h3>
 
-    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+    <table style="
+      width:100%;
+      border-collapse:collapse;
+      font-size:0.75rem;
+      table-layout:fixed;
+    ">
       <thead>
         <tr style="background:#b41821;color:white;">
-          <th style="padding:6px;text-align:left;">NL</th>
-          <th style="padding:6px;text-align:right;">Jahresumsatz</th>
-          <th style="padding:6px;text-align:right;">Erfasst (Zeitraum)</th>
-          <th style="padding:6px;text-align:right;">Abdeckungsgrad Erhebung</th>
-          <th style="padding:6px;text-align:right;">Valide Erhebung</th>
-          <th style="padding:6px;text-align:right;">Validitätsquote</th>
-          <th style="padding:6px;text-align:right;">Abdeckungsgrad Jahresumsatz</th>
+          <th style="padding:4px;text-align:left;width:50px;">NL</th>
+          <th style="padding:4px;text-align:right;width:90px;">Jahresumsatz</th>
+          <th style="padding:4px;text-align:right;width:90px;">Erfasst</th>
+          <th style="padding:4px;text-align:right;width:90px;">Abdeckung</th>
+          <th style="padding:4px;text-align:right;width:90px;">Valide</th>
+          <th style="padding:4px;text-align:right;width:90px;">Validität</th>
+          <th style="padding:4px;text-align:right;width:90px;">Jahresabdeckung</th>
         </tr>
       </thead>
       <tbody>
         ${Object.values(this.erhebungsInfo).map(info => `
           <tr>
-            <td style="padding:6px;">${info.nl}</td>
-
-            <td style="padding:6px;text-align:right;">
-              ${info.jahresumsatz.toLocaleString("de-DE")}
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${info.erfasst_total.toLocaleString("de-DE")}
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${(info.pct_erfassung * 100).toFixed(1)}%
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${info.erfasst_valid.toLocaleString("de-DE")}
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${(info.pct_valid * 100).toFixed(1)}%
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${(info.pct_hochrechnung * 100).toFixed(1)}%
-            </td>
+            <td style="padding:4px;">${info.nl}</td>
+            <td style="padding:4px;text-align:right;">${info.jahresumsatz.toLocaleString("de-DE")}</td>
+            <td style="padding:4px;text-align:right;">${info.erfasst_total.toLocaleString("de-DE")}</td>
+            <td style="padding:4px;text-align:right;">${(info.pct_erfassung * 100).toFixed(1)}%</td>
+            <td style="padding:4px;text-align:right;">${info.erfasst_valid.toLocaleString("de-DE")}</td>
+            <td style="padding:4px;text-align:right;">${(info.pct_valid * 100).toFixed(1)}%</td>
+            <td style="padding:4px;text-align:right;">${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
           </tr>
         `).join("")}
       </tbody>
@@ -2473,20 +2462,22 @@ renderErhebungsInfo() {
   container.appendChild(wrapper);
 
   const btn = wrapper.querySelector("#btn-erhebung-weiter");
-btn.addEventListener("click", () => {
-  wrapper.style.transition = "opacity 0.4s ease";
-  wrapper.style.opacity = "0";
+  btn.addEventListener("click", () => {
+    wrapper.style.transition = "opacity 0.4s ease";
+    wrapper.style.opacity = "0";
 
-  setTimeout(() => {
-    this._infoMaskActive = false;   // <--- HIER
+    setTimeout(() => {
+      this._infoMaskActive = false;
 
-    this.restoreFilterUI();
-    this.restoreDropdownSelections(); // kommt gleich
-    this.renderDataTable(this.filteredKennwerte);
-  }, 400);
-});
+      this.restoreFilterUI();
+      this.setupFilterDropdowns();
+      this.restoreDropdownSelections();
 
+      this.renderDataTable(this.filteredKennwerte);
+    }, 400);
+  });
 }
+
 
 
 
@@ -2800,10 +2791,8 @@ restoreFilterUI() {
       <div id="streuverlust-box"></div>
     </div>
   `;
-
-  // Dropdowns neu initialisieren
-  this.setupFilterDropdowns();
 }
+
 
 
 renderLegend(viewName) {
