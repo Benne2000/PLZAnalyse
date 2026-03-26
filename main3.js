@@ -1853,6 +1853,64 @@ restoreFilterUI() {
     </div>
   `;
 }
+
+renderErhebungsInfoTable() {
+  const container = this._shadowRoot.getElementById("nl-info-container");
+  if (!container) return;
+
+  const rows = Object.values(this.erhebungsInfo).map(info => `
+    <tr class="nl-info-row" data-nl="${info.nl}">
+      <td>${info.nl}</td>
+      <td>${info.jahresumsatz.toLocaleString("de-DE")}</td>
+      <td>${info.erfasst_total.toLocaleString("de-DE")}</td>
+      <td>${(info.pct_erfassung * 100).toFixed(1)}%</td>
+      <td>${info.erfasst_valid.toLocaleString("de-DE")}</td>
+      <td>${(info.pct_valid * 100).toFixed(1)}%</td>
+      <td>${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
+    </tr>
+  `).join("");
+
+  container.innerHTML = `
+    <table class="nl-info-table">
+      <thead>
+        <tr>
+          <th>NL</th>
+          <th>Jahresumsatz</th>
+          <th>Erfasst</th>
+          <th>Abdeckung</th>
+          <th>Valide</th>
+          <th>Validität</th>
+          <th>Jahresabdeckung</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  // Klick auf NL-Zeile = Marker-Klick
+  container.querySelectorAll(".nl-info-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const nl = row.dataset.nl;
+
+      if (!this._selectedNLs) this._selectedNLs = new Set();
+      this._selectedNLs.clear();
+      this._selectedNLs.add(nl);
+
+      this.applyNLFilter([nl]);
+
+      const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+      this.applyRadiusFilter(radius);
+
+      this.updateGeoLayer();
+      this.renderDataTable(this.filteredKennwerte);
+
+      const popup = this._shadowRoot.getElementById("side-popup");
+      popup.classList.remove("show");
+    });
+  });
+}
+
+
 restoreDropdownSelections() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
 
