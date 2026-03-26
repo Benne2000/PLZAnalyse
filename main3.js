@@ -2294,7 +2294,6 @@ getFilteredDataWithRadius() {
 
   return result;
 }
-
 prepareErhebungsInfo(filteredData) {
   this.erhebungsInfo = {};
 
@@ -2302,9 +2301,9 @@ prepareErhebungsInfo(filteredData) {
     return;
   }
 
-  const jahresumsatz = {};      // Netto ohne 00000
-  const erfasst_total = {};     // Erhebung inkl. 00000
-  const erfasst_valid = {};     // Erhebung ohne 00000
+  const jahresumsatz = {};      // Netto ohne 00000 (value_hr_n_umsatz_0)
+  const erfasst_total = {};     // Erhebung inkl. 00000 (value_ums_erhebung_0)
+  const erfasst_valid = {};     // Erhebung ohne 00000 (value_ums_erhebung_0)
 
   filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
@@ -2313,19 +2312,20 @@ prepareErhebungsInfo(filteredData) {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
 
-    const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    const umsatzJahr = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    const umsatzErhebung = row["value_ums_erhebung_0"]?.raw ?? 0;
 
     // 1) Erfasster Umsatz (inkl. 00000)
-    erfasst_total[nl] = (erfasst_total[nl] || 0) + umsatz;
+    erfasst_total[nl] = (erfasst_total[nl] || 0) + umsatzErhebung;
 
     // 2) Jahresumsatz (ohne 00000)
     if (plz !== "00000") {
-      jahresumsatz[nl] = (jahresumsatz[nl] || 0) + umsatz;
+      jahresumsatz[nl] = (jahresumsatz[nl] || 0) + umsatzJahr;
     }
 
     // 3) Valide Erhebung (ohne 00000)
     if (plz !== "00000") {
-      erfasst_valid[nl] = (erfasst_valid[nl] || 0) + umsatz;
+      erfasst_valid[nl] = (erfasst_valid[nl] || 0) + umsatzErhebung;
     }
   });
 
@@ -2339,102 +2339,19 @@ prepareErhebungsInfo(filteredData) {
       jahresumsatz: jahr,
       erfasst_total: total,
       erfasst_valid: valid,
+
+      // Abdeckungsgrad Erhebung
       pct_erfassung: jahr > 0 ? total / jahr : 0,
+
+      // Validitätsquote
       pct_valid: total > 0 ? valid / total : 0,
+
+      // Abdeckungsgrad Jahresumsatz
       pct_hochrechnung: jahr > 0 ? valid / jahr : 0
     };
   });
 }
 
-renderErhebungsInfo() {
-  const container = this._shadowRoot.querySelector(".filter-container");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const wrapper = document.createElement("div");
-  wrapper.style.padding = "10px";
-  wrapper.style.fontFamily = "sans-serif";
-
-  wrapper.innerHTML = `
-    <h3 style="margin-top:0;color:#b41821;">Erhebungsübersicht</h3>
-
-    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
-      <thead>
-        <tr style="background:#b41821;color:white;">
-          <th style="padding:6px;text-align:left;">NL</th>
-          <th style="padding:6px;text-align:right;">Jahresumsatz</th>
-          <th style="padding:6px;text-align:right;">Erfasst (Zeitraum)</th>
-          <th style="padding:6px;text-align:right;">Abdeckungsgrad Erhebung</th>
-          <th style="padding:6px;text-align:right;">Valide Erhebung</th>
-          <th style="padding:6px;text-align:right;">Validitätsquote</th>
-          <th style="padding:6px;text-align:right;">Abdeckungsgrad Jahresumsatz</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${Object.values(this.erhebungsInfo).map(info => `
-          <tr>
-            <td style="padding:6px;">${info.nl}</td>
-
-            <td style="padding:6px;text-align:right;">
-              ${info.jahresumsatz.toLocaleString("de-DE")}
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${info.erfasst_total.toLocaleString("de-DE")}
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${(info.pct_erfassung * 100).toFixed(1)}%
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${info.erfasst_valid.toLocaleString("de-DE")}
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${(info.pct_valid * 100).toFixed(1)}%
-            </td>
-
-            <td style="padding:6px;text-align:right;">
-              ${(info.pct_hochrechnung * 100).toFixed(1)}%
-            </td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-
-    <button id="btn-erhebung-weiter"
-      style="
-        margin-top:15px;
-        width:100%;
-        padding:8px;
-        background:#b41821;
-        color:white;
-        border:none;
-        cursor:pointer;
-        border-radius:4px;
-      ">
-      Weiter zur PLZ-Analyse
-    </button>
-  `;
-
-  container.appendChild(wrapper);
-
-  const btn = wrapper.querySelector("#btn-erhebung-weiter");
-  btn.addEventListener("click", () => {
-    wrapper.style.transition = "opacity 0.4s ease";
-    wrapper.style.opacity = "0";
-
-    setTimeout(() => {
-      // Linke UI wiederherstellen
-      this.restoreFilterUI();
-
-      // PLZ-Tabelle rendern
-      this.renderDataTable(this.filteredKennwerte);
-    }, 400);
-  });
-}
 
 
 
