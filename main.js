@@ -931,20 +931,30 @@ zoomToFilteredPLZ() {
       
       
 createAllMarkers() {
-  // Alte Marker entfernen
-  this.filteredGroup.clearLayers();
-  this.allMarkers = [];
+  console.group("📌 createAllMarkers() gestartet");
 
-  // 🔥 NL-Marker-Liste für Radius-Filter neu anlegen
+  // Alte Marker entfernen
+  if (this.filteredGroup) {
+    this.filteredGroup.clearLayers();
+  } else {
+    console.warn("⚠️ filteredGroup ist nicht definiert.");
+  }
+  this.allMarkers = [];
   this.nlMarkers = [];
+
+  console.log("🔹 Niederlassung-Objekt:", this.Niederlassung);
+  console.log("🔹 nlKoordinaten-Objekt:", this.nlKoordinaten);
+  console.log("🔹 extraNLs:", this.extraNLs);
 
   if (!this.Niederlassung || typeof this.Niederlassung !== "object") {
     console.warn("⚠️ Niederlassung ist nicht definiert oder kein Objekt:", this.Niederlassung);
+    console.groupEnd();
     return;
   }
 
   if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") {
     console.warn("⚠️ nlKoordinaten ist nicht definiert oder kein Objekt:", this.nlKoordinaten);
+    console.groupEnd();
     return;
   }
 
@@ -953,6 +963,7 @@ createAllMarkers() {
   // 🔵 Haupt-Niederlassungen erzeugen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
     const coords = this.nlKoordinaten[nlKey];
+
     if (!coords) {
       console.warn("⚠️ Keine Koordinaten für NL:", nlKey, nlName);
       return;
@@ -967,21 +978,20 @@ createAllMarkers() {
         plzs: [nlKey] // wichtig für Filterung
       });
 
-      // In globale Marker-Liste
       this.allMarkers.push(marker);
+      if (this.filteredGroup) {
+        this.filteredGroup.addLayer(marker);
+      }
 
-      // In gefilterte Gruppe (Standard: alle sichtbar)
-      this.filteredGroup.addLayer(marker);
-
-      // NL als verarbeitet markieren
       seen.add(nlKey);
 
-      // 🔥 NL-Marker für Radius-Filter speichern
       this.nlMarkers.push({
         lat: coords.lat,
         lng: coords.lon,
         marker
       });
+
+      console.log("✅ NL-Marker erstellt:", { nlKey, nlName, coords });
     }
   });
 
@@ -997,19 +1007,30 @@ createAllMarkers() {
       });
 
       this.allMarkers.push(marker);
-      this.filteredGroup.addLayer(marker);
+      if (this.filteredGroup) {
+        this.filteredGroup.addLayer(marker);
+      }
 
-      // 🔥 Extra-NL ebenfalls für Radius-Filter speichern
       this.nlMarkers.push({
         lat,
         lng: lon,
         marker
       });
+
+      console.log("➕ Extra-NL-Marker erstellt:", { nl, lat, lon });
     });
   }
 
-  console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
+  console.log("📌 NL-Marker geladen (gesamt):", this.nlMarkers.length);
+  console.log("📌 allMarkers Länge:", this.allMarkers.length);
+
+  if (this.nlMarkers.length === 0) {
+    console.warn("⚠️ createAllMarkers(): Es wurden keine NL-Marker erzeugt.");
+  }
+
+  console.groupEnd();
 }
+
 
 
 
@@ -1222,7 +1243,6 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
-
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
@@ -1232,56 +1252,62 @@ getFilteredData() {
   const data = this._myDataSource.data;
   const { erhID, jahr, nummer } = this._activeFilter || {};
 
-  console.group("🔍 Filtervorgang gestartet");
-  console.log("➡️ ErhebungsID (Dropdown):", erhID);
-  console.log("➡️ Jahr:", jahr);
-  console.log("➡️ Nummer (Dropdown):", nummer);
+  console.group("🔍 getFilteredData()");
+  console.log("➡️ Filter erhID:", erhID);
+  console.log("➡️ Filter jahr:", jahr);
+  console.log("➡️ Filter nummer:", nummer);
 
-  // ErhebungsID-Liste splitten
   const erhList = erhID ? erhID.split("/") : [];
-
-  // Nummer normalisieren (z. B. "1" → "001")
   const nummerNorm = nummer?.padStart(3, "0");
+
+  console.log("➡️ erhList:", erhList);
+  console.log("➡️ nummerNorm:", nummerNorm);
 
   const filteredKennwerte = {};
   const filteredPLZWerte = {};
 
-  const filtered = data.filter(row => {
-    const id = row["dimension_erhebung_0"]?.id?.trim();
-    const y = row["dimension_jahr_0"]?.id?.trim();
-    const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+  const filtered = data.filter((row, i) => {
+    const erh = row["dimension_erhebung_0"]?.id?.trim();
+    const j = row["dimension_jahr_0"]?.id?.trim();
+    const nr = row["dimension_erhebungsnummer_0"]?.id?.trim();
 
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = String(rawPLZ).padStart(5, "0");
+    const plz = rawPLZ ? String(rawPLZ).padStart(5, "0") : null;
 
-    // 🔥 MATCH-LOGIK korrigiert:
+    if (i < 10) {
+      console.log(`🔎 Datensatz ${i}:`, {
+        erh,
+        j,
+        nr,
+        plz,
+        row
+      });
+    }
+
     const match =
-      erhList.includes(id) &&     // Erhebung: Einzelwert muss in Liste sein
-      y === jahr &&               // Jahr muss exakt matchen
-      num === nummerNorm;         // Nummer normalisiert vergleichen
+      erhList.includes(erh) &&
+      j === jahr &&
+      nr === nummerNorm;
 
-    if (match && plz && plz !== "@NullMember") {
+    if (match) {
+      console.log(`✔️ MATCH bei PLZ ${plz}`, { erh, j, nr });
+
       filteredKennwerte[plz] = row;
-
       filteredPLZWerte[plz] = {
         wk: row["value_wk_in_percent_0"]?.raw ?? 0,
         wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
         hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
       };
-
-      console.log(
-        `✔️ Match: PLZ ${plz} | WK=${filteredPLZWerte[plz].wk} | WKPot=${filteredPLZWerte[plz].wkPot} | HZ=${filteredPLZWerte[plz].hz}`
-      );
     }
 
     return match;
   });
 
+  console.log("📦 Treffer PLZ:", Object.keys(filteredKennwerte));
+  console.groupEnd();
+
   this.filteredKennwerte = filteredKennwerte;
   this.filteredPLZWerte = filteredPLZWerte;
-
-  console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
-  console.groupEnd();
 
   return filtered;
 }
@@ -1520,11 +1546,16 @@ updateMarkers() {
 
         this.render();
       }
-prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
-  const geoFeatures = this._geoData?.features || [];
 
-  // Reset
+
+
+prepareMapData(filteredData) {
+  console.group("🧩 prepareMapData()");
+  console.log("➡️ Eingehende Datensätze:", filteredData.length);
+
+  const geoFeatures = this._geoData?.features || [];
+  console.log("➡️ GeoJSON Features:", geoFeatures.length);
+
   this.kennwerte = {};
   this.hzFlags = {};
   this.Niederlassung = {};
@@ -1533,56 +1564,45 @@ prepareMapData(filteredData) {
   this.filteredKennwerte = {};
   this.extraNLs = [];
 
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0"
-  ];
+  filteredData.forEach((row, i) => {
+    const plz = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plzNorm = plz ? String(plz).padStart(5, "0") : null;
 
-  // Geo-Notes
-  const geoNotes = {};
-  geoFeatures.forEach(f => {
-    const plz = f.properties?.plz?.trim();
-    const note = f.properties?.note?.trim();
-    if (plz) geoNotes[plz] = note || "";
-  });
-
-  // Verarbeitung der gefilterten Daten
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
     const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
     const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
 
-    const lat = parseFloat(row["dimension_Lat_0"]?.label);
-    const lon = parseFloat(row["dimension_lon_0"]?.label);
+    const lat = parseFloat(row["dimension_Lat_0"]?.raw ?? row["dimension_Lat_0"]?.id);
+    const lon = parseFloat(row["dimension_lon_0"]?.raw ?? row["dimension_lon_0"]?.id);
 
-    // --- Niederlassung speichern ---
+    if (i < 10) {
+      console.log(`🔎 prepareMapData Row ${i}:`, {
+        plzNorm,
+        nlKey,
+        hzFlag,
+        lat,
+        lon,
+        row
+      });
+    }
+
     if (nlKey) {
       this.Niederlassung[nlKey] = nlKey;
-
       if (!isNaN(lat) && !isNaN(lon)) {
         this.nlKoordinaten[nlKey] = { lat, lon };
       }
     }
 
-    // --- PLZ-Kennwerte speichern ---
-    if (plz && plz !== "@NullMember") {
-      this.filteredKennwerte[plz] = {};
-      this.hzFlags[plz] = hzFlag;
-
-      kennzahlenIDs.forEach(id => {
-        const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
-      });
-
-      this.filteredKennwerte[plz]["dimension_note_0"] = {
-        label: geoNotes[plz] || ""
-      };
+    if (plzNorm && plzNorm !== "@NullMember") {
+      this.filteredKennwerte[plzNorm] = {};
+      this.hzFlags[plzNorm] = hzFlag;
     }
   });
+
+  console.log("🏢 NL gefunden:", Object.keys(this.Niederlassung));
+  console.log("📍 PLZ gefunden:", Object.keys(this.filteredKennwerte));
+  console.groupEnd();
 }
+
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
 getDistanceKm(lat1, lon1, lat2, lon2) {
