@@ -395,17 +395,20 @@
         this.activeViews = new Set(["werbung"]); 
 
       }
-connectedCallback() {
+
+    connectedCallback() {
   if (this._isConnected) return;
   this._isConnected = true;
 
+  // Shadow Root EINMAL erstellen
   this._shadowRoot = this.attachShadow({ mode: "open" });
   this._shadowRoot.appendChild(template.content.cloneNode(true));
 
-  // Spinner anzeigen
   this.showSpinner();
 
-  // Leaflet laden (deine Logik)
+  // ----------------------------------------
+  // 1) Leaflet laden (deine Logik)
+  // ----------------------------------------
   if (!window.L) {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
@@ -421,9 +424,9 @@ connectedCallback() {
     this.initializeMapBase();
   }
 
-  // -----------------------------
-  // 🔥 UI‑Events registrieren
-  // -----------------------------
+  // ----------------------------------------
+  // 2) UI‑Events registrieren
+  // ----------------------------------------
 
   // Filter-Button
   this._shadowRoot.getElementById("filter-button")
@@ -457,9 +460,9 @@ connectedCallback() {
   this._shadowRoot.getElementById("nummer-select")
     .addEventListener("change", () => this.updateActiveFilter());
 
-  // -----------------------------
-  // 🔥 Datenquelle überwachen
-  // -----------------------------
+  // ----------------------------------------
+  // 3) Datenquelle überwachen
+  // ----------------------------------------
   this._dataSourceObserver = setInterval(() => {
     if (this._myDataSource && this._myDataSource.state === "success") {
       clearInterval(this._dataSourceObserver);
@@ -469,6 +472,7 @@ connectedCallback() {
     }
   }, 200);
 }
+
 
   showSpinner() {
     const spinner = this._shadowRoot.getElementById('loading-spinner');
