@@ -1453,27 +1453,38 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
-
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("❌ getFilteredData(): Datenquelle nicht bereit");
     return [];
   }
 
   const data = this._myDataSource.data;
   const { erhID, jahr, nummer } = this._activeFilter || {};
 
+  console.log("🔍 getFilteredData(): Aktiver Filter:", { erhID, jahr, nummer });
+  console.log("📦 Rohdaten:", data.length);
+
   const filtered = data.filter(row => {
-    return (
-      this.getDim(row, "dimension_erhebung") === erhID &&
-      this.getDim(row, "dimension_jahr") === jahr &&
-      this.getDim(row, "dimension_erhebungsnummer") === nummer
-    );
+    const erh = this.getDim(row, "dimension_erhebung");
+    const j = this.getDim(row, "dimension_jahr");
+    const nr = this.getDim(row, "dimension_erhebungsnummer");
+
+    return erh === erhID && j === jahr && nr === nummer;
   });
 
-  this.erhebungData = filtered; // wichtig für NL-Summary
+  console.log("📊 Gefilterte Daten:", filtered.length);
 
+  if (filtered.length > 0) {
+    console.log("🔬 Beispiel gefilterter Datensatz:", filtered[0]);
+  } else {
+    console.warn("⚠️ Keine Daten nach Filter — Feldnamen prüfen!");
+  }
+
+  this.erhebungData = filtered;
   return filtered;
 }
+
 renderNlTable() {
   const container = this._shadowRoot.getElementById("table-container");
   if (!container) return;
@@ -1887,9 +1898,11 @@ updateMarkers() {
         this.render();
       }
 
-
 prepareMapData(filteredData) {
+  console.log("🧩 prepareMapData(): Eingehende Datensätze:", filteredData.length);
+
   const geoFeatures = this._geoData?.features || [];
+  console.log("🗺️ GeoJSON Features:", geoFeatures.length);
 
   // Reset
   this.kennwerte = {};
@@ -1900,40 +1913,24 @@ prepareMapData(filteredData) {
   this.filteredKennwerte = {};
   this.extraNLs = [];
 
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz",
-    "value_umsatz_p_hh",
-    "value_wk_in_percent",
-    "value_wk_nachbar",
-    "value_hz_kosten",
-    "value_werbeverweigerer",
-    "value_haushalte",
-    "value_kaufkraft",
-    "value_ums_erhebung",
-    "value_kd_erhebung",
-    "value_bon_erhebung",
-    "value_auflage",
-    "value_hz_potentiell"
-  ];
-
-  // Geo-Notes
-  const geoNotes = {};
-  geoFeatures.forEach(f => {
-    const plz = f.properties?.plz?.trim();
-    const note = f.properties?.note?.trim();
-    if (plz) geoNotes[plz] = note || "";
-  });
-
-  // Verarbeitung der gefilterten Daten
-  filteredData.forEach(row => {
+  filteredData.forEach((row, i) => {
     const plz = this.getDim(row, "dimension_plz");
     const nlKey = this.getDim(row, "dimension_niederlassung");
     const hzFlag = this.getDim(row, "dimension_hzflag") === "X";
 
+    if (i === 0) {
+      console.log("🔬 Beispiel prepareMapData():", {
+        plz,
+        nlKey,
+        hzFlag,
+        lat: this.getDim(row, "dimension_Lat"),
+        lon: this.getDim(row, "dimension_lon")
+      });
+    }
+
     const lat = parseFloat(this.getDim(row, "dimension_Lat"));
     const lon = parseFloat(this.getDim(row, "dimension_lon"));
 
-    // --- Niederlassung speichern ---
     if (nlKey) {
       this.Niederlassung[nlKey] = nlKey;
 
@@ -1942,22 +1939,20 @@ prepareMapData(filteredData) {
       }
     }
 
-    // --- PLZ-Kennwerte speichern ---
     if (plz && plz !== "@NullMember") {
       this.filteredKennwerte[plz] = {};
       this.hzFlags[plz] = hzFlag;
-
-      kennzahlenIDs.forEach(id => {
-        const raw = this.getVal(row, id);
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
-      });
-
-      this.filteredKennwerte[plz]["note"] = {
-        label: geoNotes[plz] || ""
-      };
     }
   });
+
+  console.log("🏢 NL gefunden:", Object.keys(this.Niederlassung).length);
+  console.log("📍 PLZ gefunden:", Object.keys(this.filteredKennwerte).length);
+
+  if (Object.keys(this.filteredKennwerte).length === 0) {
+    console.warn("⚠️ prepareMapData(): Keine PLZ gefunden — Feldnamen prüfen!");
+  }
 }
+
 
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
