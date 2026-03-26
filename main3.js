@@ -396,13 +396,17 @@
 
       }
 
-    connectedCallback() {
+connectedCallback() {
   if (this._isConnected) return;
   this._isConnected = true;
 
-  // Shadow Root EINMAL erstellen
-  this._shadowRoot = this.attachShadow({ mode: "open" });
-  this._shadowRoot.appendChild(template.content.cloneNode(true));
+  // UI5 erstellt bereits ein Shadow‑Root → wir holen es nur ab
+  this._shadowRoot = this.shadowRoot;
+
+  // Template nur einfügen, wenn es noch nicht existiert
+  if (!this._shadowRoot.querySelector(".layout")) {
+    this._shadowRoot.appendChild(template.content.cloneNode(true));
+  }
 
   this.showSpinner();
 
@@ -428,13 +432,11 @@
   // 2) UI‑Events registrieren
   // ----------------------------------------
 
-  // Filter-Button
   this._shadowRoot.getElementById("filter-button")
-    .addEventListener("click", () => this.applyFilter());
+    ?.addEventListener("click", () => this.applyFilter());
 
-  // NL/PLZ Toggle
   this._shadowRoot.getElementById("toggle-table-btn")
-    .addEventListener("click", () => {
+    ?.addEventListener("click", () => {
       if (this.tableMode === "plz") {
         this.setTableMode("nl");
       } else {
@@ -442,23 +444,21 @@
       }
     });
 
-  // Radius-Slider
   this._shadowRoot.getElementById("radius-slider")
-    .addEventListener("input", (e) => {
+    ?.addEventListener("input", (e) => {
       const km = Number(e.target.value);
       this._shadowRoot.getElementById("radius-value").textContent = km;
       this.applyRadiusFilter(km);
     });
 
-  // Dropdowns
   this._shadowRoot.getElementById("erhebung-select")
-    .addEventListener("change", () => this.updateJahrDropdown());
+    ?.addEventListener("change", () => this.updateJahrDropdown());
 
   this._shadowRoot.getElementById("jahr-select")
-    .addEventListener("change", () => this.updateNummerDropdown());
+    ?.addEventListener("change", () => this.updateNummerDropdown());
 
   this._shadowRoot.getElementById("nummer-select")
-    .addEventListener("change", () => this.updateActiveFilter());
+    ?.addEventListener("change", () => this.updateActiveFilter());
 
   // ----------------------------------------
   // 3) Datenquelle überwachen
@@ -466,8 +466,6 @@
   this._dataSourceObserver = setInterval(() => {
     if (this._myDataSource && this._myDataSource.state === "success") {
       clearInterval(this._dataSourceObserver);
-
-      // Erstes Rendern
       this.render();
     }
   }, 200);
