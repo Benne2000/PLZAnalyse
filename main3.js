@@ -316,6 +316,23 @@
 
     <button id="filter-button">Anzeigen</button>
 
+<!-- ⬇️ HIER kommt der Toggle‑Button hin -->
+<button id="toggle-table-btn"
+  style="
+    margin-top:10px;
+    width:100%;
+    padding:8px;
+    background:#ffffff;
+    color:#b41821;
+    border:2px solid #b41821;
+    cursor:pointer;
+    border-radius:4px;
+    font-weight:bold;
+  ">
+  NL‑Tabelle anzeigen
+</button>
+
+
     <div class="table-container">
       <div class="table-wrapper" id="table-container">
         <!-- Tabelle + Sticky-Footer werden dynamisch eingefügt -->
@@ -378,24 +395,81 @@
         this.activeViews = new Set(["werbung"]); 
 
       }
+connectedCallback() {
+  if (this._isConnected) return;
+  this._isConnected = true;
 
-      connectedCallback() {
-        this.showSpinner();
+  this._shadowRoot = this.attachShadow({ mode: "open" });
+  this._shadowRoot.appendChild(template.content.cloneNode(true));
 
-        if (!window.L) {
-          const link = document.createElement('link');
-          link.rel = 'stylesheet';
-          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-          const script = document.createElement('script');
-          script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-          script.onload = () => this.initializeMapBase();
-          this._shadowRoot.appendChild(link);
-          this._shadowRoot.appendChild(script);
-        } else {
-          this.initializeMapBase();
-        }
+  // Spinner anzeigen
+  this.showSpinner();
 
+  // Leaflet laden (deine Logik)
+  if (!window.L) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+
+    const script = document.createElement('script');
+    script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    script.onload = () => this.initializeMapBase();
+
+    this._shadowRoot.appendChild(link);
+    this._shadowRoot.appendChild(script);
+  } else {
+    this.initializeMapBase();
+  }
+
+  // -----------------------------
+  // 🔥 UI‑Events registrieren
+  // -----------------------------
+
+  // Filter-Button
+  this._shadowRoot.getElementById("filter-button")
+    .addEventListener("click", () => this.applyFilter());
+
+  // NL/PLZ Toggle
+  this._shadowRoot.getElementById("toggle-table-btn")
+    .addEventListener("click", () => {
+      if (this.tableMode === "plz") {
+        this.setTableMode("nl");
+      } else {
+        this.setTableMode("plz");
       }
+    });
+
+  // Radius-Slider
+  this._shadowRoot.getElementById("radius-slider")
+    .addEventListener("input", (e) => {
+      const km = Number(e.target.value);
+      this._shadowRoot.getElementById("radius-value").textContent = km;
+      this.applyRadiusFilter(km);
+    });
+
+  // Dropdowns
+  this._shadowRoot.getElementById("erhebung-select")
+    .addEventListener("change", () => this.updateJahrDropdown());
+
+  this._shadowRoot.getElementById("jahr-select")
+    .addEventListener("change", () => this.updateNummerDropdown());
+
+  this._shadowRoot.getElementById("nummer-select")
+    .addEventListener("change", () => this.updateActiveFilter());
+
+  // -----------------------------
+  // 🔥 Datenquelle überwachen
+  // -----------------------------
+  this._dataSourceObserver = setInterval(() => {
+    if (this._myDataSource && this._myDataSource.state === "success") {
+      clearInterval(this._dataSourceObserver);
+
+      // Erstes Rendern
+      this.render();
+    }
+  }, 200);
+}
+
   showSpinner() {
     const spinner = this._shadowRoot.getElementById('loading-spinner');
     if (spinner) spinner.classList.remove('hidden');
@@ -406,6 +480,22 @@
     if (spinner) spinner.classList.add('hidden');
   }
 // --- Robuste Getter für Dimensions- und Kennzahlenfelder ---
+setTableMode(mode) {
+  this.tableMode = mode;
+
+  const btn = this._shadowRoot.getElementById("toggle-table-btn");
+
+  if (mode === "nl") {
+    btn.textContent = "PLZ‑Tabelle anzeigen";
+    this.buildNlSummary();
+    this.renderNlTable();
+  } else {
+    btn.textContent = "NL‑Tabelle anzeigen";
+    this.renderDataTable(this.filteredKennwerte);
+  }
+}
+
+
 getDim(row, id) {
   const dim = row[id];
   if (!dim) return null;
@@ -1460,39 +1550,6 @@ setTableMode(mode) {
 }
 
 
-buildNlSummary() {
-  const summary = {};
-
-  this.erhebungData.forEach(row => {
-    const nl = this.getDim(row, "dimension_niederlassung");
-    if (!nl) return;
-
-    const plz = this.getDim(row, "dimension_plz");
-    const umsatz = this.getVal(row, "value_hr_n_umsatz") || 0;
-
-    if (!summary[nl]) {
-      summary[nl] = {
-        totalMit00000: 0,
-        valideOhne00000: 0
-      };
-    }
-
-    summary[nl].totalMit00000 += umsatz;
-
-    if (plz !== "00000") {
-      summary[nl].valideOhne00000 += umsatz;
-    }
-  });
-
-  // Prozent berechnen
-  Object.values(summary).forEach(nl => {
-    const diff = nl.totalMit00000 - nl.valideOhne00000;
-    nl.anteil = nl.totalMit00000 > 0 ? diff / nl.totalMit00000 : 0;
-  });
-
-  this.nlSummary = summary;
-}
-
 
 
 
@@ -2006,36 +2063,31 @@ getColorForPLZ(plz) {
   return this.getColor(value, isHZ);
 }
 
-
 getFilteredDataWithRadius() {
   if (!this.filteredData) return [];
 
   const result = [];
   const aggregated = {};
 
+  // Umsätze pro PLZ (ungefiltert) für WK-Nachbarn
   const unfilteredUmsatzByPLZ = {};
   this.filteredData.forEach(row => {
-    const rawPLZ = this.getDim(row, "dimension_plz");
-    const plz = rawPLZ ? rawPLZ.padStart(5, "0") : "";
+    const plz = this.getDim(row, "dimension_plz")?.padStart(5, "0");
     const umsatz = this.getVal(row, "value_hr_n_umsatz") || 0;
+    if (!plz) return;
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
   });
 
   let totalErhebungUmsatz = 0;
-
-  const streuverlust = {
-    umsatz: 0,
-    anteil: 0
-  };
+  const streuverlust = { umsatz: 0, anteil: 0 };
 
   this.filteredData.forEach(row => {
-    const nl = this.getDim(row, "dimension_niederlassung");
-    const rawPLZ = this.getDim(row, "dimension_plz");
-    const plz = rawPLZ ? rawPLZ.padStart(5, "0") : "";
+    const plz = this.getDim(row, "dimension_plz")?.padStart(5, "0");
+    if (!plz) return;
 
     const isInRadius = this.plzImRadius.has(plz);
 
-    const umsatz = this.getVal(row, "value_hr_n_umsatz") || 0;
+    const umsatzNetto = this.getVal(row, "value_hr_n_umsatz") || 0;
     const hzKosten = this.getVal(row, "value_hz_kosten") || 0;
 
     const umsatzErhebung = this.getVal(row, "value_ums_erhebung") || 0;
@@ -2046,10 +2098,11 @@ getFilteredDataWithRadius() {
     const umsatzRA = this.getVal(row, "value_umsatz_ra") || 0;
     const umsatzOnline = this.getVal(row, "value_umsatz_online") || 0;
 
-    totalErhebungUmsatz += umsatz;
+    totalErhebungUmsatz += umsatzNetto;
 
+    // Streuverlust (außerhalb Radius)
     if (!isInRadius) {
-      streuverlust.umsatz += umsatz;
+      streuverlust.umsatz += umsatzNetto;
       return;
     }
 
@@ -2073,10 +2126,12 @@ getFilteredDataWithRadius() {
 
     const entry = aggregated[plz];
 
+    // HZ-Flag
     const hz = this.getDim(row, "dimension_hzflag") === "X";
     if (hz) entry.hzCount++;
 
-    entry.sum.umsatzNetto += umsatz;
+    // Summen
+    entry.sum.umsatzNetto += umsatzNetto;
     entry.sum.hzKosten += hzKosten;
     entry.sum.umsatzErhebung += umsatzErhebung;
     entry.sum.kdErhebung += kdErhebung;
@@ -2087,34 +2142,34 @@ getFilteredDataWithRadius() {
     entry.sum.umsatzOnline += umsatzOnline;
   });
 
-  this.filteredKennwerte = {};
+  // Ergebnisstrukturen zurücksetzen
   this.filteredPLZWerte = {};
 
   Object.entries(aggregated).forEach(([plz, entry]) => {
     const sum = entry.sum;
 
-    const wkPercent = sum.umsatzNetto > 0
-      ? Number(((sum.hzKosten / sum.umsatzNetto) * 100).toFixed(1))
-      : 0;
+    const wkPercent =
+      sum.umsatzNetto > 0
+        ? Number(((sum.hzKosten / sum.umsatzNetto) * 100).toFixed(1))
+        : 0;
 
     const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] || 0;
-    const wkNachbarn = unfilteredUmsatz > 0
-      ? Number(((sum.hzKosten / unfilteredUmsatz) * 100).toFixed(1))
-      : 0;
+    const wkNachbarn =
+      unfilteredUmsatz > 0
+        ? Number(((sum.hzKosten / unfilteredUmsatz) * 100).toFixed(1))
+        : 0;
 
-    const bon = sum.kdErhebung > 0
-      ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2))
-      : 0;
-
-    const potHzPercent = sum.umsatzNetto > 0
-      ? Number(((sum.hzKosten / sum.umsatzNetto) * 100).toFixed(1))
-      : 0;
+    const potHzPercent =
+      sum.umsatzNetto > 0
+        ? Number(((sum.hzKosten / sum.umsatzNetto) * 100).toFixed(1))
+        : 0;
 
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
 
     this.filteredPLZWerte[plz] = {
       hz: isHZ,
+      isCritical,
       wk: wkPercent,
       wkNachbarn,
       wkPot: potHzPercent,
@@ -2126,15 +2181,18 @@ getFilteredDataWithRadius() {
     };
   });
 
+  // Streuverlust berechnen
   this.streuverlust = {
     umsatz: streuverlust.umsatz,
-    anteil: totalErhebungUmsatz > 0
-      ? streuverlust.umsatz / totalErhebungUmsatz
-      : 0
+    anteil:
+      totalErhebungUmsatz > 0
+        ? streuverlust.umsatz / totalErhebungUmsatz
+        : 0
   };
 
   return result;
 }
+
 
 
 buildNlSummary() {
@@ -2327,6 +2385,9 @@ async render() {
   this.renderPersistentViewSelector();
 
   this.hideSpinner();
+  if (!this.tableMode) this.tableMode = "plz";
+this.setTableMode(this.tableMode);
+
 }
 
 
