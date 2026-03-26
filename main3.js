@@ -2352,6 +2352,95 @@ prepareErhebungsInfo(filteredData) {
   });
 }
 
+renderErhebungsInfo() {
+  const container = this._shadowRoot.querySelector(".filter-container");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const wrapper = document.createElement("div");
+  wrapper.style.padding = "10px";
+  wrapper.style.fontFamily = "sans-serif";
+
+  wrapper.innerHTML = `
+    <h3 style="margin-top:0;color:#b41821;">Erhebungsübersicht</h3>
+
+    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
+      <thead>
+        <tr style="background:#b41821;color:white;">
+          <th style="padding:6px;text-align:left;">NL</th>
+          <th style="padding:6px;text-align:right;">Jahresumsatz</th>
+          <th style="padding:6px;text-align:right;">Erfasst (Zeitraum)</th>
+          <th style="padding:6px;text-align:right;">Abdeckungsgrad Erhebung</th>
+          <th style="padding:6px;text-align:right;">Valide Erhebung</th>
+          <th style="padding:6px;text-align:right;">Validitätsquote</th>
+          <th style="padding:6px;text-align:right;">Abdeckungsgrad Jahresumsatz</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${Object.values(this.erhebungsInfo).map(info => `
+          <tr>
+            <td style="padding:6px;">${info.nl}</td>
+
+            <td style="padding:6px;text-align:right;">
+              ${info.jahresumsatz.toLocaleString("de-DE")}
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${info.erfasst_total.toLocaleString("de-DE")}
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${(info.pct_erfassung * 100).toFixed(1)}%
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${info.erfasst_valid.toLocaleString("de-DE")}
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${(info.pct_valid * 100).toFixed(1)}%
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${(info.pct_hochrechnung * 100).toFixed(1)}%
+            </td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <button id="btn-erhebung-weiter"
+      style="
+        margin-top:15px;
+        width:100%;
+        padding:8px;
+        background:#b41821;
+        color:white;
+        border:none;
+        cursor:pointer;
+        border-radius:4px;
+      ">
+      Weiter zur PLZ-Analyse
+    </button>
+  `;
+
+  container.appendChild(wrapper);
+
+  const btn = wrapper.querySelector("#btn-erhebung-weiter");
+  btn.addEventListener("click", () => {
+    wrapper.style.transition = "opacity 0.4s ease";
+    wrapper.style.opacity = "0";
+
+    setTimeout(() => {
+      // Linke UI wiederherstellen
+      this.restoreFilterUI();
+
+      // PLZ-Tabelle rendern
+      this.renderDataTable(this.filteredKennwerte);
+    }, 400);
+  });
+}
 
 
 
