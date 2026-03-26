@@ -2295,6 +2295,8 @@ getFilteredDataWithRadius() {
 
   return result;
 }
+
+
 prepareErhebungsInfo() {
   this.erhebungsInfo = {};
 
@@ -2303,11 +2305,20 @@ prepareErhebungsInfo() {
     return;
   }
 
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  // Nur die Daten der aktuellen Erhebung verwenden
+  const erhData = rawData.filter(row =>
+    row["dimension_erhebung_0"]?.id == erhID &&
+    row["dimension_jahr_0"]?.id == jahr &&
+    row["dimension_erhebungsnummer_0"]?.id == nummer
+  );
+
   const jahresumsatz = {};      // Netto ohne 00000 (value_hr_n_umsatz_0)
   const erfasst_total = {};     // Erhebung inkl. 00000 (value_ums_erhebung_0)
   const erfasst_valid = {};     // Erhebung ohne 00000 (value_ums_erhebung_0)
 
-  rawData.forEach(row => {
+  erhData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     if (!nl) return;
 
@@ -2321,7 +2332,7 @@ prepareErhebungsInfo() {
     if (!erfasst_total[nl]) erfasst_total[nl] = 0;
     if (!erfasst_valid[nl]) erfasst_valid[nl] = 0;
 
-    // 1) Erfasster Umsatz (inkl. 00000) → 00000 wird hier bewusst mitgerechnet
+    // 1) Erfasster Umsatz (inkl. 00000)
     erfasst_total[nl] += umsatzErhebung;
 
     // 2) Jahresumsatz (ohne 00000)
@@ -2335,6 +2346,7 @@ prepareErhebungsInfo() {
     }
   });
 
+  // Prozentwerte pro NL berechnen
   Object.keys(erfasst_total).forEach(nl => {
     const jahr = jahresumsatz[nl] || 0;
     const total = erfasst_total[nl] || 0;
@@ -2345,6 +2357,7 @@ prepareErhebungsInfo() {
       jahresumsatz: jahr,
       erfasst_total: total,
       erfasst_valid: valid,
+
       pct_erfassung: jahr > 0 ? total / jahr : 0,
       pct_valid: total > 0 ? valid / total : 0,
       pct_hochrechnung: jahr > 0 ? valid / jahr : 0
