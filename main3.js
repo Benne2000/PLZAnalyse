@@ -135,7 +135,7 @@
   cursor: pointer;
 }
 
-/* Legende */
+/* Legende im Popup */
 #side-popup .legend-box {
   flex: 1;
   overflow-y: auto;
@@ -143,6 +143,14 @@
   padding: 6px;
   background: #fafafa;
 }
+
+/* Karten-Legende separat */
+.map-container .legend {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+}
+
 
 
   .filter-container {
@@ -279,7 +287,7 @@
       <!-- 🔥 Sticky-Footer-Box -->
       <div id="streuverlust-box"></div>
     </div>
-  </div> <!-- ✔ korrekt geschlossen -->
+  </div>
 
   <!-- 🗺️ Kartenbereich -->
   <div class="map-container">
@@ -290,27 +298,26 @@
     </div>
 
     <div id="map"></div>
+
+    <!-- Karten-Legende -->
     <div class="legend" id="legend">...</div>
   </div>
 
   <!-- 📌 Popup für Details -->
   <div id="side-popup">
-  <div class="popup-content">
-    <!-- Wird dynamisch mit Tabellen gefüllt -->
-  </div>
-
-  <div class="popup-controls">
-    <div class="view-buttons">
-      <!-- Buttons werden dynamisch eingefügt -->
+    <div class="popup-content">
+      <!-- Dynamischer Inhalt -->
     </div>
 
-    <div class="legend-box" id="legend">
-      <!-- Legende wird dynamisch eingefügt -->
+    <div class="popup-controls">
+      <div class="view-buttons"></div>
+      <div class="legend-box" id="popup-legend"></div>
     </div>
   </div>
 </div>
 
-</div>
+
+
 
 
 
@@ -1131,30 +1138,25 @@ createMarkerIcon(nl, isPhantom = false) {
   return this.iconCache[key];
 }
 
-
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
     .trim();
 
   const note = feature.properties?.note || "Keine Notiz";
-
-  // 🔥 Daten der aktiven Erhebung holen
   const daten = this.filteredKennwerte?.[plz];
 
-  if (!daten) {
-    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
-  }
+  const sidePopup = this._shadowRoot.getElementById("side-popup");
+  const popupContent = sidePopup.querySelector(".popup-content");
 
-  // 🔥 Symbol bestimmen (kritisch > HZ > normal)
+  if (!popupContent) return;
+
+  // Symbol bestimmen
   let symbol = "🔴";
-  if (daten?.isCritical) {
-    symbol = "⚠️";
-  } else if (daten?.isHZ) {
-    symbol = "🟢";
-  }
+  if (daten?.isCritical) symbol = "⚠️";
+  else if (daten?.isHZ) symbol = "🟢";
 
-  // Beschriftungen für Haupttabelle
+  // Beschriftungen
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
     value_umsatz_p_hh_0: "Umsatz p. HH",
@@ -1170,22 +1172,13 @@ showPopup(feature) {
     value_auflage_0: "Auflage"
   };
 
-  // Beschriftungen für Zusatzwerte
-  const beschreibungenSide = {
-    value_wk_potentiell_0: "WK in %",
-    value_hz_potentiell_0: "HZ-Werbekosten"
-  };
-
-  // 🔥 Haupttabelle aufbauen
   let rows = "";
-
   Object.entries(beschreibungen).forEach(([id, label], index) => {
     const rawValue = daten?.[id]?.raw;
     const wert = typeof rawValue === "number"
       ? rawValue.toLocaleString("de-DE")
       : "–";
 
-    // Abschnittstrenner
     if (index === 8) {
       rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
     }
@@ -1198,11 +1191,8 @@ showPopup(feature) {
     `;
   });
 
-  // 🔥 Popup-Container holen
-  const sidePopup = this._shadowRoot.getElementById('side-popup');
-
-  // 🔥 Popup-Hauptinhalt setzen (inkl. Symbol + PLZ + Note)
-  sidePopup.innerHTML = `
+  // Popup-Inhalt setzen
+  popupContent.innerHTML = `
     <button class="close-btn">×</button>
     <table>
       <thead>
@@ -1217,52 +1207,42 @@ showPopup(feature) {
     </table>
   `;
 
-  // 🔥 Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
+  // Zusatzwerte
   const isHZ = daten?.isHZ === false;
   const umsatz = daten?.value_hr_n_umsatz_0?.raw;
 
   if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
-    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
+    const wkPot = daten.value_wk_potentiell_0?.raw;
+    const hzPot = daten.value_hz_potentiell_0?.raw;
 
-    const wkPotentiell = typeof wkPotentiellRaw === "number"
-      ? wkPotentiellRaw.toLocaleString("de-DE")
-      : "–";
-
-    const hzPotentiell = typeof hzPotentiellRaw === "number"
-      ? hzPotentiellRaw.toLocaleString("de-DE")
-      : "–";
-
-    const extraTable = `
+    popupContent.insertAdjacentHTML("beforeend", `
       <table class="extra-table">
         <thead>
           <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-            <td class="value-cell">${wkPotentiell}</td>
+            <td class="label-cell">WK in %</td>
+            <td class="value-cell">${wkPot?.toLocaleString("de-DE") ?? "–"}</td>
           </tr>
           <tr>
-            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-            <td class="value-cell">${hzPotentiell}</td>
+            <td class="label-cell">HZ-Werbekosten</td>
+            <td class="value-cell">${hzPot?.toLocaleString("de-DE") ?? "–"}</td>
           </tr>
         </tbody>
       </table>
-    `;
-    sidePopup.insertAdjacentHTML('beforeend', extraTable);
+    `);
   }
 
-  // Animation triggern
-  void sidePopup.offsetWidth;
-  setTimeout(() => sidePopup.classList.add('show'), 10);
+  // Popup anzeigen
+  sidePopup.classList.add("show");
 
   // Close-Button
-  const closeBtn = sidePopup.querySelector('.close-btn');
-  closeBtn.addEventListener('click', () => {
-    sidePopup.classList.remove('show');
+  popupContent.querySelector(".close-btn").addEventListener("click", () => {
+    sidePopup.classList.remove("show");
   });
 }
+
 
   updateNeighbours(filteredData) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
@@ -1454,7 +1434,8 @@ toggleView(viewName) {
 
 
 renderViewSelector() {
-  const container = this._shadowRoot.getElementById("view-selector");
+  const container = this._shadowRoot.querySelector("#side-popup .view-buttons");
+
   if (!container) return;
 
   container.innerHTML = `
@@ -2571,7 +2552,8 @@ computeLegendBreaks(viewName) {
 }
 
 renderDynamicLegend(viewName) {
-  const legend = this._shadowRoot.getElementById("legend");
+  const legend = this._shadowRoot.getElementById("popup-legend");
+
   if (!legend) return;
 
   const titles = {
