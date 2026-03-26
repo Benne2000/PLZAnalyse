@@ -541,6 +541,8 @@ this.map.fitBounds(bounds, {
 }
 
 renderDataTable(data) {
+  if (this._infoMaskActive) return;
+
   console.log("▶ renderDataTable aufgerufen");
   console.log("   _sortState beim Render:", this._sortState);
 
@@ -799,6 +801,8 @@ const rowValues = [plz, note, symbol, umsatz, wk];
       
 // highlightTableRow(rowElement)
 highlightTableRow(rowElement) {
+  if (this._infoMaskActive) return;
+
   if (this._lastHighlightedRow) {
     this._lastHighlightedRow.classList.remove("table-row-selected");
   }
@@ -818,6 +822,15 @@ highlightTableRowByPLZ(plz) {
       this.highlightTableRow(row);
     }
   });
+}
+restoreDropdownSelections() {
+  const selErh = this._shadowRoot.getElementById("erhebung-select");
+  const selJahr = this._shadowRoot.getElementById("jahr-select");
+  const selNum = this._shadowRoot.getElementById("nummer-select");
+
+  if (selErh && this._lastErhID) selErh.value = this._lastErhID;
+  if (selJahr && this._lastJahr) selJahr.value = this._lastJahr;
+  if (selNum && this._lastNummer) selNum.value = this._lastNummer;
 }
 
    
@@ -1122,6 +1135,8 @@ marker.on("mouseout", () => {
 }
 
 applyNLFilter(selectedNLs) {
+  if (this._infoMaskActive) return;
+
   if (!this._selectedNLs) this._selectedNLs = new Set();
   this._selectedNLs = new Set(selectedNLs);
 
@@ -1378,6 +1393,11 @@ applyFilter(erhID, jahr, nummer) {
 
   // 7️⃣ Tabelle aktualisieren (PLZ-Tabelle)
   this.renderDataTable(this.filteredKennwerte);
+
+this._lastErhID = erhID;
+this._lastJahr = jahr;
+this._lastNummer = nummer;
+
 
   // 8️⃣ Erhebungsinfo berechnen (inkl. PLZ 00000)
 this.prepareErhebungsInfo();
@@ -2018,6 +2038,8 @@ getPolygonCenter(layer) {
 }
 
 applyRadiusFilter(radiusKm) {
+  if (this._infoMaskActive) return;
+
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
   this.streuverlust = null;
@@ -2374,6 +2396,8 @@ prepareErhebungsInfo() {
 
 
 renderErhebungsInfo() {
+  this._infoMaskActive = true;
+
   const container = this._shadowRoot.querySelector(".filter-container");
   if (!container) return;
 
@@ -2449,18 +2473,19 @@ renderErhebungsInfo() {
   container.appendChild(wrapper);
 
   const btn = wrapper.querySelector("#btn-erhebung-weiter");
-  btn.addEventListener("click", () => {
-    wrapper.style.transition = "opacity 0.4s ease";
-    wrapper.style.opacity = "0";
+btn.addEventListener("click", () => {
+  wrapper.style.transition = "opacity 0.4s ease";
+  wrapper.style.opacity = "0";
 
-    setTimeout(() => {
-      // Linke UI wiederherstellen
-      this.restoreFilterUI();
+  setTimeout(() => {
+    this._infoMaskActive = false;   // <--- HIER
 
-      // PLZ-Tabelle rendern
-      this.renderDataTable(this.filteredKennwerte);
-    }, 400);
-  });
+    this.restoreFilterUI();
+    this.restoreDropdownSelections(); // kommt gleich
+    this.renderDataTable(this.filteredKennwerte);
+  }, 400);
+});
+
 }
 
 
