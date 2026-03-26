@@ -83,75 +83,161 @@
         color: #333;
         border-radius: 4px;
       }
-#side-popup {
-  width: 25%;
-  background: white;
-  border-left: 2px solid #b41821;
-  padding: 10px;
-  font-family: sans-serif;
-  color: #b41821;
-  box-sizing: border-box;
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
 
-  /* NEU: Popup in 2 Bereiche teilen */
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
+      #side-popup {
+        width: 25%;
+        background: white;
+        border-left: 2px solid #b41821;
+        padding: 10px;
+        font-family: sans-serif;
+        color: #b41821;
+        box-sizing: border-box;
+        opacity: 0;
+        transform: translateX(20px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+  #side-popup table {
+    width: 100%;
+    table-layout: fixed; /* verhindert Breitenverschiebung */
+    border-collapse: collapse;
+    border: 1px solid #b41821;
+    margin-top: 30px;
 
-/* Oberer Bereich = 60% */
-#side-popup .popup-content {
-  flex: 0 0 60%;
-  overflow-y: auto;
-  padding-right: 5px;
-}
+  }
 
-/* Unterer Bereich = 40% */
-#side-popup .popup-controls {
-  flex: 0 0 40%;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #b41821;
-}
+  #side-popup th {
+    background-color: #b41821;
+    color: white;
+    font-weight: bold;
+    padding: 6px;
+    text-align: left;
+    border: 1px solid #b41821;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-/* Buttons */
-#side-popup .view-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
+  #side-popup th.title-cell {
+    max-width: 100%;
+  }
 
-#side-popup .view-buttons button {
-  flex: 1 1 calc(50% - 6px);
-  padding: 6px;
-  background: #b41821;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+  #side-popup th.subtitle-cell {
+    background-color: #f3f3f3;
+    color: black;
+    font-weight: bold;
+    padding: 6px;
+    text-align: left;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    
+  }
 
-/* Legende im Popup */
-#side-popup .legend-box {
-  flex: 1;
-  overflow-y: auto;
-  border: 1px solid #ccc;
-  padding: 6px;
-  background: #fafafa;
-}
+  #side-popup td {
+    border: 1px solid #b41821;
+    font-size: 0.85rem;
+    padding: 4px 8px;
+    color: black;
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-/* Karten-Legende separat */
-.map-container .legend {
-  position: absolute;
-  bottom: 20px;
-  left: 20px;
-}
+  #side-popup td:first-child {
+    width: 40%;
+  }
+  /* Entfernt Rahmen für Kennzahlen-Zeilen */
+  #side-popup tr.kennzahl-row td {
+    border: none;
+  }
+
+  #side-popup .section-title {
+    background-color: #f3f3f3;
+    color: black;
+    font-weight: bold;
+    padding: 6px;
+    text-align: left;
+  }
+
+  #side-popup td:last-child {
+    font-weight: bold;
+  }
+  #side-popup td.label-cell {
+    text-align: left;
+    width: 75%;
+  }
+
+  #side-popup td.value-cell {
+    text-align: right;
+    width: 25%;
+    font-weight: normal;
+  }
+
+      #side-popup.show {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      #side-popup .close-btn {
+        position: absolute;
+        top: 5px;
+        right: 8px;
+        background: #b41821;
+        color: white;
+        border: none;
+        padding: 2px 6px;
+        font-size: 12px;
+        cursor: pointer;
+        border-radius: 3px;
+      }
 
 
+  #side-popup .extra-table {
+    display: table;
+    visibility: visible;
+    table-layout: fixed;
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+    border: 1px solid #b41821; /* Außenrahmen */
+    font-size: 0.85rem;
+    
+  }
+
+  /* Kopfzeile mit Rahmen */
+  #side-popup .extra-table th {
+    border: 1px solid #b41821;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background-color: #f3f3f3;
+    color: black;
+    font-weight: bold;
+    padding: 6px;
+    text-align: left;
+  }
+
+  /* Zellen ohne Innenrahmen */
+  #side-popup .extra-table td {
+    padding: 6px;
+    text-align: right;
+    border: none; /* keine Zellrahmen */
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #side-popup .extra-table td.label-cell {
+    text-align: left;
+    width: 75%;
+  }
+
+  #side-popup .extra-table td.value-cell {
+    text-align: right;
+    width: 25%;
+    font-weight: normal;
+  }
 
   .filter-container {
     width: 30%;
@@ -287,7 +373,7 @@
       <!-- 🔥 Sticky-Footer-Box -->
       <div id="streuverlust-box"></div>
     </div>
-  </div>
+  </div> <!-- ✔ korrekt geschlossen -->
 
   <!-- 🗺️ Kartenbereich -->
   <div class="map-container">
@@ -298,26 +384,12 @@
     </div>
 
     <div id="map"></div>
-
-    <!-- Karten-Legende -->
     <div class="legend" id="legend">...</div>
   </div>
 
   <!-- 📌 Popup für Details -->
-  <div id="side-popup">
-    <div class="popup-content">
-      <!-- Dynamischer Inhalt -->
-    </div>
-
-    <div class="popup-controls">
-      <div class="view-buttons"></div>
-      <div class="legend-box" id="popup-legend"></div>
-    </div>
-  </div>
+  <div id="side-popup"></div>
 </div>
-
-
-
 
 
 
@@ -469,8 +541,6 @@ this.map.fitBounds(bounds, {
 }
 
 renderDataTable(data) {
-  if (this._infoMaskActive) return;
-
   console.log("▶ renderDataTable aufgerufen");
   console.log("   _sortState beim Render:", this._sortState);
 
@@ -594,8 +664,6 @@ sortTableByColumn(columnIndex) {
 
 
 renderDataTableFromEntries(entries) {
-  if (this._infoMaskActive) return;
-
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
 
@@ -731,8 +799,6 @@ const rowValues = [plz, note, symbol, umsatz, wk];
       
 // highlightTableRow(rowElement)
 highlightTableRow(rowElement) {
-  if (this._infoMaskActive) return;
-
   if (this._lastHighlightedRow) {
     this._lastHighlightedRow.classList.remove("table-row-selected");
   }
@@ -753,16 +819,6 @@ highlightTableRowByPLZ(plz) {
     }
   });
 }
-restoreDropdownSelections() {
-  const selErh = this._shadowRoot.getElementById("erhebung-select");
-  const selJahr = this._shadowRoot.getElementById("jahr-select");
-  const selNum = this._shadowRoot.getElementById("nummer-select");
-
-  if (selErh && this._lastErhID) selErh.value = this._lastErhID;
-  if (selJahr && this._lastJahr) selJahr.value = this._lastJahr;
-  if (selNum && this._lastNummer) selNum.value = this._lastNummer;
-}
-
 
    
 // openPopupFromTable(plz)
@@ -1066,8 +1122,6 @@ marker.on("mouseout", () => {
 }
 
 applyNLFilter(selectedNLs) {
-  if (this._infoMaskActive) return;
-
   if (!this._selectedNLs) this._selectedNLs = new Set();
   this._selectedNLs = new Set(selectedNLs);
 
@@ -1138,25 +1192,30 @@ createMarkerIcon(nl, isPhantom = false) {
   return this.iconCache[key];
 }
 
+
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
     .trim();
 
   const note = feature.properties?.note || "Keine Notiz";
+
+  // 🔥 Daten der aktiven Erhebung holen
   const daten = this.filteredKennwerte?.[plz];
 
-  const sidePopup = this._shadowRoot.getElementById("side-popup");
-  const popupContent = sidePopup.querySelector(".popup-content");
+  if (!daten) {
+    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
+  }
 
-  if (!popupContent) return;
-
-  // Symbol bestimmen
+  // 🔥 Symbol bestimmen (kritisch > HZ > normal)
   let symbol = "🔴";
-  if (daten?.isCritical) symbol = "⚠️";
-  else if (daten?.isHZ) symbol = "🟢";
+  if (daten?.isCritical) {
+    symbol = "⚠️";
+  } else if (daten?.isHZ) {
+    symbol = "🟢";
+  }
 
-  // Beschriftungen
+  // Beschriftungen für Haupttabelle
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
     value_umsatz_p_hh_0: "Umsatz p. HH",
@@ -1172,13 +1231,22 @@ showPopup(feature) {
     value_auflage_0: "Auflage"
   };
 
+  // Beschriftungen für Zusatzwerte
+  const beschreibungenSide = {
+    value_wk_potentiell_0: "WK in %",
+    value_hz_potentiell_0: "HZ-Werbekosten"
+  };
+
+  // 🔥 Haupttabelle aufbauen
   let rows = "";
+
   Object.entries(beschreibungen).forEach(([id, label], index) => {
     const rawValue = daten?.[id]?.raw;
     const wert = typeof rawValue === "number"
       ? rawValue.toLocaleString("de-DE")
       : "–";
 
+    // Abschnittstrenner
     if (index === 8) {
       rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
     }
@@ -1191,8 +1259,11 @@ showPopup(feature) {
     `;
   });
 
-  // Popup-Inhalt setzen
-  popupContent.innerHTML = `
+  // 🔥 Popup-Container holen
+  const sidePopup = this._shadowRoot.getElementById('side-popup');
+
+  // 🔥 Popup-Hauptinhalt setzen (inkl. Symbol + PLZ + Note)
+  sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
       <thead>
@@ -1207,42 +1278,52 @@ showPopup(feature) {
     </table>
   `;
 
-  // Zusatzwerte
+  // 🔥 Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
   const isHZ = daten?.isHZ === false;
   const umsatz = daten?.value_hr_n_umsatz_0?.raw;
 
   if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPot = daten.value_wk_potentiell_0?.raw;
-    const hzPot = daten.value_hz_potentiell_0?.raw;
+    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
+    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
 
-    popupContent.insertAdjacentHTML("beforeend", `
+    const wkPotentiell = typeof wkPotentiellRaw === "number"
+      ? wkPotentiellRaw.toLocaleString("de-DE")
+      : "–";
+
+    const hzPotentiell = typeof hzPotentiellRaw === "number"
+      ? hzPotentiellRaw.toLocaleString("de-DE")
+      : "–";
+
+    const extraTable = `
       <table class="extra-table">
         <thead>
           <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
         </thead>
         <tbody>
           <tr>
-            <td class="label-cell">WK in %</td>
-            <td class="value-cell">${wkPot?.toLocaleString("de-DE") ?? "–"}</td>
+            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
+            <td class="value-cell">${wkPotentiell}</td>
           </tr>
           <tr>
-            <td class="label-cell">HZ-Werbekosten</td>
-            <td class="value-cell">${hzPot?.toLocaleString("de-DE") ?? "–"}</td>
+            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
+            <td class="value-cell">${hzPotentiell}</td>
           </tr>
         </tbody>
       </table>
-    `);
+    `;
+    sidePopup.insertAdjacentHTML('beforeend', extraTable);
   }
 
-  // Popup anzeigen
-  sidePopup.classList.add("show");
+  // Animation triggern
+  void sidePopup.offsetWidth;
+  setTimeout(() => sidePopup.classList.add('show'), 10);
 
   // Close-Button
-  popupContent.querySelector(".close-btn").addEventListener("click", () => {
-    sidePopup.classList.remove("show");
+  const closeBtn = sidePopup.querySelector('.close-btn');
+  closeBtn.addEventListener('click', () => {
+    sidePopup.classList.remove('show');
   });
 }
-
 
   updateNeighbours(filteredData) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
@@ -1252,12 +1333,6 @@ showPopup(feature) {
 
 
 applyFilter(erhID, jahr, nummer) {
-  console.group("▶ applyFilter()");
-  console.log("ErhebungsID:", erhID);
-  console.log("Jahr:", jahr);
-  console.log("Nummer:", nummer);
-
-  // 🔥 Aktiven Filter speichern
   this._activeFilter = { erhID, jahr, nummer };
 
   // 🔄 NL-Auswahl zurücksetzen
@@ -1266,199 +1341,46 @@ applyFilter(erhID, jahr, nummer) {
   } else {
     this._selectedNLs.clear();
   }
-
-  // 1️⃣ Daten filtern (inkl. PLZ 00000)
+  // 1) Daten filtern (Erhebung)
   const filteredData = this.getFilteredData();
+
+  // 🔥 WICHTIG: global merken, damit applyNLFilter() darauf arbeiten kann
   this.filteredData = filteredData;
 
-  // 2️⃣ HZ-Flags neu berechnen
+  // HZ-Flags neu berechnen
   this.hzFlags = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
-    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
-    if (plz) this.hzFlags[plz] = hz;
+    const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
+    if (plz) {
+      this.hzFlags[plz] = hz === "X";
+    }
   });
 
-  // 3️⃣ PLZ-Liste extrahieren (ohne 00000)
+  // 2) PLZ-Liste extrahieren
   this.filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember" && plz !== "00000");
+    .filter(plz => plz && plz !== "@NullMember");
 
-  // 4️⃣ Geo-Layer aktualisieren
+  // 3) Karte einfärben
   this.updateGeoLayer();
 
-  // 5️⃣ Marker aktualisieren
+  // 4) NL-Marker filtern
   this.updateMarkers();
 
-  // 6️⃣ Radius anwenden
+  // 5) Radius merken + anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
 
-  // 7️⃣ Tabelle aktualisieren (PLZ-Tabelle)
+  // 6) Tabelle nach Radiusfilter
   this.renderDataTable(this.filteredKennwerte);
 
-this._lastErhID = erhID;
-this._lastJahr = jahr;
-this._lastNummer = nummer;
-
-
-  // 8️⃣ Erhebungsinfo berechnen (inkl. PLZ 00000)
-this.prepareErhebungsInfo();
-
-
-  // 9️⃣ Erhebungsinfo anzeigen (links)
-  this.renderErhebungsInfo();
-this.createViewLayers(); // Layer vorbereiten
-
-  // 🔟 Autozoom
+  // 7) Zoom
   this.zoomToFilteredPLZ();
-
-  console.groupEnd();
 }
 
 
-getColorForView(viewName, value) {
-  const v = typeof value === "number" && !isNaN(value) ? value : 0;
-
-  switch (viewName) {
-
-    case "werbung":
-      return this.getColor(v, false); // bestehende WK-Farbskala
-
-    case "umsatz":
-      return v > 500000 ? "#800026" :
-             v > 250000 ? "#BD0026" :
-             v > 100000 ? "#E31A1C" :
-             v > 50000  ? "#FC4E2A" :
-             v > 20000  ? "#FD8D3C" :
-             v > 10000  ? "#FEB24C" :
-             v > 5000   ? "#FED976" :
-                           "#FFEDA0";
-
-    case "grosskunden":
-      return v > 100000 ? "#4B0082" :
-             v > 50000  ? "#6A0DAD" :
-             v > 20000  ? "#8A2BE2" :
-             v > 10000  ? "#9B30FF" :
-             v > 5000   ? "#B266FF" :
-                           "#E5CCFF";
-
-    case "ra":
-      return v > 50000 ? "#00441B" :
-             v > 25000 ? "#006D2C" :
-             v > 10000 ? "#238B45" :
-             v > 5000  ? "#41AE76" :
-             v > 2000  ? "#66C2A4" :
-                          "#CCECE6";
-
-    case "online":
-      return v > 50000 ? "#7F007F" :
-             v > 25000 ? "#B300B3" :
-             v > 10000 ? "#CC00CC" :
-             v > 5000  ? "#E066E0" :
-             v > 2000  ? "#F2B3F2" :
-                          "#F7DFF7";
-
-    default:
-      return "#cfd4da";
-  }
-}
-
-
-createViewLayers() {
-  if (!this.map) return;
-
-  // Container für alle Layer
-  this._viewLayers = {
-    umsatz: null,
-    online: null,
-    ra: null,
-    gk: null
-  };
-
-  const data = this.filteredKennwerte || [];
-
-  // Helper: PLZ → Koordinaten
-  const getLatLng = (row) => {
-    const lat = row["dimension_lat_0"]?.raw;
-    const lng = row["dimension_lng_0"]?.raw;
-    return lat && lng ? [lat, lng] : null;
-  };
-
-  // Helper: Wert extrahieren
-  const getValue = (row, field) => row[field]?.raw ?? 0;
-
-  // Layer erzeugen
-  const createHeatLayer = (field) => {
-    const points = [];
-
-    data.forEach(row => {
-      const ll = getLatLng(row);
-      if (!ll) return;
-
-      const val = getValue(row, field);
-      if (val > 0) {
-        points.push([ll[0], ll[1], val]);
-      }
-    });
-
-    return L.heatLayer(points, {
-      radius: 35,
-      blur: 20,
-      maxZoom: 12
-    });
-  };
-
-  this._viewLayers.umsatz = createHeatLayer("value_ums_erhebung_0");
-  this._viewLayers.online = createHeatLayer("value_online_0");
-  this._viewLayers.ra     = createHeatLayer("value_ra_0");
-  this._viewLayers.gk     = createHeatLayer("value_umsatz_gk_0");
-}
-
-
-toggleView(viewName) {
-  if (!this.viewLayers || !this.viewLayers[viewName]) return;
-
-  const layer = this.viewLayers[viewName];
-
-  if (this.map.hasLayer(layer)) {
-    this.map.removeLayer(layer);
-    this.renderLegend(""); // Legende leeren
-  } else {
-    layer.addTo(this.map);
-    this.renderLegend(viewName);
-    this.applyLayerZIndex();
-  }
-}
-
-
-renderViewSelector() {
-  const container = this._shadowRoot.querySelector("#side-popup .view-buttons");
-
-  if (!container) return;
-
-  container.innerHTML = `
-    <div style="
-      display:flex;
-      gap:6px;
-      padding:6px;
-      flex-wrap:wrap;
-    ">
-      <button class="view-btn" data-view="umsatz">Umsatz</button>
-      <button class="view-btn" data-view="online">Online</button>
-      <button class="view-btn" data-view="ra">RA</button>
-      <button class="view-btn" data-view="gk">Großkunden</button>
-    </div>
-  `;
-
-  container.querySelectorAll(".view-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const view = btn.dataset.view;
-      this.activateView(view);
-    });
-  });
-}
 
 
 
@@ -1928,8 +1850,6 @@ getPolygonCenter(layer) {
 }
 
 applyRadiusFilter(radiusKm) {
-  if (this._infoMaskActive) return;
-
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
   this.streuverlust = null;
@@ -2209,167 +2129,6 @@ getFilteredDataWithRadius() {
 }
 
 
-prepareErhebungsInfo() {
-  this.erhebungsInfo = {};
-
-  const rawData = this._myDataSource?.data || [];
-  if (!Array.isArray(rawData) || rawData.length === 0) {
-    return;
-  }
-
-  const { erhID, jahr, nummer } = this._activeFilter || {};
-
-  // Nur die Daten der aktuellen Erhebung verwenden
-  const erhData = rawData.filter(row =>
-    row["dimension_erhebung_0"]?.id == erhID &&
-    row["dimension_jahr_0"]?.id == jahr &&
-    row["dimension_erhebungsnummer_0"]?.id == nummer
-  );
-
-  const jahresumsatz = {};      // Netto ohne 00000 (value_hr_n_umsatz_0)
-  const erfasst_total = {};     // Erhebung inkl. 00000 (value_ums_erhebung_0)
-  const erfasst_valid = {};     // Erhebung ohne 00000 (value_ums_erhebung_0)
-
-  erhData.forEach(row => {
-    const nl = row["dimension_niederlassung_0"]?.id?.trim();
-    if (!nl) return;
-
-    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = String(rawPLZ).padStart(5, "0");
-
-    const umsatzJahr = row["value_hr_n_umsatz_0"]?.raw ?? 0;
-    const umsatzErhebung = row["value_ums_erhebung_0"]?.raw ?? 0;
-
-    if (!jahresumsatz[nl]) jahresumsatz[nl] = 0;
-    if (!erfasst_total[nl]) erfasst_total[nl] = 0;
-    if (!erfasst_valid[nl]) erfasst_valid[nl] = 0;
-
-    // 1) Erfasster Umsatz (inkl. 00000)
-    //    → PLZ 00000 MUSS hier rein
-    erfasst_total[nl] += umsatzErhebung;
-
-    // 2) Jahresumsatz (ohne 00000)
-    if (plz !== "00000") {
-      jahresumsatz[nl] += umsatzJahr;
-    }
-
-    // 3) Valide Erhebung (ohne 00000)
-    if (plz !== "00000") {
-      erfasst_valid[nl] += umsatzErhebung;
-    }
-  });
-
-  // Prozentwerte pro NL berechnen
-  Object.keys(erfasst_total).forEach(nl => {
-    const jahr = jahresumsatz[nl] || 0;
-    const total = erfasst_total[nl] || 0;
-    const valid = erfasst_valid[nl] || 0;
-
-    this.erhebungsInfo[nl] = {
-      nl,
-      jahresumsatz: jahr,
-      erfasst_total: total,
-      erfasst_valid: valid,
-
-      // Abdeckungsgrad Erhebung
-      pct_erfassung: jahr > 0 ? total / jahr : 0,
-
-      // Validitätsquote
-      pct_valid: total > 0 ? valid / total : 0,
-
-      // Abdeckungsgrad Jahresumsatz
-      pct_hochrechnung: jahr > 0 ? valid / jahr : 0
-    };
-  });
-}
-
-
-renderErhebungsInfo() {
-  this._infoMaskActive = true; // Marker/PLZ-Klicks blockieren
-
-  const container = this._shadowRoot.querySelector(".filter-container");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const wrapper = document.createElement("div");
-  wrapper.style.padding = "10px";
-  wrapper.style.fontFamily = "sans-serif";
-
-  wrapper.innerHTML = `
-    <h3 style="margin-top:0;color:#b41821;">Erhebungsübersicht</h3>
-
-    <table style="
-      width:100%;
-      border-collapse:collapse;
-      font-size:0.75rem;
-      table-layout:fixed;
-    ">
-      <thead>
-        <tr style="background:#b41821;color:white;">
-          <th style="padding:4px;text-align:left;width:25px;">NL</th>
-          <th style="padding:4px;text-align:right;width:70px;">Jahresumsatz</th>
-          <th style="padding:4px;text-align:right;width:60px;">Erfasst</th>
-          <th style="padding:4px;text-align:right;width:30px;">Abdeckung</th>
-          <th style="padding:4px;text-align:right;width:60px;">Valide</th>
-          <th style="padding:4px;text-align:right;width:30px;">Validität</th>
-          <th style="padding:4px;text-align:right;width:30px;">Jahresabdeckung</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${Object.values(this.erhebungsInfo).map(info => `
-          <tr>
-            <td style="padding:4px;">${info.nl}</td>
-            <td style="padding:4px;text-align:right;">${info.jahresumsatz.toLocaleString("de-DE")}</td>
-            <td style="padding:4px;text-align:right;">${info.erfasst_total.toLocaleString("de-DE")}</td>
-            <td style="padding:4px;text-align:right;">${(info.pct_erfassung * 100).toFixed(1)}%</td>
-            <td style="padding:4px;text-align:right;">${info.erfasst_valid.toLocaleString("de-DE")}</td>
-            <td style="padding:4px;text-align:right;">${(info.pct_valid * 100).toFixed(1)}%</td>
-            <td style="padding:4px;text-align:right;">${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-
-    <button id="btn-erhebung-weiter"
-      style="
-        margin-top:15px;
-        width:100%;
-        padding:8px;
-        background:#b41821;
-        color:white;
-        border:none;
-        cursor:pointer;
-        border-radius:4px;
-      ">
-      Weiter zur PLZ-Analyse
-    </button>
-  `;
-
-  container.appendChild(wrapper);
-
-  const btn = wrapper.querySelector("#btn-erhebung-weiter");
-  btn.addEventListener("click", () => {
-    wrapper.style.transition = "opacity 0.4s ease";
-    wrapper.style.opacity = "0";
-
-    setTimeout(() => {
-      this._infoMaskActive = false;
-
-      this.restoreFilterUI();
-      this.setupFilterDropdowns();
-      this.restoreDropdownSelections();
-
-      this.renderDataTable(this.filteredKennwerte);
-      this.createViewLayers();
-this.renderViewSelector();
-this.activateView("umsatz");
-this.renderDynamicLegend("umsatz");
-
-    }, 400);
-  });
-}
-
 
 
 
@@ -2502,329 +2261,11 @@ this.renderDynamicLegend("umsatz");
     this.renderDataTable(this.filteredKennwerte);
 
     this.hideSpinner();
-    // Multi-Layer-System vorbereiten
-this.createViewLayers();
-
-// UI für Ansichten anzeigen
-this.renderViewSelector();
-
   }
 
-computeLegendBreaks(viewName) {
-  const values = [];
-
-  Object.values(this.filteredKennwerte || {}).forEach(row => {
-    let v = 0;
-
-    switch (viewName) {
-      case "werbung":
-        v = row.value_wk_in_percent_0?.raw ?? 0;
-        break;
-      case "umsatz":
-        v = row.value_ums_erhebung_0?.raw ?? 0;
-        break;
-      case "grosskunden":
-        v = row.value_umsatz_grosskunden_0?.raw ?? 0;
-        break;
-      case "ra":
-        v = row.value_umsatz_ra_0?.raw ?? 0;
-        break;
-      case "online":
-        v = row.value_umsatz_online_0?.raw ?? 0;
-        break;
-    }
-
-    if (typeof v === "number" && v > 0) values.push(v);
-  });
-
-  if (values.length === 0) return [0, 1, 2, 3, 4, 5];
-
-  values.sort((a, b) => a - b);
-
-  const breaks = [];
-  const step = Math.floor(values.length / 6);
-
-  for (let i = 1; i <= 6; i++) {
-    breaks.push(values[Math.min(i * step, values.length - 1)]);
-  }
-
-  return breaks;
-}
-
-renderDynamicLegend(viewName) {
-  const legend = this._shadowRoot.getElementById("popup-legend");
-
-  if (!legend) return;
-
-  const titles = {
-    umsatz: "Umsatz Erhebung",
-    online: "Online-Umsatz",
-    ra: "Response-Rate",
-    gk: "Umsatz Großkunden"
-  };
-
-  legend.innerHTML = `
-    <div style="
-      padding:8px;
-      background:white;
-      border:1px solid #ccc;
-      border-radius:4px;
-      font-size:0.8rem;
-    ">
-      <b>${titles[viewName]}</b><br>
-      <div style="margin-top:6px;">
-        <div style="height:10px;background:#440154;"></div>
-        <div style="height:10px;background:#31688e;"></div>
-        <div style="height:10px;background:#35b779;"></div>
-        <div style="height:10px;background:#fde725;"></div>
-      </div>
-    </div>
-  `;
-}
-
-
-activateView(viewName) {
-  if (!this._viewLayers) return;
-
-  // Alle Layer entfernen
-  Object.values(this._viewLayers).forEach(layer => {
-    if (layer && this.map.hasLayer(layer)) {
-      this.map.removeLayer(layer);
-    }
-  });
-
-  // Gewählten Layer aktivieren
-  const layer = this._viewLayers[viewName];
-  if (layer) {
-    layer.addTo(this.map);
-  }
-
-  // Legende aktualisieren
-  this.renderDynamicLegend(viewName);
-}
-
-
-computeCombinedValue(plz, activeViews, mode = "max") {
-  const row = this.filteredKennwerte?.[plz];
-  if (!row) return 0;
-
-  const values = activeViews.map(view => {
-    switch (view) {
-      case "werbung": return row.value_wk_in_percent_0?.raw ?? 0;
-      case "umsatz": return row.value_ums_erhebung_0?.raw ?? 0;
-      case "grosskunden": return row.value_umsatz_grosskunden_0?.raw ?? 0;
-      case "ra": return row.value_umsatz_ra_0?.raw ?? 0;
-      case "online": return row.value_umsatz_online_0?.raw ?? 0;
-      default: return 0;
-    }
-  });
-
-  if (mode === "max") {
-    return Math.max(...values);
-  }
-
-  if (mode === "add") {
-    return values.reduce((a, b) => a + b, 0);
-  }
-
-  if (mode === "weighted") {
-    const weights = {
-      werbung: 0.3,
-      umsatz: 0.5,
-      grosskunden: 0.1,
-      ra: 0.05,
-      online: 0.05
-    };
-
-    return activeViews.reduce((sum, view, i) => {
-      return sum + values[i] * (weights[view] || 0.1);
-    }, 0);
-  }
-
-  return 0;
-}
-animateLayerTransition(layer, duration = 300) {
-  layer.eachLayer(l => {
-    const el = l._path;
-    if (!el) return;
-
-    el.style.transition = `fill ${duration}ms ease, fill-opacity ${duration}ms ease`;
-  });
-}
-
-exportMapAsPNG() {
-  if (!this.map) return;
-
-  import("https://unpkg.com/leaflet-simple-map-screenshoter").then(module => {
-    const screenshoter = module.default({
-      hidden: true,
-      mimeType: "image/png",
-      domtoimageOptions: { quality: 1 }
-    });
-
-    screenshoter.takeScreen("map").then(blob => {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "karte.png";
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-  });
-}
-
-createNLHeatmap() {
-  if (!this.nlMarkers || this.nlMarkers.length === 0) return;
-
-  const points = this.nlMarkers.map(nl => {
-    const nlName = nl.marker.options.plzs?.[0];
-    const sum = Object.values(this.filteredKennwerte || {})
-      .filter(row => row.nl === nlName)
-      .reduce((a, b) => a + (b.value_ums_erhebung_0?.raw ?? 0), 0);
-
-    return [nl.lat, nl.lng, sum];
-  });
-
-  this.nlHeatmap = L.heatLayer(points, {
-    radius: 40,
-    blur: 25,
-    maxZoom: 12
-  });
-}
-
-restoreFilterUI() {
-  const container = this._shadowRoot.querySelector(".filter-container");
-  if (!container) return;
-
-  container.innerHTML = `
-    <label for="erhebung-select">ErhebungsID:</label>
-    <select id="erhebung-select"></select>
-
-    <label for="jahr-select">Jahr:</label>
-    <select id="jahr-select" disabled></select>
-
-    <label for="nummer-select">Erhebungsnummer:</label>
-    <select id="nummer-select" disabled></select>
-
-    <button id="filter-button">Anzeigen</button>
-
-    <div class="table-container">
-      <div class="table-wrapper" id="table-container"></div>
-      <div id="streuverlust-box"></div>
-    </div>
-  `;
-}
 
 
 
-renderLegend(viewName) {
-  const legendContainer = this._shadowRoot.getElementById("legend");
-  if (!legendContainer) return;
-
-  const legends = {
-    werbung: `
-      <strong>Werbung (WK)</strong><br>
-      <i style="background:#006837"></i> 0–2%<br>
-      <i style="background:#41ab5d"></i> 2–5%<br>
-      <i style="background:#78c679"></i> 5–10%<br>
-      <i style="background:#ffffb2"></i> 10–15%<br>
-      <i style="background:#fd8d3c"></i> 15–25%<br>
-      <i style="background:#e31a1c"></i> >25%
-    `,
-    umsatz: `
-      <strong>Umsatz</strong><br>
-      <i style="background:#FFEDA0"></i> 0–5k<br>
-      <i style="background:#FED976"></i> 5–10k<br>
-      <i style="background:#FEB24C"></i> 10–20k<br>
-      <i style="background:#FD8D3C"></i> 20–50k<br>
-      <i style="background:#FC4E2A"></i> 50–100k<br>
-      <i style="background:#E31A1C"></i> 100–250k<br>
-      <i style="background:#BD0026"></i> 250–500k<br>
-      <i style="background:#800026"></i> >500k
-    `,
-    grosskunden: `
-      <strong>Großkunden</strong><br>
-      <i style="background:#E5CCFF"></i> 0–5k<br>
-      <i style="background:#B266FF"></i> 5–10k<br>
-      <i style="background:#9B30FF"></i> 10–20k<br>
-      <i style="background:#8A2BE2"></i> 20–50k<br>
-      <i style="background:#6A0DAD"></i> 50–100k<br>
-      <i style="background:#4B0082"></i> >100k
-    `,
-    ra: `
-      <strong>R&A</strong><br>
-      <i style="background:#CCECE6"></i> 0–2k<br>
-      <i style="background:#66C2A4"></i> 2–5k<br>
-      <i style="background:#41AE76"></i> 5–10k<br>
-      <i style="background:#238B45"></i> 10–25k<br>
-      <i style="background:#006D2C"></i> 25–50k<br>
-      <i style="background:#00441B"></i> >50k
-    `,
-    online: `
-      <strong>Online</strong><br>
-      <i style="background:#F7DFF7"></i> 0–2k<br>
-      <i style="background:#F2B3F2"></i> 2–5k<br>
-      <i style="background:#E066E0"></i> 5–10k<br>
-      <i style="background:#CC00CC"></i> 10–25k<br>
-      <i style="background:#B300B3"></i> 25–50k<br>
-      <i style="background:#7F007F"></i> >50k
-    `
-  };
-
-  legendContainer.innerHTML = legends[viewName] || "";
-}
-
-renderOpacitySlider() {
-  const popup = this._shadowRoot.getElementById("side-popup");
-  if (!popup) return;
-
-  let slider = this._shadowRoot.getElementById("opacity-slider");
-  if (slider) slider.remove();
-
-  slider = document.createElement("div");
-  slider.id = "opacity-slider";
-  slider.style.marginTop = "20px";
-  slider.style.padding = "10px";
-  slider.style.borderTop = "2px solid #b41821";
-
-  slider.innerHTML = `
-    <label style="font-size:0.85rem;">
-      Transparenz:
-      <span id="opacity-value">60%</span>
-    </label>
-    <input type="range" min="10" max="100" value="60" step="5"
-      style="width:100%;margin-top:8px;">
-  `;
-
-  popup.appendChild(slider);
-
-  const range = slider.querySelector("input");
-  const valueLabel = slider.querySelector("#opacity-value");
-
-  range.addEventListener("input", () => {
-    const opacity = Number(range.value) / 100;
-    valueLabel.textContent = `${range.value}%`;
-
-    Object.values(this.viewLayers || {}).forEach(layer => {
-      layer.setStyle({ fillOpacity: opacity });
-    });
-  });
-}
-
-applyLayerZIndex() {
-  if (!this.viewLayers) return;
-
-  const order = ["werbung", "umsatz", "grosskunden", "ra", "online"];
-
-  order.forEach((view, index) => {
-    const layer = this.viewLayers[view];
-    if (!layer) return;
-
-    layer.eachLayer(l => {
-      l.setZIndex(100 + index * 10);
-    });
-  });
-}
 
 
 
