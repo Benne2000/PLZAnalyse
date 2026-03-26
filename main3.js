@@ -1827,8 +1827,9 @@ updateMarkers() {
 
         this.render();
       }
+
+
 prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
   // Reset
@@ -1841,11 +1842,19 @@ prepareMapData(filteredData) {
   this.extraNLs = [];
 
   const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0"
+    "value_hr_n_umsatz",
+    "value_umsatz_p_hh",
+    "value_wk_in_percent",
+    "value_wk_nachbar",
+    "value_hz_kosten",
+    "value_werbeverweigerer",
+    "value_haushalte",
+    "value_kaufkraft",
+    "value_ums_erhebung",
+    "value_kd_erhebung",
+    "value_bon_erhebung",
+    "value_auflage",
+    "value_hz_potentiell"
   ];
 
   // Geo-Notes
@@ -1858,12 +1867,12 @@ prepareMapData(filteredData) {
 
   // Verarbeitung der gefilterten Daten
   filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
-    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    const plz = this.getDim(row, "dimension_plz");
+    const nlKey = this.getDim(row, "dimension_niederlassung");
+    const hzFlag = this.getDim(row, "dimension_hzflag") === "X";
 
-    const lat = parseFloat(row["dimension_Lat_0"]?.label);
-    const lon = parseFloat(row["dimension_lon_0"]?.label);
+    const lat = parseFloat(this.getDim(row, "dimension_Lat"));
+    const lon = parseFloat(this.getDim(row, "dimension_lon"));
 
     // --- Niederlassung speichern ---
     if (nlKey) {
@@ -1880,16 +1889,17 @@ prepareMapData(filteredData) {
       this.hzFlags[plz] = hzFlag;
 
       kennzahlenIDs.forEach(id => {
-        const raw = row[id]?.raw;
+        const raw = this.getVal(row, id);
         this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
       });
 
-      this.filteredKennwerte[plz]["dimension_note_0"] = {
+      this.filteredKennwerte[plz]["note"] = {
         label: geoNotes[plz] || ""
       };
     }
   });
 }
+
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
 getDistanceKm(lat1, lon1, lat2, lon2) {
