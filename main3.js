@@ -1294,11 +1294,31 @@ applyFilter(erhID, jahr, nummer) {
 
 
 extractPLZWerte(data) {
+  console.group("📍 extractPLZWerte() gestartet");
+  console.log("➡️ Eingehende Datensätze:", data.length);
+
   const plzWerte = {};
 
-  data.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    if (!plz || plz === "@NullMember") return;
+  data.forEach((row, i) => {
+    const rawPLZ =
+      row["dimension_plz_0"]?.id ??
+      row["dimension_plz_0"]?.raw ??
+      null;
+
+    const plz = rawPLZ ? String(rawPLZ).padStart(5, "0") : null;
+
+    if (i < 10) {
+      console.log(`🔎 Row ${i} PLZ-Rohdaten:`, {
+        rawPLZ,
+        normalisiert: plz,
+        fullRow: row
+      });
+    }
+
+    if (!plz || plz === "@NullMember") {
+      console.warn(`⚠️ PLZ ungültig in Row ${i}:`, rawPLZ);
+      return;
+    }
 
     const wk = row["value_wk_in_percent_0"]?.raw;
     const wkPot = row["value_wk_potentiell_0"]?.raw;
@@ -1311,9 +1331,12 @@ extractPLZWerte(data) {
     };
 
     console.log(
-      `📊 extractPLZWerte → PLZ ${plz}: WK=${plzWerte[plz].wk}, WKPot=${plzWerte[plz].wkPot}, HZ=${hz}`
+      `📊 PLZ ${plz}: WK=${plzWerte[plz].wk}, WKPot=${plzWerte[plz].wkPot}, HZ=${hz}`
     );
   });
+
+  console.log("📦 Anzahl extrahierter PLZ-Werte:", Object.keys(plzWerte).length);
+  console.groupEnd();
 
   return plzWerte;
 }
