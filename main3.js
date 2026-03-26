@@ -1709,128 +1709,144 @@ updateMarkers() {
 
 
 
-  setupFilterDropdowns() {
-    const erhSelect = this._shadowRoot.getElementById("erhebung-select");
-    const jahrSelect = this._shadowRoot.getElementById("jahr-select");
-    const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+ setupFilterDropdowns() {
+  const erhSelect = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect = this._shadowRoot.getElementById("jahr-select");
+  const nummerSelect = this._shadowRoot.getElementById("nummer-select");
 
-    if (!erhSelect || !jahrSelect || !nummerSelect) {
-      console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
-      return;
-    }
-
-    // 🧹 Reset
-    erhSelect.innerHTML = "";
-    jahrSelect.innerHTML = "";
-    nummerSelect.innerHTML = "";
-    jahrSelect.disabled = true;
-    nummerSelect.disabled = true;
-
-    // 🏷️ Platzhalter einfügen
-    const createPlaceholder = (text) => {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = text;
-      opt.disabled = true;
-      opt.selected = true;
-      return opt;
-    };
-
-    erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
-    Object.keys(this._erhData).forEach(erhID => {
-      if (erhID !== "@NullMember") {
-        const opt = document.createElement("option");
-        opt.value = erhID;
-        opt.textContent = erhID;
-        erhSelect.appendChild(opt);
-      }
-    });
-
-    erhSelect.addEventListener("change", () => {
-      jahrSelect.innerHTML = "";
-      nummerSelect.innerHTML = "";
-      jahrSelect.disabled = false;
-      nummerSelect.disabled = true;
-
-      jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
-      const selectedID = erhSelect.value;
-      const jahre = Object.keys(this._erhData[selectedID] || {}).filter(j => j !== "@NullMember");
-
-      jahre.forEach(j => {
-        const opt = document.createElement("option");
-        opt.value = j;
-        opt.textContent = j;
-        jahrSelect.appendChild(opt);
-      });
-    });
-
-    jahrSelect.addEventListener("change", () => {
-      nummerSelect.innerHTML = "";
-      nummerSelect.disabled = false;
-
-      nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
-      const selectedID = erhSelect.value;
-      const selectedJahr = jahrSelect.value;
-      const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []).filter(n => n !== "@NullMember");
-
-      nummern.forEach(n => {
-        const opt = document.createElement("option");
-        opt.value = n;
-        opt.textContent = n;
-        nummerSelect.appendChild(opt);
-      });
-    });
-
-    const filterButton = this._shadowRoot.getElementById("filter-button");
-    if (filterButton) {
-      filterButton.addEventListener("click", () => {
-        const selectedID = erhSelect.value;
-        const selectedJahr = jahrSelect.value;
-        const selectedNummer = nummerSelect.value;
-
-        if (selectedID && selectedJahr && selectedNummer) {
-          this.applyFilter(selectedID, selectedJahr, selectedNummer);
-        } else {
-          console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
-        }
-      });
-    }
- 
-// Button für Erhebungsübersicht
-const infoBtn = document.createElement("button");
-infoBtn.textContent = "Erhebungsübersicht";
-infoBtn.style.marginTop = "10px";
-infoBtn.style.padding = "6px";
-infoBtn.style.background = "#b41821";
-infoBtn.style.color = "white";
-infoBtn.style.border = "none";
-infoBtn.style.cursor = "pointer";
-infoBtn.style.borderRadius = "4px";
-
-infoBtn.addEventListener("click", () => {
-  const nlBox = this._shadowRoot.getElementById("nl-info-container");
-  const filter = this._shadowRoot.querySelector(".filter-container");
-
-  // Wenn NL-Info sichtbar → wieder schließen
-  if (nlBox.classList.contains("show")) {
-    nlBox.classList.remove("show");
-    filter.classList.remove("nl-info-active");
+  if (!erhSelect || !jahrSelect || !nummerSelect) {
+    console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
     return;
   }
 
-  // Wenn NL-Info NICHT sichtbar → öffnen
-  this.prepareErhebungsInfo();
-  this.renderErhebungsInfoTable();
+  // 🧹 Reset
+  erhSelect.innerHTML = "";
+  jahrSelect.innerHTML = "";
+  nummerSelect.innerHTML = "";
+  jahrSelect.disabled = true;
+  nummerSelect.disabled = true;
 
-  nlBox.classList.add("show");
-  filter.classList.add("nl-info-active");
-});
+  // 🏷️ Platzhalter
+  const createPlaceholder = (text) => {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = text;
+    opt.disabled = true;
+    opt.selected = true;
+    return opt;
+  };
 
+  erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
+  Object.keys(this._erhData).forEach(erhID => {
+    if (erhID !== "@NullMember") {
+      const opt = document.createElement("option");
+      opt.value = erhID;
+      opt.textContent = erhID;
+      erhSelect.appendChild(opt);
+    }
+  });
 
-this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
+  erhSelect.addEventListener("change", () => {
+    jahrSelect.innerHTML = "";
+    nummerSelect.innerHTML = "";
+    jahrSelect.disabled = false;
+    nummerSelect.disabled = true;
 
+    jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
+    const selectedID = erhSelect.value;
+    const jahre = Object.keys(this._erhData[selectedID] || {}).filter(j => j !== "@NullMember");
 
+    jahre.forEach(j => {
+      const opt = document.createElement("option");
+      opt.value = j;
+      opt.textContent = j;
+      jahrSelect.appendChild(opt);
+    });
+  });
+
+  jahrSelect.addEventListener("change", () => {
+    nummerSelect.innerHTML = "";
+    nummerSelect.disabled = false;
+
+    nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
+    const selectedID = erhSelect.value;
+    const selectedJahr = jahrSelect.value;
+    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []).filter(n => n !== "@NullMember");
+
+    nummern.forEach(n => {
+      const opt = document.createElement("option");
+      opt.value = n;
+      opt.textContent = n;
+      nummerSelect.appendChild(opt);
+    });
+  });
+
+  const filterButton = this._shadowRoot.getElementById("filter-button");
+  if (filterButton) {
+    filterButton.addEventListener("click", () => {
+      const selectedID = erhSelect.value;
+      const selectedJahr = jahrSelect.value;
+      const selectedNummer = nummerSelect.value;
+
+      if (selectedID && selectedJahr && selectedNummer) {
+        this.applyFilter(selectedID, selectedJahr, selectedNummer);
+      } else {
+        console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
+      }
+    });
   }
+
+  // ---------------------------------------------------------
+  // 🔥 NL-INFO CONTAINER (nur einmal erzeugen)
+  // ---------------------------------------------------------
+  let nlInfo = this._shadowRoot.getElementById("nl-info-container");
+  if (!nlInfo) {
+    nlInfo = document.createElement("div");
+    nlInfo.classList.add("nl-info-container");
+    nlInfo.id = "nl-info-container";
+    this._shadowRoot.querySelector(".filter-container").appendChild(nlInfo);
+  }
+
+  // ---------------------------------------------------------
+  // 🔥 BUTTON: Erhebungsübersicht (TOGGLE)
+  // ---------------------------------------------------------
+  const infoBtn = document.createElement("button");
+  infoBtn.textContent = "Erhebungsübersicht";
+  infoBtn.style.marginTop = "10px";
+  infoBtn.style.padding = "6px";
+  infoBtn.style.background = "#b41821";
+  infoBtn.style.color = "white";
+  infoBtn.style.border = "none";
+  infoBtn.style.cursor = "pointer";
+  infoBtn.style.borderRadius = "4px";
+
+  infoBtn.addEventListener("click", () => {
+    const nlBox = this._shadowRoot.getElementById("nl-info-container");
+    const filter = this._shadowRoot.querySelector(".filter-container");
+
+    if (!nlBox || !filter) {
+      console.error("❌ NL-Info-Container oder Filter-Container nicht gefunden!");
+      return;
+    }
+
+    // 🔄 Toggle: Wenn sichtbar → schließen
+    if (nlBox.classList.contains("show")) {
+      nlBox.classList.remove("show");
+      filter.classList.remove("nl-info-active");
+      return;
+    }
+
+    // 🔥 Wenn NICHT sichtbar → öffnen
+    this.prepareErhebungsInfo();
+    this.renderErhebungsInfoTable();
+
+    nlBox.classList.add("show");
+    filter.classList.add("nl-info-active");
+  });
+
+  this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
+}
+
 restoreFilterUI() {
   const container = this._shadowRoot.querySelector(".filter-container");
   if (!container) return;
