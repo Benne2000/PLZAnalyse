@@ -498,17 +498,17 @@ setTableMode(mode) {
 }
 
 
-getDim(row, id) {
-  const dim = row[id];
-  if (!dim) return null;
-  return dim.id?.trim?.() || dim.label?.trim?.() || null;
+getDim(row, key) {
+  const obj = row[key + "_0"];
+  return obj?.id ?? obj?.label ?? obj?.raw ?? null;
 }
 
-getVal(row, id) {
-  const val = row[id];
-  if (!val) return null;
-  return typeof val.raw === "number" ? val.raw : null;
+
+getVal(row, key) {
+  const obj = row[key + "_0"];
+  return obj?.raw ?? obj?.id ?? null;
 }
+
 
   buildErhebungsStruktur(data) {
     const struktur = {};
@@ -1453,6 +1453,8 @@ extractPLZWerte(data) {
 
   return plzWerte;
 }
+
+
 getFilteredData() {
   if (!this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("❌ getFilteredData(): Datenquelle nicht bereit");
@@ -1466,9 +1468,9 @@ getFilteredData() {
   console.log("📦 Rohdaten:", data.length);
 
   const filtered = data.filter(row => {
-    const erh = this.getDim(row, "dimension_erhebung");
-    const j = this.getDim(row, "dimension_jahr");
-    const nr = this.getDim(row, "dimension_erhebungsnummer");
+    const erh = this.getDim(row, "dimension_erhebung_0");
+    const j = this.getDim(row, "dimension_jahr_0");
+    const nr = this.getDim(row, "dimension_erhebungsnummer_0");
 
     return erh === erhID && j === jahr && nr === nummer;
   });
@@ -1484,6 +1486,7 @@ getFilteredData() {
   this.erhebungData = filtered;
   return filtered;
 }
+
 
 renderNlTable() {
   const container = this._shadowRoot.getElementById("table-container");
@@ -1897,7 +1900,6 @@ updateMarkers() {
 
         this.render();
       }
-
 prepareMapData(filteredData) {
   console.log("🧩 prepareMapData(): Eingehende Datensätze:", filteredData.length);
 
@@ -1914,22 +1916,22 @@ prepareMapData(filteredData) {
   this.extraNLs = [];
 
   filteredData.forEach((row, i) => {
-    const plz = this.getDim(row, "dimension_plz");
-    const nlKey = this.getDim(row, "dimension_niederlassung");
-    const hzFlag = this.getDim(row, "dimension_hzflag") === "X";
+    const plz = this.getDim(row, "dimension_plz_0");
+    const nlKey = this.getDim(row, "dimension_niederlassung_0");
+    const hzFlag = this.getDim(row, "dimension_hzflag_0") === "X";
 
     if (i === 0) {
       console.log("🔬 Beispiel prepareMapData():", {
         plz,
         nlKey,
         hzFlag,
-        lat: this.getDim(row, "dimension_Lat"),
-        lon: this.getDim(row, "dimension_lon")
+        lat: this.getDim(row, "dimension_Lat_0"),
+        lon: this.getDim(row, "dimension_lon_0")
       });
     }
 
-    const lat = parseFloat(this.getDim(row, "dimension_Lat"));
-    const lon = parseFloat(this.getDim(row, "dimension_lon"));
+    const lat = parseFloat(this.getDim(row, "dimension_Lat_0"));
+    const lon = parseFloat(this.getDim(row, "dimension_lon_0"));
 
     if (nlKey) {
       this.Niederlassung[nlKey] = nlKey;
@@ -2059,7 +2061,6 @@ getColorForPLZ(plz) {
 
   return this.getColor(value, isHZ);
 }
-
 getFilteredDataWithRadius() {
   if (!this.filteredData) return [];
 
@@ -2069,8 +2070,8 @@ getFilteredDataWithRadius() {
   // Umsätze pro PLZ (ungefiltert) für WK-Nachbarn
   const unfilteredUmsatzByPLZ = {};
   this.filteredData.forEach(row => {
-    const plz = this.getDim(row, "dimension_plz")?.padStart(5, "0");
-    const umsatz = this.getVal(row, "value_hr_n_umsatz") || 0;
+    const plz = this.getDim(row, "dimension_plz_0")?.padStart(5, "0");
+    const umsatz = this.getVal(row, "value_hr_n_umsatz_0") || 0;
     if (!plz) return;
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
   });
@@ -2079,25 +2080,24 @@ getFilteredDataWithRadius() {
   const streuverlust = { umsatz: 0, anteil: 0 };
 
   this.filteredData.forEach(row => {
-    const plz = this.getDim(row, "dimension_plz")?.padStart(5, "0");
+    const plz = this.getDim(row, "dimension_plz_0")?.padStart(5, "0");
     if (!plz) return;
 
     const isInRadius = this.plzImRadius.has(plz);
 
-    const umsatzNetto = this.getVal(row, "value_hr_n_umsatz") || 0;
-    const hzKosten = this.getVal(row, "value_hz_kosten") || 0;
+    const umsatzNetto = this.getVal(row, "value_hr_n_umsatz_0") || 0;
+    const hzKosten = this.getVal(row, "value_hz_kosten_0") || 0;
 
-    const umsatzErhebung = this.getVal(row, "value_ums_erhebung") || 0;
-    const kdErhebung = this.getVal(row, "value_kd_erhebung") || 0;
-    const auflage = this.getVal(row, "value_auflage") || 0;
+    const umsatzErhebung = this.getVal(row, "value_ums_erhebung_0") || 0;
+    const kdErhebung = this.getVal(row, "value_kd_erhebung_0") || 0;
+    const auflage = this.getVal(row, "value_auflage_0") || 0;
 
-    const umsatzGross = this.getVal(row, "value_umsatz_grosskunden") || 0;
-    const umsatzRA = this.getVal(row, "value_umsatz_ra") || 0;
-    const umsatzOnline = this.getVal(row, "value_umsatz_online") || 0;
+    const umsatzGross = this.getVal(row, "value_umsatz_grosskunden_0") || 0;
+    const umsatzRA = this.getVal(row, "value_umsatz_ra_0") || 0;
+    const umsatzOnline = this.getVal(row, "value_umsatz_online_0") || 0;
 
     totalErhebungUmsatz += umsatzNetto;
 
-    // Streuverlust (außerhalb Radius)
     if (!isInRadius) {
       streuverlust.umsatz += umsatzNetto;
       return;
@@ -2123,11 +2123,9 @@ getFilteredDataWithRadius() {
 
     const entry = aggregated[plz];
 
-    // HZ-Flag
-    const hz = this.getDim(row, "dimension_hzflag") === "X";
+    const hz = this.getDim(row, "dimension_hzflag_0") === "X";
     if (hz) entry.hzCount++;
 
-    // Summen
     entry.sum.umsatzNetto += umsatzNetto;
     entry.sum.hzKosten += hzKosten;
     entry.sum.umsatzErhebung += umsatzErhebung;
@@ -2139,7 +2137,6 @@ getFilteredDataWithRadius() {
     entry.sum.umsatzOnline += umsatzOnline;
   });
 
-  // Ergebnisstrukturen zurücksetzen
   this.filteredPLZWerte = {};
 
   Object.entries(aggregated).forEach(([plz, entry]) => {
@@ -2178,7 +2175,6 @@ getFilteredDataWithRadius() {
     };
   });
 
-  // Streuverlust berechnen
   this.streuverlust = {
     umsatz: streuverlust.umsatz,
     anteil:
@@ -2189,7 +2185,6 @@ getFilteredDataWithRadius() {
 
   return result;
 }
-
 
 
 buildNlSummary() {
@@ -2203,24 +2198,21 @@ buildNlSummary() {
   const erfasst_valid = {};
 
   data.forEach(row => {
-    const nl = this.getDim(row, "dimension_niederlassung");
+    const nl = this.getDim(row, "dimension_niederlassung_0");
     if (!nl) return;
 
-    const plz = this.getDim(row, "dimension_plz")?.padStart(5, "0") || "";
-    const umsatzJahr = this.getVal(row, "value_hr_n_umsatz") || 0;
-    const umsatzErhebung = this.getVal(row, "value_ums_erhebung") || 0;
+    const plz = this.getDim(row, "dimension_plz_0")?.padStart(5, "0") || "";
+    const umsatzJahr = this.getVal(row, "value_hr_n_umsatz_0") || 0;
+    const umsatzErhebung = this.getVal(row, "value_ums_erhebung_0") || 0;
 
     if (!jahresumsatz[nl]) jahresumsatz[nl] = 0;
     if (!erfasst_total[nl]) erfasst_total[nl] = 0;
     if (!erfasst_valid[nl]) erfasst_valid[nl] = 0;
 
-    // Erfasst (inkl. 00000)
     erfasst_total[nl] += umsatzErhebung;
 
-    // Jahresumsatz (ohne 00000)
     if (plz !== "00000") jahresumsatz[nl] += umsatzJahr;
 
-    // Valide Erhebung (ohne 00000)
     if (plz !== "00000") erfasst_valid[nl] += umsatzErhebung;
   });
 
@@ -2383,7 +2375,6 @@ updateActiveFilter() {
       });
     }
   }
-
 async render() {
   // 🔒 Voraussetzungen prüfen
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
@@ -2394,8 +2385,7 @@ async render() {
   this.showSpinner();
 
   const rawData = this._myDataSource.data;
-console.log("🧪 RAW DATASOURCE SAMPLE:", rawData[0]);
-
+  console.log("🧪 RAW DATASOURCE SAMPLE:", rawData[0]);
 
   // 🔧 Filterstruktur & Dropdowns vorbereiten
   this._erhData = this.buildErhebungsStruktur(rawData);
@@ -2411,7 +2401,7 @@ console.log("🧪 RAW DATASOURCE SAMPLE:", rawData[0]);
   // 🌍 GeoJSON laden
   await this.loadGeoJson();
 
-  // 🗺️ Karte einfärben (Werbung / Umsatz / etc.)
+  // 🗺️ Karte einfärben
   this.updateGeoLayer();
 
   // 📍 Marker erzeugen
@@ -2420,13 +2410,13 @@ console.log("🧪 RAW DATASOURCE SAMPLE:", rawData[0]);
   // 📍 Marker filtern (nach NL)
   const filteredPLZs = isFiltered
     ? filteredData
-        .map(row => this.getDim(row, "dimension_plz"))
+        .map(row => this.getDim(row, "dimension_plz_0"))
         .filter(plz => plz && plz !== "@NullMember")
     : Object.keys(this.allMarkers);
 
   this.updateMarkers(filteredPLZs);
 
-  // 📊 Tabelle aktualisieren (PLZ-Tabelle oder NL-Tabelle)
+  // 📊 Tabelle aktualisieren
   if (this.tableMode === "nl") {
     this.buildNlSummary();
     this.renderNlTable();
@@ -2438,11 +2428,11 @@ console.log("🧪 RAW DATASOURCE SAMPLE:", rawData[0]);
   this.renderPersistentViewSelector();
 
   this.hideSpinner();
+
+  // Standardmodus setzen
   if (!this.tableMode) this.tableMode = "plz";
-this.setTableMode(this.tableMode);
-
+  this.setTableMode(this.tableMode);
 }
-
 
 
 
