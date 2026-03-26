@@ -239,17 +239,19 @@
     font-weight: normal;
   }
 
-  .filter-container {
-    width: 30%;
-    padding: 10px;
-    box-sizing: border-box;
-    font-family: sans-serif;
-    background: f2f4f7;
-    border-right: 2px solid #b41821;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-  }
+.filter-container {
+  width: 30%;
+  padding: 10px;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  background: #f2f4f7;
+  border-right: 2px solid #b41821;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative; /* WICHTIG für Overlay */
+}
+
 
   .filter-container label {
     display: block;
@@ -266,27 +268,33 @@
     font-size: 0.9rem;
   }
 /* NL-Info: Container über der PLZ-Tabelle */
+/* NL-Info: Overlay über der PLZ-Tabelle */
 .nl-info-container {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
   background: #fff;
-  border: 1px solid #b41821;
-  border-radius: 8px;
-  margin-top: 10px;
-  overflow: hidden;
-  max-height: 0;              /* Start: unsichtbar */
+  border-top: 2px solid #b41821;
+
+  max-height: 0;
+  overflow-y: auto;
+
   opacity: 0;
-  transform: translateY(10px);
   transition:
     max-height 0.35s ease,
-    opacity 0.35s ease,
-    transform 0.35s ease;
+    opacity 0.35s ease;
+
+  z-index: 50;
 }
 
-/* Sichtbar */
+/* Sichtbar: mindestens 50% Sidebar-Höhe */
 .nl-info-container.show {
-  max-height: 600px;          /* genug Platz für Tabelle */
+  max-height: 50%;
   opacity: 1;
-  transform: translateY(0);
 }
+
 .nl-info-table {
   width: 100%;
   border-collapse: collapse;
@@ -314,6 +322,7 @@
   background-color: #f0f8ff;
   cursor: pointer;
 }
+
 .filter-container.nl-info-active .table-container {
   margin-top: 620px; /* oder dynamisch, je nach NL-Tabellenhöhe */
 }
@@ -325,12 +334,13 @@
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;
-  overflow: hidden; /* WICHTIG */
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 0; /* WICHTIG */
+  padding: 0;
 }
+
 
   .table-container table {
     width: 100%;
@@ -376,7 +386,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* WICHTIG für Scrollen */
+  min-height: 0;
 }
 
 .table-scroll {
@@ -385,8 +395,8 @@
   border: 1px solid #b41821;
   border-radius: 6px;
   background: white;
-  min-height: 0; /* WICHTIG */
-  margin-bottom: 8px; /* Abstand zum Footer */
+  min-height: 0;
+  margin-bottom: 8px;
 }
 
 #streuverlust-box {
@@ -398,6 +408,7 @@
   border-top: 2px solid #b41821;
   z-index: 10;
 }
+
 
 
 
@@ -1708,8 +1719,7 @@ updateMarkers() {
 
 
 
-
- setupFilterDropdowns() {
+setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
   const nummerSelect = this._shadowRoot.getElementById("nummer-select");
@@ -1822,17 +1832,15 @@ updateMarkers() {
 
   infoBtn.addEventListener("click", () => {
     const nlBox = this._shadowRoot.getElementById("nl-info-container");
-    const filter = this._shadowRoot.querySelector(".filter-container");
 
-    if (!nlBox || !filter) {
-      console.error("❌ NL-Info-Container oder Filter-Container nicht gefunden!");
+    if (!nlBox) {
+      console.error("❌ NL-Info-Container nicht gefunden!");
       return;
     }
 
     // 🔄 Toggle: Wenn sichtbar → schließen
     if (nlBox.classList.contains("show")) {
       nlBox.classList.remove("show");
-      filter.classList.remove("nl-info-active");
       return;
     }
 
@@ -1841,11 +1849,11 @@ updateMarkers() {
     this.renderErhebungsInfoTable();
 
     nlBox.classList.add("show");
-    filter.classList.add("nl-info-active");
   });
 
   this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
 }
+
 
 restoreFilterUI() {
   const container = this._shadowRoot.querySelector(".filter-container");
