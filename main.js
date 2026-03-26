@@ -1177,44 +1177,71 @@ showPopup(feature) {
 
 
 applyFilter(erhID, jahr, nummer) {
+  console.group("🎯 applyFilter() gestartet");
+
+  console.log("➡️ Eingehende Filterwerte:", { erhID, jahr, nummer });
+
+  // Filter speichern
   this._activeFilter = { erhID, jahr, nummer };
 
-  // 1) Daten filtern (Erhebung)
-const filteredData = this.getFilteredData();
+  // 1) Daten filtern
+  const filteredData = this.getFilteredData();
+  console.log("📦 Anzahl gefilterter Datensätze:", filteredData.length);
 
-// HZ-Flags neu berechnen
-this.hzFlags = {};
-filteredData.forEach(row => {
-  const plz = row["dimension_plz_0"]?.id?.trim();
-  const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
-  if (plz) {
-    this.hzFlags[plz] = hz === "X";  // ✔ korrekt
-  }
-});
+  // 2) HZ-Flags neu berechnen
+  this.hzFlags = {};
+  filteredData.forEach((row, i) => {
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = rawPLZ ? String(rawPLZ).padStart(5, "0") : null;
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
 
+    if (plz) this.hzFlags[plz] = hz;
 
+    if (i < 5) {
+      console.log(`🔎 HZ-Check Row ${i}:`, { plz, hz });
+    }
+  });
 
-  // 2) PLZ-Liste extrahieren
+  console.log("🔢 Anzahl HZ-Flags:", Object.keys(this.hzFlags).length);
+
+  // 3) PLZ-Liste extrahieren
   const filteredPLZs = filteredData
-    .map(row => row["dimension_plz_0"]?.id?.trim())
+    .map(row => {
+      const raw = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+      return raw ? String(raw).padStart(5, "0") : null;
+    })
     .filter(plz => plz && plz !== "@NullMember");
 
-  // 3) Karte einfärben
+  console.log("📍 Gefilterte PLZs:", filteredPLZs);
+
+  // 4) Karte einfärben
+  console.log("🎨 updateGeoLayer() wird ausgeführt…");
   this.updateGeoLayer();
 
-  // 4) NL-Marker filtern
+  // 5) NL-Marker filtern
+  console.log("📍 updateMarkers() wird ausgeführt…");
   this.updateMarkers(filteredPLZs);
 
-  // 5) Radiusfilter anwenden → setzt this.plzImRadius
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  // 6) Radiusfilter anwenden
+  const radiusSlider = this._shadowRoot.getElementById("radius-slider");
+  const radius = Number(radiusSlider?.value ?? 0);
+
+  console.log("📏 Radiuswert:", radius);
   this.applyRadiusFilter(radius);
 
-  // 6) Tabelle NACH Radiusfilter rendern
+  console.log("📍 PLZ im Radius:", Array.from(this.plzImRadius || []));
+
+  // 7) Tabelle nach Radiusfilter rendern
+  console.log("📊 renderDataTable() wird ausgeführt…");
   this.renderDataTable(this.filteredKennwerte);
 
-  // 7) Zoom auf sichtbare PLZ
+  // 8) Autozoom
+  console.log("🔍 zoomToFilteredPLZ() wird ausgeführt…");
   this.zoomToFilteredPLZ();
+
+  console.groupEnd();
 }
+
 
 
 
@@ -1339,15 +1366,25 @@ getFilteredData() {
 
 
 updateGeoLayer() {
-  if (!this._geoLayer) return;
+  console.group("🎨 updateGeoLayer() gestartet");
 
-  // Hole gefilterte Daten
+  if (!this._geoLayer) {
+    console.warn("⚠️ Kein GeoLayer vorhanden.");
+    console.groupEnd();
+    return;
+  }
+
+  // 1) Gefilterte Daten holen
   const filteredData = this.getFilteredData();
+  console.log("📦 Anzahl gefilterter Datensätze:", filteredData.length);
 
-  // Extrahiere WK, WKPot und HZ-Flag aus den gefilterten Daten
+  // 2) PLZ → WK/WKPot/HZ extrahieren
   const plzWerte = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
+
+  filteredData.forEach((row, i) => {
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = rawPLZ ? String(rawPLZ).padStart(5, "0") : null;
+
     if (!plz || plz === "@NullMember") return;
 
     const wk = row["value_wk_in_percent_0"]?.raw;
@@ -1359,31 +1396,57 @@ updateGeoLayer() {
       wkPot: typeof wkPot === "number" ? wkPot : 0,
       hz: hzFlag
     };
+
+    if (i < 10) {
+      console.log(`🔎 PLZ-Wert Row ${i}:`, {
+        plz,
+        wk: plzWerte[plz].wk,
+        wkPot: plzWerte[plz].wkPot,
+        hz: plzWerte[plz].hz
+      });
+    }
   });
 
-  // Layer aktualisieren
+  console.log("📍 Anzahl PLZ mit Werten:", Object.keys(plzWerte).length);
+
+  // 3) GeoLayer einfärben
   this._geoLayer.eachLayer(layer => {
     const plz = layer.feature?.properties?.plz?.trim();
 
-    // Werte aus gefilterten Daten holen
+    if (!plz) {
+      console.warn("⚠️ GeoJSON-Feature ohne PLZ:", layer.feature);
+      return;
+    }
+
     const values = plzWerte[plz] || { wk: 0, wkPot: 0, hz: false };
 
-    // HZ → WK in %, Nicht-HZ → WK potentiell
+    // HZ → WK, Nicht-HZ → WKPot
     const value = values.hz ? values.wk : values.wkPot;
 
+    const color = this.getColor(value, values.hz);
+
+    console.log(`🎨 Färbe PLZ ${plz}:`, {
+      hz: values.hz,
+      wk: values.wk,
+      wkPot: values.wkPot,
+      verwendeterWert: value,
+      farbe: color
+    });
+
     layer.setStyle({
-      fillColor: this.getColor(value, values.hz),
+      fillColor: color,
       fillOpacity: 0.5
     });
 
-    // Tooltip aktualisieren (falls vorhanden)
+    // Tooltip aktualisieren
     const note = layer.feature?.properties?.note;
     if (note && layer.setTooltipContent) {
       layer.setTooltipContent(note);
     }
   });
-}
 
+  console.groupEnd();
+}
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
@@ -1421,14 +1484,6 @@ updateMarkers() {
 
   console.log("🔥 Radius-relevante NL-Marker:", this.nlMarkers.length);
 }
-
-
-
-
-
-
-
-
 
 
 
