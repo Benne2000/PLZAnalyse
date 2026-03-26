@@ -265,8 +265,58 @@
     padding: 6px;
     font-size: 0.9rem;
   }
+/* NL-Info: Container über der PLZ-Tabelle */
+.nl-info-container {
+  background: #fff;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  max-height: 0;              /* Start: unsichtbar */
+  opacity: 0;
+  transform: translateY(10px);
+  transition:
+    max-height 0.35s ease,
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+/* Sichtbar */
+.nl-info-container.show {
+  max-height: 600px;          /* genug Platz für Tabelle */
+  opacity: 1;
+  transform: translateY(0);
+}
+.nl-info-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.nl-info-table th {
+  background-color: #b41821;
+  color: white;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #b41821;
+  text-align: left;
+}
+
+.nl-info-table td {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #b41821;
+  border-right: 1px solid #b41821;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nl-info-row:hover {
+  background-color: #f0f8ff;
+  cursor: pointer;
+}
 
 .table-container {
+  transition: margin-top 0.35s ease;
   margin-top: 1rem;
   background-color: #fff;
   border-radius: 8px;
@@ -337,6 +387,7 @@
 }
 
 #streuverlust-box {
+  transition: transform 0.35s ease;
   position: sticky;
   bottom: 0;
   background: white;
@@ -1754,8 +1805,19 @@ infoBtn.style.cursor = "pointer";
 infoBtn.style.borderRadius = "4px";
 
 infoBtn.addEventListener("click", () => {
+  // 1) Kennzahlen berechnen
   this.prepareErhebungsInfo();
-  this.renderErhebungsInfo();
+
+  // 2) Tabelle rendern
+  this.renderErhebungsInfoTable();
+
+  // 3) NL-Box einblenden
+  const nlBox = this._shadowRoot.getElementById("nl-info-container");
+  nlBox.classList.add("show");
+
+  // 4) PLZ-Tabelle nach unten schieben
+  const filter = this._shadowRoot.querySelector(".filter-container");
+  filter.classList.add("nl-info-active");
 });
 
 this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
