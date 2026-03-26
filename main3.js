@@ -83,161 +83,67 @@
         color: #333;
         border-radius: 4px;
       }
+#side-popup {
+  width: 25%;
+  background: white;
+  border-left: 2px solid #b41821;
+  padding: 10px;
+  font-family: sans-serif;
+  color: #b41821;
+  box-sizing: border-box;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 
-      #side-popup {
-        width: 25%;
-        background: white;
-        border-left: 2px solid #b41821;
-        padding: 10px;
-        font-family: sans-serif;
-        color: #b41821;
-        box-sizing: border-box;
-        opacity: 0;
-        transform: translateX(20px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-      }
-  #side-popup table {
-    width: 100%;
-    table-layout: fixed; /* verhindert Breitenverschiebung */
-    border-collapse: collapse;
-    border: 1px solid #b41821;
-    margin-top: 30px;
+  /* NEU: Popup in 2 Bereiche teilen */
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
 
-  }
+/* Oberer Bereich = 60% */
+#side-popup .popup-content {
+  flex: 0 0 60%;
+  overflow-y: auto;
+  padding-right: 5px;
+}
 
-  #side-popup th {
-    background-color: #b41821;
-    color: white;
-    font-weight: bold;
-    padding: 6px;
-    text-align: left;
-    border: 1px solid #b41821;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+/* Unterer Bereich = 40% */
+#side-popup .popup-controls {
+  flex: 0 0 40%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #b41821;
+}
 
-  #side-popup th.title-cell {
-    max-width: 100%;
-  }
+/* Buttons */
+#side-popup .view-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
 
-  #side-popup th.subtitle-cell {
-    background-color: #f3f3f3;
-    color: black;
-    font-weight: bold;
-    padding: 6px;
-    text-align: left;
-    font-size: 0.85rem;
-    padding: 4px 8px;
-    
-  }
+#side-popup .view-buttons button {
+  flex: 1 1 calc(50% - 6px);
+  padding: 6px;
+  background: #b41821;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
-  #side-popup td {
-    border: 1px solid #b41821;
-    font-size: 0.85rem;
-    padding: 4px 8px;
-    color: black;
-    font-weight: bold;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+/* Legende */
+#side-popup .legend-box {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 6px;
+  background: #fafafa;
+}
 
-  #side-popup td:first-child {
-    width: 40%;
-  }
-  /* Entfernt Rahmen für Kennzahlen-Zeilen */
-  #side-popup tr.kennzahl-row td {
-    border: none;
-  }
-
-  #side-popup .section-title {
-    background-color: #f3f3f3;
-    color: black;
-    font-weight: bold;
-    padding: 6px;
-    text-align: left;
-  }
-
-  #side-popup td:last-child {
-    font-weight: bold;
-  }
-  #side-popup td.label-cell {
-    text-align: left;
-    width: 75%;
-  }
-
-  #side-popup td.value-cell {
-    text-align: right;
-    width: 25%;
-    font-weight: normal;
-  }
-
-      #side-popup.show {
-        opacity: 1;
-        transform: translateX(0);
-      }
-
-      #side-popup .close-btn {
-        position: absolute;
-        top: 5px;
-        right: 8px;
-        background: #b41821;
-        color: white;
-        border: none;
-        padding: 2px 6px;
-        font-size: 12px;
-        cursor: pointer;
-        border-radius: 3px;
-      }
-
-
-  #side-popup .extra-table {
-    display: table;
-    visibility: visible;
-    table-layout: fixed;
-    width: 100%;
-    margin-top: 20px;
-    border-collapse: collapse;
-    border: 1px solid #b41821; /* Außenrahmen */
-    font-size: 0.85rem;
-    
-  }
-
-  /* Kopfzeile mit Rahmen */
-  #side-popup .extra-table th {
-    border: 1px solid #b41821;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    background-color: #f3f3f3;
-    color: black;
-    font-weight: bold;
-    padding: 6px;
-    text-align: left;
-  }
-
-  /* Zellen ohne Innenrahmen */
-  #side-popup .extra-table td {
-    padding: 6px;
-    text-align: right;
-    border: none; /* keine Zellrahmen */
-    font-weight: bold;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  #side-popup .extra-table td.label-cell {
-    text-align: left;
-    width: 75%;
-  }
-
-  #side-popup .extra-table td.value-cell {
-    text-align: right;
-    width: 25%;
-    font-weight: normal;
-  }
 
   .filter-container {
     width: 30%;
@@ -388,7 +294,22 @@
   </div>
 
   <!-- 📌 Popup für Details -->
-  <div id="side-popup"></div>
+  <div id="side-popup">
+  <div class="popup-content">
+    <!-- Wird dynamisch mit Tabellen gefüllt -->
+  </div>
+
+  <div class="popup-controls">
+    <div class="view-buttons">
+      <!-- Buttons werden dynamisch eingefügt -->
+    </div>
+
+    <div class="legend-box" id="legend">
+      <!-- Legende wird dynamisch eingefügt -->
+    </div>
+  </div>
+</div>
+
 </div>
 
 
@@ -1408,6 +1329,7 @@ this.prepareErhebungsInfo();
 
   // 9️⃣ Erhebungsinfo anzeigen (links)
   this.renderErhebungsInfo();
+this.createViewLayers(); // Layer vorbereiten
 
   // 🔟 Autozoom
   this.zoomToFilteredPLZ();
@@ -1464,61 +1386,56 @@ getColorForView(viewName, value) {
 }
 
 
-
 createViewLayers() {
-  if (!this._geoData) return;
+  if (!this.map) return;
 
-  this.viewLayers = {};
+  // Container für alle Layer
+  this._viewLayers = {
+    umsatz: null,
+    online: null,
+    ra: null,
+    gk: null
+  };
 
-  const views = ["werbung", "umsatz", "grosskunden", "ra", "online"];
+  const data = this.filteredKennwerte || [];
 
-  views.forEach(viewName => {
-    this.viewLayers[viewName] = L.geoJSON(this._geoData, {
-  renderer: L.canvas(),
+  // Helper: PLZ → Koordinaten
+  const getLatLng = (row) => {
+    const lat = row["dimension_lat_0"]?.raw;
+    const lng = row["dimension_lng_0"]?.raw;
+    return lat && lng ? [lat, lng] : null;
+  };
 
-      style: feature => {
-        const plz = String(feature.properties?.plz ?? "").padStart(5, "0");
+  // Helper: Wert extrahieren
+  const getValue = (row, field) => row[field]?.raw ?? 0;
 
-        // PLZ 00000 niemals anzeigen
-        if (plz === "00000") {
-          return { fillOpacity: 0, opacity: 0 };
-        }
+  // Layer erzeugen
+  const createHeatLayer = (field) => {
+    const points = [];
 
-        const data = this.filteredKennwerte?.[plz];
-        if (!data) {
-          return { fillColor: "#cfd4da", fillOpacity: 0.3, color: "#fff", weight: 1 };
-        }
+    data.forEach(row => {
+      const ll = getLatLng(row);
+      if (!ll) return;
 
-        let value = 0;
-
-        switch (viewName) {
-          case "werbung":
-            value = data.value_wk_in_percent_0?.raw ?? 0;
-            break;
-          case "umsatz":
-            value = data.value_ums_erhebung_0?.raw ?? 0;
-            break;
-          case "grosskunden":
-            value = data.value_umsatz_grosskunden_0?.raw ?? 0;
-            break;
-          case "ra":
-            value = data.value_umsatz_ra_0?.raw ?? 0;
-            break;
-          case "online":
-            value = data.value_umsatz_online_0?.raw ?? 0;
-            break;
-        }
-
-        return {
-          fillColor: this.getColorForView(viewName, value),
-          fillOpacity: 0.6,
-          color: "#ffffff",
-          weight: 1
-        };
+      const val = getValue(row, field);
+      if (val > 0) {
+        points.push([ll[0], ll[1], val]);
       }
     });
-  });
+
+    return L.heatLayer(points, {
+      radius: 35,
+      blur: 20,
+      maxZoom: 12
+    });
+  };
+
+  this._viewLayers.umsatz = createHeatLayer("value_ums_erhebung_0");
+  this._viewLayers.online = createHeatLayer("value_online_0");
+  this._viewLayers.ra     = createHeatLayer("value_ra_0");
+  this._viewLayers.gk     = createHeatLayer("value_umsatz_gk_0");
 }
+
 
 toggleView(viewName) {
   if (!this.viewLayers || !this.viewLayers[viewName]) return;
@@ -1536,41 +1453,30 @@ toggleView(viewName) {
 }
 
 
-
 renderViewSelector() {
-  const popup = this._shadowRoot.getElementById("side-popup");
-  if (!popup) return;
+  const container = this._shadowRoot.getElementById("view-selector");
+  if (!container) return;
 
-  let selector = this._shadowRoot.getElementById("view-selector");
-  if (selector) selector.remove();
-
-  selector = document.createElement("div");
-  selector.id = "view-selector";
-  selector.style.marginTop = "20px";
-  selector.style.padding = "10px";
-  selector.style.borderTop = "2px solid #b41821";
-  selector.style.fontSize = "0.85rem";
-
-  selector.innerHTML = `
-    <strong>Ansichten:</strong><br><br>
-    <label><input type="checkbox" data-view="werbung"> Werbung</label><br>
-    <label><input type="checkbox" data-view="umsatz"> Umsatz</label><br>
-    <label><input type="checkbox" data-view="grosskunden"> Großkunden</label><br>
-    <label><input type="checkbox" data-view="ra"> R&A</label><br>
-    <label><input type="checkbox" data-view="online"> Online</label><br>
+  container.innerHTML = `
+    <div style="
+      display:flex;
+      gap:6px;
+      padding:6px;
+      flex-wrap:wrap;
+    ">
+      <button class="view-btn" data-view="umsatz">Umsatz</button>
+      <button class="view-btn" data-view="online">Online</button>
+      <button class="view-btn" data-view="ra">RA</button>
+      <button class="view-btn" data-view="gk">Großkunden</button>
+    </div>
   `;
 
-  popup.appendChild(selector);
-
-  selector.querySelectorAll("input[type=checkbox]").forEach(cb => {
-    cb.addEventListener("change", () => {
-      const view = cb.dataset.view;
-      this.toggleView(view);
+  container.querySelectorAll(".view-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const view = btn.dataset.view;
+      this.activateView(view);
     });
   });
-
-  this.renderOpacitySlider();
-
 }
 
 
@@ -2420,13 +2326,13 @@ renderErhebungsInfo() {
     ">
       <thead>
         <tr style="background:#b41821;color:white;">
-          <th style="padding:4px;text-align:left;width:50px;">NL</th>
-          <th style="padding:4px;text-align:right;width:90px;">Jahresumsatz</th>
-          <th style="padding:4px;text-align:right;width:90px;">Erfasst</th>
-          <th style="padding:4px;text-align:right;width:90px;">Abdeckung</th>
-          <th style="padding:4px;text-align:right;width:90px;">Valide</th>
-          <th style="padding:4px;text-align:right;width:90px;">Validität</th>
-          <th style="padding:4px;text-align:right;width:90px;">Jahresabdeckung</th>
+          <th style="padding:4px;text-align:left;width:25px;">NL</th>
+          <th style="padding:4px;text-align:right;width:70px;">Jahresumsatz</th>
+          <th style="padding:4px;text-align:right;width:60px;">Erfasst</th>
+          <th style="padding:4px;text-align:right;width:30px;">Abdeckung</th>
+          <th style="padding:4px;text-align:right;width:60px;">Valide</th>
+          <th style="padding:4px;text-align:right;width:30px;">Validität</th>
+          <th style="padding:4px;text-align:right;width:30px;">Jahresabdeckung</th>
         </tr>
       </thead>
       <tbody>
@@ -2474,6 +2380,11 @@ renderErhebungsInfo() {
       this.restoreDropdownSelections();
 
       this.renderDataTable(this.filteredKennwerte);
+      this.createViewLayers();
+this.renderViewSelector();
+this.activateView("umsatz");
+this.renderDynamicLegend("umsatz");
+
     }, 400);
   });
 }
@@ -2660,27 +2571,56 @@ computeLegendBreaks(viewName) {
 }
 
 renderDynamicLegend(viewName) {
-  const legendContainer = this._shadowRoot.getElementById("legend");
-  if (!legendContainer) return;
+  const legend = this._shadowRoot.getElementById("legend");
+  if (!legend) return;
 
-  const breaks = this.computeLegendBreaks(viewName);
+  const titles = {
+    umsatz: "Umsatz Erhebung",
+    online: "Online-Umsatz",
+    ra: "Response-Rate",
+    gk: "Umsatz Großkunden"
+  };
 
-  let html = `<strong>${viewName.toUpperCase()}</strong><br>`;
+  legend.innerHTML = `
+    <div style="
+      padding:8px;
+      background:white;
+      border:1px solid #ccc;
+      border-radius:4px;
+      font-size:0.8rem;
+    ">
+      <b>${titles[viewName]}</b><br>
+      <div style="margin-top:6px;">
+        <div style="height:10px;background:#440154;"></div>
+        <div style="height:10px;background:#31688e;"></div>
+        <div style="height:10px;background:#35b779;"></div>
+        <div style="height:10px;background:#fde725;"></div>
+      </div>
+    </div>
+  `;
+}
 
-  for (let i = 0; i < breaks.length; i++) {
-    const from = i === 0 ? 0 : breaks[i - 1];
-    const to = breaks[i];
 
-    const color = this.getColorForView(viewName, to);
+activateView(viewName) {
+  if (!this._viewLayers) return;
 
-    html += `
-      <i style="background:${color}"></i>
-      ${from.toLocaleString("de-DE")} – ${to.toLocaleString("de-DE")}<br>
-    `;
+  // Alle Layer entfernen
+  Object.values(this._viewLayers).forEach(layer => {
+    if (layer && this.map.hasLayer(layer)) {
+      this.map.removeLayer(layer);
+    }
+  });
+
+  // Gewählten Layer aktivieren
+  const layer = this._viewLayers[viewName];
+  if (layer) {
+    layer.addTo(this.map);
   }
 
-  legendContainer.innerHTML = html;
+  // Legende aktualisieren
+  this.renderDynamicLegend(viewName);
 }
+
 
 computeCombinedValue(plz, activeViews, mode = "max") {
   const row = this.filteredKennwerte?.[plz];
