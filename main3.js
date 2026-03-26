@@ -2247,6 +2247,60 @@ buildNlSummary() {
 }
 
 
+updateJahrDropdown() {
+  const erhSelect = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect = this._shadowRoot.getElementById("jahr-select");
+
+  const erhID = erhSelect.value;
+  jahrSelect.innerHTML = "";
+
+  if (!this._erhData[erhID]) return;
+
+  const jahre = Object.keys(this._erhData[erhID]).sort();
+
+  jahre.forEach(j => {
+    const opt = document.createElement("option");
+    opt.value = j;
+    opt.textContent = j;
+    jahrSelect.appendChild(opt);
+  });
+
+  jahrSelect.disabled = false;
+  this.updateNummerDropdown();
+}
+updateNummerDropdown() {
+  const erhSelect = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect = this._shadowRoot.getElementById("jahr-select");
+  const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+
+  const erhID = erhSelect.value;
+  const jahr = jahrSelect.value;
+
+  nummerSelect.innerHTML = "";
+
+  if (!this._erhData[erhID] || !this._erhData[erhID][jahr]) return;
+
+  const nummern = Object.keys(this._erhData[erhID][jahr]).sort();
+
+  nummern.forEach(n => {
+    const opt = document.createElement("option");
+    opt.value = n;
+    opt.textContent = n;
+    nummerSelect.appendChild(opt);
+  });
+
+  nummerSelect.disabled = false;
+  this.updateActiveFilter();
+}
+updateActiveFilter() {
+  const erhID = this._shadowRoot.getElementById("erhebung-select").value;
+  const jahr = this._shadowRoot.getElementById("jahr-select").value;
+  const nummer = this._shadowRoot.getElementById("nummer-select").value;
+
+  this._activeFilter = { erhID, jahr, nummer };
+}
+
+
 
   prepareDropdownData(data) {
     const erhSelect = this._shadowRoot.getElementById("erhebung-select");
