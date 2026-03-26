@@ -1380,7 +1380,8 @@ applyFilter(erhID, jahr, nummer) {
   this.renderDataTable(this.filteredKennwerte);
 
   // 8️⃣ Erhebungsinfo berechnen (inkl. PLZ 00000)
-  this.prepareErhebungsInfo(filteredData);
+this.prepareErhebungsInfo();
+
 
   // 9️⃣ Erhebungsinfo anzeigen (links)
   this.renderErhebungsInfo();
@@ -2294,11 +2295,11 @@ getFilteredDataWithRadius() {
 
   return result;
 }
-
-prepareErhebungsInfo(filteredData) {
+prepareErhebungsInfo() {
   this.erhebungsInfo = {};
 
-  if (!Array.isArray(filteredData) || filteredData.length === 0) {
+  const rawData = this._myDataSource?.data || [];
+  if (!Array.isArray(rawData) || rawData.length === 0) {
     return;
   }
 
@@ -2306,7 +2307,7 @@ prepareErhebungsInfo(filteredData) {
   const erfasst_total = {};     // Erhebung inkl. 00000 (value_ums_erhebung_0)
   const erfasst_valid = {};     // Erhebung ohne 00000 (value_ums_erhebung_0)
 
-  filteredData.forEach(row => {
+  rawData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     if (!nl) return;
 
@@ -2316,12 +2317,11 @@ prepareErhebungsInfo(filteredData) {
     const umsatzJahr = row["value_hr_n_umsatz_0"]?.raw ?? 0;
     const umsatzErhebung = row["value_ums_erhebung_0"]?.raw ?? 0;
 
-    // Initialisieren
     if (!jahresumsatz[nl]) jahresumsatz[nl] = 0;
     if (!erfasst_total[nl]) erfasst_total[nl] = 0;
     if (!erfasst_valid[nl]) erfasst_valid[nl] = 0;
 
-    // 1) Erfasster Umsatz (inkl. 00000)
+    // 1) Erfasster Umsatz (inkl. 00000) → 00000 wird hier bewusst mitgerechnet
     erfasst_total[nl] += umsatzErhebung;
 
     // 2) Jahresumsatz (ohne 00000)
@@ -2335,7 +2335,6 @@ prepareErhebungsInfo(filteredData) {
     }
   });
 
-  // Jetzt pro NL berechnen
   Object.keys(erfasst_total).forEach(nl => {
     const jahr = jahresumsatz[nl] || 0;
     const total = erfasst_total[nl] || 0;
@@ -2346,14 +2345,8 @@ prepareErhebungsInfo(filteredData) {
       jahresumsatz: jahr,
       erfasst_total: total,
       erfasst_valid: valid,
-
-      // Abdeckungsgrad Erhebung (pro NL!)
       pct_erfassung: jahr > 0 ? total / jahr : 0,
-
-      // Validitätsquote (pro NL!)
       pct_valid: total > 0 ? valid / total : 0,
-
-      // Abdeckungsgrad Jahresumsatz (pro NL!)
       pct_hochrechnung: jahr > 0 ? valid / jahr : 0
     };
   });
