@@ -430,81 +430,128 @@
     return struktur;
   }
 
+async loadGeoJson() {
+  console.group("🌍 loadGeoJson() gestartet");
 
-      async loadGeoJson() {
-  if (this._geoLayer) return;
+  if (this._geoLayer) {
+    console.log("ℹ️ GeoLayer existiert bereits – wird nicht erneut geladen.");
+    console.groupEnd();
+    return;
+  }
 
   try {
-    const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
+    console.log("📡 Lade GeoJSON…");
+    const response = await fetch(
+      "https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson"
+    );
+
     this._geoData = await response.json();
-    this.geoNotes = {};
-(this._geoData.features || []).forEach(feature => {
-  const plz = feature.properties?.plz?.trim();
-  const note = feature.properties?.note?.trim();
-  if (plz && note) {
-    this.geoNotes[plz] = note;
-  }
-});
 
-    const filteredData = this.getFilteredData(); // baut filteredKennwerte
-    const plzWerte = this.extractPLZWerte(filteredData);
-
-    this._geoLayer = L.geoJSON(this._geoData, {
-style: feature => {
-  const plz = feature.properties?.plz?.trim();
-  const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
-  const isHZ = this.hzFlags?.[plz] ?? false;
-
-  const value = isHZ ? values.wk : values.wkPot;
-
-  return {
-    fillColor: this.getColor(value, isHZ),
-    weight: 1,
-    opacity: 1,
-    color: "white",
-    fillOpacity: 0.5
-  };
-}
-,
-
-// onEachFeature(feature, layer)
-onEachFeature: (feature, layer) => {
-  layer.on("click", (e) => {
-    const plz = e.target.feature.properties.plz?.toString().trim();
-    const kennwerte = this.filteredKennwerte[plz];
-
-    // Gebiet highlighten
-    this.highlightMapArea(plz);
-
-    // Popup öffnen
-    this.showPopup(e.target.feature, kennwerte);
-
-    // Tabellenzeile highlighten
-    this.highlightTableRowByPLZ(plz);
-  });
-}
-
+    console.log("📦 GeoJSON geladen:", {
+      features: this._geoData?.features?.length,
+      keys: Object.keys(this._geoData || {})
     });
 
-this._geoLayer.addTo(this.map);
+    if (!this._geoData?.features?.length) {
+      console.error("❌ GeoJSON enthält KEINE Features!");
+      console.groupEnd();
+      return;
+    }
 
-// 🔥 Radius-Filter direkt nach dem Laden anwenden
-const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-this.applyRadiusFilter(radius);
+    // Notes extrahieren
+    this.geoNotes = {};
+    (this._geoData.features || []).forEach((feature, i) => {
+      const plz = feature.properties?.plz?.trim();
+      const note = feature.properties?.note?.trim();
 
-// 📍 Automatisch auf die volle Ausdehnung zoomen
-const bounds = this._geoLayer.getBounds();
-console.log("Geojson einrahmen");
-this.map.fitBounds(bounds, {
-  padding: [20, 20],
-  maxZoom: 14
-});
+      if (i < 5) {
+        console.log("🔎 Feature", i, { plz, note });
+      }
 
+      if (plz && note) {
+        this.geoNotes[plz] = note;
+      }
+    });
+
+    console.log("📝 Notes geladen:", Object.keys(this.geoNotes).length);
+
+    // Gefilterte Daten holen
+    const filteredData = this.getFilteredData();
+    console.log("📊 Gefilterte Datensätze:", filteredData.length);
+
+    // PLZ-Werte extrahieren
+    const plzWerte = this.extractPLZWerte(filteredData);
+    console.log("📍 PLZ-Werte extrahiert:", Object.keys(plzWerte).length);
+
+    // GeoLayer erzeugen
+    console.log("🗺️ Erzeuge GeoLayer…");
+    this._geoLayer = L.geoJSON(this._geoData, {
+      style: feature => {
+        const plz = feature.properties?.plz?.trim();
+        const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+        const isHZ = this.hzFlags?.[plz] ?? false;
+
+        const value = isHZ ? values.wk : values.wkPot;
+
+        return {
+          fillColor: this.getColor(value, isHZ),
+          weight: 1,
+          opacity: 1,
+          color: "white",
+          fillOpacity: 0.5
+        };
+      },
+
+      onEachFeature: (feature, layer) => {
+        const plz = feature.properties?.plz?.trim();
+
+        if (!plz) {
+          console.warn("⚠️ Feature ohne PLZ:", feature);
+          return;
+        }
+
+        layer.on("click", e => {
+          const plz = e.target.feature.properties.plz?.toString().trim();
+          const kennwerte = this.filteredKennwerte[plz];
+
+          this.highlightMapArea(plz);
+          this.showPopup(e.target.feature, kennwerte);
+          this.highlightTableRowByPLZ(plz);
+        });
+      }
+    });
+
+    console.log("🧱 GeoLayer erzeugt:", {
+      layerCount: this._geoLayer.getLayers().length
+    });
+
+    this._geoLayer.addTo(this.map);
+    console.log("🗺️ GeoLayer zur Karte hinzugefügt.");
+
+    // Radiusfilter anwenden
+    const radius = Number(
+      this._shadowRoot.getElementById("radius-slider").value
+    );
+    console.log("📏 Radiusfilter:", radius);
+    this.applyRadiusFilter(radius);
+
+    // Karte einrahmen
+    const bounds = this._geoLayer.getBounds();
+    console.log("📐 Bounds:", bounds);
+
+    console.log("🌍 Geojson einrahmen");
+    this.map.fitBounds(bounds, {
+      padding: [20, 20],
+      maxZoom: 14
+    });
 
   } catch (error) {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
+
+  console.groupEnd();
 }
+
 
 
 
