@@ -694,13 +694,14 @@ renderDataTableFromEntries(entries) {
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
-  const headers = [
-    { label: 'PLZ', width: '40px' },
-    { label: 'Gemeinde', width: '90px' },
-    { label: 'HZ', width: '20px' },
-    { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
-    { label: 'WK (%)\nincl. Nachb.', width: '50px' }
-  ];
+const headers = [
+  { label: 'PLZ', width: '40px' },
+  { label: 'Gemeinde', width: '90px' },
+  { label: 'HZ', width: '20px' },
+  { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
+  { label: 'WK (%)', width: '50px' }   // ✔ geändert
+];
+
 
   headers.forEach(({ label, width }, i) => {
     const th = document.createElement('th');
@@ -750,7 +751,7 @@ if (this.filteredKennwerte[plz]?.isCritical) {
 
 
     const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
-    const wk = kennwerte["value_wk_nachbar_0"]?.raw?.toFixed(1) ?? '–';
+    const wk = kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–';  // ✔ geändert
 
 const rowValues = [plz, note, symbol, umsatz, wk];
 
