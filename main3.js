@@ -2333,6 +2333,7 @@ prepareErhebungsInfo() {
     if (!erfasst_valid[nl]) erfasst_valid[nl] = 0;
 
     // 1) Erfasster Umsatz (inkl. 00000)
+    //    → PLZ 00000 MUSS hier rein
     erfasst_total[nl] += umsatzErhebung;
 
     // 2) Jahresumsatz (ohne 00000)
@@ -2358,12 +2359,18 @@ prepareErhebungsInfo() {
       erfasst_total: total,
       erfasst_valid: valid,
 
+      // Abdeckungsgrad Erhebung
       pct_erfassung: jahr > 0 ? total / jahr : 0,
+
+      // Validitätsquote
       pct_valid: total > 0 ? valid / total : 0,
+
+      // Abdeckungsgrad Jahresumsatz
       pct_hochrechnung: jahr > 0 ? valid / jahr : 0
     };
   });
 }
+
 
 
 renderErhebungsInfo() {
