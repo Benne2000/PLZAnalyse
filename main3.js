@@ -1333,6 +1333,12 @@ showPopup(feature) {
 
 
 applyFilter(erhID, jahr, nummer) {
+  console.group("▶ applyFilter()");
+  console.log("ErhebungsID:", erhID);
+  console.log("Jahr:", jahr);
+  console.log("Nummer:", nummer);
+
+  // 🔥 Aktiven Filter speichern
   this._activeFilter = { erhID, jahr, nummer };
 
   // 🔄 NL-Auswahl zurücksetzen
@@ -1341,46 +1347,207 @@ applyFilter(erhID, jahr, nummer) {
   } else {
     this._selectedNLs.clear();
   }
-  // 1) Daten filtern (Erhebung)
-  const filteredData = this.getFilteredData();
 
-  // 🔥 WICHTIG: global merken, damit applyNLFilter() darauf arbeiten kann
+  // 1️⃣ Daten filtern (inkl. PLZ 00000)
+  const filteredData = this.getFilteredData();
   this.filteredData = filteredData;
 
-  // HZ-Flags neu berechnen
+  // 2️⃣ HZ-Flags neu berechnen
   this.hzFlags = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
-    const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
-    if (plz) {
-      this.hzFlags[plz] = hz === "X";
-    }
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    if (plz) this.hzFlags[plz] = hz;
   });
 
-  // 2) PLZ-Liste extrahieren
+  // 3️⃣ PLZ-Liste extrahieren (ohne 00000)
   this.filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember");
+    .filter(plz => plz && plz !== "@NullMember" && plz !== "00000");
 
-  // 3) Karte einfärben
+  // 4️⃣ Geo-Layer aktualisieren
   this.updateGeoLayer();
 
-  // 4) NL-Marker filtern
+  // 5️⃣ Marker aktualisieren
   this.updateMarkers();
 
-  // 5) Radius merken + anwenden
+  // 6️⃣ Radius anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
 
-  // 6) Tabelle nach Radiusfilter
+  // 7️⃣ Tabelle aktualisieren (PLZ-Tabelle)
   this.renderDataTable(this.filteredKennwerte);
 
-  // 7) Zoom
+  // 8️⃣ Erhebungsinfo berechnen (inkl. PLZ 00000)
+  this.prepareErhebungsInfo(filteredData);
+
+  // 9️⃣ Erhebungsinfo anzeigen (links)
+  this.renderErhebungsInfo();
+
+  // 🔟 Autozoom
   this.zoomToFilteredPLZ();
+
+  console.groupEnd();
 }
 
 
+getColorForView(viewName, value) {
+  const v = typeof value === "number" && !isNaN(value) ? value : 0;
+
+  switch (viewName) {
+
+    case "werbung":
+      return this.getColor(v, false); // bestehende WK-Farbskala
+
+    case "umsatz":
+      return v > 500000 ? "#800026" :
+             v > 250000 ? "#BD0026" :
+             v > 100000 ? "#E31A1C" :
+             v > 50000  ? "#FC4E2A" :
+             v > 20000  ? "#FD8D3C" :
+             v > 10000  ? "#FEB24C" :
+             v > 5000   ? "#FED976" :
+                           "#FFEDA0";
+
+    case "grosskunden":
+      return v > 100000 ? "#4B0082" :
+             v > 50000  ? "#6A0DAD" :
+             v > 20000  ? "#8A2BE2" :
+             v > 10000  ? "#9B30FF" :
+             v > 5000   ? "#B266FF" :
+                           "#E5CCFF";
+
+    case "ra":
+      return v > 50000 ? "#00441B" :
+             v > 25000 ? "#006D2C" :
+             v > 10000 ? "#238B45" :
+             v > 5000  ? "#41AE76" :
+             v > 2000  ? "#66C2A4" :
+                          "#CCECE6";
+
+    case "online":
+      return v > 50000 ? "#7F007F" :
+             v > 25000 ? "#B300B3" :
+             v > 10000 ? "#CC00CC" :
+             v > 5000  ? "#E066E0" :
+             v > 2000  ? "#F2B3F2" :
+                          "#F7DFF7";
+
+    default:
+      return "#cfd4da";
+  }
+}
+
+
+
+createViewLayers() {
+  if (!this._geoData) return;
+
+  this.viewLayers = {};
+
+  const views = ["werbung", "umsatz", "grosskunden", "ra", "online"];
+
+  views.forEach(viewName => {
+    this.viewLayers[viewName] = L.geoJSON(this._geoData, {
+  renderer: L.canvas(),
+
+      style: feature => {
+        const plz = String(feature.properties?.plz ?? "").padStart(5, "0");
+
+        // PLZ 00000 niemals anzeigen
+        if (plz === "00000") {
+          return { fillOpacity: 0, opacity: 0 };
+        }
+
+        const data = this.filteredKennwerte?.[plz];
+        if (!data) {
+          return { fillColor: "#cfd4da", fillOpacity: 0.3, color: "#fff", weight: 1 };
+        }
+
+        let value = 0;
+
+        switch (viewName) {
+          case "werbung":
+            value = data.value_wk_in_percent_0?.raw ?? 0;
+            break;
+          case "umsatz":
+            value = data.value_ums_erhebung_0?.raw ?? 0;
+            break;
+          case "grosskunden":
+            value = data.value_umsatz_grosskunden_0?.raw ?? 0;
+            break;
+          case "ra":
+            value = data.value_umsatz_ra_0?.raw ?? 0;
+            break;
+          case "online":
+            value = data.value_umsatz_online_0?.raw ?? 0;
+            break;
+        }
+
+        return {
+          fillColor: this.getColorForView(viewName, value),
+          fillOpacity: 0.6,
+          color: "#ffffff",
+          weight: 1
+        };
+      }
+    });
+  });
+}
+
+toggleView(viewName) {
+  if (!this.viewLayers || !this.viewLayers[viewName]) return;
+
+  const layer = this.viewLayers[viewName];
+
+  if (this.map.hasLayer(layer)) {
+    this.map.removeLayer(layer);
+    this.renderLegend(""); // Legende leeren
+  } else {
+    layer.addTo(this.map);
+    this.renderLegend(viewName);
+    this.applyLayerZIndex();
+  }
+}
+
+
+
+renderViewSelector() {
+  const popup = this._shadowRoot.getElementById("side-popup");
+  if (!popup) return;
+
+  let selector = this._shadowRoot.getElementById("view-selector");
+  if (selector) selector.remove();
+
+  selector = document.createElement("div");
+  selector.id = "view-selector";
+  selector.style.marginTop = "20px";
+  selector.style.padding = "10px";
+  selector.style.borderTop = "2px solid #b41821";
+  selector.style.fontSize = "0.85rem";
+
+  selector.innerHTML = `
+    <strong>Ansichten:</strong><br><br>
+    <label><input type="checkbox" data-view="werbung"> Werbung</label><br>
+    <label><input type="checkbox" data-view="umsatz"> Umsatz</label><br>
+    <label><input type="checkbox" data-view="grosskunden"> Großkunden</label><br>
+    <label><input type="checkbox" data-view="ra"> R&A</label><br>
+    <label><input type="checkbox" data-view="online"> Online</label><br>
+  `;
+
+  popup.appendChild(selector);
+
+  selector.querySelectorAll("input[type=checkbox]").forEach(cb => {
+    cb.addEventListener("change", () => {
+      const view = cb.dataset.view;
+      this.toggleView(view);
+    });
+  });
+
+  this.renderOpacitySlider();
+
+}
 
 
 
@@ -2129,6 +2296,115 @@ getFilteredDataWithRadius() {
 }
 
 
+prepareErhebungsInfo(filteredData) {
+  // Struktur zurücksetzen
+  this.erhebungsInfo = {};
+
+  if (!Array.isArray(filteredData) || filteredData.length === 0) {
+    return;
+  }
+
+  // Hilfsstrukturen
+  const sumValid = {};     // Umsätze ohne 00000
+  const sumTotal = {};     // Umsätze inkl. 00000
+
+  filteredData.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    if (!nl) return;
+
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ).padStart(5, "0");
+
+    const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+
+    // Gesamtumsatz immer addieren
+    sumTotal[nl] = (sumTotal[nl] || 0) + umsatz;
+
+    // Valider Umsatz nur wenn PLZ != 00000
+    if (plz !== "00000") {
+      sumValid[nl] = (sumValid[nl] || 0) + umsatz;
+    }
+  });
+
+  // Ergebnisstruktur aufbauen
+  Object.keys(sumTotal).forEach(nl => {
+    const total = sumTotal[nl] || 0;
+    const valid = sumValid[nl] || 0;
+    const percent = total > 0 ? valid / total : 0;
+
+    this.erhebungsInfo[nl] = {
+      nl,
+      total,
+      valid,
+      percent
+    };
+  });
+}
+
+
+renderErhebungsInfo() {
+  const container = this._shadowRoot.querySelector(".filter-container");
+  if (!container) return;
+
+  // Vorherige Inhalte entfernen
+  container.innerHTML = "";
+
+  const wrapper = document.createElement("div");
+  wrapper.style.padding = "10px";
+  wrapper.style.fontFamily = "sans-serif";
+
+  wrapper.innerHTML = `
+    <h3 style="margin-top:0;color:#b41821;">Erhebungsübersicht</h3>
+    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+      <thead>
+        <tr style="background:#b41821;color:white;">
+          <th style="padding:6px;text-align:left;">NL</th>
+          <th style="padding:6px;text-align:right;">Gesamt</th>
+          <th style="padding:6px;text-align:right;">Valide</th>
+          <th style="padding:6px;text-align:right;">%</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${Object.values(this.erhebungsInfo).map(info => `
+          <tr>
+            <td style="padding:6px;">${info.nl}</td>
+            <td style="padding:6px;text-align:right;">${info.total.toLocaleString("de-DE")}</td>
+            <td style="padding:6px;text-align:right;">${info.valid.toLocaleString("de-DE")}</td>
+            <td style="padding:6px;text-align:right;">${(info.percent * 100).toFixed(1)}%</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <button id="btn-erhebung-weiter"
+      style="
+        margin-top:15px;
+        width:100%;
+        padding:8px;
+        background:#b41821;
+        color:white;
+        border:none;
+        cursor:pointer;
+        border-radius:4px;
+      ">
+      Weiter zur PLZ-Analyse
+    </button>
+  `;
+
+  container.appendChild(wrapper);
+
+  // Smooth Fade-Out + PLZ-Tabelle anzeigen
+  const btn = wrapper.querySelector("#btn-erhebung-weiter");
+  btn.addEventListener("click", () => {
+    wrapper.style.transition = "opacity 0.4s ease";
+    wrapper.style.opacity = "0";
+
+    setTimeout(() => {
+      container.innerHTML = "";
+      this.renderDataTable(this.filteredKennwerte);
+    }, 400);
+  });
+}
 
 
 
@@ -2261,11 +2537,275 @@ getFilteredDataWithRadius() {
     this.renderDataTable(this.filteredKennwerte);
 
     this.hideSpinner();
+    // Multi-Layer-System vorbereiten
+this.createViewLayers();
+
+// UI für Ansichten anzeigen
+this.renderViewSelector();
+
   }
 
+computeLegendBreaks(viewName) {
+  const values = [];
+
+  Object.values(this.filteredKennwerte || {}).forEach(row => {
+    let v = 0;
+
+    switch (viewName) {
+      case "werbung":
+        v = row.value_wk_in_percent_0?.raw ?? 0;
+        break;
+      case "umsatz":
+        v = row.value_ums_erhebung_0?.raw ?? 0;
+        break;
+      case "grosskunden":
+        v = row.value_umsatz_grosskunden_0?.raw ?? 0;
+        break;
+      case "ra":
+        v = row.value_umsatz_ra_0?.raw ?? 0;
+        break;
+      case "online":
+        v = row.value_umsatz_online_0?.raw ?? 0;
+        break;
+    }
+
+    if (typeof v === "number" && v > 0) values.push(v);
+  });
+
+  if (values.length === 0) return [0, 1, 2, 3, 4, 5];
+
+  values.sort((a, b) => a - b);
+
+  const breaks = [];
+  const step = Math.floor(values.length / 6);
+
+  for (let i = 1; i <= 6; i++) {
+    breaks.push(values[Math.min(i * step, values.length - 1)]);
+  }
+
+  return breaks;
+}
+
+renderDynamicLegend(viewName) {
+  const legendContainer = this._shadowRoot.getElementById("legend");
+  if (!legendContainer) return;
+
+  const breaks = this.computeLegendBreaks(viewName);
+
+  let html = `<strong>${viewName.toUpperCase()}</strong><br>`;
+
+  for (let i = 0; i < breaks.length; i++) {
+    const from = i === 0 ? 0 : breaks[i - 1];
+    const to = breaks[i];
+
+    const color = this.getColorForView(viewName, to);
+
+    html += `
+      <i style="background:${color}"></i>
+      ${from.toLocaleString("de-DE")} – ${to.toLocaleString("de-DE")}<br>
+    `;
+  }
+
+  legendContainer.innerHTML = html;
+}
+
+computeCombinedValue(plz, activeViews, mode = "max") {
+  const row = this.filteredKennwerte?.[plz];
+  if (!row) return 0;
+
+  const values = activeViews.map(view => {
+    switch (view) {
+      case "werbung": return row.value_wk_in_percent_0?.raw ?? 0;
+      case "umsatz": return row.value_ums_erhebung_0?.raw ?? 0;
+      case "grosskunden": return row.value_umsatz_grosskunden_0?.raw ?? 0;
+      case "ra": return row.value_umsatz_ra_0?.raw ?? 0;
+      case "online": return row.value_umsatz_online_0?.raw ?? 0;
+      default: return 0;
+    }
+  });
+
+  if (mode === "max") {
+    return Math.max(...values);
+  }
+
+  if (mode === "add") {
+    return values.reduce((a, b) => a + b, 0);
+  }
+
+  if (mode === "weighted") {
+    const weights = {
+      werbung: 0.3,
+      umsatz: 0.5,
+      grosskunden: 0.1,
+      ra: 0.05,
+      online: 0.05
+    };
+
+    return activeViews.reduce((sum, view, i) => {
+      return sum + values[i] * (weights[view] || 0.1);
+    }, 0);
+  }
+
+  return 0;
+}
+animateLayerTransition(layer, duration = 300) {
+  layer.eachLayer(l => {
+    const el = l._path;
+    if (!el) return;
+
+    el.style.transition = `fill ${duration}ms ease, fill-opacity ${duration}ms ease`;
+  });
+}
+
+exportMapAsPNG() {
+  if (!this.map) return;
+
+  import("https://unpkg.com/leaflet-simple-map-screenshoter").then(module => {
+    const screenshoter = module.default({
+      hidden: true,
+      mimeType: "image/png",
+      domtoimageOptions: { quality: 1 }
+    });
+
+    screenshoter.takeScreen("map").then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "karte.png";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  });
+}
+
+createNLHeatmap() {
+  if (!this.nlMarkers || this.nlMarkers.length === 0) return;
+
+  const points = this.nlMarkers.map(nl => {
+    const nlName = nl.marker.options.plzs?.[0];
+    const sum = Object.values(this.filteredKennwerte || {})
+      .filter(row => row.nl === nlName)
+      .reduce((a, b) => a + (b.value_ums_erhebung_0?.raw ?? 0), 0);
+
+    return [nl.lat, nl.lng, sum];
+  });
+
+  this.nlHeatmap = L.heatLayer(points, {
+    radius: 40,
+    blur: 25,
+    maxZoom: 12
+  });
+}
 
 
+renderLegend(viewName) {
+  const legendContainer = this._shadowRoot.getElementById("legend");
+  if (!legendContainer) return;
 
+  const legends = {
+    werbung: `
+      <strong>Werbung (WK)</strong><br>
+      <i style="background:#006837"></i> 0–2%<br>
+      <i style="background:#41ab5d"></i> 2–5%<br>
+      <i style="background:#78c679"></i> 5–10%<br>
+      <i style="background:#ffffb2"></i> 10–15%<br>
+      <i style="background:#fd8d3c"></i> 15–25%<br>
+      <i style="background:#e31a1c"></i> >25%
+    `,
+    umsatz: `
+      <strong>Umsatz</strong><br>
+      <i style="background:#FFEDA0"></i> 0–5k<br>
+      <i style="background:#FED976"></i> 5–10k<br>
+      <i style="background:#FEB24C"></i> 10–20k<br>
+      <i style="background:#FD8D3C"></i> 20–50k<br>
+      <i style="background:#FC4E2A"></i> 50–100k<br>
+      <i style="background:#E31A1C"></i> 100–250k<br>
+      <i style="background:#BD0026"></i> 250–500k<br>
+      <i style="background:#800026"></i> >500k
+    `,
+    grosskunden: `
+      <strong>Großkunden</strong><br>
+      <i style="background:#E5CCFF"></i> 0–5k<br>
+      <i style="background:#B266FF"></i> 5–10k<br>
+      <i style="background:#9B30FF"></i> 10–20k<br>
+      <i style="background:#8A2BE2"></i> 20–50k<br>
+      <i style="background:#6A0DAD"></i> 50–100k<br>
+      <i style="background:#4B0082"></i> >100k
+    `,
+    ra: `
+      <strong>R&A</strong><br>
+      <i style="background:#CCECE6"></i> 0–2k<br>
+      <i style="background:#66C2A4"></i> 2–5k<br>
+      <i style="background:#41AE76"></i> 5–10k<br>
+      <i style="background:#238B45"></i> 10–25k<br>
+      <i style="background:#006D2C"></i> 25–50k<br>
+      <i style="background:#00441B"></i> >50k
+    `,
+    online: `
+      <strong>Online</strong><br>
+      <i style="background:#F7DFF7"></i> 0–2k<br>
+      <i style="background:#F2B3F2"></i> 2–5k<br>
+      <i style="background:#E066E0"></i> 5–10k<br>
+      <i style="background:#CC00CC"></i> 10–25k<br>
+      <i style="background:#B300B3"></i> 25–50k<br>
+      <i style="background:#7F007F"></i> >50k
+    `
+  };
+
+  legendContainer.innerHTML = legends[viewName] || "";
+}
+
+renderOpacitySlider() {
+  const popup = this._shadowRoot.getElementById("side-popup");
+  if (!popup) return;
+
+  let slider = this._shadowRoot.getElementById("opacity-slider");
+  if (slider) slider.remove();
+
+  slider = document.createElement("div");
+  slider.id = "opacity-slider";
+  slider.style.marginTop = "20px";
+  slider.style.padding = "10px";
+  slider.style.borderTop = "2px solid #b41821";
+
+  slider.innerHTML = `
+    <label style="font-size:0.85rem;">
+      Transparenz:
+      <span id="opacity-value">60%</span>
+    </label>
+    <input type="range" min="10" max="100" value="60" step="5"
+      style="width:100%;margin-top:8px;">
+  `;
+
+  popup.appendChild(slider);
+
+  const range = slider.querySelector("input");
+  const valueLabel = slider.querySelector("#opacity-value");
+
+  range.addEventListener("input", () => {
+    const opacity = Number(range.value) / 100;
+    valueLabel.textContent = `${range.value}%`;
+
+    Object.values(this.viewLayers || {}).forEach(layer => {
+      layer.setStyle({ fillOpacity: opacity });
+    });
+  });
+}
+
+applyLayerZIndex() {
+  if (!this.viewLayers) return;
+
+  const order = ["werbung", "umsatz", "grosskunden", "ra", "online"];
+
+  order.forEach((view, index) => {
+    const layer = this.viewLayers[view];
+    if (!layer) return;
+
+    layer.eachLayer(l => {
+      l.setZIndex(100 + index * 10);
+    });
+  });
+}
 
 
 
