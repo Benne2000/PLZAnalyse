@@ -314,6 +314,9 @@
   background-color: #f0f8ff;
   cursor: pointer;
 }
+.filter-container.nl-info-active .table-container {
+  margin-top: 620px; /* oder dynamisch, je nach NL-Tabellenhöhe */
+}
 
 .table-container {
   transition: margin-top 0.35s ease;
@@ -1805,20 +1808,24 @@ infoBtn.style.cursor = "pointer";
 infoBtn.style.borderRadius = "4px";
 
 infoBtn.addEventListener("click", () => {
-  // 1) Kennzahlen berechnen
-  this.prepareErhebungsInfo();
+  const nlBox = this._shadowRoot.getElementById("nl-info-container");
+  const filter = this._shadowRoot.querySelector(".filter-container");
 
-  // 2) Tabelle rendern
+  // Wenn NL-Info sichtbar → wieder schließen
+  if (nlBox.classList.contains("show")) {
+    nlBox.classList.remove("show");
+    filter.classList.remove("nl-info-active");
+    return;
+  }
+
+  // Wenn NL-Info NICHT sichtbar → öffnen
+  this.prepareErhebungsInfo();
   this.renderErhebungsInfoTable();
 
-  // 3) NL-Box einblenden
-  const nlBox = this._shadowRoot.getElementById("nl-info-container");
   nlBox.classList.add("show");
-
-  // 4) PLZ-Tabelle nach unten schieben
-  const filter = this._shadowRoot.querySelector(".filter-container");
   filter.classList.add("nl-info-active");
 });
+
 
 this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
 
