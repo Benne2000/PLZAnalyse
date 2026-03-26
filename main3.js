@@ -2295,18 +2295,16 @@ getFilteredDataWithRadius() {
   return result;
 }
 
-
 prepareErhebungsInfo(filteredData) {
-  // Struktur zurücksetzen
   this.erhebungsInfo = {};
 
   if (!Array.isArray(filteredData) || filteredData.length === 0) {
     return;
   }
 
-  // Hilfsstrukturen
-  const sumValid = {};     // Umsätze ohne 00000
-  const sumTotal = {};     // Umsätze inkl. 00000
+  const jahresumsatz = {};      // Netto ohne 00000
+  const erfasst_total = {};     // Erhebung inkl. 00000
+  const erfasst_valid = {};     // Erhebung ohne 00000
 
   filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
@@ -2317,36 +2315,41 @@ prepareErhebungsInfo(filteredData) {
 
     const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
 
-    // Gesamtumsatz immer addieren
-    sumTotal[nl] = (sumTotal[nl] || 0) + umsatz;
+    // 1) Erfasster Umsatz (inkl. 00000)
+    erfasst_total[nl] = (erfasst_total[nl] || 0) + umsatz;
 
-    // Valider Umsatz nur wenn PLZ != 00000
+    // 2) Jahresumsatz (ohne 00000)
     if (plz !== "00000") {
-      sumValid[nl] = (sumValid[nl] || 0) + umsatz;
+      jahresumsatz[nl] = (jahresumsatz[nl] || 0) + umsatz;
+    }
+
+    // 3) Valide Erhebung (ohne 00000)
+    if (plz !== "00000") {
+      erfasst_valid[nl] = (erfasst_valid[nl] || 0) + umsatz;
     }
   });
 
-  // Ergebnisstruktur aufbauen
-  Object.keys(sumTotal).forEach(nl => {
-    const total = sumTotal[nl] || 0;
-    const valid = sumValid[nl] || 0;
-    const percent = total > 0 ? valid / total : 0;
+  Object.keys(erfasst_total).forEach(nl => {
+    const jahr = jahresumsatz[nl] || 0;
+    const total = erfasst_total[nl] || 0;
+    const valid = erfasst_valid[nl] || 0;
 
     this.erhebungsInfo[nl] = {
       nl,
-      total,
-      valid,
-      percent
+      jahresumsatz: jahr,
+      erfasst_total: total,
+      erfasst_valid: valid,
+      pct_erfassung: jahr > 0 ? total / jahr : 0,
+      pct_valid: total > 0 ? valid / total : 0,
+      pct_hochrechnung: jahr > 0 ? valid / jahr : 0
     };
   });
 }
-
 
 renderErhebungsInfo() {
   const container = this._shadowRoot.querySelector(".filter-container");
   if (!container) return;
 
-  // Vorherige Inhalte entfernen
   container.innerHTML = "";
 
   const wrapper = document.createElement("div");
@@ -2355,22 +2358,47 @@ renderErhebungsInfo() {
 
   wrapper.innerHTML = `
     <h3 style="margin-top:0;color:#b41821;">Erhebungsübersicht</h3>
-    <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+
+    <table style="width:100%;border-collapse:collapse;font-size:0.8rem;">
       <thead>
         <tr style="background:#b41821;color:white;">
           <th style="padding:6px;text-align:left;">NL</th>
-          <th style="padding:6px;text-align:right;">Gesamt</th>
-          <th style="padding:6px;text-align:right;">Valide</th>
-          <th style="padding:6px;text-align:right;">%</th>
+          <th style="padding:6px;text-align:right;">Jahresumsatz</th>
+          <th style="padding:6px;text-align:right;">Erfasst (Zeitraum)</th>
+          <th style="padding:6px;text-align:right;">Abdeckungsgrad Erhebung</th>
+          <th style="padding:6px;text-align:right;">Valide Erhebung</th>
+          <th style="padding:6px;text-align:right;">Validitätsquote</th>
+          <th style="padding:6px;text-align:right;">Abdeckungsgrad Jahresumsatz</th>
         </tr>
       </thead>
       <tbody>
         ${Object.values(this.erhebungsInfo).map(info => `
           <tr>
             <td style="padding:6px;">${info.nl}</td>
-            <td style="padding:6px;text-align:right;">${info.total.toLocaleString("de-DE")}</td>
-            <td style="padding:6px;text-align:right;">${info.valid.toLocaleString("de-DE")}</td>
-            <td style="padding:6px;text-align:right;">${(info.percent * 100).toFixed(1)}%</td>
+
+            <td style="padding:6px;text-align:right;">
+              ${info.jahresumsatz.toLocaleString("de-DE")}
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${info.erfasst_total.toLocaleString("de-DE")}
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${(info.pct_erfassung * 100).toFixed(1)}%
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${info.erfasst_valid.toLocaleString("de-DE")}
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${(info.pct_valid * 100).toFixed(1)}%
+            </td>
+
+            <td style="padding:6px;text-align:right;">
+              ${(info.pct_hochrechnung * 100).toFixed(1)}%
+            </td>
           </tr>
         `).join("")}
       </tbody>
@@ -2393,14 +2421,16 @@ renderErhebungsInfo() {
 
   container.appendChild(wrapper);
 
-  // Smooth Fade-Out + PLZ-Tabelle anzeigen
   const btn = wrapper.querySelector("#btn-erhebung-weiter");
   btn.addEventListener("click", () => {
     wrapper.style.transition = "opacity 0.4s ease";
     wrapper.style.opacity = "0";
 
     setTimeout(() => {
-      container.innerHTML = "";
+      // Linke UI wiederherstellen
+      this.restoreFilterUI();
+
+      // PLZ-Tabelle rendern
       this.renderDataTable(this.filteredKennwerte);
     }, 400);
   });
@@ -2695,6 +2725,32 @@ createNLHeatmap() {
     blur: 25,
     maxZoom: 12
   });
+}
+
+restoreFilterUI() {
+  const container = this._shadowRoot.querySelector(".filter-container");
+  if (!container) return;
+
+  container.innerHTML = `
+    <label for="erhebung-select">ErhebungsID:</label>
+    <select id="erhebung-select"></select>
+
+    <label for="jahr-select">Jahr:</label>
+    <select id="jahr-select" disabled></select>
+
+    <label for="nummer-select">Erhebungsnummer:</label>
+    <select id="nummer-select" disabled></select>
+
+    <button id="filter-button">Anzeigen</button>
+
+    <div class="table-container">
+      <div class="table-wrapper" id="table-container"></div>
+      <div id="streuverlust-box"></div>
+    </div>
+  `;
+
+  // Dropdowns neu initialisieren
+  this.setupFilterDropdowns();
 }
 
 
