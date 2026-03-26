@@ -1233,30 +1233,36 @@ getFilteredData() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
 
   console.group("🔍 Filtervorgang gestartet");
-  console.log("➡️ ErhebungsID:", erhID);
+  console.log("➡️ ErhebungsID (Dropdown):", erhID);
   console.log("➡️ Jahr:", jahr);
-  console.log("➡️ Nummer:", nummer);
+  console.log("➡️ Nummer (Dropdown):", nummer);
 
-  // 🔥 WICHTIG: beide Strukturen initialisieren
-  const filteredKennwerte = {};   // komplette Zeilen → Tabelle & Popup
-  const filteredPLZWerte = {};    // extrahierte Werte → Farben
+  // ErhebungsID-Liste splitten
+  const erhList = erhID ? erhID.split("/") : [];
+
+  // Nummer normalisieren (z. B. "1" → "001")
+  const nummerNorm = nummer?.padStart(3, "0");
+
+  const filteredKennwerte = {};
+  const filteredPLZWerte = {};
 
   const filtered = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
     const y = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
+
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
 
-
-    const match = id === erhID && y === jahr && num === nummer;
+    // 🔥 MATCH-LOGIK korrigiert:
+    const match =
+      erhList.includes(id) &&     // Erhebung: Einzelwert muss in Liste sein
+      y === jahr &&               // Jahr muss exakt matchen
+      num === nummerNorm;         // Nummer normalisiert vergleichen
 
     if (match && plz && plz !== "@NullMember") {
-
-      // 🔵 1) komplette Datenzeile speichern (Popup + Tabelle)
       filteredKennwerte[plz] = row;
 
-      // 🔵 2) extrahierte Werte für Farben speichern
       filteredPLZWerte[plz] = {
         wk: row["value_wk_in_percent_0"]?.raw ?? 0,
         wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
@@ -1271,7 +1277,6 @@ getFilteredData() {
     return match;
   });
 
-  // 🔥 Beide Strukturen global speichern
   this.filteredKennwerte = filteredKennwerte;
   this.filteredPLZWerte = filteredPLZWerte;
 
