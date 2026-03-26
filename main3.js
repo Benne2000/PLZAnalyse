@@ -1378,6 +1378,10 @@ applyFilter(erhID, jahr, nummer) {
 
   // 7) Zoom
   this.zoomToFilteredPLZ();
+
+  // 8) Erhebungsinfo vorbereiten
+this.prepareErhebungsInfo();
+
 }
 
 
@@ -1737,11 +1741,212 @@ updateMarkers() {
         }
       });
     }
+ 
+// Button für Erhebungsübersicht
+const infoBtn = document.createElement("button");
+infoBtn.textContent = "Erhebungsübersicht";
+infoBtn.style.marginTop = "10px";
+infoBtn.style.padding = "6px";
+infoBtn.style.background = "#b41821";
+infoBtn.style.color = "white";
+infoBtn.style.border = "none";
+infoBtn.style.cursor = "pointer";
+infoBtn.style.borderRadius = "4px";
+
+infoBtn.addEventListener("click", () => {
+  this.prepareErhebungsInfo();
+  this.renderErhebungsInfo();
+});
+
+this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
+
+
   }
+restoreFilterUI() {
+  const container = this._shadowRoot.querySelector(".filter-container");
+  if (!container) return;
+
+  container.innerHTML = `
+    <label for="erhebung-select">ErhebungsID:</label>
+    <select id="erhebung-select"></select>
+
+    <label for="jahr-select">Jahr:</label>
+    <select id="jahr-select" disabled></select>
+
+    <label for="nummer-select">Erhebungsnummer:</label>
+    <select id="nummer-select" disabled></select>
+
+    <button id="filter-button">Anzeigen</button>
+
+    <div class="table-container">
+      <div class="table-wrapper" id="table-container"></div>
+      <div id="streuverlust-box"></div>
+    </div>
+  `;
+}
+restoreDropdownSelections() {
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  const erhSelect = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect = this._shadowRoot.getElementById("jahr-select");
+  const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+
+  if (!erhSelect || !jahrSelect || !nummerSelect) return;
+
+  if (erhID) erhSelect.value = erhID;
+  erhSelect.dispatchEvent(new Event("change"));
+
+  if (jahr) jahrSelect.value = jahr;
+  jahrSelect.dispatchEvent(new Event("change"));
+
+  if (nummer) nummerSelect.value = nummer;
+}
+
+prepareErhebungsInfo() {
+  this.erhebungsInfo = {};
+
+  const rawData = this._myDataSource?.data || [];
+  if (!Array.isArray(rawData) || rawData.length === 0) return;
+
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  const erhData = rawData.filter(row =>
+    row["dimension_erhebung_0"]?.id == erhID &&
+    row["dimension_jahr_0"]?.id == jahr &&
+    row["dimension_erhebungsnummer_0"]?.id == nummer
+  );
+
+  const jahresumsatz = {};
+  const erfasst_total = {};
+  const erfasst_valid = {};
+
+  erhData.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    if (!nl) return;
+
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ).padStart(5, "0");
+
+    const umsatzJahr = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    const umsatzErhebung = row["value_ums_erhebung_0"]?.raw ?? 0;
+
+    if (!jahresumsatz[nl]) jahresumsatz[nl] = 0;
+    if (!erfasst_total[nl]) erfasst_total[nl] = 0;
+    if (!erfasst_valid[nl]) erfasst_valid[nl] = 0;
+
+    erfasst_total[nl] += umsatzErhebung;
+
+    if (plz !== "00000") {
+      jahresumsatz[nl] += umsatzJahr;
+      erfasst_valid[nl] += umsatzErhebung;
+    }
+  });
+
+  Object.keys(erfasst_total).forEach(nl => {
+    const jahrU = jahresumsatz[nl] || 0;
+    const total = erfasst_total[nl] || 0;
+    const valid = erfasst_valid[nl] || 0;
+
+    this.erhebungsInfo[nl] = {
+      nl,
+      jahresumsatz: jahrU,
+      erfasst_total: total,
+      erfasst_valid: valid,
+      pct_erfassung: jahrU > 0 ? total / jahrU : 0,
+      pct_valid: total > 0 ? valid / total : 0,
+      pct_hochrechnung: jahrU > 0 ? valid / jahrU : 0
+    };
+  });
+}
 
 
 
+renderErhebungsInfo() {
+  this._infoMaskActive = true;
 
+  const container = this._shadowRoot.querySelector(".filter-container");
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const wrapper = document.createElement("div");
+  wrapper.style.padding = "10px";
+  wrapper.style.fontFamily = "sans-serif";
+
+  wrapper.innerHTML = `
+    <h3 style="margin-top:0;color:#b41821;">Erhebungsübersicht</h3>
+
+    <table style="width:100%;border-collapse:collapse;font-size:0.75rem;table-layout:fixed;">
+      <thead>
+        <tr style="background:#b41821;color:white;">
+          <th style="padding:4px;text-align:left;width:50px;">NL</th>
+          <th style="padding:4px;text-align:right;width:90px;">Jahresumsatz</th>
+          <th style="padding:4px;text-align:right;width:90px;">Erfasst</th>
+          <th style="padding:4px;text-align:right;width:90px;">Abdeckung</th>
+          <th style="padding:4px;text-align:right;width:90px;">Valide</th>
+          <th style="padding:4px;text-align:right;width:90px;">Validität</th>
+          <th style="padding:4px;text-align:right;width:90px;">Jahresabdeckung</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${Object.values(this.erhebungsInfo).map(info => `
+          <tr class="nl-row" data-nl="${info.nl}" style="cursor:pointer;">
+            <td style="padding:4px;">${info.nl}</td>
+            <td style="padding:4px;text-align:right;">${info.jahresumsatz.toLocaleString("de-DE")}</td>
+            <td style="padding:4px;text-align:right;">${info.erfasst_total.toLocaleString("de-DE")}</td>
+            <td style="padding:4px;text-align:right;">${(info.pct_erfassung * 100).toFixed(1)}%</td>
+            <td style="padding:4px;text-align:right;">${info.erfasst_valid.toLocaleString("de-DE")}</td>
+            <td style="padding:4px;text-align:right;">${(info.pct_valid * 100).toFixed(1)}%</td>
+            <td style="padding:4px;text-align:right;">${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+
+    <button id="btn-erhebung-weiter"
+      style="margin-top:15px;width:100%;padding:8px;background:#b41821;color:white;border:none;cursor:pointer;border-radius:4px;">
+      Weiter zur PLZ-Analyse
+    </button>
+  `;
+
+  container.appendChild(wrapper);
+
+  // 🔥 Klick auf NL-Zeile = Klick auf Marker
+  wrapper.querySelectorAll(".nl-row").forEach(row => {
+    row.addEventListener("click", () => {
+      const nl = row.dataset.nl;
+
+      if (!this._selectedNLs) this._selectedNLs = new Set();
+      this._selectedNLs.clear();
+      this._selectedNLs.add(nl);
+
+      this.applyNLFilter([nl]);
+
+      const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+      this.applyRadiusFilter(radius);
+
+      this.updateGeoLayer();
+      this.renderDataTable(this.filteredKennwerte);
+
+      const popup = this._shadowRoot.getElementById("side-popup");
+      popup.classList.remove("show");
+    });
+  });
+
+  // 🔥 Zurück zur PLZ-Analyse
+  wrapper.querySelector("#btn-erhebung-weiter").addEventListener("click", () => {
+    wrapper.style.transition = "opacity 0.4s ease";
+    wrapper.style.opacity = "0";
+
+    setTimeout(() => {
+      this._infoMaskActive = false;
+      this.restoreFilterUI();
+      this.setupFilterDropdowns();
+      this.restoreDropdownSelections();
+      this.renderDataTable(this.filteredKennwerte);
+    }, 400);
+  });
+}
 
 
       onCustomWidgetEvent(event) {
