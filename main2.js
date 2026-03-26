@@ -1933,12 +1933,20 @@ getColorForPLZ(plz) {
 
   return this.getColor(value, isHZ);
 }
-
 getFilteredDataWithRadius() {
   if (!this.filteredData) return [];
 
   const result = [];
   const aggregated = {};
+
+  // 🔥 Ungefilterter Umsatz pro PLZ (für WK inkl. Nachbarn)
+  const unfilteredUmsatzByPLZ = {};
+  this.filteredData.forEach(row => {
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = rawPLZ == null ? "" : String(rawPLZ).padStart(5, "0");
+    const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
+  });
 
   // 🔥 Gesamtumsatz der Erhebung (nach NL-Filter, unabhängig vom Radius)
   let totalErhebungUmsatz = 0;
@@ -2060,10 +2068,24 @@ getFilteredDataWithRadius() {
     const umsatzNetto = sum.umsatzNetto;
     const hzKosten = sum.hzKosten;
 
-    const umsatzPHH = avgHaushalte > 0 ? Number((umsatzNetto / avgHaushalte).toFixed(2)) : 0;
-    const wkPercent = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
-    const bon = sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0;
-    const potHzPercent = umsatzNetto > 0 ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1)) : 0;
+    // WK normal (gefiltert)
+    const wkPercent = umsatzNetto > 0
+      ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
+      : 0;
+
+    // WK inkl. Nachbarn (ungefilterter Umsatz)
+    const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
+    const wkNachbarn = unfilteredUmsatz > 0
+      ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
+      : 0;
+
+    const bon = sum.kdErhebung > 0
+      ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2))
+      : 0;
+
+    const potHzPercent = umsatzNetto > 0
+      ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1))
+      : 0;
 
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
@@ -2072,8 +2094,9 @@ getFilteredDataWithRadius() {
       isHZ,
       isCritical,
       value_hr_n_umsatz_0: { raw: umsatzNetto },
-      value_umsatz_p_hh_0: { raw: umsatzPHH },
+      value_umsatz_p_hh_0: { raw: avgHaushalte > 0 ? Number((umsatzNetto / avgHaushalte).toFixed(2)) : 0 },
       value_wk_in_percent_0: { raw: wkPercent },
+      value_wk_nachbar_0: { raw: wkNachbarn },   // ✔ NEU
       value_hz_kosten_0: { raw: hzKosten },
       value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
       value_haushalte_0: { raw: avgHaushalte },
@@ -2088,6 +2111,7 @@ getFilteredDataWithRadius() {
 
     this.filteredPLZWerte[plz] = {
       wk: wkPercent,
+      wkNachbarn: wkNachbarn,   // ✔ NEU
       wkPot: potHzPercent,
       hz: isHZ
     };
