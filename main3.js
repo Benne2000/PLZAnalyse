@@ -2294,6 +2294,7 @@ getFilteredDataWithRadius() {
 
   return result;
 }
+
 prepareErhebungsInfo(filteredData) {
   this.erhebungsInfo = {};
 
@@ -2315,20 +2316,26 @@ prepareErhebungsInfo(filteredData) {
     const umsatzJahr = row["value_hr_n_umsatz_0"]?.raw ?? 0;
     const umsatzErhebung = row["value_ums_erhebung_0"]?.raw ?? 0;
 
+    // Initialisieren
+    if (!jahresumsatz[nl]) jahresumsatz[nl] = 0;
+    if (!erfasst_total[nl]) erfasst_total[nl] = 0;
+    if (!erfasst_valid[nl]) erfasst_valid[nl] = 0;
+
     // 1) Erfasster Umsatz (inkl. 00000)
-    erfasst_total[nl] = (erfasst_total[nl] || 0) + umsatzErhebung;
+    erfasst_total[nl] += umsatzErhebung;
 
     // 2) Jahresumsatz (ohne 00000)
     if (plz !== "00000") {
-      jahresumsatz[nl] = (jahresumsatz[nl] || 0) + umsatzJahr;
+      jahresumsatz[nl] += umsatzJahr;
     }
 
     // 3) Valide Erhebung (ohne 00000)
     if (plz !== "00000") {
-      erfasst_valid[nl] = (erfasst_valid[nl] || 0) + umsatzErhebung;
+      erfasst_valid[nl] += umsatzErhebung;
     }
   });
 
+  // Jetzt pro NL berechnen
   Object.keys(erfasst_total).forEach(nl => {
     const jahr = jahresumsatz[nl] || 0;
     const total = erfasst_total[nl] || 0;
@@ -2340,17 +2347,18 @@ prepareErhebungsInfo(filteredData) {
       erfasst_total: total,
       erfasst_valid: valid,
 
-      // Abdeckungsgrad Erhebung
+      // Abdeckungsgrad Erhebung (pro NL!)
       pct_erfassung: jahr > 0 ? total / jahr : 0,
 
-      // Validitätsquote
+      // Validitätsquote (pro NL!)
       pct_valid: total > 0 ? valid / total : 0,
 
-      // Abdeckungsgrad Jahresumsatz
+      // Abdeckungsgrad Jahresumsatz (pro NL!)
       pct_hochrechnung: jahr > 0 ? valid / jahr : 0
     };
   });
 }
+
 
 renderErhebungsInfo() {
   const container = this._shadowRoot.querySelector(".filter-container");
