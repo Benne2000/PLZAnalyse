@@ -1912,26 +1912,34 @@ renderErhebungsInfoTable() {
   `;
 
   // Klick auf NL-Zeile = Marker-Klick
-  container.querySelectorAll(".nl-info-row").forEach(row => {
-    row.addEventListener("click", () => {
-      const nl = row.dataset.nl;
+container.querySelectorAll(".nl-info-row").forEach(row => {
+  row.addEventListener("click", () => {
+    const nl = row.dataset.nl;
 
-      if (!this._selectedNLs) this._selectedNLs = new Set();
-      this._selectedNLs.clear();
+    // Toggle-Logik
+    if (this._selectedNLs.has(nl)) {
+      this._selectedNLs.delete(nl);
+      row.classList.remove("table-row-selected");
+    } else {
       this._selectedNLs.add(nl);
+      row.classList.add("table-row-selected");
+    }
 
-      this.applyNLFilter([nl]);
+    // NL-Filter anwenden
+    this.applyNLFilter([...this._selectedNLs]);
 
-      const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-      this.applyRadiusFilter(radius);
+    // Radius erneut anwenden
+    const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+    this.applyRadiusFilter(radius);
 
-      this.updateGeoLayer();
-      this.renderDataTable(this.filteredKennwerte);
+    // Karte aktualisieren
+    this.updateGeoLayer();
 
-      const popup = this._shadowRoot.getElementById("side-popup");
-      popup.classList.remove("show");
-    });
+    // Tabelle aktualisieren
+    this.renderDataTable(this.filteredKennwerte);
   });
+});
+
 }
 
 
