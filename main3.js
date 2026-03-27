@@ -293,11 +293,6 @@
 }
 
 
-.nl-row-dimmed {
-  opacity: 0.4;
-}
-
-
 .nl-info-table {
   width: 100%;
   border-collapse: collapse;
@@ -1099,19 +1094,11 @@ zoomToFilteredPLZ() {
 
     marker.setZIndexOffset(1000);
 
-    marker.on("click", () => {
-      console.log("🟡 NL-Klick:", nlKey);
+marker.on("click", () => {
+  console.log("🟡 NL-Klick:", nl);
+  this.toggleNLSelection(nl);
+});
 
-      if (!this._selectedNLs) this._selectedNLs = new Set();
-
-      if (this._selectedNLs.has(nlKey)) {
-        this._selectedNLs.delete(nlKey);
-      } else {
-        this._selectedNLs.add(nlKey);
-      }
-
-      this.applyNLFilter([...this._selectedNLs]);
-    });
 
 marker.on("mouseover", () => {
   const nl = marker.options.plzs?.[0];
@@ -1168,19 +1155,11 @@ marker.on("mouseout", () => {
 
       marker.setZIndexOffset(1000);
 
-      marker.on("click", () => {
-        console.log("🟡 NL-Klick:", nl);
+marker.on("click", () => {
+  console.log("🟡 NL-Klick:", nl);
+  this.toggleNLSelection(nl);
+});
 
-        if (!this._selectedNLs) this._selectedNLs = new Set();
-
-        if (this._selectedNLs.has(nl)) {
-          this._selectedNLs.delete(nl);
-        } else {
-          this._selectedNLs.add(nl);
-        }
-
-        this.applyNLFilter([...this._selectedNLs]);
-      });
 
       this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
@@ -1660,6 +1639,7 @@ updateGeoLayer() {
     }
   });
 }
+
 updateMarkers() {
   this.filteredGroup.clearLayers();
 
@@ -1743,6 +1723,7 @@ onMarkerClick(nl) {
   this.updateGeoLayer();
   this.renderDataTable(this.filteredKennwerte);
 }
+
 
 
 
@@ -1955,27 +1936,11 @@ container.innerHTML = `
 container.querySelectorAll(".nl-info-row").forEach(row => {
   row.addEventListener("click", () => {
     const nl = row.dataset.nl;
-
-    // Toggle
-    if (this._selectedNLs.has(nl)) {
-      this._selectedNLs.delete(nl);
-    } else {
-      this._selectedNLs.add(nl);
-    }
-
-    // UI aktualisieren
-    this.updateNLSelectionUI();
-
-    // Filter anwenden
-    this.applyNLFilter([...this._selectedNLs]);
-
-    const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-    this.applyRadiusFilter(radius);
-
-    this.updateGeoLayer();
-    this.renderDataTable(this.filteredKennwerte);
+    this.toggleNLSelection(nl);
   });
 });
+
+
 this.updateNLSelectionUI();
 
 
@@ -1990,13 +1955,12 @@ updateNLSelectionUI() {
 
     if (this._selectedNLs.has(nl)) {
       row.classList.add("table-row-selected");
-      row.classList.remove("nl-row-dimmed");
     } else {
       row.classList.remove("table-row-selected");
-      row.classList.add("nl-row-dimmed");
     }
   });
 }
+
 
 
 
@@ -2311,6 +2275,36 @@ applyRadiusFilter(radiusKm) {
   this.renderDataTable(this.filteredKennwerte);
 }
 
+toggleNLSelection(nl) {
+  if (!this._selectedNLs) this._selectedNLs = new Set();
+
+  // Toggle
+  if (this._selectedNLs.has(nl)) {
+    this._selectedNLs.delete(nl);
+  } else {
+    this._selectedNLs.add(nl);
+  }
+
+  // Wenn ALLE NLs ausgewählt → alle markieren
+  if (this._selectedNLs.size === this.allNLs.length) {
+    this._selectedNLs = new Set(this.allNLs);
+  }
+
+  // Tabelle aktualisieren
+  this.updateNLSelectionUI();
+
+  // Filter anwenden
+  this.applyNLFilter([...this._selectedNLs]);
+
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.applyRadiusFilter(radius);
+
+  // Karte aktualisieren
+  this.updateGeoLayer();
+
+  // PLZ-Tabelle aktualisieren
+  this.renderDataTable(this.filteredKennwerte);
+}
 
 
 
