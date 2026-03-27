@@ -48,6 +48,31 @@
     100% { transform: rotate(360deg); }
   }
 
+  #map-tile-toggle-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 42px;
+  height: 42px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 9999;
+
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15 6l5-2v14l-5 2-6-2-5 2V6l5-2 6 2zm-6-.12v12.24l4 1.33V7.21l-4-1.33zm10 0l-4 1.33v12.24l4-1.33V5.88zm-14 0v12.24l3-1V4.88l-3 1z"/></svg>');
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+#map-tile-toggle-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
+
+
   #loading-spinner.hidden {
     display: none;
   }
@@ -450,7 +475,6 @@
 
     </style>
 
-
 <div class="layout">
 
   <!-- 🔍 Filterbereich -->
@@ -470,14 +494,13 @@
     <!-- 📊 Tabellenbereich -->
     <div class="table-container">
 
-      <div class="table-wrapper" id="table-container">
-        <!-- PLZ-Tabelle -->
-      </div>
+      <!-- PLZ-Tabelle -->
+      <div class="table-wrapper" id="table-container"></div>
 
-      <div id="nl-info-container">
-        <!-- NL-Tabelle -->
-      </div>
+      <!-- NL-Tabelle -->
+      <div id="nl-info-container"></div>
 
+      <!-- Sticky Streuverlust -->
       <div id="streuverlust-box"></div>
 
     </div> <!-- END table-container -->
@@ -486,22 +509,30 @@
 
   <!-- 🗺️ Kartenbereich -->
   <div class="map-container">
+
     <div id="loading-spinner" class="spinner"></div>
 
+    <!-- Radius-Slider -->
     <div id="radius-slider-container">
       <label>Radius: <span id="radius-value">40</span> km</label>
       <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
     </div>
 
+    <!-- 🔥 Kartenstil-Button unten rechts -->
+    <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
+
+    <!-- Leaflet Map -->
     <div id="map"></div>
+
+    <!-- Legende -->
     <div class="legend" id="legend">...</div>
-  </div>
+
+  </div> <!-- END map-container -->
 
   <!-- 📌 Popup für Details -->
   <div id="side-popup"></div>
 
 </div> <!-- END layout -->
-
 
 
     `;
@@ -1028,35 +1059,41 @@ zoomToFilteredPLZ() {
 }
 
 
+initializeMapBase() {
+  const mapContainer = this._shadowRoot.getElementById('map');
+  this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
-  initializeMapBase() {
-    const mapContainer = this._shadowRoot.getElementById('map');
-    this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
+  // 🧭 Events für Marker-Notizen
+  this.map.on('zoomend', () => this.showNotesOnMap());
+  this.map.on('moveend', () => this.showNotesOnMap());
 
-    // 🧭 Events für Marker-Notizen
-    this.map.on('zoomend', () => this.showNotesOnMap());
-    this.map.on('moveend', () => this.showNotesOnMap());
+  // 🧱 Initialisiere Marker-Gruppen und Marker
+  this.filteredGroup = L.layerGroup().addTo(this.map);
+  this.neighbourGroup = L.layerGroup();
 
-    // 🧱 Initialisiere Marker-Gruppen und Marker
-    this.filteredGroup = L.layerGroup().addTo(this.map);
-    this.neighbourGroup = L.layerGroup();
-
-
-    // 📐 Resize-Handling
-    if (!this._resizeObserver) {
-      this._resizeObserver = new ResizeObserver(() => {
-        if (this.map) {
-          this.map.invalidateSize();
-        }
-      });
-      this._resizeObserver.observe(this._shadowRoot.host);
-    }
-
-    // 🔄 Starte das Rendering
-    this.render();
-    
-    this.initRadiusSlider();
+  // 📐 Resize-Handling
+  if (!this._resizeObserver) {
+    this._resizeObserver = new ResizeObserver(() => {
+      if (this.map) {
+        this.map.invalidateSize();
+      }
+    });
+    this._resizeObserver.observe(this._shadowRoot.host);
   }
+
+  // 🔄 Starte das Rendering
+  this.render();
+  this.initRadiusSlider();
+
+  // 🗺️ Kartenstil-Button aktivieren
+  const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
+  if (tileBtn) {
+    tileBtn.addEventListener("click", () => {
+      console.log("🗺️ Kartenstil umschalten");
+      this.toggleMapTiles();
+    });
+  }
+}
 
 
       initializeMapTiles() {
