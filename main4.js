@@ -418,9 +418,9 @@
 .nl-col-jahr    { width: 55px; }
 .nl-col-erf     { width: 45px; }
 .nl-col-pct1    { width: 25px; }
-.nl-col-val     { width: 45px; }
+.nl-col-val     { width: 40px; }
 .nl-col-pct2    { width: 25px; }
-.nl-col-abd     { width: 40px; }
+.nl-col-abd     { width: 45px; }
 
 /* --------------------------------------------- */
 /* ANIMATION: NUR DIE PLZ-TABELLE HOCHSCHIEBEN */
