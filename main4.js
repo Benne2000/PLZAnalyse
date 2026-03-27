@@ -25,6 +25,13 @@
   z-index: 1;
 }
 
+.map-mode-btn.active,
+.map-switch.active {
+  border-color: #b41821;
+  background: #fff3f3;
+  box-shadow: 0 0 6px rgba(180, 24, 33, 0.4);
+}
+
 
 .map-switch {
   display: flex;
@@ -67,6 +74,24 @@
   background: white;
   border-radius: 50%;
   transition: transform 0.25s ease;
+}
+.map-mode-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+  font-size: 0.9rem;
+  color: #b41821;
+  font-weight: bold;
+}
+
+.map-mode-btn:hover {
+  background: #fff3f3;
 }
 
 .map-switch.active .map-switch-toggle {
@@ -314,12 +339,21 @@
   box-sizing: border-box;
   font-family: sans-serif;
   z-index: 99998;
-
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #b41821 #f7f7f7;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+#map-control-panel::-webkit-scrollbar {
+  width: 6px;
+}
 
+#map-control-panel::-webkit-scrollbar-thumb {
+  background: #b41821;
+  border-radius: 4px;
+}
 #map-control-panel h4 {
   margin: 0 0 6px 0;
   color: #b41821;
@@ -646,22 +680,22 @@
 
   <!-- Umsatzarten -->
   <div class="map-switch" data-base="umsatz">
-    <span class="map-switch-label">Umsatz</span>
+    <span class="map-switch-label">Umsatz (absolut)</span>
     <div class="map-switch-toggle"></div>
   </div>
 
   <div class="map-switch" data-base="ra">
-    <span class="map-switch-label">R&A</span>
+    <span class="map-switch-label">R&A (absolut)</span>
     <div class="map-switch-toggle"></div>
   </div>
 
   <div class="map-switch" data-base="online">
-    <span class="map-switch-label">Onlineshop</span>
+    <span class="map-switch-label">Onlineshop (absolut)</span>
     <div class="map-switch-toggle"></div>
   </div>
 
   <div class="map-switch" data-base="pluscard">
-    <span class="map-switch-label">Pluscard</span>
+    <span class="map-switch-label">Pluscard (absolut)</span>
     <div class="map-switch-toggle"></div>
   </div>
 </div>
@@ -1234,32 +1268,65 @@ initializeMapBase() {
     });
   }
 
-  // 🎛️ Steuerzentrale – Werbekosten Button
+  // ⭐ Hilfsfunktion: Alle Ansichten deaktivieren
+  const deactivateAllViews = () => {
+    this._shadowRoot.querySelectorAll(".map-mode-btn, .map-switch")
+      .forEach(el => el.classList.remove("active"));
+  };
+
+  // ⭐ Werbekosten Button
   this._shadowRoot.querySelectorAll(".map-mode-btn").forEach(btn => {
     btn.addEventListener("click", () => {
+      deactivateAllViews();
+      btn.classList.add("active");
+
       this.currentMapMode = btn.dataset.mode;
       this.updateGeoLayer();
     });
   });
 
-  // 🎛️ Steuerzentrale – Umsatz-Switches
+  // ⭐ Umsatz-Switches (absolut ↔ pro Haushalt)
   this._shadowRoot.querySelectorAll(".map-switch").forEach(sw => {
     sw.addEventListener("click", () => {
       const base = sw.dataset.base;
+      const label = sw.querySelector(".map-switch-label");
 
-      // UI toggeln
+      // Alle anderen deaktivieren
+      deactivateAllViews();
+
+      // Toggle aktivieren
       const isActive = sw.classList.toggle("active");
 
-      // Modus setzen
-      this.currentMapMode = isActive ? base + "hh" : base;
+      if (isActive) {
+        this.currentMapMode = base + "hh";
+        label.textContent = label.textContent.replace("(absolut)", "(pro Haushalt)");
+      } else {
+        this.currentMapMode = base;
+        label.textContent = label.textContent.replace("(pro Haushalt)", "(absolut)");
+      }
 
-      // Karte neu einfärben
       this.updateGeoLayer();
     });
   });
+
+  // ⭐ Standard: Werbekosten aktiv markieren
+  const wkBtn = this._shadowRoot.querySelector('.map-mode-btn[data-mode="wk"]');
+  if (wkBtn) wkBtn.classList.add("active");
 }
 
 
+getDynamicHeatColor(value, max) {
+  if (!max || max === 0) return "#cccccc";
+
+  const ratio = value / max;
+
+  // Gelb → Orange → Rot
+  if (ratio > 0.9) return "#b41821";
+  if (ratio > 0.7) return "#d9483b";
+  if (ratio > 0.5) return "#f0803c";
+  if (ratio > 0.3) return "#f6b65b";
+  return "#ffe89c";
+}
 
 
       initializeMapTiles() {
@@ -1847,23 +1914,45 @@ updateGeoLayer() {
 
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
 
+  // ⭐ 1) Dynamischen Maximalwert bestimmen
+  let maxValue = 0;
+
+  Object.values(plzWerte).forEach(v => {
+    switch (this.currentMapMode) {
+      case "umsatz": maxValue = Math.max(maxValue, v.umsatz || 0); break;
+      case "umsatzhh": maxValue = Math.max(maxValue, v.umsatzProHaushalt || 0); break;
+
+      case "ra": maxValue = Math.max(maxValue, v.ra || 0); break;
+      case "rahh": maxValue = Math.max(maxValue, v.raProHaushalt || 0); break;
+
+      case "online": maxValue = Math.max(maxValue, v.onlineshop || 0); break;
+      case "onlinehh": maxValue = Math.max(maxValue, v.onlineshopProHaushalt || 0); break;
+
+      case "pluscard": maxValue = Math.max(maxValue, v.pluscard || 0); break;
+      case "pluscardhh": maxValue = Math.max(maxValue, v.pluscardProHaushalt || 0); break;
+
+      case "wk+umsatz":
+        maxValue = Math.max(maxValue, (v.wk || 0) + (v.umsatz || 0));
+        break;
+    }
+  });
+
+  // ⭐ 2) Layer durchgehen
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
 
     const hasValues = plzWerte[plz] !== undefined;
     const values = plzWerte[plz] || {
-      wk: 0,
-      wkPot: 0,
-      hz: false,
-      umsatz: 0,
-      umsatzProHaushalt: 0,
-      ra: 0,
-      onlineshop: 0,
-      pluscard: 0
+      wk: 0, wkPot: 0, hz: false,
+      umsatz: 0, umsatzProHaushalt: 0,
+      ra: 0, raProHaushalt: 0,
+      onlineshop: 0, onlineshopProHaushalt: 0,
+      pluscard: 0, pluscardProHaushalt: 0
     };
 
     const inRadius = !hasRadius || this.plzImRadius.has(plz);
 
+    // ⭐ Grey-Out Funktion
     const setGrey = () => {
       layer.setStyle({
         fillColor: "#cfd4da",
@@ -1891,7 +1980,7 @@ updateGeoLayer() {
       return;
     }
 
-    // 3️⃣ PLZ im Radius → farbig (abhängig vom Kartenmodus)
+    // ⭐ 3) Wert je nach Modus bestimmen
     let value;
     let fillColor;
 
@@ -1899,44 +1988,60 @@ updateGeoLayer() {
       case "wk": {
         const wkValue = values.hz ? values.wk : values.wkPot;
         value = wkValue;
-        fillColor = this.getColor(value, values.hz); // deine bestehende WK-Skala
+        fillColor = this.getColor(value, values.hz); // deine WK-Skala
         break;
       }
 
       case "umsatz":
         value = values.umsatz;
-        fillColor = this.getHeatColor(value);
+        fillColor = this.getDynamicHeatColor(value, maxValue);
         break;
 
       case "umsatzhh":
         value = values.umsatzProHaushalt;
-        fillColor = this.getHeatColor(value);
+        fillColor = this.getDynamicHeatColor(value, maxValue);
         break;
 
       case "ra":
         value = values.ra;
-        fillColor = this.getHeatColor(value);
+        fillColor = this.getDynamicHeatColor(value, maxValue);
+        break;
+
+      case "rahh":
+        value = values.raProHaushalt;
+        fillColor = this.getDynamicHeatColor(value, maxValue);
         break;
 
       case "online":
         value = values.onlineshop;
-        fillColor = this.getHeatColor(value);
+        fillColor = this.getDynamicHeatColor(value, maxValue);
+        break;
+
+      case "onlinehh":
+        value = values.onlineshopProHaushalt;
+        fillColor = this.getDynamicHeatColor(value, maxValue);
         break;
 
       case "pluscard":
         value = values.pluscard;
-        fillColor = this.getHeatColor(value);
+        fillColor = this.getDynamicHeatColor(value, maxValue);
+        break;
+
+      case "pluscardhh":
+        value = values.pluscardProHaushalt;
+        fillColor = this.getDynamicHeatColor(value, maxValue);
         break;
 
       case "wk+umsatz":
         value = (values.wk || 0) + (values.umsatz || 0);
-        fillColor = this.getHeatColor(value);
+        fillColor = this.getDynamicHeatColor(value, maxValue);
         break;
 
       default:
-        fillColor = "#cfd4da";
+        fillColor = "#cccccc";
     }
 
+    // ⭐ 4) Farbe anwenden
     layer.setStyle({
       fillColor,
       fillOpacity: 0.7,
@@ -1945,7 +2050,7 @@ updateGeoLayer() {
     });
     layer.options.interactive = true;
 
-    // ⚠️ Critical Marker
+    // ⭐ 5) Critical Marker
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
     if (isCritical) {
