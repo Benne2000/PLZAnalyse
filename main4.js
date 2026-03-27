@@ -22,7 +22,9 @@
 .map-container {
   width: 70%;
   position: relative;
+  z-index: 1;
 }
+
 
 .map-switch {
   display: flex;
@@ -150,7 +152,7 @@
   color: #b41821;
   box-sizing: border-box;
   overflow-y: auto;
-
+  z-index: 99999;
   opacity: 0;
   transform: translateX(20px);
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -311,7 +313,7 @@
   padding: 10px;
   box-sizing: border-box;
   font-family: sans-serif;
-
+  z-index: 99998;
 
   display: flex;
   flex-direction: column;
@@ -542,6 +544,7 @@
   border-radius: 6px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   font-size: 14px;
+  z-index: 9999;
 }
 
 /* --------------------------------------------- */
@@ -558,7 +561,7 @@
   border-radius: 50%;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   cursor: pointer;
-
+  z-index: 9999;
 
   /* 🔥 Neues Karten-Icon in deinem Rot (#b41821) */
   background-image: url('data:image/svg+xml;utf8,<svg fill="%23b41821" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
