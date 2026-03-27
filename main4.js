@@ -19,10 +19,11 @@
         width: 100%;
       }
 
-      .map-container {
-        width: 70%;
-        position: relative;
-      }
+.map-container {
+  position: relative;
+  z-index: 1; /* Karte ist Basis */
+}
+
 
       #map {
         height: 100%;
@@ -92,6 +93,7 @@
   width: 25%;
   height: 70%; /* nur obere 70% */
   background: white;
+    z-index: 99999; /* Popup über allem */
   border-left: 2px solid #b41821;
   padding: 10px;
   font-family: sans-serif;
@@ -484,7 +486,7 @@
 #radius-slider-container {
   position: absolute;
   top: 10px;
-  right: 10px;
+  right: 30%;
   background: white;
   padding: 8px 12px;
   border-radius: 6px;
@@ -500,7 +502,7 @@
 #map-tile-toggle-btn {
   position: absolute;
   bottom: 20px;
-  right: 20px;
+  right: 30%;
   width: 42px;
   height: 42px;
   background: white;
