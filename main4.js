@@ -20,7 +20,7 @@
       }
 
 .map-container {
-  position: relative;
+  position: 70%;
   z-index: 1; /* Karte ist Basis */
 }
 
