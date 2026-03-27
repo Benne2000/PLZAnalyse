@@ -1498,7 +1498,15 @@ showPopup(feature) {
 
 
 applyFilter(erhID, jahr, nummer) {
+
+  // 🧹 Wenn NL-Tabelle offen ist → schließen
+  const filterContainer = this._shadowRoot.querySelector(".filter-container");
+  if (filterContainer?.classList.contains("nl-info-active")) {
+    this.closeNLTable();
+  }
+
   this._activeFilter = { erhID, jahr, nummer };
+
 
   // 🔄 NL-Auswahl zurücksetzen
   if (!this._selectedNLs) {
@@ -2666,6 +2674,13 @@ getFilteredDataWithRadius() {
 }
 
 
+closeNLTable() {
+  const nlContainer = this._shadowRoot.getElementById("nl-info-container");
+  const filterContainer = this._shadowRoot.querySelector(".filter-container");
+
+  nlContainer?.classList.remove("show");
+  filterContainer?.classList.remove("nl-info-active");
+}
 
 
 
