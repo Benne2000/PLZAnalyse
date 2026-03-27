@@ -22,7 +22,6 @@
 .map-container {
   width: 70%;
   position: relative;
-  z-index: 1; /* Karte ist Basis */
 }
 
 .map-switch {
