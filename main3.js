@@ -271,12 +271,14 @@
 /* NL-Info: Overlay über der PLZ-Tabelle */
 .nl-info-container {
   position: absolute;
-  left: 0;
-  right: 0;
+  right: 0;          /* rechts andocken */
+  width: 250px;      /* ✔ gewünschte Breite */
   bottom: 0;
 
   background: #fff;
+  border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
+  border-radius: 8px 0 0 0;
 
   max-height: 0;
   overflow-y: auto;
@@ -289,11 +291,13 @@
   z-index: 50;
 }
 
+
 /* Sichtbar: mindestens 50% Sidebar-Höhe */
 .nl-info-container.show {
-  max-height: 50%;
+  max-height: 40%;
   opacity: 1;
 }
+
 
 .nl-info-table {
   width: 100%;
@@ -301,22 +305,15 @@
   font-size: 0.8rem;
 }
 
-.nl-info-table th {
-  background-color: #b41821;
-  color: white;
-  padding: 0.6rem 0.8rem;
+.nl-info-table th,
+.nl-info-table td {
+  padding: 0.4rem 0.6rem;
   border-bottom: 1px solid #b41821;
-  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
-.nl-info-table td {
-  padding: 0.6rem 0.8rem;
-  border-bottom: 1px solid #b41821;
-  border-right: 1px solid #b41821;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
 .nl-info-row:hover {
   background-color: #f0f8ff;
@@ -324,8 +321,10 @@
 }
 
 .filter-container.nl-info-active .table-container {
-  margin-top: 620px; /* oder dynamisch, je nach NL-Tabellenhöhe */
+  transform: translateY(-40%);
+  transition: transform 0.35s ease;
 }
+
 
 .table-container {
   transition: margin-top 0.35s ease;
@@ -1830,26 +1829,27 @@ setupFilterDropdowns() {
   infoBtn.style.cursor = "pointer";
   infoBtn.style.borderRadius = "4px";
 
-  infoBtn.addEventListener("click", () => {
-    const nlBox = this._shadowRoot.getElementById("nl-info-container");
+infoBtn.addEventListener("click", () => {
+  const nlBox = this._shadowRoot.getElementById("nl-info-container");
+  const filter = this._shadowRoot.querySelector(".filter-container");
 
-    if (!nlBox) {
-      console.error("❌ NL-Info-Container nicht gefunden!");
-      return;
-    }
+  if (!nlBox) return;
 
-    // 🔄 Toggle: Wenn sichtbar → schließen
-    if (nlBox.classList.contains("show")) {
-      nlBox.classList.remove("show");
-      return;
-    }
+  // Toggle schließen
+  if (nlBox.classList.contains("show")) {
+    nlBox.classList.remove("show");
+    filter.classList.remove("nl-info-active");
+    return;
+  }
 
-    // 🔥 Wenn NICHT sichtbar → öffnen
-    this.prepareErhebungsInfo();
-    this.renderErhebungsInfoTable();
+  // Öffnen
+  this.prepareErhebungsInfo();
+  this.renderErhebungsInfoTable();
 
-    nlBox.classList.add("show");
-  });
+  nlBox.classList.add("show");
+  filter.classList.add("nl-info-active");
+});
+
 
   this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
 }
