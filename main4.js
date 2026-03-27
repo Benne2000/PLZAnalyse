@@ -25,6 +25,56 @@
   z-index: 1; /* Karte ist Basis */
 }
 
+.map-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.map-switch:hover {
+  background: #fff3f3;
+}
+
+.map-switch-label {
+  font-size: 0.9rem;
+  color: #b41821;
+  font-weight: bold;
+}
+
+.map-switch-toggle {
+  position: relative;
+  width: 48px;
+  height: 24px;
+  background: #ccc;
+  border-radius: 12px;
+  transition: background 0.25s ease;
+}
+
+.map-switch-toggle::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.25s ease;
+}
+
+.map-switch.active .map-switch-toggle {
+  background: #b41821;
+}
+
+.map-switch.active .map-switch-toggle::after {
+  transform: translateX(24px);
+}
 
 
       #map {
@@ -586,21 +636,34 @@
   <div id="side-popup"></div>
 
   <!-- 🎛️ Steuerzentrale für Kartenansichten (30%) -->
-  <div id="map-control-panel">
-    <h4>Kartenansicht</h4>
+<div id="map-control-panel">
+  <h4>Kartenansicht</h4>
 
-    <button data-mode="wk">Werbekosten</button>
-    <button data-mode="umsatz">Erhebungsumsatz</button>
-    <button data-mode="umsatzhh">Umsatz pro Haushalt</button>
-    <button data-mode="ra">R&A</button>
-    <button data-mode="online">Onlineshop</button>
-    <button data-mode="pluscard">Pluscard</button>
+  <!-- Werbekosten -->
+  <button class="map-mode-btn" data-mode="wk">Werbekosten</button>
 
-    <!-- Optional: Kombi-Sichten -->
-    <button data-mode="wk+umsatz">WK + Umsatz</button>
+  <!-- Umsatzarten -->
+  <div class="map-switch" data-base="umsatz">
+    <span class="map-switch-label">Umsatz</span>
+    <div class="map-switch-toggle"></div>
   </div>
 
-</div> <!-- END layout -->
+  <div class="map-switch" data-base="ra">
+    <span class="map-switch-label">R&A</span>
+    <div class="map-switch-toggle"></div>
+  </div>
+
+  <div class="map-switch" data-base="online">
+    <span class="map-switch-label">Onlineshop</span>
+    <div class="map-switch-toggle"></div>
+  </div>
+
+  <div class="map-switch" data-base="pluscard">
+    <span class="map-switch-label">Pluscard</span>
+    <div class="map-switch-toggle"></div>
+  </div>
+</div>
+
 
 
     `;
@@ -1137,7 +1200,7 @@ initializeMapBase() {
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
   // ⭐ Standard-Kartenmodus
-  this.currentMapMode = "wk"; // Werbekosten
+  this.currentMapMode = "wk";
 
   // 🧭 Events für Marker-Notizen
   this.map.on("zoomend", () => this.showNotesOnMap());
@@ -1161,7 +1224,7 @@ initializeMapBase() {
   this.render();
   this.initRadiusSlider();
 
-  // 🗺️ Kartenstil-Button
+  // 🗺️ Kartenstil-Button (Tile-Layer)
   const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
   if (tileBtn) {
     tileBtn.addEventListener("click", () => {
@@ -1169,19 +1232,31 @@ initializeMapBase() {
     });
   }
 
-  // 🎛️ Steuerzentrale für Kartenmodi
-  const panel = this._shadowRoot.getElementById("map-control-panel");
-  if (panel) {
-    panel.querySelectorAll("button[data-mode]").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const mode = btn.dataset.mode;
-        if (!mode) return;
-        this.currentMapMode = mode;
-        this.updateGeoLayer();
-      });
+  // 🎛️ Steuerzentrale – Werbekosten Button
+  this._shadowRoot.querySelectorAll(".map-mode-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      this.currentMapMode = btn.dataset.mode;
+      this.updateGeoLayer();
     });
-  }
+  });
+
+  // 🎛️ Steuerzentrale – Umsatz-Switches
+  this._shadowRoot.querySelectorAll(".map-switch").forEach(sw => {
+    sw.addEventListener("click", () => {
+      const base = sw.dataset.base;
+
+      // UI toggeln
+      const isActive = sw.classList.toggle("active");
+
+      // Modus setzen
+      this.currentMapMode = isActive ? base + "hh" : base;
+
+      // Karte neu einfärben
+      this.updateGeoLayer();
+    });
+  });
 }
+
 
 
 
