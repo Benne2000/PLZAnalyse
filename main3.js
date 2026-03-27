@@ -288,16 +288,16 @@
 }
 
 .nl-info-container.show {
-  max-height: 40vh; /* öffnet sich nach oben */
+  max-height: 80vh;  /* doppelt so hoch */
   opacity: 1;
 }
 
 .nl-info-scroll {
   overflow-y: auto;
-  max-height: 40vh;
-  border: 1px solid #b41821;
-  border-radius: 6px;
+  max-height: 80vh;  /* mitwachsen */
 }
+
+
 
 
 .nl-info-table {
@@ -349,9 +349,10 @@
 }
 
 .filter-container.nl-info-active .table-container {
-  transform: translateY(-150px); /* Eingabemaske + Button */
+  transform: translateY(-220px); /* weiter hoch, bis an den oberen Rand */
   transition: transform 0.35s ease;
 }
+
 
 
 
@@ -1203,10 +1204,27 @@ createAllMarkers() {
   }
 
   // 🔥 WICHTIG: Alle NLs für die Auswahl-Logik speichern
-  this.allNLs = [
-    ...Object.keys(this.Niederlassung),
-    ...(this.extraNLs?.map(e => e.nl) ?? [])
-  ];
+// Alle NLs merken
+this.allNLs = [
+  ...Object.keys(this.Niederlassung),
+  ...(this.extraNLs?.map(e => e.nl) ?? [])
+];
+
+// Initial: alle NLs ausgewählt
+this._selectedNLs = new Set(this.allNLs);
+
+// Filter + Karte + Tabelle initial auf „alle NLs“
+this.applyNLFilter([...this._selectedNLs]);
+
+const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
+this.applyRadiusFilter(radius);
+this.updateGeoLayer();
+
+// Wenn NL-Tabelle schon gerendert ist → Selektion synchronisieren
+this.updateNLSelectionUI?.();
+
+console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
+
 
   console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
