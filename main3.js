@@ -297,6 +297,9 @@
   max-height: 40%;
   opacity: 1;
 }
+.nl-row-dimmed {
+  opacity: 0.4;
+}
 
 
 .nl-info-table {
@@ -1715,6 +1718,26 @@ updateMarkers() {
 }
 
 
+onMarkerClick(nl) {
+  // Toggle
+  if (this._selectedNLs.has(nl)) {
+    this._selectedNLs.delete(nl);
+  } else {
+    this._selectedNLs.add(nl);
+  }
+
+  // Tabellen-UI aktualisieren
+  this.updateNLSelectionUI();
+
+  // Filter anwenden
+  this.applyNLFilter([...this._selectedNLs]);
+
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.applyRadiusFilter(radius);
+
+  this.updateGeoLayer();
+  this.renderDataTable(this.filteredKennwerte);
+}
 
 
 
@@ -1916,30 +1939,46 @@ container.querySelectorAll(".nl-info-row").forEach(row => {
   row.addEventListener("click", () => {
     const nl = row.dataset.nl;
 
-    // Toggle-Logik
+    // Toggle
     if (this._selectedNLs.has(nl)) {
       this._selectedNLs.delete(nl);
-      row.classList.remove("table-row-selected");
     } else {
       this._selectedNLs.add(nl);
-      row.classList.add("table-row-selected");
     }
 
-    // NL-Filter anwenden
+    // UI aktualisieren
+    this.updateNLSelectionUI();
+
+    // Filter anwenden
     this.applyNLFilter([...this._selectedNLs]);
 
-    // Radius erneut anwenden
     const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
     this.applyRadiusFilter(radius);
 
-    // Karte aktualisieren
     this.updateGeoLayer();
-
-    // Tabelle aktualisieren
     this.renderDataTable(this.filteredKennwerte);
   });
 });
+this.updateNLSelectionUI();
 
+
+}
+
+
+updateNLSelectionUI() {
+  const rows = this._shadowRoot.querySelectorAll(".nl-info-row");
+
+  rows.forEach(row => {
+    const nl = row.dataset.nl;
+
+    if (this._selectedNLs.has(nl)) {
+      row.classList.add("table-row-selected");
+      row.classList.remove("nl-row-dimmed");
+    } else {
+      row.classList.remove("table-row-selected");
+      row.classList.add("nl-row-dimmed");
+    }
+  });
 }
 
 
