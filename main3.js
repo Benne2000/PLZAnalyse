@@ -1079,7 +1079,7 @@ zoomToFilteredPLZ() {
   }
       
       
-      createAllMarkers() {
+createAllMarkers() {
   console.log("📌 createAllMarkers() gestartet");
 
   // Sicherstellen, dass _selectedNLs existiert
@@ -1119,41 +1119,43 @@ zoomToFilteredPLZ() {
 
     marker.setZIndexOffset(1000);
 
-marker.on("click", () => {
-  console.log("🟡 NL-Klick:", nl);
-  this.toggleNLSelection(nl);
-});
+    // 🟡 Klick-Logik (korrekt!)
+    marker.on("click", () => {
+      const nl = marker.options.plzs?.[0];
+      if (!nl) return;
 
+      console.log("🟡 NL-Klick:", nl);
+      this.toggleNLSelection(nl);
+    });
 
-marker.on("mouseover", () => {
-  const nl = marker.options.plzs?.[0];
-  const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
-  const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
+    // ✨ Hover-Effekte
+    marker.on("mouseover", () => {
+      const nl = marker.options.plzs?.[0];
+      const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
+      const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
 
-  // Phantom-NL nicht highlighten
-  if (!isSelected) return;
+      if (!isSelected) return;
 
-  const el = marker.getElement();
-  if (el) {
-    el.style.filter = "brightness(1.35)";
-    el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-  }
-});
+      const el = marker.getElement();
+      if (el) {
+        el.style.filter = "brightness(1.35)";
+        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+      }
+    });
 
-marker.on("mouseout", () => {
-  const nl = marker.options.plzs?.[0];
-  const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
-  const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
+    marker.on("mouseout", () => {
+      const nl = marker.options.plzs?.[0];
+      const hasNLFilter = this._selectedNLs && this._selectedNLs.size > 0;
+      const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
 
-  if (!isSelected) return;
+      if (!isSelected) return;
 
-  const el = marker.getElement();
-  if (el) {
-    el.style.filter = "brightness(1)";
-    el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-  }
-});
-
+      const el = marker.getElement();
+      if (el) {
+        el.style.filter = "brightness(1)";
+        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+      }
+    });
 
     this.allMarkers.push(marker);
     this.filteredGroup.addLayer(marker);
@@ -1180,11 +1182,14 @@ marker.on("mouseout", () => {
 
       marker.setZIndexOffset(1000);
 
-marker.on("click", () => {
-  console.log("🟡 NL-Klick:", nl);
-  this.toggleNLSelection(nl);
-});
+      // 🟡 Klick-Logik (korrekt!)
+      marker.on("click", () => {
+        const nlValue = marker.options.plzs?.[0];
+        if (!nlValue) return;
 
+        console.log("🟡 NL-Klick:", nlValue);
+        this.toggleNLSelection(nlValue);
+      });
 
       this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
@@ -1197,8 +1202,15 @@ marker.on("click", () => {
     });
   }
 
+  // 🔥 WICHTIG: Alle NLs für die Auswahl-Logik speichern
+  this.allNLs = [
+    ...Object.keys(this.Niederlassung),
+    ...(this.extraNLs?.map(e => e.nl) ?? [])
+  ];
+
   console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
+
 
 applyNLFilter(selectedNLs) {
   if (!this._selectedNLs) this._selectedNLs = new Set();
