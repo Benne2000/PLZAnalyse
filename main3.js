@@ -48,30 +48,6 @@
     100% { transform: rotate(360deg); }
   }
 
-  #map-tile-toggle-btn {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 42px;
-  height: 42px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  cursor: pointer;
-  z-index: 9999;
-
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M15 6l5-2v14l-5 2-6-2-5 2V6l5-2 6 2zm-6-.12v12.24l4 1.33V7.21l-4-1.33zm10 0l-4 1.33v12.24l4-1.33V5.88zm-14 0v12.24l3-1V4.88l-3 1z"/></svg>');
-  background-size: 60%;
-  background-repeat: no-repeat;
-  background-position: center;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-#map-tile-toggle-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
-}
-
 
   #loading-spinner.hidden {
     display: none;
@@ -263,7 +239,8 @@
     width: 25%;
     font-weight: normal;
   }
-/* --------------------------------------------- */
+
+ /* --------------------------------------------- */
 /* SIDEBAR / FILTER-CONTAINER */
 /* --------------------------------------------- */
 
@@ -300,7 +277,6 @@
 /* --------------------------------------------- */
 
 .table-container {
-  transition: margin-top 0.35s ease;
   margin-top: 1rem;
   background-color: #fff;
   border-radius: 8px;
@@ -318,6 +294,7 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  transition: transform 0.35s ease;
 }
 
 .table-scroll {
@@ -375,7 +352,7 @@
 /* NL-TABELLE (UNTERE TABELLE) */
 /* --------------------------------------------- */
 
-.nl-info-container {
+#nl-info-container {
   width: 100%;
   background: #fff;
   border-radius: 8px;
@@ -390,8 +367,8 @@
     opacity 0.35s ease;
 }
 
-.nl-info-container.show {
-  max-height: 80vh;   /* NL-Tabelle wächst doppelt so hoch */
+#nl-info-container.show {
+  max-height: 80vh;
   opacity: 1;
 }
 
@@ -439,19 +416,18 @@
 /* Spaltenbreiten */
 .nl-col-nl      { width: 15px; }
 .nl-col-jahr    { width: 60px; }
-.nl-col-erf     { width: 45px; }
-.nl-col-pct1    { width: 20px; }
-.nl-col-val     { width: 45px; }
-.nl-col-pct2    { width: 20px; }
+.nl-col-erf     { width: 50px; }
+.nl-col-pct1    { width: 15px; }
+.nl-col-val     { width: 50px; }
+.nl-col-pct2    { width: 15px; }
 .nl-col-abd     { width: 45px; }
 
 /* --------------------------------------------- */
-/* ANIMATION: PLZ-TABELLE HOCHSCHIEBEN */
+/* ANIMATION: NUR DIE PLZ-TABELLE HOCHSCHIEBEN */
 /* --------------------------------------------- */
 
-.filter-container.nl-info-active .table-container {
+.filter-container.nl-info-active .table-wrapper {
   transform: translateY(-260px);
-  transition: transform 0.35s ease;
 }
 
 /* --------------------------------------------- */
@@ -470,6 +446,35 @@
   font-size: 14px;
 }
 
+/* --------------------------------------------- */
+/* MAP TILE TOGGLE BUTTON */
+/* --------------------------------------------- */
+
+#map-tile-toggle-btn {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 42px;
+  height: 42px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 9999;
+
+  /* 🔥 Neues Karten-Icon in deinem Rot (#b41821) */
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23b41821" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
+  background-size: 60%;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+#map-tile-toggle-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+}
 
 
 
