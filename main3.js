@@ -451,10 +451,11 @@
     </style>
 
 
-
 <div class="layout">
+
   <!-- 🔍 Filterbereich -->
   <div class="filter-container">
+
     <label for="erhebung-select">ErhebungsID:</label>
     <select id="erhebung-select"></select>
 
@@ -466,24 +467,27 @@
 
     <button id="filter-button">Anzeigen</button>
 
-<div class="table-container">
+    <!-- 📊 Tabellenbereich -->
+    <div class="table-container">
 
-  <div class="table-wrapper" id="table-container">
-    <!-- PLZ-Tabelle -->
-  </div>
+      <div class="table-wrapper" id="table-container">
+        <!-- PLZ-Tabelle -->
+      </div>
 
-  <div id="nl-info-container">
-    <!-- NL-Tabelle -->
-  </div>
+      <div id="nl-info-container">
+        <!-- NL-Tabelle -->
+      </div>
 
-  <div id="streuverlust-box"></div>
+      <div id="streuverlust-box"></div>
 
-</div>
+    </div> <!-- END table-container -->
 
+  </div> <!-- END filter-container -->
 
   <!-- 🗺️ Kartenbereich -->
   <div class="map-container">
     <div id="loading-spinner" class="spinner"></div>
+
     <div id="radius-slider-container">
       <label>Radius: <span id="radius-value">40</span> km</label>
       <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
@@ -495,8 +499,8 @@
 
   <!-- 📌 Popup für Details -->
   <div id="side-popup"></div>
-</div>
 
+</div> <!-- END layout -->
 
 
 
