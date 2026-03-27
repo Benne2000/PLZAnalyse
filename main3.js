@@ -416,10 +416,10 @@
 /* Spaltenbreiten */
 .nl-col-nl      { width: 15px; }
 .nl-col-jahr    { width: 60px; }
-.nl-col-erf     { width: 50px; }
-.nl-col-pct1    { width: 15px; }
-.nl-col-val     { width: 50px; }
-.nl-col-pct2    { width: 15px; }
+.nl-col-erf     { width: 45px; }
+.nl-col-pct1    { width: 20px; }
+.nl-col-val     { width: 45px; }
+.nl-col-pct2    { width: 20px; }
 .nl-col-abd     { width: 45px; }
 
 /* --------------------------------------------- */
