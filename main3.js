@@ -238,6 +238,9 @@
     width: 25%;
     font-weight: normal;
   }
+/* --------------------------------------------- */
+/* SIDEBAR / FILTER-CONTAINER */
+/* --------------------------------------------- */
 
 .filter-container {
   width: 30%;
@@ -249,27 +252,104 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  position: relative; /* WICHTIG */
+  position: relative;
 }
 
+.filter-container label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+  color: #333;
+}
 
+.filter-container select,
+.filter-container button {
+  width: 100%;
+  margin-top: 5px;
+  padding: 6px;
+  font-size: 0.9rem;
+}
 
-  .filter-container label {
-    display: block;
-    margin-top: 10px;
-    font-weight: bold;
-    color: #333;
-  }
+/* --------------------------------------------- */
+/* PLZ-TABELLE (OBERE TABELLE) */
+/* --------------------------------------------- */
 
-  .filter-container select,
-  .filter-container button {
-    width: 100%;
-    margin-top: 5px;
-    padding: 6px;
-    font-size: 0.9rem;
-  }
-/* NL-Info: Container über der PLZ-Tabelle */
-/* NL-Info: Overlay über der PLZ-Tabelle */
+.table-container {
+  transition: margin-top 0.35s ease;
+  margin-top: 1rem;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  font-family: sans-serif;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+}
+
+.table-wrapper {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.table-scroll {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid #b41821;
+  border-radius: 6px;
+  background: white;
+  min-height: 0;
+  margin-bottom: 8px;
+}
+
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table-container th,
+.table-container td {
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 0.8rem;
+}
+
+.table-container th {
+  background-color: #f5f5f5;
+  font-weight: 600;
+  color: #333;
+}
+
+.table-container tr:hover {
+  background-color: #f0f8ff;
+}
+
+.table-row-selected {
+  background-color: #fff8c4 !important;
+}
+
+/* --------------------------------------------- */
+/* STREUVERLUST (STICKY FOOTER) */
+/* --------------------------------------------- */
+
+#streuverlust-box {
+  position: sticky;
+  bottom: 0;
+  background: white;
+  padding: 10px;
+  border-top: 2px solid #b41821;
+  z-index: 10;
+  transition: transform 0.35s ease;
+}
+
+/* --------------------------------------------- */
+/* NL-TABELLE (UNTERE TABELLE) */
+/* --------------------------------------------- */
+
 .nl-info-container {
   width: 100%;
   background: #fff;
@@ -283,22 +363,19 @@
   transition:
     max-height 0.35s ease,
     opacity 0.35s ease;
-
-  margin-top: 10px;
 }
 
 .nl-info-container.show {
-  max-height: 80vh;  /* doppelt so hoch */
+  max-height: 80vh;   /* NL-Tabelle wächst doppelt so hoch */
   opacity: 1;
 }
 
 .nl-info-scroll {
   overflow-y: auto;
-  max-height: 80vh;  /* mitwachsen */
+  max-height: 80vh;
+  border: 1px solid #b41821;
+  border-radius: 6px;
 }
-
-
-
 
 .nl-info-table {
   width: 100%;
@@ -329,6 +406,11 @@
   text-overflow: ellipsis;
 }
 
+.nl-info-row:hover {
+  background-color: #f0f8ff;
+  cursor: pointer;
+}
+
 /* Spaltenbreiten */
 .nl-col-nl      { width: 15px; }
 .nl-col-jahr    { width: 60px; }
@@ -338,69 +420,20 @@
 .nl-col-pct2    { width: 15px; }
 .nl-col-abd     { width: 45px; }
 
-.table-row-selected {
-  background-color: #fff8c4 !important;
-}
-
-
-.nl-info-row:hover {
-  background-color: #f0f8ff;
-  cursor: pointer;
-}
+/* --------------------------------------------- */
+/* ANIMATION: PLZ-TABELLE HOCHSCHIEBEN */
+/* --------------------------------------------- */
 
 .filter-container.nl-info-active .table-container {
-  transform: translateY(-220px); /* weiter hoch, bis an den oberen Rand */
+  transform: translateY(-260px);
   transition: transform 0.35s ease;
 }
 
+/* --------------------------------------------- */
+/* RADIUS-SLIDER */
+/* --------------------------------------------- */
 
-
-
-
-
-.table-container {
-  transition: margin-top 0.35s ease;
-  margin-top: 1rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  font-family: sans-serif;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 0;
-}
-
-
-  .table-container table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-
-  .table-container th,
-  .table-container td {
-    padding: 0.6rem 0.8rem;
-    border-bottom: 1px solid #eee;
-    text-align: left;
-    font-size: 0.8rem;
-  }
-
-.table-row-selected {
-  background-color: #fff8c4 !important;
-}
-
-
-  .table-container th {
-    background-color: #f5f5f5;
-    font-weight: 600;
-    color: #333;
-  }
-
-  .table-container tr:hover {
-    background-color: #f0f8ff;
-  }
-  #radius-slider-container {
+#radius-slider-container {
   position: absolute;
   top: 10px;
   right: 10px;
@@ -410,34 +443,6 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.2);
   z-index: 9999;
   font-size: 14px;
-}
-
-
-.table-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-}
-
-.table-scroll {
-  flex: 1;
-  overflow-y: auto;
-  border: 1px solid #b41821;
-  border-radius: 6px;
-  background: white;
-  min-height: 0;
-  margin-bottom: 8px;
-}
-
-#streuverlust-box {
-  transition: transform 0.35s ease;
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 10px;
-  border-top: 2px solid #b41821;
-  z-index: 10;
 }
 
 
@@ -461,15 +466,20 @@
 
     <button id="filter-button">Anzeigen</button>
 
-    <div class="table-container">
-      <div class="table-wrapper" id="table-container">
-        <!-- Tabelle + Sticky-Footer werden dynamisch eingefügt -->
-      </div>
+<div class="table-container">
 
-      <!-- 🔥 Sticky-Footer-Box -->
-      <div id="streuverlust-box"></div>
-    </div>
-  </div> <!-- ✔ korrekt geschlossen -->
+  <div class="table-wrapper" id="table-container">
+    <!-- PLZ-Tabelle -->
+  </div>
+
+  <div id="nl-info-container">
+    <!-- NL-Tabelle -->
+  </div>
+
+  <div id="streuverlust-box"></div>
+
+</div>
+
 
   <!-- 🗺️ Kartenbereich -->
   <div class="map-container">
