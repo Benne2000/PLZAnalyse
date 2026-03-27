@@ -414,10 +414,10 @@
 /* Spaltenbreiten */
 .nl-col-nl      { width: 15px; }
 .nl-col-jahr    { width: 60px; }
-.nl-col-erf     { width: 50px; }
-.nl-col-pct1    { width: 15px; }
-.nl-col-val     { width: 50px; }
-.nl-col-pct2    { width: 15px; }
+.nl-col-erf     { width: 45px; }
+.nl-col-pct1    { width: 20px; }
+.nl-col-val     { width: 45px; }
+.nl-col-pct2    { width: 20px; }
 .nl-col-abd     { width: 45px; }
 
 /* --------------------------------------------- */
@@ -1967,9 +1967,9 @@ renderErhebungsInfoTable() {
   const headers = [
     { label: 'NL', width: '15px', class: 'nl-col-nl' },
     { label: 'Jahresumsatz', width: '60px', class: 'nl-col-jahr' },
-    { label: 'Erfasst', width: '50px', class: 'nl-col-erf' },
+    { label: 'Erfasst (Zeitraum)', width: '50px', class: 'nl-col-erf' },
     { label: '%', width: '15px', class: 'nl-col-pct1' },
-    { label: 'Valide', width: '50px', class: 'nl-col-val' },
+    { label: 'Davon Valide', width: '50px', class: 'nl-col-val' },
     { label: '%', width: '15px', class: 'nl-col-pct2' },
     { label: 'Abdeckung', width: '45px', class: 'nl-col-abd' }
   ];
