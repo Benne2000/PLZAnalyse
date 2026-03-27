@@ -2013,11 +2013,11 @@ renderErhebungsInfoTable() {
   const headers = [
     { label: 'NL', width: '15px', class: 'nl-col-nl' },
     { label: 'Jahresumsatz', width: '60px', class: 'nl-col-jahr' },
-    { label: 'Erfasst (Zeitraum)', width: '50px', class: 'nl-col-erf' },
-    { label: '%', width: '15px', class: 'nl-col-pct1' },
-    { label: 'Davon Valide', width: '50px', class: 'nl-col-val' },
-    { label: '%', width: '15px', class: 'nl-col-pct2' },
-    { label: 'Abdeckung', width: '45px', class: 'nl-col-abd' }
+    { label: 'Erfasst (Zeitraum)', width: '45px', class: 'nl-col-erf' },
+    { label: '%', width: '20px', class: 'nl-col-pct1' },
+    { label: 'Davon Valide', width: '45px', class: 'nl-col-val' },
+    { label: '%', width: '20px', class: 'nl-col-pct2' },
+    { label: 'Abdeckung Jahresumsatz', width: '45px', class: 'nl-col-abd' }
   ];
 
   headers.forEach(h => {
