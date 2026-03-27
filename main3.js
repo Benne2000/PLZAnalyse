@@ -249,8 +249,9 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  position: relative; /* WICHTIG für Overlay */
+  position: relative; /* WICHTIG */
 }
+
 
 
   .filter-container label {
@@ -271,32 +272,30 @@
 /* NL-Info: Overlay über der PLZ-Tabelle */
 .nl-info-container {
   position: absolute;
-  right: 0;          /* rechts andocken */
-  width: 250px;      /* ✔ gewünschte Breite */
-  bottom: 0;
+  top: 140px;          /* Eingabemaske + Button bleiben frei */
+  right: 0;
+  width: 250px;        /* ✔ gewünschte Breite */
+  max-height: 0;       /* Start: unsichtbar */
+  overflow-y: auto;
 
   background: #fff;
   border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
   border-radius: 8px 0 0 0;
 
-  max-height: 0;
-  overflow-y: auto;
-
   opacity: 0;
   transition:
     max-height 0.35s ease,
     opacity 0.35s ease;
 
-  z-index: 50;
+  z-index: 50;         /* über PLZ-Tabelle, unter Eingabemaske */
 }
 
-
-/* Sichtbar: mindestens 50% Sidebar-Höhe */
 .nl-info-container.show {
-  max-height: 40%;
+  max-height: 40%;     /* ✔ fährt 40% hoch */
   opacity: 1;
 }
+
 .nl-row-dimmed {
   opacity: 0.4;
 }
@@ -305,17 +304,27 @@
 .nl-info-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
 }
 
 .nl-info-table th,
 .nl-info-table td {
-  padding: 0.4rem 0.6rem;
+  padding: 0.3rem 0.4rem;
   border-bottom: 1px solid #b41821;
   white-space: nowrap;
-  text-overflow: ellipsis;
   overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+/* Spaltenbreiten */
+.nl-col-nl        { width: 15px; }
+.nl-col-jahres    { width: 60px; }
+.nl-col-erfasst   { width: 50px; }
+.nl-col-pct1      { width: 15px; }
+.nl-col-valid     { width: 50px; }
+.nl-col-pct2      { width: 15px; }
+.nl-col-abdeck    { width: 45px; }
+
 
 
 .nl-info-row:hover {
@@ -327,6 +336,7 @@
   transform: translateY(-40%);
   transition: transform 0.35s ease;
 }
+
 
 
 .table-container {
@@ -1719,17 +1729,14 @@ updateMarkers() {
 
 
 onMarkerClick(nl) {
-  // Toggle
   if (this._selectedNLs.has(nl)) {
     this._selectedNLs.delete(nl);
   } else {
     this._selectedNLs.add(nl);
   }
 
-  // Tabellen-UI aktualisieren
   this.updateNLSelectionUI();
 
-  // Filter anwenden
   this.applyNLFilter([...this._selectedNLs]);
 
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
@@ -1917,22 +1924,35 @@ renderErhebungsInfoTable() {
     </tr>
   `).join("");
 
-  container.innerHTML = `
-    <table class="nl-info-table">
-      <thead>
-        <tr>
-          <th>NL</th>
-          <th>Jahresumsatz</th>
-          <th>Erfasst</th>
-          <th>Abdeckung</th>
-          <th>Valide</th>
-          <th>Validität</th>
-          <th>Jahresabdeckung</th>
+container.innerHTML = `
+  <table class="nl-info-table">
+    <thead>
+      <tr>
+        <th class="nl-col-nl">NL</th>
+        <th class="nl-col-jahres">Jahresumsatz</th>
+        <th class="nl-col-erfasst">Erfasst</th>
+        <th class="nl-col-pct1">%</th>
+        <th class="nl-col-valid">Valide</th>
+        <th class="nl-col-pct2">%</th>
+        <th class="nl-col-abdeck">Abdeckung</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${Object.values(this.erhebungsInfo).map(info => `
+        <tr class="nl-info-row" data-nl="${info.nl}">
+          <td class="nl-col-nl">${info.nl}</td>
+          <td class="nl-col-jahres">${info.jahresumsatz.toLocaleString("de-DE")}</td>
+          <td class="nl-col-erfasst">${info.erfasst_total.toLocaleString("de-DE")}</td>
+          <td class="nl-col-pct1">${(info.pct_erfassung * 100).toFixed(1)}%</td>
+          <td class="nl-col-valid">${info.erfasst_valid.toLocaleString("de-DE")}</td>
+          <td class="nl-col-pct2">${(info.pct_valid * 100).toFixed(1)}%</td>
+          <td class="nl-col-abdeck">${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
         </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
+      `).join("")}
+    </tbody>
+  </table>
+`;
+
 
   // Klick auf NL-Zeile = Marker-Klick
 container.querySelectorAll(".nl-info-row").forEach(row => {
@@ -1980,6 +2000,7 @@ updateNLSelectionUI() {
     }
   });
 }
+
 
 
 restoreDropdownSelections() {
