@@ -568,11 +568,10 @@
 /* --------------------------------------------- */
 /* RADIUS-SLIDER */
 /* --------------------------------------------- */
-
 #radius-slider-container {
   position: absolute;
   top: 10px;
-  right: 30%;
+  right: 40%; /* weiter links */
   background: white;
   padding: 8px 12px;
   border-radius: 6px;
@@ -581,14 +580,10 @@
   z-index: 9999;
 }
 
-/* --------------------------------------------- */
-/* MAP TILE TOGGLE BUTTON */
-/* --------------------------------------------- */
-
 #map-tile-toggle-btn {
   position: absolute;
   bottom: 20px;
-  right: 30%;
+  right: 40%; /* weiter links */
   width: 42px;
   height: 42px;
   background: white;
@@ -597,8 +592,7 @@
   cursor: pointer;
   z-index: 9999;
 
-  /* 🔥 Neues Karten-Icon in deinem Rot (#b41821) */
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23b41821" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
+  background-image: url('data:image/svg+xml;utf8,<svg fill="%23b41821" ... ></svg>');
   background-size: 60%;
   background-repeat: no-repeat;
   background-position: center;
