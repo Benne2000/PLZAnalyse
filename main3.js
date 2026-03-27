@@ -273,8 +273,8 @@
 .nl-info-container {
   width: 100%;
   background: #fff;
-  border: 1px solid #b41821;
   border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   overflow: hidden;
 
   max-height: 0;
@@ -284,27 +284,49 @@
     max-height 0.35s ease,
     opacity 0.35s ease;
 
-  margin-top: 10px; /* Abstand zur PLZ-Tabelle */
+  margin-top: 10px;
 }
 
 .nl-info-container.show {
-  max-height: 40vh; /* 40% der Sidebar-Höhe */
+  max-height: 40vh; /* öffnet sich nach oben */
   opacity: 1;
+}
+
+.nl-info-scroll {
+  overflow-y: auto;
+  max-height: 40vh;
+  border: 1px solid #b41821;
+  border-radius: 6px;
 }
 
 
 .nl-info-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
   font-size: 0.8rem;
 }
 
-.nl-info-table th,
+.nl-info-table th {
+  background-color: #b41821;
+  color: white;
+  padding: 8px;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  white-space: pre-line;
+  border-bottom: 1px solid #b41821;
+  border-right: 1px solid #b41821;
+}
+
 .nl-info-table td {
-  padding: 0.6rem 0.8rem;
-  border-bottom: 1px solid #eee;
-  text-align: left;
+  padding: 6px 8px;
+  border-bottom: 1px solid #b41821;
+  border-right: 1px solid #b41821;
   font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Spaltenbreiten */
@@ -316,7 +338,9 @@
 .nl-col-pct2    { width: 15px; }
 .nl-col-abd     { width: 45px; }
 
-
+.table-row-selected {
+  background-color: #fff8c4 !important;
+}
 
 
 .nl-info-row:hover {
@@ -325,9 +349,10 @@
 }
 
 .filter-container.nl-info-active .table-container {
-  transform: translateY(-120px); /* Eingabemaske + Button */
+  transform: translateY(-150px); /* Eingabemaske + Button */
   transition: transform 0.35s ease;
 }
+
 
 
 
@@ -1888,63 +1913,74 @@ restoreFilterUI() {
 
 renderErhebungsInfoTable() {
   const container = this._shadowRoot.getElementById("nl-info-container");
-  if (!container) return;
+  container.innerHTML = "";
 
-  const rows = Object.values(this.erhebungsInfo).map(info => `
-    <tr class="nl-info-row" data-nl="${info.nl}">
-      <td>${info.nl}</td>
-      <td>${info.jahresumsatz.toLocaleString("de-DE")}</td>
-      <td>${info.erfasst_total.toLocaleString("de-DE")}</td>
-      <td>${(info.pct_erfassung * 100).toFixed(1)}%</td>
-      <td>${info.erfasst_valid.toLocaleString("de-DE")}</td>
-      <td>${(info.pct_valid * 100).toFixed(1)}%</td>
-      <td>${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
-    </tr>
-  `).join("");
+  const scroll = document.createElement("div");
+  scroll.classList.add("nl-info-scroll");
 
-container.innerHTML = `
-  <table class="nl-info-table">
-    <thead>
-      <tr>
-        <th class="nl-col-nl">NL</th>
-        <th class="nl-col-jahr">Jahresumsatz</th>
-        <th class="nl-col-erf">Erfasst</th>
-        <th class="nl-col-pct1">%</th>
-        <th class="nl-col-val">Valide</th>
-        <th class="nl-col-pct2">%</th>
-        <th class="nl-col-abd">Abdeckung</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${Object.values(this.erhebungsInfo).map(info => `
-        <tr class="nl-info-row" data-nl="${info.nl}">
-          <td class="nl-col-nl">${info.nl}</td>
-          <td class="nl-col-jahr">${info.jahresumsatz.toLocaleString("de-DE")}</td>
-          <td class="nl-col-erf">${info.erfasst_total.toLocaleString("de-DE")}</td>
-          <td class="nl-col-pct1">${(info.pct_erfassung * 100).toFixed(1)}%</td>
-          <td class="nl-col-val">${info.erfasst_valid.toLocaleString("de-DE")}</td>
-          <td class="nl-col-pct2">${(info.pct_valid * 100).toFixed(1)}%</td>
-          <td class="nl-col-abd">${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
-        </tr>
-      `).join("")}
-    </tbody>
-  </table>
-`;
+  const table = document.createElement("table");
+  table.classList.add("nl-info-table");
 
+  const thead = document.createElement("thead");
+  const headerRow = document.createElement("tr");
 
-  // Klick auf NL-Zeile = Marker-Klick
-container.querySelectorAll(".nl-info-row").forEach(row => {
-  row.addEventListener("click", () => {
-    const nl = row.dataset.nl;
-    this.toggleNLSelection(nl);
+  const headers = [
+    { label: 'NL', width: '15px', class: 'nl-col-nl' },
+    { label: 'Jahresumsatz', width: '60px', class: 'nl-col-jahr' },
+    { label: 'Erfasst', width: '50px', class: 'nl-col-erf' },
+    { label: '%', width: '15px', class: 'nl-col-pct1' },
+    { label: 'Valide', width: '50px', class: 'nl-col-val' },
+    { label: '%', width: '15px', class: 'nl-col-pct2' },
+    { label: 'Abdeckung', width: '45px', class: 'nl-col-abd' }
+  ];
+
+  headers.forEach(h => {
+    const th = document.createElement("th");
+    th.textContent = h.label;
+    th.classList.add(h.class);
+    headerRow.appendChild(th);
   });
-});
+
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement("tbody");
+
+  Object.values(this.erhebungsInfo).forEach(info => {
+    const tr = document.createElement("tr");
+    tr.classList.add("nl-info-row");
+    tr.dataset.nl = info.nl;
+
+const values = [
+  info.nl,
+  Math.round(info.jahresumsatz).toLocaleString("de-DE"),
+  Math.round(info.erfasst_total).toLocaleString("de-DE"),
+  (info.pct_erfassung * 100).toFixed(1) + "%",
+  Math.round(info.erfasst_valid).toLocaleString("de-DE"),
+  (info.pct_valid * 100).toFixed(1) + "%",
+  (info.pct_hochrechnung * 100).toFixed(1) + "%"
+];
 
 
-this.updateNLSelectionUI();
+    values.forEach((val, i) => {
+      const td = document.createElement("td");
+      td.textContent = val;
+      td.classList.add(headers[i].class);
+      tr.appendChild(td);
+    });
 
+    tr.addEventListener("click", () => this.toggleNLSelection(info.nl));
 
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  scroll.appendChild(table);
+  container.appendChild(scroll);
+
+  this.updateNLSelectionUI();
 }
+
 
 
 updateNLSelectionUI() {
