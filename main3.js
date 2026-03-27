@@ -271,30 +271,27 @@
 /* NL-Info: Container über der PLZ-Tabelle */
 /* NL-Info: Overlay über der PLZ-Tabelle */
 .nl-info-container {
-  position: absolute;
-  top: 140px;          /* Eingabemaske + Button bleiben frei */
-  right: 0;
-  width: 250px;        /* ✔ gewünschte Breite */
-  max-height: 0;       /* Start: unsichtbar */
-  overflow-y: auto;
-
+  width: 100%;
   background: #fff;
-  border-left: 2px solid #b41821;
-  border-top: 2px solid #b41821;
-  border-radius: 8px 0 0 0;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  overflow: hidden;
 
+  max-height: 0;
   opacity: 0;
+
   transition:
     max-height 0.35s ease,
     opacity 0.35s ease;
 
-  z-index: 50;         /* über PLZ-Tabelle, unter Eingabemaske */
+  margin-top: 10px; /* Abstand zur PLZ-Tabelle */
 }
 
 .nl-info-container.show {
-  max-height: 40%;     /* ✔ fährt 40% hoch */
+  max-height: 40vh; /* 40% der Sidebar-Höhe */
   opacity: 1;
 }
+
 
 .nl-row-dimmed {
   opacity: 0.4;
@@ -304,26 +301,26 @@
 .nl-info-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
 }
 
 .nl-info-table th,
 .nl-info-table td {
-  padding: 0.3rem 0.4rem;
-  border-bottom: 1px solid #b41821;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0.6rem 0.8rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+  font-size: 0.8rem;
 }
 
 /* Spaltenbreiten */
-.nl-col-nl        { width: 15px; }
-.nl-col-jahres    { width: 60px; }
-.nl-col-erfasst   { width: 50px; }
-.nl-col-pct1      { width: 15px; }
-.nl-col-valid     { width: 50px; }
-.nl-col-pct2      { width: 15px; }
-.nl-col-abdeck    { width: 45px; }
+.nl-col-nl      { width: 15px; }
+.nl-col-jahr    { width: 60px; }
+.nl-col-erf     { width: 50px; }
+.nl-col-pct1    { width: 15px; }
+.nl-col-val     { width: 50px; }
+.nl-col-pct2    { width: 15px; }
+.nl-col-abd     { width: 45px; }
+
 
 
 
@@ -333,9 +330,10 @@
 }
 
 .filter-container.nl-info-active .table-container {
-  transform: translateY(-40%);
+  transform: translateY(-120px); /* Eingabemaske + Button */
   transition: transform 0.35s ease;
 }
+
 
 
 
@@ -1865,20 +1863,19 @@ infoBtn.addEventListener("click", () => {
 
   if (!nlBox) return;
 
-  // Toggle schließen
   if (nlBox.classList.contains("show")) {
     nlBox.classList.remove("show");
     filter.classList.remove("nl-info-active");
     return;
   }
 
-  // Öffnen
   this.prepareErhebungsInfo();
   this.renderErhebungsInfoTable();
 
   nlBox.classList.add("show");
   filter.classList.add("nl-info-active");
 });
+
 
 
   this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
@@ -1929,24 +1926,24 @@ container.innerHTML = `
     <thead>
       <tr>
         <th class="nl-col-nl">NL</th>
-        <th class="nl-col-jahres">Jahresumsatz</th>
-        <th class="nl-col-erfasst">Erfasst</th>
+        <th class="nl-col-jahr">Jahresumsatz</th>
+        <th class="nl-col-erf">Erfasst</th>
         <th class="nl-col-pct1">%</th>
-        <th class="nl-col-valid">Valide</th>
+        <th class="nl-col-val">Valide</th>
         <th class="nl-col-pct2">%</th>
-        <th class="nl-col-abdeck">Abdeckung</th>
+        <th class="nl-col-abd">Abdeckung</th>
       </tr>
     </thead>
     <tbody>
       ${Object.values(this.erhebungsInfo).map(info => `
         <tr class="nl-info-row" data-nl="${info.nl}">
           <td class="nl-col-nl">${info.nl}</td>
-          <td class="nl-col-jahres">${info.jahresumsatz.toLocaleString("de-DE")}</td>
-          <td class="nl-col-erfasst">${info.erfasst_total.toLocaleString("de-DE")}</td>
+          <td class="nl-col-jahr">${info.jahresumsatz.toLocaleString("de-DE")}</td>
+          <td class="nl-col-erf">${info.erfasst_total.toLocaleString("de-DE")}</td>
           <td class="nl-col-pct1">${(info.pct_erfassung * 100).toFixed(1)}%</td>
-          <td class="nl-col-valid">${info.erfasst_valid.toLocaleString("de-DE")}</td>
+          <td class="nl-col-val">${info.erfasst_valid.toLocaleString("de-DE")}</td>
           <td class="nl-col-pct2">${(info.pct_valid * 100).toFixed(1)}%</td>
-          <td class="nl-col-abdeck">${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
+          <td class="nl-col-abd">${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
         </tr>
       `).join("")}
     </tbody>
