@@ -85,18 +85,25 @@
         border-radius: 4px;
       }
 
-      #side-popup {
-        width: 25%;
-        background: white;
-        border-left: 2px solid #b41821;
-        padding: 10px;
-        font-family: sans-serif;
-        color: #b41821;
-        box-sizing: border-box;
-        opacity: 0;
-        transform: translateX(20px);
-        transition: opacity 0.3s ease, transform 0.3s ease;
-      }
+#side-popup {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 25%;
+  height: 70%; /* nur obere 70% */
+  background: white;
+  border-left: 2px solid #b41821;
+  padding: 10px;
+  font-family: sans-serif;
+  color: #b41821;
+  box-sizing: border-box;
+  overflow-y: auto;
+
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
   #side-popup table {
     width: 100%;
     table-layout: fixed; /* verhindert Breitenverschiebung */
@@ -239,6 +246,46 @@
     width: 25%;
     font-weight: normal;
   }
+
+#map-control-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 25%;
+  height: 30%; /* untere 30% */
+  background: #f7f7f7;
+  border-left: 2px solid #b41821;
+  border-top: 2px solid #b41821;
+  padding: 10px;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  z-index: 9999;
+
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#map-control-panel h4 {
+  margin: 0 0 6px 0;
+  color: #b41821;
+  font-size: 0.9rem;
+}
+
+#map-control-panel button {
+  padding: 6px;
+  border: 1px solid #b41821;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #b41821;
+}
+
+#map-control-panel button:hover {
+  background: #fff3f3;
+}
+
 
  /* --------------------------------------------- */
 /* SIDEBAR / FILTER-CONTAINER */
@@ -479,7 +526,6 @@
 
 
     </style>
-
 <div class="layout">
 
   <!-- 🔍 Filterbereich -->
@@ -534,8 +580,23 @@
 
   </div> <!-- END map-container -->
 
-  <!-- 📌 Popup für Details -->
+  <!-- 📌 Popup für Details (70%) -->
   <div id="side-popup"></div>
+
+  <!-- 🎛️ Steuerzentrale für Kartenansichten (30%) -->
+  <div id="map-control-panel">
+    <h4>Kartenansicht</h4>
+
+    <button data-mode="wk">Werbekosten</button>
+    <button data-mode="umsatz">Erhebungsumsatz</button>
+    <button data-mode="umsatzhh">Umsatz pro Haushalt</button>
+    <button data-mode="ra">R&A</button>
+    <button data-mode="online">Onlineshop</button>
+    <button data-mode="pluscard">Pluscard</button>
+
+    <!-- Optional: Kombi-Sichten -->
+    <button data-mode="wk+umsatz">WK + Umsatz</button>
+  </div>
 
 </div> <!-- END layout -->
 
@@ -685,6 +746,12 @@ this.map.fitBounds(bounds, {
     console.error("❌ Fehler beim Laden der GeoJSON:", error);
   }
 }
+
+applyMapMode(mode) {
+  this.currentMapMode = mode;
+  this.updateGeoLayer(); // färbt die Karte neu
+}
+
 
 renderDataTable(data) {
   console.log("▶ renderDataTable aufgerufen");
@@ -1063,16 +1130,18 @@ zoomToFilteredPLZ() {
   }
 }
 
-
 initializeMapBase() {
-  const mapContainer = this._shadowRoot.getElementById('map');
+  const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
-  // 🧭 Events für Marker-Notizen
-  this.map.on('zoomend', () => this.showNotesOnMap());
-  this.map.on('moveend', () => this.showNotesOnMap());
+  // ⭐ Standard-Kartenmodus
+  this.currentMapMode = "wk"; // Werbekosten
 
-  // 🧱 Initialisiere Marker-Gruppen und Marker
+  // 🧭 Events für Marker-Notizen
+  this.map.on("zoomend", () => this.showNotesOnMap());
+  this.map.on("moveend", () => this.showNotesOnMap());
+
+  // 🧱 Marker-Gruppen
   this.filteredGroup = L.layerGroup().addTo(this.map);
   this.neighbourGroup = L.layerGroup();
 
@@ -1086,19 +1155,32 @@ initializeMapBase() {
     this._resizeObserver.observe(this._shadowRoot.host);
   }
 
-  // 🔄 Starte das Rendering
+  // 🔄 Rendering starten
   this.render();
   this.initRadiusSlider();
 
-  // 🗺️ Kartenstil-Button aktivieren
+  // 🗺️ Kartenstil-Button
   const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
   if (tileBtn) {
     tileBtn.addEventListener("click", () => {
-      console.log("🗺️ Kartenstil umschalten");
       this.toggleMapTiles();
     });
   }
+
+  // 🎛️ Steuerzentrale für Kartenmodi
+  const panel = this._shadowRoot.getElementById("map-control-panel");
+  if (panel) {
+    panel.querySelectorAll("button[data-mode]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const mode = btn.dataset.mode;
+        if (!mode) return;
+        this.currentMapMode = mode;
+        this.updateGeoLayer();
+      });
+    });
+  }
 }
+
 
 
       initializeMapTiles() {
@@ -1666,6 +1748,18 @@ getFilteredData() {
                             "#cfd4da";    // Grau
   }
   }
+
+  getHeatColor(value) {
+  if (value == null || isNaN(value)) return "#cccccc";
+
+  // Normale Heatmap: gelb → orange → rot
+  return value > 10000 ? "#b41821" :
+         value > 5000  ? "#d9483b" :
+         value > 2000  ? "#f0803c" :
+         value > 500   ? "#f6b65b" :
+                         "#ffe89c";
+}
+
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -1678,12 +1772,19 @@ updateGeoLayer() {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
 
     const hasValues = plzWerte[plz] !== undefined;
-    const values = plzWerte[plz] || { wk: 0, wkPot: 0, hz: false };
-    const value = values.hz ? values.wk : values.wkPot;
+    const values = plzWerte[plz] || {
+      wk: 0,
+      wkPot: 0,
+      hz: false,
+      umsatz: 0,
+      umsatzProHaushalt: 0,
+      ra: 0,
+      onlineshop: 0,
+      pluscard: 0
+    };
 
     const inRadius = !hasRadius || this.plzImRadius.has(plz);
 
-    // 🔥 Einheitliches Grau für ALLE irrelevanten PLZs
     const setGrey = () => {
       layer.setStyle({
         fillColor: "#cfd4da",
@@ -1711,9 +1812,54 @@ updateGeoLayer() {
       return;
     }
 
-    // 3️⃣ PLZ im Radius → farbig
+    // 3️⃣ PLZ im Radius → farbig (abhängig vom Kartenmodus)
+    let value;
+    let fillColor;
+
+    switch (this.currentMapMode) {
+      case "wk": {
+        const wkValue = values.hz ? values.wk : values.wkPot;
+        value = wkValue;
+        fillColor = this.getColor(value, values.hz); // deine bestehende WK-Skala
+        break;
+      }
+
+      case "umsatz":
+        value = values.umsatz;
+        fillColor = this.getHeatColor(value);
+        break;
+
+      case "umsatzhh":
+        value = values.umsatzProHaushalt;
+        fillColor = this.getHeatColor(value);
+        break;
+
+      case "ra":
+        value = values.ra;
+        fillColor = this.getHeatColor(value);
+        break;
+
+      case "online":
+        value = values.onlineshop;
+        fillColor = this.getHeatColor(value);
+        break;
+
+      case "pluscard":
+        value = values.pluscard;
+        fillColor = this.getHeatColor(value);
+        break;
+
+      case "wk+umsatz":
+        value = (values.wk || 0) + (values.umsatz || 0);
+        fillColor = this.getHeatColor(value);
+        break;
+
+      default:
+        fillColor = "#cfd4da";
+    }
+
     layer.setStyle({
-      fillColor: this.getColor(value, values.hz),
+      fillColor,
       fillOpacity: 0.7,
       color: "#ffffff",
       weight: 1
