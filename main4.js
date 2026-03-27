@@ -415,12 +415,12 @@
 
 /* Spaltenbreiten */
 .nl-col-nl      { width: 15px; }
-.nl-col-jahr    { width: 60px; }
+.nl-col-jahr    { width: 55px; }
 .nl-col-erf     { width: 45px; }
-.nl-col-pct1    { width: 20px; }
+.nl-col-pct1    { width: 25px; }
 .nl-col-val     { width: 45px; }
-.nl-col-pct2    { width: 20px; }
-.nl-col-abd     { width: 45px; }
+.nl-col-pct2    { width: 25px; }
+.nl-col-abd     { width: 40px; }
 
 /* --------------------------------------------- */
 /* ANIMATION: NUR DIE PLZ-TABELLE HOCHSCHIEBEN */
