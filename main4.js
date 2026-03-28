@@ -25,7 +25,45 @@
   z-index: 1;
 }
 
-.map-mode-btn.active,
+.map-switch.global {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  margin-bottom: 10px;
+}
+
+.map-switch.global.active {
+  background: #fff3f3;
+  box-shadow: 0 0 6px rgba(180, 24, 33, 0.4);
+}
+.map-toggle {
+  padding: 10px 12px;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #b41821;
+  font-weight: bold;
+  transition: background 0.2s ease;
+}
+
+.map-toggle:hover {
+  background: #fff3f3;
+}
+
+.map-toggle.active {
+  background: #fff3f3;
+  box-shadow: 0 0 6px rgba(180, 24, 33, 0.4);
+}
+
+
+
 .map-switch.active {
   border-color: #b41821;
   background: #fff3f3;
@@ -76,23 +114,24 @@
   transition: transform 0.25s ease;
 }
 .map-mode-btn {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: white;
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
   border: 1px solid #b41821;
   border-radius: 8px;
-  padding: 10px 12px;
+  background: white;
   cursor: pointer;
-  transition: background 0.2s ease;
   font-size: 0.9rem;
   color: #b41821;
   font-weight: bold;
+  transition: background 0.2s ease;
 }
 
-.map-mode-btn:hover {
+.map-mode-btn.active {
   background: #fff3f3;
+  box-shadow: 0 0 6px rgba(180, 24, 33, 0.4);
 }
+
 
 .map-switch.active .map-switch-toggle {
   background: #b41821;
@@ -681,32 +720,28 @@
 
   <!-- 🎛️ Steuerzentrale für Kartenansichten (30%) -->
 <div id="map-control-panel">
+
   <h4>Kartenansicht</h4>
 
-  <!-- Werbekosten -->
-  <button class="map-mode-btn" data-mode="wk">Werbekosten</button>
-
-  <!-- Umsatzarten -->
-  <div class="map-switch" data-base="umsatz">
-    <span class="map-switch-label">Umsatz (absolut)</span>
+  <!-- 🔄 Globaler Switch: absolut ↔ pro Haushalt -->
+  <div id="mode-switch" class="map-switch global">
+    <span class="map-switch-label">Anzeige: absolut</span>
     <div class="map-switch-toggle"></div>
   </div>
 
-  <div class="map-switch" data-base="ra">
-    <span class="map-switch-label">R&A (absolut)</span>
-    <div class="map-switch-toggle"></div>
-  </div>
+  <!-- 📌 Werbekostenanalyse -->
+  <button class="map-mode-btn" data-mode="wk">Werbekostenanalyse</button>
 
-  <div class="map-switch" data-base="online">
-    <span class="map-switch-label">Onlineshop (absolut)</span>
-    <div class="map-switch-toggle"></div>
-  </div>
+  <h4>Umsatzanalyse</h4>
 
-  <div class="map-switch" data-base="pluscard">
-    <span class="map-switch-label">Pluscard (absolut)</span>
-    <div class="map-switch-toggle"></div>
-  </div>
+  <!-- 📊 Umsatzkategorien (kombinierbar) -->
+  <div class="map-toggle" data-cat="stationaer">Stationär</div>
+  <div class="map-toggle" data-cat="pluscard">Pluscard</div>
+  <div class="map-toggle" data-cat="ra">R&A</div>
+  <div class="map-toggle" data-cat="online">Onlineshop</div>
+
 </div>
+
 
 
 
@@ -727,6 +762,9 @@
         this._geoLayerVisible = false;
         this._tilesVisible = false;
         this._sortState = { column: null, direction: "asc" };
+        this.umsatzMode = "abs";        // "abs" oder "hh"
+        this.activeCategories = new Set(); // stationaer, pluscard, ra, online
+
       }
 
       connectedCallback() {
@@ -1238,86 +1276,98 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
-  // ⭐ Standard-Kartenmodus
+  // Standardmodus
   this.currentMapMode = "wk";
 
-  // 🧭 Events für Marker-Notizen
+  // Marker-Events
   this.map.on("zoomend", () => this.showNotesOnMap());
   this.map.on("moveend", () => this.showNotesOnMap());
 
-  // 🧱 Marker-Gruppen
+  // Marker-Gruppen
   this.filteredGroup = L.layerGroup().addTo(this.map);
   this.neighbourGroup = L.layerGroup();
 
-  // 📐 Resize-Handling
+  // Resize Observer
   if (!this._resizeObserver) {
     this._resizeObserver = new ResizeObserver(() => {
-      if (this.map) {
-        this.map.invalidateSize();
-      }
+      if (this.map) this.map.invalidateSize();
     });
     this._resizeObserver.observe(this._shadowRoot.host);
   }
 
-  // 🔄 Rendering starten
+  // Rendering starten
   this.render();
   this.initRadiusSlider();
 
-  // 🗺️ Kartenstil-Button (Tile-Layer)
+  // Kartenstil-Button
   const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
   if (tileBtn) {
-    tileBtn.addEventListener("click", () => {
-      this.toggleMapTiles();
-    });
+    tileBtn.addEventListener("click", () => this.toggleMapTiles());
   }
 
-  // ⭐ Hilfsfunktion: Alle Ansichten deaktivieren
+  // ⭐ Hilfsfunktion: alles deaktivieren
   const deactivateAllViews = () => {
-    this._shadowRoot.querySelectorAll(".map-mode-btn, .map-switch")
+    this._shadowRoot.querySelectorAll(".map-mode-btn, .map-toggle")
       .forEach(el => el.classList.remove("active"));
   };
 
-  // ⭐ Werbekosten Button
+  // ⭐ Globaler Switch: absolut ↔ pro Haushalt
+  const modeSwitch = this._shadowRoot.getElementById("mode-switch");
+  modeSwitch.addEventListener("click", () => {
+    const label = modeSwitch.querySelector(".map-switch-label");
+    const isActive = modeSwitch.classList.toggle("active");
+
+    this.umsatzMode = isActive ? "hh" : "abs";
+
+    label.textContent = isActive
+      ? "Anzeige: pro Haushalt"
+      : "Anzeige: absolut";
+
+    this.updateGeoLayer();
+  });
+
+  // ⭐ Werbekostenanalyse
   this._shadowRoot.querySelectorAll(".map-mode-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       deactivateAllViews();
       btn.classList.add("active");
 
-      this.currentMapMode = btn.dataset.mode;
+      this.activeCategories.clear();
+      this.currentMapMode = "wk";
+
       this.updateGeoLayer();
     });
   });
 
-  // ⭐ Umsatz-Switches (absolut ↔ pro Haushalt)
-  this._shadowRoot.querySelectorAll(".map-switch").forEach(sw => {
-    sw.addEventListener("click", () => {
-      const base = sw.dataset.base;
-      const label = sw.querySelector(".map-switch-label");
+  // ⭐ Umsatzkategorien (kombinierbar)
+  this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
+    toggle.addEventListener("click", () => {
+      const cat = toggle.dataset.cat;
 
-      // Alle anderen deaktivieren
-      deactivateAllViews();
+      // WK deaktivieren
+      this._shadowRoot.querySelectorAll(".map-mode-btn")
+        .forEach(b => b.classList.remove("active"));
 
-      // Toggle aktivieren
-      const isActive = sw.classList.toggle("active");
+      this.currentMapMode = "umsatz-multi";
 
-      if (isActive) {
-        this.currentMapMode = base + "hh";
-        label.textContent = label.textContent.replace("(absolut)", "(pro Haushalt)");
+      // Kategorie toggeln
+      if (this.activeCategories.has(cat)) {
+        this.activeCategories.delete(cat);
+        toggle.classList.remove("active");
       } else {
-        this.currentMapMode = base;
-        label.textContent = label.textContent.replace("(pro Haushalt)", "(absolut)");
+        this.activeCategories.add(cat);
+        toggle.classList.add("active");
       }
 
       this.updateGeoLayer();
     });
   });
 
-  // ⭐ Standard: Werbekosten aktiv markieren
+  // Standard: WK aktiv
   const wkBtn = this._shadowRoot.querySelector('.map-mode-btn[data-mode="wk"]');
   if (wkBtn) wkBtn.classList.add("active");
 }
@@ -1913,7 +1963,6 @@ getFilteredData() {
          value > 500   ? "#f6b65b" :
                          "#ffe89c";
 }
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -1922,45 +1971,44 @@ updateGeoLayer() {
 
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
 
-  // ⭐ 1) Dynamischen Maximalwert bestimmen
+  // ⭐ Maximalwert bestimmen
   let maxValue = 0;
 
   Object.values(plzWerte).forEach(v => {
-    switch (this.currentMapMode) {
-      case "umsatz": maxValue = Math.max(maxValue, v.umsatz || 0); break;
-      case "umsatzhh": maxValue = Math.max(maxValue, v.umsatzProHaushalt || 0); break;
+    if (this.currentMapMode === "wk") {
+      const wkValue = v.hz ? v.wk : v.wkPot;
+      maxValue = Math.max(maxValue, wkValue);
+      return;
+    }
 
-      case "ra": maxValue = Math.max(maxValue, v.ra || 0); break;
-      case "rahh": maxValue = Math.max(maxValue, v.raProHaushalt || 0); break;
+    if (this.currentMapMode === "umsatz-multi") {
+      let sum = 0;
 
-      case "online": maxValue = Math.max(maxValue, v.onlineshop || 0); break;
-      case "onlinehh": maxValue = Math.max(maxValue, v.onlineshopProHaushalt || 0); break;
+      if (this.activeCategories.has("stationaer"))
+        sum += this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz;
 
-      case "pluscard": maxValue = Math.max(maxValue, v.pluscard || 0); break;
-      case "pluscardhh": maxValue = Math.max(maxValue, v.pluscardProHaushalt || 0); break;
+      if (this.activeCategories.has("pluscard"))
+        sum += this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard;
 
-      case "wk+umsatz":
-        maxValue = Math.max(maxValue, (v.wk || 0) + (v.umsatz || 0));
-        break;
+      if (this.activeCategories.has("ra"))
+        sum += this.umsatzMode === "hh" ? v.raProHaushalt : v.ra;
+
+      if (this.activeCategories.has("online"))
+        sum += this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop;
+
+      maxValue = Math.max(maxValue, sum);
+      return;
     }
   });
 
-  // ⭐ 2) Layer durchgehen
+  // ⭐ Layer einfärben
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
 
     const hasValues = plzWerte[plz] !== undefined;
-    const values = plzWerte[plz] || {
-      wk: 0, wkPot: 0, hz: false,
-      umsatz: 0, umsatzProHaushalt: 0,
-      ra: 0, raProHaushalt: 0,
-      onlineshop: 0, onlineshopProHaushalt: 0,
-      pluscard: 0, pluscardProHaushalt: 0
-    };
-
+    const values = plzWerte[plz] || {};
     const inRadius = !hasRadius || this.plzImRadius.has(plz);
 
-    // ⭐ Grey-Out Funktion
     const setGrey = () => {
       layer.setStyle({
         fillColor: "#cfd4da",
@@ -1969,87 +2017,43 @@ updateGeoLayer() {
         weight: 1
       });
       layer.options.interactive = false;
-
-      if (this.criticalMarkers[plz]) {
-        this.map.removeLayer(this.criticalMarkers[plz]);
-        delete this.criticalMarkers[plz];
-      }
     };
 
-    // 1️⃣ PLZ ohne Werte → grau
-    if (!hasValues) {
+    if (!hasValues || !inRadius) {
       setGrey();
       return;
     }
 
-    // 2️⃣ PLZ außerhalb Radius → grau
-    if (!inRadius) {
-      setGrey();
-      return;
+    let value = 0;
+    let fillColor = "#cccccc";
+
+    // ⭐ WK
+    if (this.currentMapMode === "wk") {
+      value = values.hz ? values.wk : values.wkPot;
+      fillColor = this.getColor(value, values.hz);
     }
 
-    // ⭐ 3) Wert je nach Modus bestimmen
-    let value;
-    let fillColor;
+    // ⭐ Multi-Umsatz
+    if (this.currentMapMode === "umsatz-multi") {
+      let sum = 0;
 
-    switch (this.currentMapMode) {
-      case "wk": {
-        const wkValue = values.hz ? values.wk : values.wkPot;
-        value = wkValue;
-        fillColor = this.getColor(value, values.hz); // deine WK-Skala
-        break;
-      }
+      if (this.activeCategories.has("stationaer"))
+        sum += this.umsatzMode === "hh" ? values.umsatzProHaushalt : values.umsatz;
 
-      case "umsatz":
-        value = values.umsatz;
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
+      if (this.activeCategories.has("pluscard"))
+        sum += this.umsatzMode === "hh" ? values.pluscardProHaushalt : values.pluscard;
 
-      case "umsatzhh":
-        value = values.umsatzProHaushalt;
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
+      if (this.activeCategories.has("ra"))
+        sum += this.umsatzMode === "hh" ? values.raProHaushalt : values.ra;
 
-      case "ra":
-        value = values.ra;
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
+      if (this.activeCategories.has("online"))
+        sum += this.umsatzMode === "hh" ? values.onlineshopProHaushalt : values.onlineshop;
 
-      case "rahh":
-        value = values.raProHaushalt;
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
-
-      case "online":
-        value = values.onlineshop;
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
-
-      case "onlinehh":
-        value = values.onlineshopProHaushalt;
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
-
-      case "pluscard":
-        value = values.pluscard;
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
-
-      case "pluscardhh":
-        value = values.pluscardProHaushalt;
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
-
-      case "wk+umsatz":
-        value = (values.wk || 0) + (values.umsatz || 0);
-        fillColor = this.getDynamicHeatColor(value, maxValue);
-        break;
-
-      default:
-        fillColor = "#cccccc";
+      value = sum;
+      fillColor = this.getDynamicHeatColor(value, maxValue);
     }
 
-    // ⭐ 4) Farbe anwenden
+    // ⭐ Farbe anwenden
     layer.setStyle({
       fillColor,
       fillOpacity: 0.7,
@@ -2057,45 +2061,9 @@ updateGeoLayer() {
       weight: 1
     });
     layer.options.interactive = true;
-
-    // ⭐ 5) Critical Marker
-    const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
-
-    if (isCritical) {
-      if (!this.criticalMarkers[plz]) {
-        const center = layer.getBounds().getCenter();
-
-        const icon = L.divIcon({
-          html: `<div style="
-            background:#ffffff;
-            border:2px solid #b41821;
-            border-radius:50%;
-            width:22px;
-            height:22px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:14px;
-            font-weight:bold;
-          ">⚠️</div>`,
-          className: "",
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
-        });
-
-        this.criticalMarkers[plz] = L.marker(center, {
-          icon,
-          interactive: false
-        }).addTo(this.map);
-      }
-    } else {
-      if (this.criticalMarkers[plz]) {
-        this.map.removeLayer(this.criticalMarkers[plz]);
-        delete this.criticalMarkers[plz];
-      }
-    }
   });
 }
+
 
 updateMarkers() {
   this.filteredGroup.clearLayers();
