@@ -1432,6 +1432,7 @@ getDynamicHeatColor(value, max) {
 
 
 
+
       initializeMapTiles() {
         if (!this.map) return;
         this._tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1918,7 +1919,18 @@ updateGeoLayer() {
   const radiusActive = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
   console.log("➡️ Radius active:", radiusActive, "| PLZ im Radius:", this.plzImRadius?.size);
 
-  const safe = x => Number.isFinite(x) ? x : 0;
+  // Hilfsfunktion: immer in Zahl casten
+  const safe = x => {
+    const n = Number(x);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // 🔒 Fallback: wenn keine Kategorie aktiv → Stationär aktivieren
+  if (this.currentMapMode === "umsatz-multi" && (!this.activeCategories || this.activeCategories.size === 0)) {
+    console.warn("⚠️ Keine Umsatz-Kategorie aktiv – fallback auf 'stationaer'");
+    this.activeCategories = new Set(["stationaer"]);
+  }
+  console.log("➡️ aktive Kategorien:", Array.from(this.activeCategories || []));
 
   // ---------------------------------------------------------
   // 1️⃣ MAX-WERT BERECHNEN (nur PLZ im Radius!)
@@ -1954,10 +1966,13 @@ updateGeoLayer() {
       if (this.activeCategories.has("online"))
         sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
 
-      if (sum > 0) sums.push(sum);
+      if (sum > 0) {
+        sums.push(sum);
+      }
     });
 
     maxValue = sums.length > 0 ? Math.max(...sums) : 0;
+    console.log("➡️ Beispiel-Summen (erste 5):", sums.slice(0, 5));
   }
 
   console.log("➡️ maxValue (nach Radius):", maxValue);
@@ -2019,6 +2034,7 @@ updateGeoLayer() {
     });
   });
 }
+
 
 
 updateMarkers() {
