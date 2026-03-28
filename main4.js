@@ -989,40 +989,43 @@ style: feature => {
 }
 ,
 
-// onEachFeature(feature, layer)
 onEachFeature: (feature, layer) => {
   layer.on("click", (e) => {
+
     // PLZ IMMER normalisieren
     const plz = String(e.target.feature.properties.plz).padStart(5, "0");
 
-    // Gebiet highlighten
+    // Highlight
     this.highlightMapArea(plz);
-
-    // Tabellenzeile highlighten
     this.highlightTableRowByPLZ(plz);
 
-    // Umsatz-Modus → Umsatz-Popup
+    // Popups referenzieren
+    const wkPopup = this._shadowRoot.getElementById("side-popup");
+    const umsatzPopup = this._shadowRoot.getElementById("popup-umsatz");
+
+    // Immer beide schließen
+    wkPopup.classList.remove("show");
+    umsatzPopup.classList.add("hidden");
+
+    // Umsatz-Modus
     if (this.currentMapMode === "umsatz-multi") {
       const values = this.filteredPLZWerte?.[plz];
 
-      // WK-Popup leeren, damit nichts überlappt
-      const sidePopup = this._shadowRoot.getElementById("side-popup");
-      sidePopup.innerHTML = "";
-
-      if (values) {
-        this.showUmsatzPopup(plz, values);
-      } else {
+      if (!values) {
         console.warn("❌ Keine Umsatzwerte für PLZ", plz);
+        return;
       }
 
+      this.showUmsatzPopup(plz, values);
       return;
     }
 
-    // WK-Modus → altes Popup
+    // WK-Modus
     const kennwerte = this.filteredKennwerte?.[plz];
     this.showPopup(e.target.feature, kennwerte);
   });
 }
+
 
 
 
@@ -1725,9 +1728,8 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
-
 showUmsatzPopup(plz, values) {
-  const sidePopup = this._shadowRoot.getElementById("side-popup");
+  const popup = this._shadowRoot.getElementById("popup-umsatz");
 
   const modeHH = this.umsatzMode === "hh";
 
@@ -1742,18 +1744,15 @@ showUmsatzPopup(plz, values) {
 
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-  // Anteil-Balken Prozentwerte
   const pct = x => total > 0 ? (x / total) * 100 : 0;
 
-  sidePopup.innerHTML = `
+  popup.innerHTML = `
     <button class="close-btn">×</button>
 
     <table>
       <thead>
         <tr>
-          <th colspan="2" class="title-cell" title="${note}">
-            ${plz} – ${note}
-          </th>
+          <th colspan="2" class="title-cell">${plz} – ${note}</th>
         </tr>
 
         <tr>
@@ -1786,7 +1785,6 @@ showUmsatzPopup(plz, values) {
       </div>
     </div>
 
-    <!-- Anteil-Balken -->
     <div class="umsatz-share-bar">
       <div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>
       <div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>
@@ -1795,14 +1793,17 @@ showUmsatzPopup(plz, values) {
     </div>
   `;
 
-  // Animation
-  void sidePopup.offsetWidth;
-  setTimeout(() => sidePopup.classList.add("show"), 10);
+  popup.classList.remove("hidden");
 
-  sidePopup.querySelector(".close-btn").onclick = () => {
-    sidePopup.classList.remove("show");
+  void popup.offsetWidth;
+  popup.classList.add("show");
+
+  popup.querySelector(".close-btn").onclick = () => {
+    popup.classList.remove("show");
+    popup.classList.add("hidden");
   };
 }
+
 
 
 
@@ -2101,8 +2102,7 @@ getFilteredData() {
                             "#cfd4da";    // Grau
   }
   }
-
-  updateGeoLayer() {
+updateGeoLayer() {
   if (!this._geoLayer) return;
 
   console.group("🧪 updateGeoLayer()");
@@ -2114,7 +2114,7 @@ getFilteredData() {
   const safe = x => Number.isFinite(x) ? x : 0;
 
   // ---------------------------------------------------------
-  // 1️⃣ MAX-WERT GLOBAL BERECHNEN (NICHT nach Radius!)
+  // 1️⃣ MAX-WERT GLOBAL BERECHNEN
   // ---------------------------------------------------------
   let maxValue = 0;
 
@@ -2126,8 +2126,6 @@ getFilteredData() {
   }
 
   if (this.currentMapMode === "umsatz-multi") {
-    const sums = [];
-
     Object.values(plzWerte).forEach(v => {
       let sum = 0;
 
@@ -2143,10 +2141,8 @@ getFilteredData() {
       if (this.activeCategories.has("online"))
         sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
 
-      if (sum > 0) sums.push(sum);
+      maxValue = Math.max(maxValue, sum);
     });
-
-    maxValue = sums.length > 0 ? Math.max(...sums) : 0;
   }
 
   console.log("➡️ maxValue:", maxValue);
@@ -2616,7 +2612,6 @@ prepareErhebungsInfo() {
   });
 }
 
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -2629,8 +2624,10 @@ prepareUmsatzPLZWerte() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  const plzWerte = this.filteredPLZWerte || {};
+  // NEU: Immer frisches Objekt erzeugen
+  const plzWerte = {};
 
+  // Nur Zeilen der aktiven Erhebung
   const rows = raw.filter(row =>
     row["dimension_erhebung_0"]?.id == erhID &&
     row["dimension_jahr_0"]?.id == jahr &&
@@ -2643,41 +2640,38 @@ prepareUmsatzPLZWerte() {
 
     if (!plzWerte[plz]) {
       plzWerte[plz] = {
-        wk: 0,
-        wkPot: 0,
-        hz: false,
+        haushalte: 0,
 
         umsatz: 0,
-        umsatzProHaushalt: 0,
-
         ra: 0,
-        raProHaushalt: 0,
-
         onlineshop: 0,
-        onlineshopProHaushalt: 0,
-
         pluscard: 0,
-        pluscardProHaushalt: 0,
 
-        haushalte: 0
+        umsatzProHaushalt: 0,
+        raProHaushalt: 0,
+        onlineshopProHaushalt: 0,
+        pluscardProHaushalt: 0
       };
     }
 
     const v = plzWerte[plz];
 
+    // Haushalte
     const hh = safe(row["value_haushalte_0"]?.raw);
     v.haushalte += hh;
 
-    v.umsatz += safe(row["value_hr_n_umsatz_0"]?.raw);
-    v.ra += safe(row["value_umsatz_ra_0"]?.raw);
+    // Umsatzarten
+    v.umsatz     += safe(row["value_hr_n_umsatz_0"]?.raw);
+    v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
     v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-    v.pluscard += safe(row["value_umsatz_grosskunden_0"]?.raw);
+    v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
 
+    // Pro-Haushalt
     if (v.haushalte > 0) {
-      v.umsatzProHaushalt = v.umsatz / v.haushalte;
-      v.raProHaushalt = v.ra / v.haushalte;
+      v.umsatzProHaushalt     = v.umsatz     / v.haushalte;
+      v.raProHaushalt         = v.ra         / v.haushalte;
       v.onlineshopProHaushalt = v.onlineshop / v.haushalte;
-      v.pluscardProHaushalt = v.pluscard / v.haushalte;
+      v.pluscardProHaushalt   = v.pluscard   / v.haushalte;
     }
   });
 
