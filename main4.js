@@ -1435,7 +1435,9 @@ createAllMarkers() {
   if (!this._selectedNLs) this._selectedNLs = new Set();
 
   // Alte Marker entfernen
-  this.filteredGroup.clearLayers();
+  [this.filteredGroup, this.neighbourGroup, this.radiusGroup, this.markerGroup, this._geoLayer]
+  .forEach(g => g?.clearLayers());
+
   this.allMarkers = [];
   this.nlMarkers = [];
 
@@ -2072,7 +2074,9 @@ updateGeoLayer() {
 
 
 updateMarkers() {
-  this.filteredGroup.clearLayers();
+  [this.filteredGroup, this.neighbourGroup, this.radiusGroup, this.markerGroup, this._geoLayer]
+   .forEach(g => g?.clearLayers());
+
 
   const filteredData = this.filteredData || [];
   if (!filteredData.length) return;
