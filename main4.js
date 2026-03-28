@@ -680,7 +680,64 @@
 .mode-selector.hh .mode-right {
   color: #b41821;
 }
+.popup-umsatz {
+  padding: 20px;
+  font-family: inherit;
+  background: white;
+  border-left: 3px solid #b41821;
+  height: 100%;
+  overflow-y: auto;
+}
 
+.popup-umsatz.hidden {
+  display: none;
+}
+
+.popup-umsatz h2 {
+  margin: 0 0 16px 0;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #b41821;
+}
+
+.popup-umsatz-list {
+  margin-bottom: 20px;
+}
+
+.popup-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+.popup-bar {
+  display: flex;
+  height: 22px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #ccc;
+}
+
+.bar-segment {
+  height: 100%;
+}
+
+#bar-stationaer { background: #b41821; }
+#bar-pluscard   { background: #d9483b; }
+#bar-ra         { background: #f0803c; }
+#bar-online     { background: #f6b65b; }
+
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+}
 
 
 
@@ -741,6 +798,37 @@
 
   <!-- 📌 Popup für Details (70%) -->
   <div id="side-popup"></div>
+  <div id="popup-umsatz" class="popup-umsatz hidden">
+  <button class="close-btn">×</button>
+
+  <h2 id="popup-umsatz-total"></h2>
+
+  <div class="popup-umsatz-list">
+    <div class="popup-row">
+      <span>Stationär</span>
+      <span id="popup-stationaer"></span>
+    </div>
+    <div class="popup-row">
+      <span>Pluscard</span>
+      <span id="popup-pluscard"></span>
+    </div>
+    <div class="popup-row">
+      <span>R&A</span>
+      <span id="popup-ra"></span>
+    </div>
+    <div class="popup-row">
+      <span>Onlineshop</span>
+      <span id="popup-online"></span>
+    </div>
+  </div>
+
+  <div class="popup-bar">
+    <div id="bar-stationaer" class="bar-segment"></div>
+    <div id="bar-pluscard" class="bar-segment"></div>
+    <div id="bar-ra" class="bar-segment"></div>
+    <div id="bar-online" class="bar-segment"></div>
+  </div>
+</div>
 
   <!-- 🎛️ Steuerzentrale für Kartenansichten (30%) -->
 <div id="map-control-panel">
@@ -898,18 +986,31 @@ style: feature => {
 onEachFeature: (feature, layer) => {
   layer.on("click", (e) => {
     const plz = e.target.feature.properties.plz?.toString().trim();
-    const kennwerte = this.filteredKennwerte[plz];
 
     // Gebiet highlighten
     this.highlightMapArea(plz);
 
-    // Popup öffnen
-    this.showPopup(e.target.feature, kennwerte);
+    // Umsatz-Modus → Umsatz-Popup
+    if (this.currentMapMode === "umsatz-multi") {
+      const values = this.filteredPLZWerte?.[plz];
+      if (values) {
+        this.showUmsatzPopup(plz, values);
+      } else {
+        console.warn("❌ Keine Umsatzwerte für PLZ", plz);
+      }
+    }
+
+    // WK-Modus → altes Popup
+    else {
+      const kennwerte = this.filteredKennwerte?.[plz];
+      this.showPopup(e.target.feature, kennwerte);
+    }
 
     // Tabellenzeile highlighten
     this.highlightTableRowByPLZ(plz);
   });
 }
+
 
     });
 
@@ -1609,6 +1710,49 @@ createMarkerIcon(nl, isPhantom = false) {
   }
 
   return this.iconCache[key];
+}
+
+showUmsatzPopup(plz, values) {
+  const modeHH = this.umsatzMode === "hh";
+
+  const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
+  const pluscard   = modeHH ? values.pluscardProHaushalt : values.pluscard;
+  const ra         = modeHH ? values.raProHaushalt : values.ra;
+  const online     = modeHH ? values.onlineshopProHaushalt : values.onlineshop;
+
+  const total = stationaer + pluscard + ra + online;
+
+  const fmt = x => modeHH ? x.toFixed(3) : x.toLocaleString("de-DE");
+
+  // Werte einfügen
+  this._shadowRoot.getElementById("popup-umsatz-total").textContent =
+    modeHH ? `${total.toFixed(3)} pro Haushalt` : `${total.toLocaleString("de-DE")} €`;
+
+  this._shadowRoot.getElementById("popup-stationaer").textContent = fmt(stationaer);
+  this._shadowRoot.getElementById("popup-pluscard").textContent   = fmt(pluscard);
+  this._shadowRoot.getElementById("popup-ra").textContent         = fmt(ra);
+  this._shadowRoot.getElementById("popup-online").textContent     = fmt(online);
+
+  // Balkenbreiten
+  const pct = x => total > 0 ? (x / total) * 100 : 0;
+
+  this._shadowRoot.getElementById("bar-stationaer").style.width = pct(stationaer) + "%";
+  this._shadowRoot.getElementById("bar-pluscard").style.width   = pct(pluscard) + "%";
+  this._shadowRoot.getElementById("bar-ra").style.width         = pct(ra) + "%";
+  this._shadowRoot.getElementById("bar-online").style.width     = pct(online) + "%";
+
+  // WK-Popup verstecken
+  this._shadowRoot.getElementById("side-popup").innerHTML = "";
+  this._shadowRoot.getElementById("side-popup").classList.remove("show");
+
+  // Umsatz-Popup anzeigen
+  const popup = this._shadowRoot.getElementById("popup-umsatz");
+  popup.classList.remove("hidden");
+
+  // Close-Button
+  popup.querySelector(".close-btn").onclick = () => {
+    popup.classList.add("hidden");
+  };
 }
 
 
