@@ -351,7 +351,7 @@
   right: 0;
   bottom: 0;
   width: 25%;
-  height: 30%; /* untere 30% */
+  height: 12%; /* WK-Modus */
   background: #f7f7f7;
   border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
@@ -359,13 +359,14 @@
   box-sizing: border-box;
   font-family: sans-serif;
   z-index: 99998;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #b41821 #f7f7f7;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  overflow: hidden;
+  transition: height 0.35s ease;
 }
+
+#map-control-panel.expanded {
+  height: 30%; /* Umsatz-Modus */
+}
+
 #map-control-panel::-webkit-scrollbar {
   width: 6px;
 }
@@ -611,54 +612,58 @@
   font-size: 14px;
   z-index: 9999;
 }
-
 #map-tile-toggle-btn {
   position: absolute;
   bottom: 20px;
   right: 40%;
-  width: 42px;
-  height: 42px;
+  width: 54px;   /* größer */
+  height: 54px;  /* größer */
   background: white;
   border-radius: 50%;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
   cursor: pointer;
   z-index: 9999;
 
-   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23b41821"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
-  background-size: 60%;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
+  background-size: 65%; /* größer */
   background-repeat: no-repeat;
   background-position: center;
 
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
-
 #map-tile-toggle-btn:hover {
-  transform: scale(1.08);
-  box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+  transform: scale(1.12); /* etwas größerer Hover */
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
+
 .analysis-switch {
   display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .analysis-btn {
   flex: 1;
   padding: 10px;
-  border: 1px solid #b41821;
-  border-radius: 8px;
-  background: white;
+  text-align: center;
   cursor: pointer;
-  font-size: 0.9rem;
+  background: white;
   color: #b41821;
   font-weight: bold;
+  border-right: 1px solid #b41821;
+}
+
+.analysis-btn:last-child {
+  border-right: none;
 }
 
 .analysis-btn.active {
-  background: #fff3f3;
-  box-shadow: 0 0 6px rgba(180,24,33,0.4);
+  background: #b41821;
+  color: white;
 }
+
 
 .umsatz-grid {
   display: grid;
@@ -686,6 +691,41 @@
 .hidden {
   display: none;
 }
+
+.mode-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+}
+
+.mode-left,
+.mode-right {
+  flex: 1;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #b41821;
+  font-weight: bold;
+}
+
+.mode-dot {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #b41821;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.25s ease;
+}
+
+.mode-selector.hh .mode-dot {
+  transform: translateX(40px); /* wandert nach rechts */
+}
+
 
 
     </style>
@@ -761,10 +801,12 @@
   <div id="umsatz-panel" class="hidden">
 
     <!-- Globaler Switch -->
-    <div id="umsatz-mode-switch" class="map-switch global">
-      <span class="map-switch-label">Anzeige: absolut</span>
-      <div class="map-switch-toggle"></div>
-    </div>
+  <div id="umsatz-mode-switch" class="mode-selector">
+    <span class="mode-left">Absolut</span>
+    <div class="mode-dot"></div>
+    <span class="mode-right">pro Haushalt</span>
+  </div>
+
 
     <!-- 2×2 Grid -->
     <div class="umsatz-grid">
@@ -1313,8 +1355,6 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
-
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
@@ -1333,7 +1373,16 @@ initializeMapBase() {
   this.render();
   this.initRadiusSlider();
 
-  // Umschalter
+  // ⭐ Kartenstil-Button
+  const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
+  if (tileBtn) {
+    tileBtn.addEventListener("click", () => this.toggleMapTiles());
+  }
+
+  // ⭐ Steuerpanel (für Animation)
+  const panel = this._shadowRoot.getElementById("map-control-panel");
+
+  // ⭐ Umschalter WK ↔ Umsatz
   const btnWK = this._shadowRoot.getElementById("btn-wk");
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
   const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
@@ -1342,6 +1391,8 @@ initializeMapBase() {
     btnWK.classList.add("active");
     btnUmsatz.classList.remove("active");
     umsatzPanel.classList.add("hidden");
+
+    panel.classList.remove("expanded"); // Panel klein
 
     this.currentMapMode = "wk";
     this.updateGeoLayer();
@@ -1352,23 +1403,21 @@ initializeMapBase() {
     btnWK.classList.remove("active");
     umsatzPanel.classList.remove("hidden");
 
+    panel.classList.add("expanded"); // Panel groß
+
     this.currentMapMode = "umsatz-multi";
     this.updateGeoLayer();
   });
 
-  // Globaler Switch
+  // ⭐ Neutraler Haushalte/Absolut-Switch
   const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
   modeSwitch.addEventListener("click", () => {
-    const label = modeSwitch.querySelector(".map-switch-label");
-    const isActive = modeSwitch.classList.toggle("active");
-
-    this.umsatzMode = isActive ? "hh" : "abs";
-    label.textContent = isActive ? "Anzeige: pro Haushalt" : "Anzeige: absolut";
-
+    const isHH = modeSwitch.classList.toggle("hh");
+    this.umsatzMode = isHH ? "hh" : "abs";
     this.updateGeoLayer();
   });
 
-  // Kategorien
+  // ⭐ Umsatzkategorien (2×2 Grid)
   this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
     toggle.addEventListener("click", () => {
       const cat = toggle.dataset.cat;
@@ -1386,6 +1435,7 @@ initializeMapBase() {
     });
   });
 }
+
 
 
 
@@ -1436,13 +1486,9 @@ getDynamicHeatColor(value, max) {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-      
    createAllMarkers() {
-  console.log("📌 createAllMarkers() gestartet");
-
   if (!this.filteredGroup) return;
 
-  // Alte Marker entfernen
   this.filteredGroup.clearLayers();
   this.neighbourGroup?.clearLayers();
   this.radiusGroup?.clearLayers();
@@ -1450,8 +1496,7 @@ getDynamicHeatColor(value, max) {
   this.allMarkers = [];
   this.nlMarkers = [];
 
-  if (!this.Niederlassung || typeof this.Niederlassung !== "object") return;
-  if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") return;
+  if (!this.Niederlassung || !this.nlKoordinaten) return;
 
   const seen = new Set();
 
@@ -1467,7 +1512,6 @@ getDynamicHeatColor(value, max) {
     });
 
     marker.setZIndexOffset(1000);
-
     marker.on("click", () => this.toggleNLSelection(nlKey));
 
     this.allMarkers.push(marker);
@@ -1511,8 +1555,6 @@ getDynamicHeatColor(value, max) {
 
   this.updateGeoLayer();
   this.updateNLSelectionUI?.();
-
-  console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
 
 
@@ -1908,7 +1950,6 @@ getFilteredData() {
                          "#ffe89c";
 }
 
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -1993,7 +2034,6 @@ updateGeoLayer() {
   });
 }
 
-
 updateMarkers() {
   if (!this.filteredGroup || !this.allMarkers) return;
 
@@ -2055,6 +2095,7 @@ updateMarkers() {
     marker
   }));
 }
+
 
 
 onMarkerClick(nl) {
