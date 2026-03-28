@@ -299,37 +299,6 @@
 }
 
 
- /* --------------------------------------------- */
-/* SIDEBAR / FILTER-CONTAINER */
-/* --------------------------------------------- */
-
-.filter-container {
-  width: 30%;
-  padding: 10px;
-  box-sizing: border-box;
-  font-family: sans-serif;
-  background: #f2f4f7;
-  border-right: 2px solid #b41821;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  position: relative;
-}
-
-.filter-container label {
-  display: block;
-  margin-top: 10px;
-  font-weight: bold;
-  color: #333;
-}
-
-.filter-container select,
-.filter-container button {
-  width: 100%;
-  margin-top: 5px;
-  padding: 6px;
-  font-size: 0.9rem;
-}
 
 /* --------------------------------------------- */
 /* PLZ-TABELLE (OBERE TABELLE) */
@@ -410,6 +379,9 @@
 /* --------------------------------------------- */
 /* NL-TABELLE (UNTERE TABELLE) */
 /* --------------------------------------------- */
+/* ------------------------------------------------------ */
+/* NL-INFO-CONTAINER (fährt von unten hoch und runter)    */
+/* ------------------------------------------------------ */
 
 #nl-info-container {
   width: 100%;
@@ -417,30 +389,29 @@
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   overflow: hidden;
-  max-height: 0;
+
+  /* Startposition: komplett unten */
+  transform: translateY(100%);
   opacity: 0;
-  display: flex;
-  flex-direction: column;
+
   transition:
-    max-height 0.35s ease,
+    transform 0.35s ease,
     opacity 0.35s ease;
 }
 
 #nl-info-container.show {
-  height: 80vh;          /* NEU */
-  max-height: none;      /* NEU */
+  transform: translateY(0);
   opacity: 1;
-  overflow: hidden;
 }
 
+/* Scrollbereich */
 .nl-info-scroll {
-  flex: 1;               /* NEU – entscheidend */
-  min-height: 0;         /* wichtig */
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: #b41821 #ffffff;
 }
-
 
 .nl-info-scroll::-webkit-scrollbar {
   width: 6px;
@@ -451,7 +422,7 @@
   border-radius: 4px;
 }
 
-
+/* Tabelle */
 .nl-info-table {
   width: 100%;
   border-collapse: collapse;
@@ -495,13 +466,47 @@
 .nl-col-pct2    { width: 25px; }
 .nl-col-abd     { width: 45px; }
 
-/* --------------------------------------------- */
-/* ANIMATION: NUR DIE PLZ-TABELLE HOCHSCHIEBEN */
-/* --------------------------------------------- */
+/* ------------------------------------------------------ */
+/* PLZ-TABELLE HOCHSCHIEBEN, WENN NL-INFO AKTIV           */
+/* ------------------------------------------------------ */
 
 .filter-container.nl-info-active .table-wrapper {
   transform: translateY(-260px);
+  transition: transform 0.35s ease;
 }
+
+/* ------------------------------------------------------ */
+/* FILTER-CONTAINER BASISLAYOUT                           */
+/* ------------------------------------------------------ */
+
+.filter-container {
+  width: 30%;
+  padding: 10px;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  background: #f2f4f7;
+  border-right: 2px solid #b41821;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+.filter-container label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+.filter-container select,
+.filter-container button {
+  width: 100%;
+  margin-top: 5px;
+  padding: 6px;
+  font-size: 0.9rem;
+}
+
 
 /* --------------------------------------------- */
 /* RADIUS-SLIDER */
