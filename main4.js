@@ -1890,7 +1890,6 @@ getFilteredData() {
   }
   }
 
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -1900,16 +1899,15 @@ updateGeoLayer() {
   const plzWerte = this.filteredPLZWerte || {};
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
 
-  // Hilfsfunktion: NaN verhindern
   const safe = x => Number.isFinite(x) ? x : 0;
 
-  // ---------------------------------------------------------
-  // 1️⃣ MAX-WERT BERECHNEN (entscheidend für Heatmap)
-  // ---------------------------------------------------------
   let maxValue = 0;
 
   if (this.currentMapMode === "wk") {
-    Object.values(plzWerte).forEach(v => {
+    Object.entries(plzWerte).forEach(([plz, v]) => {
+      const inRadius = !hasRadius || this.plzImRadius.has(plz);
+      if (!inRadius) return;
+
       const val = v.hz ? v.wk : v.wkPot;
       maxValue = Math.max(maxValue, safe(val));
     });
@@ -1918,7 +1916,10 @@ updateGeoLayer() {
   if (this.currentMapMode === "umsatz-multi") {
     const sums = [];
 
-    Object.values(plzWerte).forEach(v => {
+    Object.entries(plzWerte).forEach(([plz, v]) => {
+      const inRadius = !hasRadius || this.plzImRadius.has(plz);
+      if (!inRadius) return;
+
       let sum = 0;
 
       if (this.activeCategories.has("stationaer"))
@@ -1939,12 +1940,9 @@ updateGeoLayer() {
     maxValue = sums.length > 0 ? Math.max(...sums) : 0;
   }
 
-  console.log("➡️ maxValue:", maxValue);
+  console.log("➡️ maxValue (nach Radius):", maxValue);
   console.groupEnd();
 
-  // ---------------------------------------------------------
-  // 2️⃣ LAYER FÄRBEN
-  // ---------------------------------------------------------
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
     const v = plzWerte[plz];
@@ -1963,13 +1961,11 @@ updateGeoLayer() {
     let value = 0;
     let fillColor = "#cccccc";
 
-    // WK-MODUS
     if (this.currentMapMode === "wk") {
       value = safe(v.hz ? v.wk : v.wkPot);
       fillColor = this.getColor(value, v.hz);
     }
 
-    // UMSATZ-MULTI-MODUS
     if (this.currentMapMode === "umsatz-multi") {
       let sum = 0;
 
