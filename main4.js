@@ -1800,7 +1800,6 @@ showPopup(feature) {
   }
 
 
-
 applyFilter(erhID, jahr, nummer) {
 
   // 🧹 Wenn NL-Tabelle offen ist → schließen
@@ -1811,54 +1810,52 @@ applyFilter(erhID, jahr, nummer) {
 
   this._activeFilter = { erhID, jahr, nummer };
 
-
   // 🔄 NL-Auswahl zurücksetzen
   if (!this._selectedNLs) {
     this._selectedNLs = new Set();
   } else {
     this._selectedNLs.clear();
   }
-  // 1) Daten filtern (Erhebung)
-  const filteredData = this.getFilteredData();
 
-  // 🔥 WICHTIG: global merken, damit applyNLFilter() darauf arbeiten kann
+  // 1️⃣ Daten filtern (Erhebung)
+  const filteredData = this.getFilteredData();
   this.filteredData = filteredData;
 
-  // HZ-Flags neu berechnen
+  // ⭐ 2️⃣ Umsatzwerte pro PLZ vorbereiten (NEU!)
+  this.prepareUmsatzPLZWerte();
+
+  // 3️⃣ HZ-Flags neu berechnen (nur WK)
   this.hzFlags = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
-    const hz = row["dimension_hzflag_0"]?.id?.trim(); // X oder leer
-    if (plz) {
-      this.hzFlags[plz] = hz === "X";
-    }
+    const hz = row["dimension_hzflag_0"]?.id?.trim();
+    if (plz) this.hzFlags[plz] = hz === "X";
   });
 
-  // 2) PLZ-Liste extrahieren
+  // 4️⃣ PLZ-Liste extrahieren
   this.filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  // 3) Karte einfärben
+  // 5️⃣ Karte einfärben
   this.updateGeoLayer();
 
-  // 4) NL-Marker filtern
+  // 6️⃣ NL-Marker aktualisieren
   this.updateMarkers();
 
-  // 5) Radius merken + anwenden
+  // 7️⃣ Radius anwenden (nur WK)
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
 
-  // 6) Tabelle nach Radiusfilter
+  // 8️⃣ Tabelle rendern
   this.renderDataTable(this.filteredKennwerte);
 
-  // 7) Zoom
+  // 9️⃣ Zoom
   this.zoomToFilteredPLZ();
 
-  // 8) Erhebungsinfo vorbereiten
-this.prepareErhebungsInfo();
-
+  // 🔟 Erhebungsinfo
+  this.prepareErhebungsInfo();
 }
 
 
@@ -2474,6 +2471,78 @@ prepareErhebungsInfo() {
   });
 }
 
+prepareUmsatzPLZWerte() {
+  const raw = this._myDataSource?.data || [];
+  if (!Array.isArray(raw) || raw.length === 0) return;
+
+  const { erhID, jahr, nummer } = this._activeFilter || {};
+
+  const rows = raw.filter(row =>
+    row["dimension_erhebung_0"]?.id == erhID &&
+    row["dimension_jahr_0"]?.id == jahr &&
+    row["dimension_erhebungsnummer_0"]?.id == nummer
+  );
+
+  // Wenn WK-Werte schon existieren → erweitern
+  const plzWerte = this.filteredPLZWerte || {};
+
+  rows.forEach(row => {
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ).padStart(5, "0");
+
+    if (!plzWerte[plz]) {
+      plzWerte[plz] = {
+        // WK-Werte (falls vorhanden)
+        wk: 0,
+        wkPot: 0,
+        hz: false,
+
+        // Umsatzwerte
+        umsatz: 0,
+        umsatzProHaushalt: 0,
+
+        ra: 0,
+        raProHaushalt: 0,
+
+        onlineshop: 0,
+        onlineshopProHaushalt: 0,
+
+        pluscard: 0,
+        pluscardProHaushalt: 0,
+
+        haushalte: 0
+      };
+    }
+
+    const v = plzWerte[plz];
+
+    // Haushalte
+    const hh = row["value_haushalte_0"]?.raw ?? 0;
+    v.haushalte += hh;
+
+    // Stationär / Gesamt
+    v.umsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+
+    // R&A
+    v.ra += row["value_umsatz_ra_0"]?.raw ?? 0;
+
+    // Online
+    v.onlineshop += row["value_umsatz_online_0"]?.raw ?? 0;
+
+    // Großkunden = Pluscard
+    v.pluscard += row["value_umsatz_grosskunden_0"]?.raw ?? 0;
+
+    // Pro Haushalt berechnen
+    if (v.haushalte > 0) {
+      v.umsatzProHaushalt = v.umsatz / v.haushalte;
+      v.raProHaushalt = v.ra / v.haushalte;
+      v.onlineshopProHaushalt = v.onlineshop / v.haushalte;
+      v.pluscardProHaushalt = v.pluscard / v.haushalte;
+    }
+  });
+
+  this.filteredPLZWerte = plzWerte;
+}
 
 
 renderErhebungsInfo() {
