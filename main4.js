@@ -1385,19 +1385,24 @@ modeSwitch.addEventListener("click", () => {
 
 
 
-
 getDynamicHeatColor(value, max) {
-  if (!max || max === 0) return "#cccccc";
+  value = Number(value);
+  max = Number(max);
+
+  if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
+    console.warn("⚠️ Heatmap: Ungültiger Wert:", { value, max });
+    return "#cccccc";
+  }
 
   const ratio = value / max;
 
-  // Gelb → Orange → Rot
   if (ratio > 0.9) return "#b41821";
   if (ratio > 0.7) return "#d9483b";
   if (ratio > 0.5) return "#f0803c";
   if (ratio > 0.3) return "#f6b65b";
   return "#ffe89c";
 }
+
 
 
       initializeMapTiles() {
@@ -1875,58 +1880,67 @@ getFilteredData() {
   }
   }
 
-  getHeatColor(value) {
-  if (value == null || isNaN(value)) return "#cccccc";
-
-  // Normale Heatmap: gelb → orange → rot
-  return value > 10000 ? "#b41821" :
-         value > 5000  ? "#d9483b" :
-         value > 2000  ? "#f0803c" :
-         value > 500   ? "#f6b65b" :
-                         "#ffe89c";
-}
 
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
-  console.log("🧪 updateGeoLayer() mode:", this.currentMapMode, "umsatzMode:", this.umsatzMode);
-  console.log("🧪 filteredPLZWerte sample:", Object.entries(this.filteredPLZWerte || {}).slice(0, 5));
+  console.group("🧪 updateGeoLayer()");
+  console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzMode);
+
   const plzWerte = this.filteredPLZWerte || {};
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
 
+  // Hilfsfunktion: NaN verhindern
+  const safe = x => Number.isFinite(x) ? x : 0;
+
+  // ---------------------------------------------------------
+  // 1️⃣ MAX-WERT BERECHNEN (entscheidend für Heatmap)
+  // ---------------------------------------------------------
   let maxValue = 0;
 
-  Object.values(plzWerte).forEach(v => {
-    if (this.currentMapMode === "wk") {
-      maxValue = Math.max(maxValue, v.hz ? v.wk : v.wkPot);
-      return;
-    }
+  if (this.currentMapMode === "wk") {
+    Object.values(plzWerte).forEach(v => {
+      const val = v.hz ? v.wk : v.wkPot;
+      maxValue = Math.max(maxValue, safe(val));
+    });
+  }
 
-    if (this.currentMapMode === "umsatz-multi") {
+  if (this.currentMapMode === "umsatz-multi") {
+    const sums = [];
+
+    Object.values(plzWerte).forEach(v => {
       let sum = 0;
 
       if (this.activeCategories.has("stationaer"))
-        sum += this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz;
+        sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
 
       if (this.activeCategories.has("pluscard"))
-        sum += this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard;
+        sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
 
       if (this.activeCategories.has("ra"))
-        sum += this.umsatzMode === "hh" ? v.raProHaushalt : v.ra;
+        sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
 
       if (this.activeCategories.has("online"))
-        sum += this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop;
+        sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
 
-      maxValue = Math.max(maxValue, sum);
-    }
-  });
+      if (sum > 0) sums.push(sum);
+    });
 
+    maxValue = sums.length > 0 ? Math.max(...sums) : 0;
+  }
+
+  console.log("➡️ maxValue:", maxValue);
+  console.groupEnd();
+
+  // ---------------------------------------------------------
+  // 2️⃣ LAYER FÄRBEN
+  // ---------------------------------------------------------
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
-    const values = plzWerte[plz];
+    const v = plzWerte[plz];
     const inRadius = !hasRadius || this.plzImRadius.has(plz);
 
-    if (!values || !inRadius) {
+    if (!v || !inRadius) {
       layer.setStyle({
         fillColor: "#cfd4da",
         fillOpacity: 0.45,
@@ -1939,27 +1953,29 @@ updateGeoLayer() {
     let value = 0;
     let fillColor = "#cccccc";
 
+    // WK-MODUS
     if (this.currentMapMode === "wk") {
-      value = values.hz ? values.wk : values.wkPot;
-      fillColor = this.getColor(value, values.hz);
+      value = safe(v.hz ? v.wk : v.wkPot);
+      fillColor = this.getColor(value, v.hz);
     }
 
+    // UMSATZ-MULTI-MODUS
     if (this.currentMapMode === "umsatz-multi") {
       let sum = 0;
 
       if (this.activeCategories.has("stationaer"))
-        sum += this.umsatzMode === "hh" ? values.umsatzProHaushalt : values.umsatz;
+        sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
 
       if (this.activeCategories.has("pluscard"))
-        sum += this.umsatzMode === "hh" ? values.pluscardProHaushalt : values.pluscard;
+        sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
 
       if (this.activeCategories.has("ra"))
-        sum += this.umsatzMode === "hh" ? values.raProHaushalt : values.ra;
+        sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
 
       if (this.activeCategories.has("online"))
-        sum += this.umsatzMode === "hh" ? values.onlineshopProHaushalt : values.onlineshop;
+        sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
 
-      value = sum;
+      value = safe(sum);
       fillColor = this.getDynamicHeatColor(value, maxValue);
     }
 
@@ -1971,6 +1987,7 @@ updateGeoLayer() {
     });
   });
 }
+
 
 updateMarkers() {
   if (!this.filteredGroup || !this.allMarkers) return;
