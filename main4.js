@@ -290,6 +290,23 @@
   color: black;
   text-align: right;
 }
+.umsatz-share-bar {
+  margin-top: 16px;
+  height: 18px;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #b41821;
+  display: flex;
+}
+
+.share-segment {
+  height: 100%;
+}
+
+.share-stationaer { background: #b41821; }
+.share-pluscard   { background: #d9483b; }
+.share-ra         { background: #f0803c; }
+.share-online     { background: #f6b65b; }
 
 
 #map-control-panel {
@@ -1708,6 +1725,7 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
+
 showUmsatzPopup(plz, values) {
   const sidePopup = this._shadowRoot.getElementById("side-popup");
 
@@ -1724,6 +1742,9 @@ showUmsatzPopup(plz, values) {
 
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
+  // Anteil-Balken Prozentwerte
+  const pct = x => total > 0 ? (x / total) * 100 : 0;
+
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
 
@@ -1736,7 +1757,7 @@ showUmsatzPopup(plz, values) {
         </tr>
 
         <tr>
-          <th colspan="2" class="umsatz-total-row">
+          <th colspan="2" class="subtitle-cell">
             Gesamtumsatz: ${modeHH ? total.toFixed(3) + " pro HH" : total.toLocaleString("de-DE") + " €"}
           </th>
         </tr>
@@ -1764,6 +1785,14 @@ showUmsatzPopup(plz, values) {
         <div class="umsatz-box-value">${fmt(online)}</div>
       </div>
     </div>
+
+    <!-- Anteil-Balken -->
+    <div class="umsatz-share-bar">
+      <div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>
+      <div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>
+      <div class="share-segment share-ra"         style="width:${pct(ra)}%"></div>
+      <div class="share-segment share-online"     style="width:${pct(online)}%"></div>
+    </div>
   `;
 
   // Animation
@@ -1774,6 +1803,7 @@ showUmsatzPopup(plz, values) {
     sidePopup.classList.remove("show");
   };
 }
+
 
 
 showPopup(feature) {
