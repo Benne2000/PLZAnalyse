@@ -2379,6 +2379,8 @@ prepareErhebungsInfo() {
     };
   });
 }
+
+
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -2386,16 +2388,13 @@ prepareUmsatzPLZWerte() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
   if (!erhID || !jahr || !nummer) return;
 
-  // Hilfsfunktion: NaN verhindern
   const safe = x => {
     const n = Number(x);
     return Number.isFinite(n) ? n : 0;
   };
 
-  // Falls WK-Werte schon existieren → erweitern
   const plzWerte = this.filteredPLZWerte || {};
 
-  // Nur Zeilen der aktiven Erhebung
   const rows = raw.filter(row =>
     row["dimension_erhebung_0"]?.id == erhID &&
     row["dimension_jahr_0"]?.id == jahr &&
@@ -2408,12 +2407,10 @@ prepareUmsatzPLZWerte() {
 
     if (!plzWerte[plz]) {
       plzWerte[plz] = {
-        // WK-Werte (falls vorhanden)
         wk: 0,
         wkPot: 0,
         hz: false,
 
-        // Umsatzwerte
         umsatz: 0,
         umsatzProHaushalt: 0,
 
@@ -2432,23 +2429,14 @@ prepareUmsatzPLZWerte() {
 
     const v = plzWerte[plz];
 
-    // Haushalte
-    const hh = safe(row["value_haushalte"]?.raw);
+    const hh = safe(row["value_haushalte_0"]?.raw);
     v.haushalte += hh;
 
-    // Stationär / Gesamtumsatz
-    v.umsatz += safe(row["value_hr_n_umsatz"]?.raw);
+    v.umsatz += safe(row["value_hr_n_umsatz_0"]?.raw);
+    v.ra += safe(row["value_umsatz_ra_0"]?.raw);
+    v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
+    v.pluscard += safe(row["value_umsatz_grosskunden_0"]?.raw);
 
-    // R&A
-    v.ra += safe(row["value_umsatz_ra"]?.raw);
-
-    // Online
-    v.onlineshop += safe(row["value_umsatz_online"]?.raw);
-
-    // Großkunden = Pluscard
-    v.pluscard += safe(row["value_umsatz_grosskunden"]?.raw);
-
-    // Pro Haushalt berechnen
     if (v.haushalte > 0) {
       v.umsatzProHaushalt = v.umsatz / v.haushalte;
       v.raProHaushalt = v.ra / v.haushalte;
@@ -2462,6 +2450,7 @@ prepareUmsatzPLZWerte() {
   console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(plzWerte).length);
   console.log("🧪 Beispiel:", Object.entries(plzWerte).slice(0, 5));
 }
+
 
 
 renderErhebungsInfo() {
