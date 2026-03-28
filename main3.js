@@ -351,7 +351,7 @@
   right: 0;
   bottom: 0;
   width: 25%;
-  height: 30%; /* untere 30% */
+  height: 12%; /* WK-Modus */
   background: #f7f7f7;
   border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
@@ -359,13 +359,14 @@
   box-sizing: border-box;
   font-family: sans-serif;
   z-index: 99998;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #b41821 #f7f7f7;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  overflow: hidden;
+  transition: height 0.35s ease;
 }
+
+#map-control-panel.expanded {
+  height: 30%; /* Umsatz-Modus */
+}
+
 #map-control-panel::-webkit-scrollbar {
   width: 6px;
 }
@@ -638,26 +639,32 @@
 
 .analysis-switch {
   display: flex;
-  gap: 6px;
-  margin-bottom: 10px;
+  gap: 0;
+  margin-bottom: 12px; /* Abstand nach unten */
 }
 
 .analysis-btn {
   flex: 1;
   padding: 10px;
-  border: 1px solid #b41821;
-  border-radius: 8px;
-  background: white;
+  text-align: center;
   cursor: pointer;
-  font-size: 0.9rem;
+  background: white;
   color: #b41821;
   font-weight: bold;
+  border: 1px solid #b41821;
+  border-right: none;
+}
+
+.analysis-btn:last-child {
+  border-right: 1px solid #b41821;
 }
 
 .analysis-btn.active {
-  background: #fff3f3;
-  box-shadow: 0 0 6px rgba(180,24,33,0.4);
+  background: #b41821;
+  color: white;
 }
+
+
 
 .umsatz-grid {
   display: grid;
@@ -685,6 +692,64 @@
 .hidden {
   display: none;
 }
+
+/* Container */
+.mode-selector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 10px 12px;
+  margin-top: 16px;
+  user-select: none;
+  cursor: pointer;
+}
+
+/* Labels */
+.mode-left,
+.mode-right {
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-width: 90px;
+  text-align: center;
+  transition: color 0.25s ease;
+}
+
+/* Standard: Absolut aktiv */
+.mode-selector:not(.hh) .mode-left {
+  color: #b41821;
+}
+
+.mode-selector:not(.hh) .mode-right {
+  color: #999;
+}
+
+/* Haushalt aktiv */
+.mode-selector.hh .mode-left {
+  color: #999;
+}
+
+.mode-selector.hh .mode-right {
+  color: #b41821;
+}
+
+/* Der Punkt */
+.mode-dot {
+  width: 18px;
+  height: 18px;
+  border: 2px solid #b41821;
+  border-radius: 50%;
+  background: #b41821; /* Standard: gefüllt = Absolut aktiv */
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+/* Haushalt aktiv → Punkt wandert nach rechts + wird leer */
+.mode-selector.hh .mode-dot {
+  transform: translateX(70px);
+  background: white;
+}
+
+
 
 
     </style>
@@ -760,10 +825,13 @@
   <div id="umsatz-panel" class="hidden">
 
     <!-- Globaler Switch -->
-    <div id="umsatz-mode-switch" class="map-switch global">
-      <span class="map-switch-label">Anzeige: absolut</span>
-      <div class="map-switch-toggle"></div>
-    </div>
+<div id="umsatz-mode-switch" class="mode-selector">
+  <span class="mode-left">Absolut</span>
+  <div class="mode-dot"></div>
+  <span class="mode-right">pro Haushalt</span>
+</div>
+
+
 
     <!-- 2×2 Grid -->
     <div class="umsatz-grid">
@@ -1312,7 +1380,6 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
@@ -1331,13 +1398,14 @@ initializeMapBase() {
   this.render();
   this.initRadiusSlider();
 
-  // ⭐ Kartenstil-Button wieder einbauen
+  // ⭐ Kartenstil-Button
   const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
   if (tileBtn) {
-    tileBtn.addEventListener("click", () => {
-      this.toggleMapTiles();
-    });
+    tileBtn.addEventListener("click", () => this.toggleMapTiles());
   }
+
+  // ⭐ Steuerpanel (für Animation)
+  const panel = this._shadowRoot.getElementById("map-control-panel");
 
   // ⭐ Umschalter WK ↔ Umsatz
   const btnWK = this._shadowRoot.getElementById("btn-wk");
@@ -1349,6 +1417,8 @@ initializeMapBase() {
     btnUmsatz.classList.remove("active");
     umsatzPanel.classList.add("hidden");
 
+    panel.classList.remove("expanded"); // Panel klein
+
     this.currentMapMode = "wk";
     this.updateGeoLayer();
   });
@@ -1358,21 +1428,26 @@ initializeMapBase() {
     btnWK.classList.remove("active");
     umsatzPanel.classList.remove("hidden");
 
+    panel.classList.add("expanded"); // Panel groß
+
     this.currentMapMode = "umsatz-multi";
     this.updateGeoLayer();
   });
 
-  // ⭐ Globaler Switch absolut ↔ pro Haushalt
-  const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
-  modeSwitch.addEventListener("click", () => {
-    const label = modeSwitch.querySelector(".map-switch-label");
-    const isActive = modeSwitch.classList.toggle("active");
+  // ⭐ Neutraler Haushalte/Absolut-Switch
+const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
 
-    this.umsatzMode = isActive ? "hh" : "abs";
-    label.textContent = isActive ? "Anzeige: pro Haushalt" : "Anzeige: absolut";
+// Standardzustand: Absolut
+this.umsatzMode = "abs";
 
-    this.updateGeoLayer();
-  });
+modeSwitch.addEventListener("click", () => {
+  const isHH = modeSwitch.classList.toggle("hh");
+
+  this.umsatzMode = isHH ? "hh" : "abs";
+
+  this.updateGeoLayer();
+});
+
 
   // ⭐ Umsatzkategorien (2×2 Grid)
   this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
@@ -1443,13 +1518,9 @@ getDynamicHeatColor(value, max) {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-      
    createAllMarkers() {
-  console.log("📌 createAllMarkers() gestartet");
-
   if (!this.filteredGroup) return;
 
-  // Alte Marker entfernen
   this.filteredGroup.clearLayers();
   this.neighbourGroup?.clearLayers();
   this.radiusGroup?.clearLayers();
@@ -1457,8 +1528,7 @@ getDynamicHeatColor(value, max) {
   this.allMarkers = [];
   this.nlMarkers = [];
 
-  if (!this.Niederlassung || typeof this.Niederlassung !== "object") return;
-  if (!this.nlKoordinaten || typeof this.nlKoordinaten !== "object") return;
+  if (!this.Niederlassung || !this.nlKoordinaten) return;
 
   const seen = new Set();
 
@@ -1474,7 +1544,6 @@ getDynamicHeatColor(value, max) {
     });
 
     marker.setZIndexOffset(1000);
-
     marker.on("click", () => this.toggleNLSelection(nlKey));
 
     this.allMarkers.push(marker);
@@ -1518,8 +1587,6 @@ getDynamicHeatColor(value, max) {
 
   this.updateGeoLayer();
   this.updateNLSelectionUI?.();
-
-  console.log("📌 NL-Marker geladen:", this.nlMarkers.length);
 }
 
 
@@ -1915,7 +1982,6 @@ getFilteredData() {
                          "#ffe89c";
 }
 
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -2000,7 +2066,6 @@ updateGeoLayer() {
   });
 }
 
-
 updateMarkers() {
   if (!this.filteredGroup || !this.allMarkers) return;
 
@@ -2062,6 +2127,7 @@ updateMarkers() {
     marker
   }));
 }
+
 
 
 onMarkerClick(nl) {
