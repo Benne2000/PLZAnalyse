@@ -41,26 +41,7 @@
   background: #fff3f3;
   box-shadow: 0 0 6px rgba(180, 24, 33, 0.4);
 }
-.map-toggle {
-  padding: 10px 12px;
-  border: 1px solid #b41821;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #b41821;
-  font-weight: bold;
-  transition: background 0.2s ease;
-}
 
-.map-toggle:hover {
-  background: #fff3f3;
-}
-
-.map-toggle.active {
-  background: #fff3f3;
-  box-shadow: 0 0 6px rgba(180, 24, 33, 0.4);
-}
 
 
 
@@ -543,8 +524,9 @@
 #nl-info-container.show {
   max-height: 80vh;
   opacity: 1;
-  overflow: hidden; /* wichtig: Scrollen passiert im inneren Container */
+  overflow: visible; /* statt hidden */
 }
+
 
 .nl-info-scroll {
   overflow-y: auto;
@@ -641,10 +623,7 @@
   cursor: pointer;
   z-index: 9999;
 
-  background-image: url('data:image/svg+xml;utf8,
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23b41821">
-      <path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/>
-    </svg>');
+   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23b41821"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
   background-size: 60%;
   background-repeat: no-repeat;
   background-position: center;
@@ -657,7 +636,55 @@
   transform: scale(1.08);
   box-shadow: 0 3px 10px rgba(0,0,0,0.4);
 }
+.analysis-switch {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
 
+.analysis-btn {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #b41821;
+  font-weight: bold;
+}
+
+.analysis-btn.active {
+  background: #fff3f3;
+  box-shadow: 0 0 6px rgba(180,24,33,0.4);
+}
+
+.umsatz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.map-toggle {
+  padding: 10px;
+  border: 1px solid #b41821;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #b41821;
+  font-weight: bold;
+  text-align: center;
+}
+
+.map-toggle.active {
+  background: #fff3f3;
+  box-shadow: 0 0 6px rgba(180,24,33,0.4);
+}
+.hidden {
+  display: none;
+}
 
 
     </style>
@@ -723,24 +750,33 @@
 
   <h4>Kartenansicht</h4>
 
-  <!-- 🔄 Globaler Switch: absolut ↔ pro Haushalt -->
-  <div id="mode-switch" class="map-switch global">
-    <span class="map-switch-label">Anzeige: absolut</span>
-    <div class="map-switch-toggle"></div>
+  <!-- Hauptumschalter -->
+  <div class="analysis-switch">
+    <button id="btn-wk" class="analysis-btn active">Werbekosten</button>
+    <button id="btn-umsatz" class="analysis-btn">Umsatz</button>
   </div>
 
-  <!-- 📌 Werbekostenanalyse -->
-  <button class="map-mode-btn" data-mode="wk">Werbekostenanalyse</button>
+  <!-- Umsatzanalyse-Bereich -->
+  <div id="umsatz-panel" class="hidden">
 
-  <h4>Umsatzanalyse</h4>
+    <!-- Globaler Switch -->
+    <div id="umsatz-mode-switch" class="map-switch global">
+      <span class="map-switch-label">Anzeige: absolut</span>
+      <div class="map-switch-toggle"></div>
+    </div>
 
-  <!-- 📊 Umsatzkategorien (kombinierbar) -->
-  <div class="map-toggle" data-cat="stationaer">Stationär</div>
-  <div class="map-toggle" data-cat="pluscard">Pluscard</div>
-  <div class="map-toggle" data-cat="ra">R&A</div>
-  <div class="map-toggle" data-cat="online">Onlineshop</div>
+    <!-- 2×2 Grid -->
+    <div class="umsatz-grid">
+      <div class="map-toggle active" data-cat="stationaer">Stationär</div>
+      <div class="map-toggle" data-cat="pluscard">Pluscard</div>
+      <div class="map-toggle" data-cat="ra">R&A</div>
+      <div class="map-toggle" data-cat="online">Onlineshop</div>
+    </div>
+
+  </div>
 
 </div>
+
 
 
 
@@ -1280,81 +1316,53 @@ initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
-  // Standardmodus
   this.currentMapMode = "wk";
+  this.umsatzMode = "abs";
+  this.activeCategories = new Set(["stationaer"]);
 
-  // Marker-Events
-  this.map.on("zoomend", () => this.showNotesOnMap());
-  this.map.on("moveend", () => this.showNotesOnMap());
-
-  // Marker-Gruppen
-  this.filteredGroup = L.layerGroup().addTo(this.map);
-  this.neighbourGroup = L.layerGroup();
-
-  // Resize Observer
-  if (!this._resizeObserver) {
-    this._resizeObserver = new ResizeObserver(() => {
-      if (this.map) this.map.invalidateSize();
-    });
-    this._resizeObserver.observe(this._shadowRoot.host);
-  }
-
-  // Rendering starten
   this.render();
   this.initRadiusSlider();
 
-  // Kartenstil-Button
-  const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
-  if (tileBtn) {
-    tileBtn.addEventListener("click", () => this.toggleMapTiles());
-  }
+  // Umschalter
+  const btnWK = this._shadowRoot.getElementById("btn-wk");
+  const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
+  const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
 
-  // ⭐ Hilfsfunktion: alles deaktivieren
-  const deactivateAllViews = () => {
-    this._shadowRoot.querySelectorAll(".map-mode-btn, .map-toggle")
-      .forEach(el => el.classList.remove("active"));
-  };
+  btnWK.addEventListener("click", () => {
+    btnWK.classList.add("active");
+    btnUmsatz.classList.remove("active");
+    umsatzPanel.classList.add("hidden");
 
-  // ⭐ Globaler Switch: absolut ↔ pro Haushalt
-  const modeSwitch = this._shadowRoot.getElementById("mode-switch");
+    this.currentMapMode = "wk";
+    this.updateGeoLayer();
+  });
+
+  btnUmsatz.addEventListener("click", () => {
+    btnUmsatz.classList.add("active");
+    btnWK.classList.remove("active");
+    umsatzPanel.classList.remove("hidden");
+
+    this.currentMapMode = "umsatz-multi";
+    this.updateGeoLayer();
+  });
+
+  // Globaler Switch
+  const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
   modeSwitch.addEventListener("click", () => {
     const label = modeSwitch.querySelector(".map-switch-label");
     const isActive = modeSwitch.classList.toggle("active");
 
     this.umsatzMode = isActive ? "hh" : "abs";
-
-    label.textContent = isActive
-      ? "Anzeige: pro Haushalt"
-      : "Anzeige: absolut";
+    label.textContent = isActive ? "Anzeige: pro Haushalt" : "Anzeige: absolut";
 
     this.updateGeoLayer();
   });
 
-  // ⭐ Werbekostenanalyse
-  this._shadowRoot.querySelectorAll(".map-mode-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      deactivateAllViews();
-      btn.classList.add("active");
-
-      this.activeCategories.clear();
-      this.currentMapMode = "wk";
-
-      this.updateGeoLayer();
-    });
-  });
-
-  // ⭐ Umsatzkategorien (kombinierbar)
+  // Kategorien
   this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
     toggle.addEventListener("click", () => {
       const cat = toggle.dataset.cat;
 
-      // WK deaktivieren
-      this._shadowRoot.querySelectorAll(".map-mode-btn")
-        .forEach(b => b.classList.remove("active"));
-
-      this.currentMapMode = "umsatz-multi";
-
-      // Kategorie toggeln
       if (this.activeCategories.has(cat)) {
         this.activeCategories.delete(cat);
         toggle.classList.remove("active");
@@ -1363,14 +1371,12 @@ initializeMapBase() {
         toggle.classList.add("active");
       }
 
+      this.currentMapMode = "umsatz-multi";
       this.updateGeoLayer();
     });
   });
-
-  // Standard: WK aktiv
-  const wkBtn = this._shadowRoot.querySelector('.map-mode-btn[data-mode="wk"]');
-  if (wkBtn) wkBtn.classList.add("active");
 }
+
 
 
 getDynamicHeatColor(value, max) {
