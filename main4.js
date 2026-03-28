@@ -419,26 +419,28 @@
   overflow: hidden;
   max-height: 0;
   opacity: 0;
-  display: flex;            /* wichtig */
-  flex-direction: column;   /* wichtig */
+  display: flex;
+  flex-direction: column;
   transition:
     max-height 0.35s ease,
     opacity 0.35s ease;
 }
 
 #nl-info-container.show {
-  max-height: 80vh;
+  height: 80vh;          /* NEU */
+  max-height: none;      /* NEU */
   opacity: 1;
-  overflow: hidden; /* wichtig */
+  overflow: hidden;
 }
 
 .nl-info-scroll {
+  flex: 1;               /* NEU – entscheidend */
+  min-height: 0;         /* wichtig */
   overflow-y: auto;
-  max-height: 80vh;
-  min-height: 0; /* CRITICAL FIX */
   scrollbar-width: thin;
   scrollbar-color: #b41821 #ffffff;
 }
+
 
 .nl-info-scroll::-webkit-scrollbar {
   width: 6px;
@@ -1325,16 +1327,21 @@ initializeMapBase() {
     this.updateGeoLayer();
   });
 
-  btnUmsatz.addEventListener("click", () => {
-    btnUmsatz.classList.add("active");
-    btnWK.classList.remove("active");
-    umsatzPanel.classList.remove("hidden");
+btnUmsatz.addEventListener("click", () => {
+  btnUmsatz.classList.add("active");
+  btnWK.classList.remove("active");
+  umsatzPanel.classList.remove("hidden");
 
-    panel.classList.add("expanded"); // Panel groß
+  panel.classList.add("expanded");
 
-    this.currentMapMode = "umsatz-multi";
-    this.updateGeoLayer();
-  });
+  this.currentMapMode = "umsatz-multi";
+
+  // ⭐ NEU: Umsatzwerte sicherstellen
+  this.prepareUmsatzPLZWerte();
+
+  this.updateGeoLayer();
+});
+
 
   // ⭐ Neutraler Haushalte/Absolut-Switch
 const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
@@ -1519,6 +1526,8 @@ applyNLFilter(selectedNLs) {
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
+  this.prepareUmsatzPLZWerte();
+
 }
 
 
@@ -1703,6 +1712,11 @@ showPopup(feature) {
 
 
 applyFilter(erhID, jahr, nummer) {
+
+  if (!erhID || !jahr || !nummer) {
+  console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
+  return;
+}
 
   // 🧹 Wenn NL-Tabelle offen ist → schließen
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
@@ -2701,6 +2715,8 @@ toggleNLSelection(nl) {
 
   // PLZ-Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
+  this.prepareUmsatzPLZWerte();
+
 }
 
 
