@@ -1534,9 +1534,9 @@ getDynamicHeatColor(value, max) {
   value = Number(value);
   max = Number(max);
 
-  if (!Number.isFinite(value) || !Number.isFinite(max) || max <= 0) {
-    console.warn("⚠️ Heatmap: Ungültiger Wert:", { value, max });
-    return "#cccccc";
+  // ❗ Wenn kein Wert vorhanden → Standardgrau
+  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(max) || max <= 0) {
+    return "#cfd4da";
   }
 
   const ratio = value / max;
@@ -1547,6 +1547,7 @@ getDynamicHeatColor(value, max) {
   if (ratio > 0.3) return "#f6b65b";
   return "#ffe89c";
 }
+
 
 
 
