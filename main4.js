@@ -249,6 +249,49 @@
     font-weight: normal;
   }
 
+/* ------------------------------------------------------ */
+/* Umsatz-Popup Layout (gleicher Stil wie WK-Popup)       */
+/* ------------------------------------------------------ */
+
+#side-popup .umsatz-total-row {
+  background-color: #f3f3f3;
+  color: black;
+  font-weight: bold;
+  padding: 6px 8px;
+  text-align: left;
+  border: 1px solid #b41821;
+  font-size: 0.9rem;
+}
+
+#side-popup .umsatz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+#side-popup .umsatz-box {
+  border: 1px solid #b41821;
+  border-radius: 4px;
+  padding: 8px;
+  background: #fff;
+}
+
+#side-popup .umsatz-box-title {
+  font-weight: bold;
+  color: #b41821;
+  margin-bottom: 4px;
+  font-size: 0.85rem;
+}
+
+#side-popup .umsatz-box-value {
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: black;
+  text-align: right;
+}
+
+
 #map-control-panel {
   position: absolute;
   right: 0;
@@ -685,64 +728,6 @@
 .mode-selector.hh .mode-right {
   color: #b41821;
 }
-.popup-umsatz {
-  padding: 20px;
-  font-family: inherit;
-  background: white;
-  border-left: 3px solid #b41821;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.popup-umsatz.hidden {
-  display: none;
-}
-
-.popup-umsatz h2 {
-  margin: 0 0 16px 0;
-  font-size: 1.6rem;
-  font-weight: 700;
-  color: #b41821;
-}
-
-.popup-umsatz-list {
-  margin-bottom: 20px;
-}
-
-.popup-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  font-size: 1rem;
-  border-bottom: 1px solid #eee;
-}
-
-.popup-bar {
-  display: flex;
-  height: 22px;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #ccc;
-}
-
-.bar-segment {
-  height: 100%;
-}
-
-#bar-stationaer { background: #b41821; }
-#bar-pluscard   { background: #d9483b; }
-#bar-ra         { background: #f0803c; }
-#bar-online     { background: #f6b65b; }
-
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 14px;
-  background: none;
-  border: none;
-  font-size: 22px;
-  cursor: pointer;
-}
 
 
 
@@ -990,31 +975,38 @@ style: feature => {
 // onEachFeature(feature, layer)
 onEachFeature: (feature, layer) => {
   layer.on("click", (e) => {
-    const plz = e.target.feature.properties.plz?.toString().trim();
+    // PLZ IMMER normalisieren
+    const plz = String(e.target.feature.properties.plz).padStart(5, "0");
 
     // Gebiet highlighten
     this.highlightMapArea(plz);
 
+    // Tabellenzeile highlighten
+    this.highlightTableRowByPLZ(plz);
+
     // Umsatz-Modus → Umsatz-Popup
     if (this.currentMapMode === "umsatz-multi") {
       const values = this.filteredPLZWerte?.[plz];
+
+      // WK-Popup leeren, damit nichts überlappt
+      const sidePopup = this._shadowRoot.getElementById("side-popup");
+      sidePopup.innerHTML = "";
+
       if (values) {
         this.showUmsatzPopup(plz, values);
       } else {
         console.warn("❌ Keine Umsatzwerte für PLZ", plz);
       }
+
+      return;
     }
 
     // WK-Modus → altes Popup
-    else {
-      const kennwerte = this.filteredKennwerte?.[plz];
-      this.showPopup(e.target.feature, kennwerte);
-    }
-
-    // Tabellenzeile highlighten
-    this.highlightTableRowByPLZ(plz);
+    const kennwerte = this.filteredKennwerte?.[plz];
+    this.showPopup(e.target.feature, kennwerte);
   });
 }
+
 
 
     });
@@ -1716,8 +1708,9 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
-
 showUmsatzPopup(plz, values) {
+  const sidePopup = this._shadowRoot.getElementById("side-popup");
+
   const modeHH = this.umsatzMode === "hh";
 
   const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
@@ -1729,34 +1722,56 @@ showUmsatzPopup(plz, values) {
 
   const fmt = x => modeHH ? x.toFixed(3) : x.toLocaleString("de-DE");
 
-  // Werte einfügen
-  this._shadowRoot.getElementById("popup-umsatz-total").textContent =
-    modeHH ? `${total.toFixed(3)} pro Haushalt` : `${total.toLocaleString("de-DE")} €`;
+  const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-  this._shadowRoot.getElementById("popup-stationaer").textContent = fmt(stationaer);
-  this._shadowRoot.getElementById("popup-pluscard").textContent   = fmt(pluscard);
-  this._shadowRoot.getElementById("popup-ra").textContent         = fmt(ra);
-  this._shadowRoot.getElementById("popup-online").textContent     = fmt(online);
+  sidePopup.innerHTML = `
+    <button class="close-btn">×</button>
 
-  // Balkenbreiten
-  const pct = x => total > 0 ? (x / total) * 100 : 0;
+    <table>
+      <thead>
+        <tr>
+          <th colspan="2" class="title-cell" title="${note}">
+            ${plz} – ${note}
+          </th>
+        </tr>
 
-  this._shadowRoot.getElementById("bar-stationaer").style.width = pct(stationaer) + "%";
-  this._shadowRoot.getElementById("bar-pluscard").style.width   = pct(pluscard) + "%";
-  this._shadowRoot.getElementById("bar-ra").style.width         = pct(ra) + "%";
-  this._shadowRoot.getElementById("bar-online").style.width     = pct(online) + "%";
+        <tr>
+          <th colspan="2" class="umsatz-total-row">
+            Gesamtumsatz: ${modeHH ? total.toFixed(3) + " pro HH" : total.toLocaleString("de-DE") + " €"}
+          </th>
+        </tr>
+      </thead>
+    </table>
 
-  // WK-Popup verstecken
-  this._shadowRoot.getElementById("side-popup").innerHTML = "";
-  this._shadowRoot.getElementById("side-popup").classList.remove("show");
+    <div class="umsatz-grid">
+      <div class="umsatz-box">
+        <div class="umsatz-box-title">Stationär</div>
+        <div class="umsatz-box-value">${fmt(stationaer)}</div>
+      </div>
 
-  // Umsatz-Popup anzeigen
-  const popup = this._shadowRoot.getElementById("popup-umsatz");
-  popup.classList.remove("hidden");
+      <div class="umsatz-box">
+        <div class="umsatz-box-title">Pluscard</div>
+        <div class="umsatz-box-value">${fmt(pluscard)}</div>
+      </div>
 
-  // Close-Button
-  popup.querySelector(".close-btn").onclick = () => {
-    popup.classList.add("hidden");
+      <div class="umsatz-box">
+        <div class="umsatz-box-title">R&A</div>
+        <div class="umsatz-box-value">${fmt(ra)}</div>
+      </div>
+
+      <div class="umsatz-box">
+        <div class="umsatz-box-title">Onlineshop</div>
+        <div class="umsatz-box-value">${fmt(online)}</div>
+      </div>
+    </div>
+  `;
+
+  // Animation
+  void sidePopup.offsetWidth;
+  setTimeout(() => sidePopup.classList.add("show"), 10);
+
+  sidePopup.querySelector(".close-btn").onclick = () => {
+    sidePopup.classList.remove("show");
   };
 }
 
