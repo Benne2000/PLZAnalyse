@@ -541,6 +541,7 @@
   transform: scale(1.12); /* etwas größerer Hover */
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
+
 .analysis-switch {
   display: flex;
   gap: 0;
@@ -564,16 +565,17 @@
   border-right: 1px solid #b41821;
 }
 
-/* ✔ aktive Box */
+/* ⭐ Diese Regel MUSS NACH ALLEN anderen analysis-btn-Regeln stehen */
 .analysis-btn.active {
-  background: #b41821;
-  color: white;
+  background: #b41821 !important;
+  color: white !important;
 }
 
-/* ✔ Hover nur für NICHT aktive Box */
+/* Hover nur für inaktive */
 .analysis-btn:not(.active):hover {
   background: #fff3f3;
 }
+
 
 
 
@@ -604,16 +606,21 @@
 .hidden {
   display: none;
 }
+
 .mode-selector {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 40px; /* größerer Abstand für echte Mitte */
-  padding: 10px 12px;
+  gap: 80px; /* Texte weiter außen */
+  padding: 12px 16px;
   margin-top: 16px;
   user-select: none;
   cursor: pointer;
-  position: relative;
+
+  background: white;          /* weißer Hintergrund */
+  border: 2px solid #b41821;  /* roter Rahmen */
+  border-radius: 10px;
 }
 
 /* Labels */
@@ -630,7 +637,7 @@
 .mode-dot {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%) translateX(-40px); /* Start: links der Mitte */
+  transform: translateY(-50%) translateX(-40px); /* Start links der Mitte */
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -638,7 +645,7 @@
   transition: transform 0.25s ease;
 }
 
-/* Haushalt aktiv → Punkt nach rechts der Mitte */
+/* Punkt wandert symmetrisch nach rechts */
 .mode-selector.hh .mode-dot {
   transform: translateY(-50%) translateX(40px);
 }
@@ -657,6 +664,7 @@
 .mode-selector.hh .mode-right {
   color: #b41821;
 }
+
 
 
 
@@ -1290,6 +1298,8 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
+
+
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
