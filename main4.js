@@ -640,17 +640,17 @@
 .analysis-switch {
   display: flex;
   gap: 0;
-  margin-bottom: 12px; /* Abstand nach unten */
+  margin-bottom: 14px;
 }
 
 .analysis-btn {
   flex: 1;
-  padding: 10px;
+  padding: 10px 12px;
   text-align: center;
   cursor: pointer;
   background: white;
   color: #b41821;
-  font-weight: bold;
+  font-weight: 600;
   border: 1px solid #b41821;
   border-right: none;
 }
@@ -663,6 +663,7 @@
   background: #b41821;
   color: white;
 }
+
 
 
 
@@ -733,20 +734,18 @@
   color: #b41821;
 }
 
-/* Der Punkt */
+/* Der Punkt — immer gefüllt */
 .mode-dot {
   width: 18px;
   height: 18px;
-  border: 2px solid #b41821;
   border-radius: 50%;
-  background: #b41821; /* Standard: gefüllt = Absolut aktiv */
-  transition: transform 0.25s ease, background 0.25s ease;
+  background: #b41821;
+  transition: transform 0.25s ease;
 }
 
-/* Haushalt aktiv → Punkt wandert nach rechts + wird leer */
+/* Punkt wandert nach rechts */
 .mode-selector.hh .mode-dot {
   transform: translateX(70px);
-  background: white;
 }
 
 
@@ -1901,9 +1900,7 @@ getFilteredData() {
   console.log("➡️ Jahr:", jahr);
   console.log("➡️ Nummer:", nummer);
 
-  // 🔥 WICHTIG: beide Strukturen initialisieren
-  const filteredKennwerte = {};   // komplette Zeilen → Tabelle & Popup
-  const filteredPLZWerte = {};    // extrahierte Werte → Farben
+  const filteredKennwerte = {};
 
   const filtered = data.filter(row => {
     const id = row["dimension_erhebung_0"]?.id?.trim();
@@ -1912,36 +1909,23 @@ getFilteredData() {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
 
-
     const match = id === erhID && y === jahr && num === nummer;
 
     if (match && plz && plz !== "@NullMember") {
-
-      // 🔵 1) komplette Datenzeile speichern (Popup + Tabelle)
       filteredKennwerte[plz] = row;
-
-      // 🔵 2) extrahierte Werte für Farben speichern
-      filteredPLZWerte[plz] = {
-        wk: row["value_wk_in_percent_0"]?.raw ?? 0,
-        wkPot: row["value_wk_potentiell_0"]?.raw ?? 0,
-        hz: row["dimension_hzflag_0"]?.id?.trim() === "X"
-      };
-
-
     }
 
     return match;
   });
 
-  // 🔥 Beide Strukturen global speichern
   this.filteredKennwerte = filteredKennwerte;
-  this.filteredPLZWerte = filteredPLZWerte;
 
   console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
   console.groupEnd();
 
   return filtered;
 }
+
 
 
 
@@ -1982,6 +1966,8 @@ getFilteredData() {
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
+  console.log("🧪 updateGeoLayer() mode:", this.currentMapMode, "umsatzMode:", this.umsatzMode);
+  console.log("🧪 filteredPLZWerte sample:", Object.entries(this.filteredPLZWerte || {}).slice(0, 5));
   const plzWerte = this.filteredPLZWerte || {};
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
 
@@ -2542,6 +2528,10 @@ prepareUmsatzPLZWerte() {
   });
 
   this.filteredPLZWerte = plzWerte;
+
+  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(this.filteredPLZWerte).length);
+console.log("🧪 Beispiel:", Object.entries(this.filteredPLZWerte).slice(0, 5));
+
 }
 
 
