@@ -606,51 +606,67 @@
 .hidden {
   display: none;
 }
-
+/* Gesamter Umschalter */
 .mode-selector {
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 80px; /* Texte weiter außen */
-  padding: 12px 16px;
+  gap: 110px; /* Texte weiter außen */
+  padding: 14px 20px;
   margin-top: 16px;
   user-select: none;
   cursor: pointer;
 
-  background: white;          /* weißer Hintergrund */
-  border: 2px solid #b41821;  /* roter Rahmen */
-  border-radius: 10px;
+  background: white;
+  border: 2px solid #b41821;
+  border-radius: 12px;
 }
 
 /* Labels */
 .mode-left,
 .mode-right {
-  font-size: 0.9rem;
-  font-weight: 600;
-  min-width: 90px;
+  font-size: 1rem;
+  font-weight: 700;
+  min-width: 100px;
   text-align: center;
-  transition: color 0.25s ease;
+  z-index: 2; /* Punkt überlappt sie nicht */
+  pointer-events: none;
 }
 
-/* Punkt */
+/* Die Schiene, in der der Punkt fährt */
+.mode-track {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 90px;              /* Breite der Schiene */
+  height: 26px;             /* Höhe der Schiene */
+  transform: translate(-50%, -50%);
+  border: 2px solid #b41821;
+  border-radius: 20px;
+  background: white;
+  z-index: 1;
+}
+
+/* Der Punkt */
 .mode-dot {
   position: absolute;
   top: 50%;
-  transform: translateY(-50%) translateX(-40px); /* Start links der Mitte */
+  left: 50%;
   width: 18px;
   height: 18px;
   border-radius: 50%;
   background: #b41821;
+  transform: translate(-50%, -50%) translateX(-28px); /* Start links */
   transition: transform 0.25s ease;
 }
 
-/* Punkt wandert symmetrisch nach rechts */
+/* Punkt wandert nach rechts */
 .mode-selector.hh .mode-dot {
-  transform: translateY(-50%) translateX(40px);
+  transform: translate(-50%, -50%) translateX(28px);
 }
 
-/* Farben */
+/* Farben der Labels */
 .mode-selector:not(.hh) .mode-left {
   color: #b41821;
 }
@@ -664,8 +680,6 @@
 .mode-selector.hh .mode-right {
   color: #b41821;
 }
-
-
 
 
 
@@ -745,9 +759,12 @@
     <!-- Globaler Switch -->
 <div id="umsatz-mode-switch" class="mode-selector">
   <span class="mode-left">Absolut</span>
-  <div class="mode-dot"></div>
+  <div class="mode-track">
+    <div class="mode-dot"></div>
+  </div>
   <span class="mode-right">pro Haushalt</span>
 </div>
+
 
 
 
