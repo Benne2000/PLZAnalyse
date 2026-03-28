@@ -541,42 +541,42 @@
   transform: scale(1.12); /* etwas größerer Hover */
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
-
 .analysis-switch {
   display: flex;
   gap: 0;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .analysis-btn {
   flex: 1;
-  padding: 10px 12px;
+  padding: 14px 16px;              /* ✔ höhere Buttons */
   text-align: center;
   cursor: pointer;
   background: white;
   color: #b41821;
-  font-weight: 600;
-  border: 1px solid #b41821;
+  font-size: 1rem;                 /* ✔ größere Schrift */
+  font-weight: 700;                /* ✔ fetter */
+  border: 2px solid #b41821;       /* ✔ kräftiger Rahmen */
   border-right: none;
+  border-radius: 6px 0 0 6px;      /* ✔ leichte Rundung */
   transition: background 0.2s ease, color 0.2s ease;
 }
 
 .analysis-btn:last-child {
-  border-right: 1px solid #b41821;
+  border-right: 2px solid #b41821;
+  border-radius: 0 6px 6px 0;      /* ✔ rechte Rundung */
 }
 
-/* ⭐ Diese Regel MUSS NACH ALLEN anderen analysis-btn-Regeln stehen */
+/* ⭐ aktive Box */
 .analysis-btn.active {
   background: #b41821 !important;
   color: white !important;
 }
 
-/* Hover nur für inaktive */
+/* Hover nur für NICHT aktive */
 .analysis-btn:not(.active):hover {
-  background: #fff3f3;
+  background: #ffecec;
 }
-
-
 
 
 
