@@ -2373,21 +2373,28 @@ prepareErhebungsInfo() {
     };
   });
 }
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
 
   const { erhID, jahr, nummer } = this._activeFilter || {};
+  if (!erhID || !jahr || !nummer) return;
 
+  // Hilfsfunktion: NaN verhindern
+  const safe = x => {
+    const n = Number(x);
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // Falls WK-Werte schon existieren → erweitern
+  const plzWerte = this.filteredPLZWerte || {};
+
+  // Nur Zeilen der aktiven Erhebung
   const rows = raw.filter(row =>
     row["dimension_erhebung_0"]?.id == erhID &&
     row["dimension_jahr_0"]?.id == jahr &&
     row["dimension_erhebungsnummer_0"]?.id == nummer
   );
-
-  // Wenn WK-Werte schon existieren → erweitern
-  const plzWerte = this.filteredPLZWerte || {};
 
   rows.forEach(row => {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
@@ -2420,20 +2427,20 @@ prepareUmsatzPLZWerte() {
     const v = plzWerte[plz];
 
     // Haushalte
-    const hh = row["value_haushalte_0"]?.raw ?? 0;
+    const hh = safe(row["value_haushalte"]?.raw);
     v.haushalte += hh;
 
-    // Stationär / Gesamt
-    v.umsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    // Stationär / Gesamtumsatz
+    v.umsatz += safe(row["value_hr_n_umsatz"]?.raw);
 
     // R&A
-    v.ra += row["value_umsatz_ra_0"]?.raw ?? 0;
+    v.ra += safe(row["value_umsatz_ra"]?.raw);
 
     // Online
-    v.onlineshop += row["value_umsatz_online_0"]?.raw ?? 0;
+    v.onlineshop += safe(row["value_umsatz_online"]?.raw);
 
     // Großkunden = Pluscard
-    v.pluscard += row["value_umsatz_grosskunden_0"]?.raw ?? 0;
+    v.pluscard += safe(row["value_umsatz_grosskunden"]?.raw);
 
     // Pro Haushalt berechnen
     if (v.haushalte > 0) {
@@ -2446,9 +2453,8 @@ prepareUmsatzPLZWerte() {
 
   this.filteredPLZWerte = plzWerte;
 
-  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(this.filteredPLZWerte).length);
-console.log("🧪 Beispiel:", Object.entries(this.filteredPLZWerte).slice(0, 5));
-
+  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(plzWerte).length);
+  console.log("🧪 Beispiel:", Object.entries(plzWerte).slice(0, 5));
 }
 
 
