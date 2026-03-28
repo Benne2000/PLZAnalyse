@@ -501,18 +501,28 @@
     max-height 0.35s ease,
     opacity 0.35s ease;
 }
-
 #nl-info-container.show {
   max-height: 80vh;
   opacity: 1;
+  overflow: hidden; /* wichtig: Scrollen passiert im inneren Container */
 }
 
 .nl-info-scroll {
   overflow-y: auto;
   max-height: 80vh;
-  border: 1px solid #b41821;
-  border-radius: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #b41821 #ffffff;
 }
+
+.nl-info-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nl-info-scroll::-webkit-scrollbar-thumb {
+  background: #b41821;
+  border-radius: 4px;
+}
+
 
 .nl-info-table {
   width: 100%;
@@ -583,7 +593,7 @@
 #map-tile-toggle-btn {
   position: absolute;
   bottom: 20px;
-  right: 40%; /* weiter links */
+  right: 40%;
   width: 42px;
   height: 42px;
   background: white;
@@ -592,13 +602,17 @@
   cursor: pointer;
   z-index: 9999;
 
-  background-image: url('data:image/svg+xml;utf8,<svg fill="%23b41821" ... ></svg>');
+  background-image: url('data:image/svg+xml;utf8,
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23b41821">
+      <path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/>
+    </svg>');
   background-size: 60%;
   background-repeat: no-repeat;
   background-position: center;
 
   transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
+
 
 #map-tile-toggle-btn:hover {
   transform: scale(1.08);
