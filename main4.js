@@ -639,9 +639,8 @@
 
 .analysis-switch {
   display: flex;
-  border: 1px solid #b41821;
-  border-radius: 8px;
-  overflow: hidden;
+  gap: 0;
+  margin-bottom: 12px; /* Abstand nach unten */
 }
 
 .analysis-btn {
@@ -652,17 +651,19 @@
   background: white;
   color: #b41821;
   font-weight: bold;
-  border-right: 1px solid #b41821;
+  border: 1px solid #b41821;
+  border-right: none;
 }
 
 .analysis-btn:last-child {
-  border-right: none;
+  border-right: 1px solid #b41821;
 }
 
 .analysis-btn.active {
   background: #b41821;
   color: white;
 }
+
 
 
 .umsatz-grid {
@@ -692,39 +693,62 @@
   display: none;
 }
 
+/* Container */
 .mode-selector {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 10px;
-  border: 1px solid #b41821;
-  border-radius: 8px;
-  background: white;
+  justify-content: center;
+  gap: 22px;
+  padding: 10px 12px;
+  margin-top: 16px;
+  user-select: none;
   cursor: pointer;
 }
 
+/* Labels */
 .mode-left,
 .mode-right {
-  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  min-width: 90px;
   text-align: center;
-  font-size: 0.85rem;
-  color: #b41821;
-  font-weight: bold;
+  transition: color 0.25s ease;
 }
 
+/* Standard: Absolut aktiv */
+.mode-selector:not(.hh) .mode-left {
+  color: #b41821;
+}
+
+.mode-selector:not(.hh) .mode-right {
+  color: #999;
+}
+
+/* Haushalt aktiv */
+.mode-selector.hh .mode-left {
+  color: #999;
+}
+
+.mode-selector.hh .mode-right {
+  color: #b41821;
+}
+
+/* Der Punkt */
 .mode-dot {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border: 2px solid #b41821;
   border-radius: 50%;
-  background: #fff;
-  transition: transform 0.25s ease;
+  background: #b41821; /* Standard: gefüllt = Absolut aktiv */
+  transition: transform 0.25s ease, background 0.25s ease;
 }
 
+/* Haushalt aktiv → Punkt wandert nach rechts + wird leer */
 .mode-selector.hh .mode-dot {
-  transform: translateX(40px); /* wandert nach rechts */
+  transform: translateX(70px);
+  background: white;
 }
+
 
 
 
@@ -801,11 +825,12 @@
   <div id="umsatz-panel" class="hidden">
 
     <!-- Globaler Switch -->
-  <div id="umsatz-mode-switch" class="mode-selector">
-    <span class="mode-left">Absolut</span>
-    <div class="mode-dot"></div>
-    <span class="mode-right">pro Haushalt</span>
-  </div>
+<div id="umsatz-mode-switch" class="mode-selector">
+  <span class="mode-left">Absolut</span>
+  <div class="mode-dot"></div>
+  <span class="mode-right">pro Haushalt</span>
+</div>
+
 
 
     <!-- 2×2 Grid -->
@@ -1410,12 +1435,19 @@ initializeMapBase() {
   });
 
   // ⭐ Neutraler Haushalte/Absolut-Switch
-  const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
-  modeSwitch.addEventListener("click", () => {
-    const isHH = modeSwitch.classList.toggle("hh");
-    this.umsatzMode = isHH ? "hh" : "abs";
-    this.updateGeoLayer();
-  });
+const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
+
+// Standardzustand: Absolut
+this.umsatzMode = "abs";
+
+modeSwitch.addEventListener("click", () => {
+  const isHH = modeSwitch.classList.toggle("hh");
+
+  this.umsatzMode = isHH ? "hh" : "abs";
+
+  this.updateGeoLayer();
+});
+
 
   // ⭐ Umsatzkategorien (2×2 Grid)
   this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
