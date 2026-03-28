@@ -513,24 +513,25 @@
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   overflow: hidden;
-
   max-height: 0;
   opacity: 0;
-
+  display: flex;            /* wichtig */
+  flex-direction: column;   /* wichtig */
   transition:
     max-height 0.35s ease,
     opacity 0.35s ease;
 }
+
 #nl-info-container.show {
   max-height: 80vh;
   opacity: 1;
-  overflow: visible; /* statt hidden */
+  overflow: hidden; /* wichtig */
 }
-
 
 .nl-info-scroll {
   overflow-y: auto;
   max-height: 80vh;
+  min-height: 0; /* CRITICAL FIX */
   scrollbar-width: thin;
   scrollbar-color: #b41821 #ffffff;
 }
