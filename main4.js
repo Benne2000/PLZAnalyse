@@ -541,7 +541,6 @@
   transform: scale(1.12); /* etwas größerer Hover */
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
-
 .analysis-switch {
   display: flex;
   gap: 0;
@@ -558,15 +557,22 @@
   font-weight: 600;
   border: 1px solid #b41821;
   border-right: none;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 .analysis-btn:last-child {
   border-right: 1px solid #b41821;
 }
 
+/* ✔ aktive Box */
 .analysis-btn.active {
   background: #b41821;
   color: white;
+}
+
+/* ✔ Hover nur für NICHT aktive Box */
+.analysis-btn:not(.active):hover {
+  background: #fff3f3;
 }
 
 
@@ -598,17 +604,16 @@
 .hidden {
   display: none;
 }
-
-/* Container */
 .mode-selector {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 22px;
+  gap: 40px; /* größerer Abstand für echte Mitte */
   padding: 10px 12px;
   margin-top: 16px;
   user-select: none;
   cursor: pointer;
+  position: relative;
 }
 
 /* Labels */
@@ -621,26 +626,11 @@
   transition: color 0.25s ease;
 }
 
-/* Standard: Absolut aktiv */
-.mode-selector:not(.hh) .mode-left {
-  color: #b41821;
-}
-
-.mode-selector:not(.hh) .mode-right {
-  color: #999;
-}
-
-/* Haushalt aktiv */
-.mode-selector.hh .mode-left {
-  color: #999;
-}
-
-.mode-selector.hh .mode-right {
-  color: #b41821;
-}
-
-/* Der Punkt — immer gefüllt */
+/* Punkt */
 .mode-dot {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%) translateX(-40px); /* Start: links der Mitte */
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -648,10 +638,26 @@
   transition: transform 0.25s ease;
 }
 
-/* Punkt wandert nach rechts */
+/* Haushalt aktiv → Punkt nach rechts der Mitte */
 .mode-selector.hh .mode-dot {
-  transform: translateX(70px);
+  transform: translateY(-50%) translateX(40px);
 }
+
+/* Farben */
+.mode-selector:not(.hh) .mode-left {
+  color: #b41821;
+}
+.mode-selector:not(.hh) .mode-right {
+  color: #999;
+}
+
+.mode-selector.hh .mode-left {
+  color: #999;
+}
+.mode-selector.hh .mode-right {
+  color: #b41821;
+}
+
 
 
 
