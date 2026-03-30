@@ -2077,6 +2077,7 @@ showUmsatzPopup(plz, values) {
     this.neighbours = computeNeighbours(filteredMarkers);
   }
 
+
 applyFilter(erhID, jahr, nummer) {
 
   if (!erhID || !jahr || !nummer) {
@@ -2084,7 +2085,7 @@ applyFilter(erhID, jahr, nummer) {
     return;
   }
 
-  // 🧹 Wenn NL-Tabelle offen ist → schließen
+  // 🧹 NL-Tabelle schließen
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
   if (filterContainer?.classList.contains("nl-info-active")) {
     this.closeNLTable();
@@ -2099,34 +2100,33 @@ applyFilter(erhID, jahr, nummer) {
     this._selectedNLs.clear();
   }
 
-  // 1️⃣ Daten filtern (Erhebung)
+  // 1️⃣ Daten filtern
   const filteredData = this.getFilteredData();
   this.filteredData = filteredData;
 
-  // 2️⃣ Umsatzwerte vorbereiten (immer!)
+  // 2️⃣ Umsatzwerte vorbereiten
   this.prepareUmsatzPLZWerte();
 
-  // ⭐ 3️⃣ MapMode korrekt setzen, falls Benutzer Umsatz gewählt hat
+  // 3️⃣ MapMode korrekt setzen
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
-  const btnWK = this._shadowRoot.getElementById("btn-wk");
 
   if (btnUmsatz?.classList.contains("active")) {
     this.currentMapMode = "umsatz-multi";
 
-    // Kategorien aktivieren, falls leer
     if (!this.activeCategories || this.activeCategories.size === 0) {
       this.activeCategories = new Set(["stationaer", "pluscard", "ra", "online"]);
     }
 
-    // Umsatz-Panel sichtbar machen
     this._shadowRoot.getElementById("wk-extra").style.display = "none";
     this._shadowRoot.getElementById("umsatz-extra").style.display = "block";
+    this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "block";
+
   } else {
     this.currentMapMode = "wk";
 
-    // WK-Panel sichtbar machen
     this._shadowRoot.getElementById("wk-extra").style.display = "block";
     this._shadowRoot.getElementById("umsatz-extra").style.display = "none";
+    this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "none";
   }
 
   // 4️⃣ HZ-Flags neu berechnen
@@ -2142,7 +2142,7 @@ applyFilter(erhID, jahr, nummer) {
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  // 6️⃣ Karte einfärben
+  // 6️⃣ Karte initial einfärben
   this.updateGeoLayer();
 
   // 7️⃣ NL-Marker aktualisieren
@@ -2259,7 +2259,6 @@ getFilteredData() {
   }
   }
 
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -2276,7 +2275,6 @@ updateGeoLayer() {
 
   // Nur im WK-Modus sollen Critical-Marker sichtbar sein
   const showCritical = this.currentMapMode === "wk" && this.showCritical;
-
 
   // ---------------------------------------------------------
   // 1️⃣ MAX-WERT GLOBAL BERECHNEN
@@ -2319,7 +2317,19 @@ updateGeoLayer() {
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
     const v = plzWerte[plz];
-    const inRadius = !hasRadius || this.plzImRadius.has(plz);
+
+    // Radiuslogik
+    let inRadius = true;
+    if (this.currentMapMode === "umsatz-multi") {
+      if (this.useRadiusFilter && hasRadius) {
+        inRadius = this.plzImRadius.has(plz);
+      } else {
+        inRadius = true; // Radius ignorieren
+      }
+    } else {
+      // WK-Modus → Radiusfilter immer aktiv, falls vorhanden
+      inRadius = !hasRadius || this.plzImRadius.has(plz);
+    }
 
     // Hilfsfunktion: grau + Marker entfernen
     const setGrey = () => {
@@ -2391,26 +2401,31 @@ updateGeoLayer() {
     // ---------------------------------------------------------
     layer.off("click");
 
-layer.on("click", () => {
-  const values = this.filteredPLZWerte?.[plz];
+    layer.on("click", () => {
+      const values = this.filteredPLZWerte?.[plz];
 
-  if (this.currentMapMode === "umsatz-multi") {
-    if (values) {
-      this.showUmsatzPopup(plz, values);
-    } else {
-      this.showEmptyUmsatzPopup(plz);
-    }
-  } else {
-    this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
-  }
+      if (this.currentMapMode === "umsatz-multi") {
+        if (values) {
+          this.showUmsatzPopup(plz, values);
+        } else {
+          this.showEmptyUmsatzPopup(plz);
+        }
+      } else {
+        this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+      }
 
-  const popupWK = this._shadowRoot.getElementById("side-popup");
-  if (popupWK) {
-    popupWK.classList.remove("show");
-    popupWK.classList.add("hidden");
-  }
-});
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      if (popupWK) {
+        popupWK.classList.remove("show");
+        popupWK.classList.add("hidden");
+      }
 
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupU && this.currentMapMode !== "umsatz-multi") {
+        popupU.classList.remove("show");
+        popupU.classList.add("hidden");
+      }
+    });
 
     // ---------------------------------------------------------
     // ⚠️ CRITICAL-MARKER NUR IM WK-MODUS
@@ -3165,17 +3180,21 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
+
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
   // Umsatzmodus → Radiusfilter optional
   if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter === false) {
+    // Alle PLZ gelten als "im Radius"
     this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
+
     this.updateGeoLayer();
     this.renderDataTable(this.filteredKennwerte);
     return;
   }
 
+  // WK-Modus oder Umsatzmodus mit aktivem Radiusfilter
   this.streuverlust = null;
 
   const plzImRadius = new Set();
@@ -3202,11 +3221,13 @@ applyRadiusFilter(radiusKm) {
 
   this.plzImRadius = plzImRadius;
 
+  // Umsatzwerte NICHT überschreiben → nur WK-Werte neu berechnen
   this.getFilteredDataWithRadius();
 
   this.updateGeoLayer();
   this.renderDataTable(this.filteredKennwerte);
 }
+
 
 
 toggleNLSelection(nl) {
