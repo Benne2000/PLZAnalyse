@@ -727,13 +727,6 @@ select:disabled {
   to   { opacity: 1; }
 }
 
-/* Spinner rechts im Dropdown */
-select.loading {
-  background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 100 100' fill='%23b41821' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='35' stroke='%23b41821' stroke-width='10' stroke-linecap='round' fill='none' stroke-dasharray='164' stroke-dashoffset='82'%3E%3CanimateTransform attributeName='transform' type='rotate' dur='1s' repeatCount='indefinite' from='0 50 50' to='360 50 50'/%3E%3C/circle%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 18px;
-}
 
 button:disabled {
   opacity: 0.5;
