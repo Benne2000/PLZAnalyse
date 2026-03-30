@@ -1456,29 +1456,6 @@ btnUmsatz.addEventListener("click", () => {
 });
 
 
-
-btnUmsatz.addEventListener("click", () => {
-  btnUmsatz.classList.add("active");
-  btnWK.classList.remove("active");
-  umsatzPanel.classList.remove("hidden");
-
-  panel.classList.add("expanded");
-
-  this.currentMapMode = "umsatz-multi";
-
-  this.prepareUmsatzPLZWerte();
-
-  // ⭐ Sichtbarkeit der Checkboxen
-  this._shadowRoot.getElementById("wk-extra").style.display = "none";
-  this._shadowRoot.getElementById("chk-bestreuung").closest(".umsatz-extra").style.display = "block";
-
-  // Popups schließen
-  this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
-  this._shadowRoot.getElementById("side-popup").classList.remove("show");
-
-  this.updateGeoLayer();
-});
-
   // HH/ABS Switch
   const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
   this.umsatzMode = "abs";
