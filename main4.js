@@ -290,6 +290,13 @@
   color: black;
   text-align: right;
 }
+/* ausgegraute Kategorien */
+.umsatz-box.disabled {
+  opacity: 0.35;
+  filter: grayscale(100%);
+}
+
+/* Anteil-Balken */
 .umsatz-share-bar {
   margin-top: 16px;
   height: 18px;
@@ -1534,18 +1541,22 @@ getDynamicHeatColor(value, max) {
   value = Number(value);
   max = Number(max);
 
-  // ❗ Wenn kein Wert vorhanden → Standardgrau
+  // ❗ Kein Wert → Standardgrau
   if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(max) || max <= 0) {
     return "#cfd4da";
   }
 
   const ratio = value / max;
 
-  if (ratio > 0.9) return "#b41821";
-  if (ratio > 0.7) return "#d9483b";
-  if (ratio > 0.5) return "#f0803c";
-  if (ratio > 0.3) return "#f6b65b";
-  return "#ffe89c";
+  if (ratio > 0.95) return "#7a0f17";  // sehr dunkelrot
+  if (ratio > 0.85) return "#9d131b";  // dunkles rot
+  if (ratio > 0.75) return "#b41821";  // signature red
+  if (ratio > 0.65) return "#d9483b";  // rot-orange
+  if (ratio > 0.55) return "#e96a3a";  // orange
+  if (ratio > 0.45) return "#f08a3c";  // hellorange
+  if (ratio > 0.35) return "#f6b65b";  // gelb-orange
+  if (ratio > 0.20) return "#ffe89c";  // hellgelb
+  return "#fff6d6";                    // sehr helles gelb
 }
 
 
@@ -1729,22 +1740,38 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
+
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("popup-umsatz");
 
   const modeHH = this.umsatzMode === "hh";
 
+  // Werte holen
   const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
   const pluscard   = modeHH ? values.pluscardProHaushalt : values.pluscard;
   const ra         = modeHH ? values.raProHaushalt : values.ra;
   const online     = modeHH ? values.onlineshopProHaushalt : values.onlineshop;
 
-  const total = stationaer + pluscard + ra + online;
+  const note = this.geoNotes?.[plz] || "Keine Notiz";
+
+  // Welche Kategorien sind aktiv?
+  const active = {
+    stationaer: this.activeCategories.has("stationaer"),
+    pluscard:   this.activeCategories.has("pluscard"),
+    ra:         this.activeCategories.has("ra"),
+    online:     this.activeCategories.has("online")
+  };
+
+  // Gesamtsumme NUR aktive Kategorien
+  const total =
+    (active.stationaer ? stationaer : 0) +
+    (active.pluscard   ? pluscard   : 0) +
+    (active.ra         ? ra         : 0) +
+    (active.online     ? online     : 0);
 
   const fmt = x => modeHH ? x.toFixed(3) : x.toLocaleString("de-DE");
 
-  const note = this.geoNotes?.[plz] || "Keine Notiz";
-
+  // Prozentfunktion
   const pct = x => total > 0 ? (x / total) * 100 : 0;
 
   popup.innerHTML = `
@@ -1758,39 +1785,45 @@ showUmsatzPopup(plz, values) {
 
         <tr>
           <th colspan="2" class="subtitle-cell">
-            Gesamtumsatz: ${modeHH ? total.toFixed(3) + " pro HH" : total.toLocaleString("de-DE") + " €"}
+            Gesamtumsatz: ${
+              modeHH
+                ? total.toFixed(3) + " pro HH"
+                : total.toLocaleString("de-DE") + " €"
+            }
           </th>
         </tr>
       </thead>
     </table>
 
     <div class="umsatz-grid">
-      <div class="umsatz-box">
+
+      <div class="umsatz-box ${active.stationaer ? "" : "disabled"}">
         <div class="umsatz-box-title">Stationär</div>
         <div class="umsatz-box-value">${fmt(stationaer)}</div>
       </div>
 
-      <div class="umsatz-box">
+      <div class="umsatz-box ${active.pluscard ? "" : "disabled"}">
         <div class="umsatz-box-title">Pluscard</div>
         <div class="umsatz-box-value">${fmt(pluscard)}</div>
       </div>
 
-      <div class="umsatz-box">
+      <div class="umsatz-box ${active.ra ? "" : "disabled"}">
         <div class="umsatz-box-title">R&A</div>
         <div class="umsatz-box-value">${fmt(ra)}</div>
       </div>
 
-      <div class="umsatz-box">
+      <div class="umsatz-box ${active.online ? "" : "disabled"}">
         <div class="umsatz-box-title">Onlineshop</div>
         <div class="umsatz-box-value">${fmt(online)}</div>
       </div>
+
     </div>
 
     <div class="umsatz-share-bar">
-      <div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>
-      <div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>
-      <div class="share-segment share-ra"         style="width:${pct(ra)}%"></div>
-      <div class="share-segment share-online"     style="width:${pct(online)}%"></div>
+      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
+      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>`   : ""}
+      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(ra)}%"></div>`         : ""}
+      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online)}%"></div>`     : ""}
     </div>
   `;
 
@@ -2103,7 +2136,8 @@ getFilteredData() {
                             "#cfd4da";    // Grau
   }
   }
-updateGeoLayer() {
+
+  updateGeoLayer() {
   if (!this._geoLayer) return;
 
   console.group("🧪 updateGeoLayer()");
@@ -2113,6 +2147,9 @@ updateGeoLayer() {
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
 
   const safe = x => Number.isFinite(x) ? x : 0;
+
+  // Marker-Cache initialisieren
+  this.criticalMarkers = this.criticalMarkers || {};
 
   // ---------------------------------------------------------
   // 1️⃣ MAX-WERT GLOBAL BERECHNEN
@@ -2150,23 +2187,42 @@ updateGeoLayer() {
   console.groupEnd();
 
   // ---------------------------------------------------------
-  // 2️⃣ LAYER FÄRBEN (Radiusfilter NUR HIER anwenden)
+  // 2️⃣ LAYER FÄRBEN + CRITICAL-MARKER
   // ---------------------------------------------------------
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
     const v = plzWerte[plz];
     const inRadius = !hasRadius || this.plzImRadius.has(plz);
 
-    if (!v || !inRadius) {
+    // Hilfsfunktion: grau + Marker entfernen
+    const setGrey = () => {
       layer.setStyle({
         fillColor: "#cfd4da",
         fillOpacity: 0.45,
         color: "#ffffff",
         weight: 1
       });
+      layer.options.interactive = false;
+
+      if (this.criticalMarkers[plz]) {
+        this.map.removeLayer(this.criticalMarkers[plz]);
+        delete this.criticalMarkers[plz];
+      }
+    };
+
+    // 1️⃣ PLZ ohne Werte → grau
+    if (!v) {
+      setGrey();
       return;
     }
 
+    // 2️⃣ PLZ außerhalb Radius → grau
+    if (!inRadius) {
+      setGrey();
+      return;
+    }
+
+    // 3️⃣ PLZ im Radius → farbig
     let value = 0;
     let fillColor = "#cccccc";
 
@@ -2200,8 +2256,50 @@ updateGeoLayer() {
       color: "#ffffff",
       weight: 1
     });
+
+    layer.options.interactive = true;
+
+    // ---------------------------------------------------------
+    // ⚠️ CRITICAL-MARKER WIEDER EINBLENDEN
+    // ---------------------------------------------------------
+    const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
+
+    if (isCritical) {
+      if (!this.criticalMarkers[plz]) {
+        const center = layer.getBounds().getCenter();
+
+        const icon = L.divIcon({
+          html: `<div style="
+            background:#ffffff;
+            border:2px solid #b41821;
+            border-radius:50%;
+            width:22px;
+            height:22px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            font-size:14px;
+            font-weight:bold;
+          ">⚠️</div>`,
+          className: "",
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        });
+
+        this.criticalMarkers[plz] = L.marker(center, {
+          icon,
+          interactive: false
+        }).addTo(this.map);
+      }
+    } else {
+      if (this.criticalMarkers[plz]) {
+        this.map.removeLayer(this.criticalMarkers[plz]);
+        delete this.criticalMarkers[plz];
+      }
+    }
   });
 }
+
 
 
 
