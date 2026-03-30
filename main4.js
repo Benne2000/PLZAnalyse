@@ -2557,16 +2557,14 @@ onMarkerClick(nl) {
   this.renderDataTable(this.filteredKennwerte);
 }
 
+
+
 setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
   const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+  const filterButton = this._shadowRoot.getElementById("filter-button");
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
-
-  if (!erhSelect || !jahrSelect || !nummerSelect || !filterContainer) {
-    console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
-    return;
-  }
 
   // 🧹 Reset
   erhSelect.innerHTML = "";
@@ -2574,6 +2572,24 @@ setupFilterDropdowns() {
   nummerSelect.innerHTML = "";
   jahrSelect.disabled = true;
   nummerSelect.disabled = true;
+  filterButton.disabled = true;
+
+  // 🔥 Info-Button erzeugen (falls nicht vorhanden)
+  let infoBtn = this._shadowRoot.getElementById("erhebungsinfo-button");
+  if (!infoBtn) {
+    infoBtn = document.createElement("button");
+    infoBtn.id = "erhebungsinfo-button";
+    infoBtn.textContent = "Erhebungsübersicht";
+    infoBtn.style.marginTop = "10px";
+    infoBtn.style.padding = "6px";
+    infoBtn.style.background = "#b41821";
+    infoBtn.style.color = "white";
+    infoBtn.style.border = "none";
+    infoBtn.style.cursor = "pointer";
+    infoBtn.style.borderRadius = "4px";
+    infoBtn.disabled = true; // ⭐ Start disabled
+    filterContainer.appendChild(infoBtn);
+  }
 
   // 🏷️ Platzhalter
   const createPlaceholder = (text) => {
@@ -2589,7 +2605,7 @@ setupFilterDropdowns() {
   jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
   nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
 
-  // 🧩 ErhebungsIDs einfügen
+  // ErhebungsIDs einfügen
   Object.keys(this._erhData).forEach(erhID => {
     if (erhID !== "@NullMember") {
       const opt = document.createElement("option");
@@ -2599,41 +2615,18 @@ setupFilterDropdowns() {
     }
   });
 
-  // ---------------------------------------------------------
-  // 🔥 NL-INFO CONTAINER (nur einmal erzeugen)
-  // ---------------------------------------------------------
-  let nlInfo = this._shadowRoot.getElementById("nl-info-container");
-  if (!nlInfo) {
-    nlInfo = document.createElement("div");
-    nlInfo.classList.add("nl-info-container");
-    nlInfo.id = "nl-info-container";
-    filterContainer.appendChild(nlInfo);
-  }
+  // ⭐ Button-Aktivierungslogik
+  const updateFilterButtonState = () => {
+    const enabled =
+      erhSelect.value &&
+      jahrSelect.value &&
+      nummerSelect.value;
 
-  // ---------------------------------------------------------
-  // 🔥 BUTTON: Erhebungsübersicht (dynamisch erzeugt)
-  // ---------------------------------------------------------
-  let infoBtn = this._shadowRoot.getElementById("erhebungsinfo-button");
+    filterButton.disabled = !enabled;
+    filterButton.style.background = enabled ? "#b41821" : "#888";
+  };
 
-  if (!infoBtn) {
-    infoBtn = document.createElement("button");
-    infoBtn.id = "erhebungsinfo-button";
-    infoBtn.textContent = "Erhebungsübersicht";
-    infoBtn.style.marginTop = "10px";
-    infoBtn.style.padding = "6px";
-    infoBtn.style.background = "#b41821";
-    infoBtn.style.color = "white";
-    infoBtn.style.border = "none";
-    infoBtn.style.cursor = "pointer";
-    infoBtn.style.borderRadius = "4px";
-    infoBtn.disabled = true; // ⭐ Start: ausgegraut
-
-    filterContainer.appendChild(infoBtn);
-  }
-
-  // ---------------------------------------------------------
-  // 🔄 Erhebung → Jahr aktivieren + Info-Button aktivieren
-  // ---------------------------------------------------------
+  // Erhebung → Jahr aktivieren
   erhSelect.addEventListener("change", () => {
     jahrSelect.innerHTML = "";
     nummerSelect.innerHTML = "";
@@ -2644,9 +2637,6 @@ setupFilterDropdowns() {
     jahrSelect.disabled = false;
     nummerSelect.disabled = true;
 
-    // ⭐ Info-Button aktivieren
-    infoBtn.disabled = false;
-
     const selectedID = erhSelect.value;
     const jahre = Object.keys(this._erhData[selectedID] || {}).filter(j => j !== "@NullMember");
 
@@ -2656,11 +2646,11 @@ setupFilterDropdowns() {
       opt.textContent = j;
       jahrSelect.appendChild(opt);
     });
+
+    updateFilterButtonState();
   });
 
-  // ---------------------------------------------------------
-  // 🔄 Jahr → Nummer aktivieren
-  // ---------------------------------------------------------
+  // Jahr → Nummer aktivieren
   jahrSelect.addEventListener("change", () => {
     nummerSelect.innerHTML = "";
     nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
@@ -2678,11 +2668,27 @@ setupFilterDropdowns() {
       opt.textContent = n;
       nummerSelect.appendChild(opt);
     });
+
+    updateFilterButtonState();
   });
 
-  // ---------------------------------------------------------
-  // 🔥 BUTTON: Erhebungsübersicht (TOGGLE)
-  // ---------------------------------------------------------
+  nummerSelect.addEventListener("change", updateFilterButtonState);
+
+  // ⭐ Filterbutton
+  filterButton.addEventListener("click", () => {
+    const selectedID = erhSelect.value;
+    const selectedJahr = jahrSelect.value;
+    const selectedNummer = nummerSelect.value;
+
+    if (selectedID && selectedJahr && selectedNummer) {
+      this.applyFilter(selectedID, selectedJahr, selectedNummer);
+
+      // ⭐ Jetzt erst Erhebungsübersicht aktivieren
+      infoBtn.disabled = false;
+    }
+  });
+
+  // ⭐ Info-Button Toggle
   infoBtn.addEventListener("click", () => {
     const nlBox = this._shadowRoot.getElementById("nl-info-container");
 
@@ -2700,26 +2706,7 @@ setupFilterDropdowns() {
     nlBox.classList.add("show");
     filterContainer.classList.add("nl-info-active");
   });
-
-  // ---------------------------------------------------------
-  // 🟢 Filterbutton
-  // ---------------------------------------------------------
-  const filterButton = this._shadowRoot.getElementById("filter-button");
-  if (filterButton) {
-    filterButton.addEventListener("click", () => {
-      const selectedID = erhSelect.value;
-      const selectedJahr = jahrSelect.value;
-      const selectedNummer = nummerSelect.value;
-
-      if (selectedID && selectedJahr && selectedNummer) {
-        this.applyFilter(selectedID, selectedJahr, selectedNummer);
-      } else {
-        console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
-      }
-    });
-  }
 }
-
 
 
 
@@ -3690,8 +3677,6 @@ closeNLTable() {
   // 📍 Marker anzeigen
   this.updateMarkers(filteredPLZs);
 
-  // 📊 Tabelle aktualisieren
-  this.renderDataTable(this.filteredKennwerte);
 
   this.hideSpinner();
 }
