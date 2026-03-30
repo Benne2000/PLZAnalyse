@@ -356,7 +356,7 @@
   flex-direction: column;
   min-height: 0;
   transition: transform 0.35s ease;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .table-scroll {
@@ -424,11 +424,12 @@
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: auto;
+  max-height: 100%;
   overflow: hidden; /* bleibt! */
   padding: 0;       /* wichtig */
   border-radius: 0; /* damit Header bündig sitzt */
-
+  z-index: 1;
   /* Startposition: komplett unten */
   transform: translateY(100%);
   opacity: 0;
@@ -529,6 +530,7 @@
   flex-direction: column;
   height: 100%;
   position: relative;
+  z-index: 2;
 }
 
 .filter-container label {
