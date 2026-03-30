@@ -343,6 +343,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;
+  position: relative;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -418,26 +419,26 @@
 /* ------------------------------------------------------ */
 
 #nl-info-container {
-  width: 100%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  height: 60%; /* oder auto + max-height */
+  max-height: 70%;
+
   background: #fff;
-  border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  height: auto;
-  max-height: 100%;
-  overflow: hidden; /* bleibt! */
-  padding: 0;       /* wichtig */
-  border-radius: 0; /* damit Header bündig sitzt */
-  z-index: 1;
-  /* Startposition: komplett unten */
+
   transform: translateY(100%);
   opacity: 0;
+  transition: transform 0.35s ease, opacity 0.35s ease;
 
-  transition:
-    transform 0.35s ease,
-    opacity 0.35s ease;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
+
 
 #nl-info-container.show {
   transform: translateY(0);
@@ -783,6 +784,8 @@
 }
 
     </style>
+
+
 <div class="layout">
 
   <!-- 🔍 Filterbereich -->
