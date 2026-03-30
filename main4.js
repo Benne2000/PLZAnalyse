@@ -504,7 +504,7 @@
 /* ------------------------------------------------------ */
 
 .filter-container.nl-info-active .table-wrapper {
-  transform: translateY(-260px);
+  transform: translateY(-100%);
   transition: transform 0.35s ease;
 }
 
