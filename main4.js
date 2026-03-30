@@ -335,7 +335,7 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;
   overflow: hidden;
-  display: none;
+  display: flex;
   flex-direction: column;
   height: 100%;
   padding: 0;
@@ -525,22 +525,11 @@
 
 .filter-container select,
 .filter-container button {
-  color: white !important;   /* Schrift IMMER weiß */
-  background: #ccc;          /* Standard disabled */
-  border: none;
+  width: 100%;
+  margin-top: 5px;
+  padding: 6px;
+  font-size: 0.9rem;
 }
-
-.filter-container button:disabled {
-  background: #ccc !important;  /* Hellgrau */
-  color: white !important;       /* Weiß bleibt */
-  opacity: 0.7;
-}
-
-.filter-container button:not(:disabled) {
-  background: #b41821 !important; /* Aktiv: Rot */
-  color: white !important;
-}
-
 
 
 /* --------------------------------------------- */
@@ -721,22 +710,6 @@
   color: #b41821;
 }
 
-
-/* Disabled Dropdown */
-select:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* Fade-In Animation */
-.dropdown-enabled {
-  animation: fadeIn 0.35s ease forwards;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0.3; }
-  to   { opacity: 1; }
-}
 
 
     </style>
@@ -1000,8 +973,6 @@ onEachFeature: (feature, layer) => {
     const kennwerte = this.filteredKennwerte?.[plz];
     this.showPopup(e.target.feature, kennwerte);
   });
-
-
 }
 
 
@@ -1677,7 +1648,6 @@ updateBestreuungMarkers() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-
    createAllMarkers() {
   if (!this.filteredGroup) return;
 
@@ -2107,37 +2077,37 @@ showUmsatzPopup(plz, values) {
     this.neighbours = computeNeighbours(filteredMarkers);
   }
 
+
 applyFilter(erhID, jahr, nummer) {
 
   if (!erhID || !jahr || !nummer) {
-    console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
-    return;
-  }
+  console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
+  return;
+}
 
-  // Filter setzen
-  this._activeFilter = { erhID, jahr, nummer };
-
-  // NL-Tabelle schließen
+  // 🧹 Wenn NL-Tabelle offen ist → schließen
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
   if (filterContainer?.classList.contains("nl-info-active")) {
     this.closeNLTable();
   }
 
-  // NL-Auswahl zurücksetzen
+  this._activeFilter = { erhID, jahr, nummer };
+
+  // 🔄 NL-Auswahl zurücksetzen
   if (!this._selectedNLs) {
     this._selectedNLs = new Set();
   } else {
     this._selectedNLs.clear();
   }
 
-  // Daten filtern
+  // 1️⃣ Daten filtern (Erhebung)
   const filteredData = this.getFilteredData();
   this.filteredData = filteredData;
 
-  // Umsatzwerte vorbereiten
+  // ⭐ 2️⃣ Umsatzwerte pro PLZ vorbereiten (NEU!)
   this.prepareUmsatzPLZWerte();
 
-  // HZ-Flags
+  // 3️⃣ HZ-Flags neu berechnen (nur WK)
   this.hzFlags = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
@@ -2145,32 +2115,32 @@ applyFilter(erhID, jahr, nummer) {
     if (plz) this.hzFlags[plz] = hz === "X";
   });
 
-  // PLZ-Liste
+  // 4️⃣ PLZ-Liste extrahieren
   this.filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  // Karte einfärben
+  // 5️⃣ Karte einfärben
   this.updateGeoLayer();
 
-  // Marker aktualisieren (mit PLZ-Liste!)
-  this.updateMarkers(this.filteredPLZs);
+  // 6️⃣ NL-Marker aktualisieren
+  this.updateMarkers();
 
-  // Radius anwenden
+  // 7️⃣ Radius anwenden (nur WK)
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
 
-  // Tabelle rendern
+  // 8️⃣ Tabelle rendern
   this.renderDataTable(this.filteredKennwerte);
-  this._shadowRoot.getElementById("table-container").style.display = "block";
 
-  // Zoom
+  // 9️⃣ Zoom
   this.zoomToFilteredPLZ();
 
-  // Erhebungsinfo vorbereiten
+  // 🔟 Erhebungsinfo
   this.prepareErhebungsInfo();
 }
+
 
 
 
@@ -2474,16 +2444,18 @@ updateGeoLayer() {
 }
 
 
-updateMarkers(filteredPLZs = null) {
+
+
+updateMarkers() {
   if (!this.filteredGroup || !this.allMarkers) return;
 
   this.filteredGroup.clearLayers();
 
-  const data = this.filteredData || [];
-  if (!data.length) return;
+  const filteredData = this.filteredData || [];
+  if (!filteredData.length) return;
 
   const erhNLs = new Set(
-    data
+    filteredData
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(Boolean)
   );
@@ -2495,10 +2467,6 @@ updateMarkers(filteredPLZs = null) {
   this.allMarkers.forEach(marker => {
     const nl = marker.options.plzs?.[0];
     if (!nl || !erhNLs.has(nl)) return;
-
-    if (filteredPLZs && Array.isArray(filteredPLZs)) {
-      if (!filteredPLZs.includes(nl)) return;
-    }
 
     this.filteredGroup.addLayer(marker);
 
@@ -2542,8 +2510,6 @@ updateMarkers(filteredPLZs = null) {
 
 
 
-
-
 onMarkerClick(nl) {
   if (this._selectedNLs.has(nl)) {
     this._selectedNLs.delete(nl);
@@ -2563,12 +2529,17 @@ onMarkerClick(nl) {
 }
 
 
+
+
 setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
   const nummerSelect = this._shadowRoot.getElementById("nummer-select");
-  const filterButton = this._shadowRoot.getElementById("filter-button");
-  const filterContainer = this._shadowRoot.querySelector(".filter-container");
+
+  if (!erhSelect || !jahrSelect || !nummerSelect) {
+    console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
+    return;
+  }
 
   // 🧹 Reset
   erhSelect.innerHTML = "";
@@ -2576,24 +2547,6 @@ setupFilterDropdowns() {
   nummerSelect.innerHTML = "";
   jahrSelect.disabled = true;
   nummerSelect.disabled = true;
-  filterButton.disabled = true;
-
-  // 🔥 Info-Button erzeugen (falls nicht vorhanden)
-  let infoBtn = this._shadowRoot.getElementById("erhebungsinfo-button");
-  if (!infoBtn) {
-    infoBtn = document.createElement("button");
-    infoBtn.id = "erhebungsinfo-button";
-    infoBtn.textContent = "Erhebungsübersicht";
-    infoBtn.style.marginTop = "10px";
-    infoBtn.style.padding = "6px";
-    infoBtn.style.background = "#b41821";
-    infoBtn.style.color = "white";
-    infoBtn.style.border = "none";
-    infoBtn.style.cursor = "pointer";
-    infoBtn.style.borderRadius = "4px";
-    infoBtn.disabled = true; // ⭐ Start disabled
-    filterContainer.appendChild(infoBtn);
-  }
 
   // 🏷️ Platzhalter
   const createPlaceholder = (text) => {
@@ -2606,10 +2559,6 @@ setupFilterDropdowns() {
   };
 
   erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
-  jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
-  nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
-
-  // ErhebungsIDs einfügen
   Object.keys(this._erhData).forEach(erhID => {
     if (erhID !== "@NullMember") {
       const opt = document.createElement("option");
@@ -2619,35 +2568,13 @@ setupFilterDropdowns() {
     }
   });
 
-  // ⭐ Button-Aktivierungslogik
-  const updateFilterButtonState = () => {
-    const enabled =
-      erhSelect.value &&
-      jahrSelect.value &&
-      nummerSelect.value;
-
-    filterButton.disabled = !enabled;
-
-    if (enabled) {
-      filterButton.style.background = "#b41821";
-      filterButton.style.color = "white";
-    } else {
-      filterButton.style.background = "#ccc";   // Einheitliches Hellgrau
-      filterButton.style.color = "white";       // Schrift immer weiß
-    }
-  };
-
-  // Erhebung → Jahr aktivieren
   erhSelect.addEventListener("change", () => {
     jahrSelect.innerHTML = "";
     nummerSelect.innerHTML = "";
-
-    jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
-    nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
-
     jahrSelect.disabled = false;
     nummerSelect.disabled = true;
 
+    jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
     const selectedID = erhSelect.value;
     const jahre = Object.keys(this._erhData[selectedID] || {}).filter(j => j !== "@NullMember");
 
@@ -2657,21 +2584,16 @@ setupFilterDropdowns() {
       opt.textContent = j;
       jahrSelect.appendChild(opt);
     });
-
-    updateFilterButtonState();
   });
 
-  // Jahr → Nummer aktivieren
   jahrSelect.addEventListener("change", () => {
     nummerSelect.innerHTML = "";
-    nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
-
     nummerSelect.disabled = false;
 
+    nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
     const selectedID = erhSelect.value;
     const selectedJahr = jahrSelect.value;
-    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || [])
-      .filter(n => n !== "@NullMember");
+    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []).filter(n => n !== "@NullMember");
 
     nummern.forEach(n => {
       const opt = document.createElement("option");
@@ -2679,106 +2601,70 @@ setupFilterDropdowns() {
       opt.textContent = n;
       nummerSelect.appendChild(opt);
     });
-
-    updateFilterButtonState();
   });
 
-  nummerSelect.addEventListener("change", updateFilterButtonState);
+  const filterButton = this._shadowRoot.getElementById("filter-button");
+  if (filterButton) {
+    filterButton.addEventListener("click", () => {
+      const selectedID = erhSelect.value;
+      const selectedJahr = jahrSelect.value;
+      const selectedNummer = nummerSelect.value;
 
-  // ⭐ Filterbutton
-  filterButton.addEventListener("click", () => {
-    const selectedID = erhSelect.value;
-    const selectedJahr = jahrSelect.value;
-    const selectedNummer = nummerSelect.value;
-
-    if (selectedID && selectedJahr && selectedNummer) {
-      this.applyFilter(selectedID, selectedJahr, selectedNummer);
-
-      // ⭐ Jetzt erst Erhebungsübersicht aktivieren
-      infoBtn.disabled = false;
-
-      // ⭐ PLZ-Tabelle sichtbar machen
-      this._shadowRoot.getElementById("table-container").style.display = "block";
-    }
-  });
-
-  // ⭐ Info-Button Toggle
-  infoBtn.addEventListener("click", () => {
-    const nlBox = this._shadowRoot.getElementById("nl-info-container");
-
-    if (!nlBox) return;
-
-    if (nlBox.classList.contains("show")) {
-      nlBox.classList.remove("show");
-      filterContainer.classList.remove("nl-info-active");
-      return;
-    }
-
-    this.prepareErhebungsInfo();
-    this.renderErhebungsInfoTable();
-
-    nlBox.classList.add("show");
-    filterContainer.classList.add("nl-info-active");
-  });
-}
-
-
-
-disableAllDropdowns() {
-  const erh = this._shadowRoot.getElementById("erhebung-select");
-  const jahr = this._shadowRoot.getElementById("jahr-select");
-  const nummer = this._shadowRoot.getElementById("nummer-select");
-  const btn = this._shadowRoot.getElementById("filter-button");
-
-  erh.disabled = true;
-  jahr.disabled = true;
-  nummer.disabled = true;
-  btn.disabled = true;
-
-  erh.classList.add("loading");
-  jahr.classList.add("loading");
-  nummer.classList.add("loading");
-}
-
-enableErhebungDropdown() {
-  const erh = this._shadowRoot.getElementById("erhebung-select");
-  erh.disabled = false;
-  erh.classList.remove("loading");
-  erh.classList.add("dropdown-enabled");
-}
-
-enableJahrDropdown() {
-  const jahr = this._shadowRoot.getElementById("jahr-select");
-  jahr.disabled = false;
-  jahr.classList.remove("loading");
-  jahr.classList.add("dropdown-enabled");
-}
-
-enableNummerDropdown() {
-  const nummer = this._shadowRoot.getElementById("nummer-select");
-  nummer.disabled = false;
-  nummer.classList.remove("loading");
-  nummer.classList.add("dropdown-enabled");
-}
-
-updateFilterButtonState() {
-  const erh = this._shadowRoot.getElementById("erhebung-select");
-  const jahr = this._shadowRoot.getElementById("jahr-select");
-  const nummer = this._shadowRoot.getElementById("nummer-select");
-  const btn = this._shadowRoot.getElementById("filter-button");
-
-  const enabled = erh.value && jahr.value && nummer.value;
-
-  btn.disabled = !enabled;
-
-  if (enabled) {
-    btn.style.transition = "background 0.3s ease";
-    btn.style.background = "#b41821";
-  } else {
-    btn.style.background = "#888";
+      if (selectedID && selectedJahr && selectedNummer) {
+        this.applyFilter(selectedID, selectedJahr, selectedNummer);
+      } else {
+        console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
+      }
+    });
   }
-}
 
+  // ---------------------------------------------------------
+  // 🔥 NL-INFO CONTAINER (nur einmal erzeugen)
+  // ---------------------------------------------------------
+  let nlInfo = this._shadowRoot.getElementById("nl-info-container");
+  if (!nlInfo) {
+    nlInfo = document.createElement("div");
+    nlInfo.classList.add("nl-info-container");
+    nlInfo.id = "nl-info-container";
+    this._shadowRoot.querySelector(".filter-container").appendChild(nlInfo);
+  }
+
+  // ---------------------------------------------------------
+  // 🔥 BUTTON: Erhebungsübersicht (TOGGLE)
+  // ---------------------------------------------------------
+  const infoBtn = document.createElement("button");
+  infoBtn.textContent = "Erhebungsübersicht";
+  infoBtn.style.marginTop = "10px";
+  infoBtn.style.padding = "6px";
+  infoBtn.style.background = "#b41821";
+  infoBtn.style.color = "white";
+  infoBtn.style.border = "none";
+  infoBtn.style.cursor = "pointer";
+  infoBtn.style.borderRadius = "4px";
+
+infoBtn.addEventListener("click", () => {
+  const nlBox = this._shadowRoot.getElementById("nl-info-container");
+  const filter = this._shadowRoot.querySelector(".filter-container");
+
+  if (!nlBox) return;
+
+  if (nlBox.classList.contains("show")) {
+    nlBox.classList.remove("show");
+    filter.classList.remove("nl-info-active");
+    return;
+  }
+
+  this.prepareErhebungsInfo();
+  this.renderErhebungsInfoTable();
+
+  nlBox.classList.add("show");
+  filter.classList.add("nl-info-active");
+});
+
+
+
+  this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
+}
 
 
 restoreFilterUI() {
@@ -3643,67 +3529,53 @@ closeNLTable() {
     }
   }
 
+  async render() {
+    if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+      console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+      return;
+    }
 
-async render() {
-  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-    return;
+    this.showSpinner();
+
+    const rawData = this._myDataSource.data;
+
+    // 🔧 Filterstruktur & Dropdowns vorbereiten
+    this._erhData = this.buildErhebungsStruktur(rawData);
+    this.setupFilterDropdowns();
+
+    // 🔍 Filter anwenden oder Rohdaten verwenden
+    const isFiltered = !!this._activeFilter;
+    const filteredData = isFiltered ? this.getFilteredData() : rawData;
+
+    // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+    this.prepareMapData(filteredData);
+
+
+
+    // 🌍 GeoJSON laden & Layer aktualisieren
+    await this.loadGeoJson();
+
+    this.updateGeoLayer();
+      this.createAllMarkers();
+    // 📌 PLZs extrahieren für Marker-Filterung
+    const filteredPLZs = isFiltered
+      ? filteredData
+          .map(d => d["dimension_plz_0"]?.id?.trim())
+          .filter(plz => plz && plz !== "@NullMember")
+      : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
+
+    // 📍 Marker anzeigen (gefiltert oder vollständig)
+    this.updateMarkers(filteredPLZs);
+
+    // 📊 Tabelle aktualisieren
+    this.renderDataTable(this.filteredKennwerte);
+
+    this.hideSpinner();
   }
 
-  this.showSpinner();
 
-  // Dropdowns blockieren
-  this.disableAllDropdowns();
 
-  const rawData = this._myDataSource.data;
 
-  // Erhebungsstruktur
-  this._erhData = this.buildErhebungsStruktur(rawData);
-
-  // Dropdowns füllen
-  this.setupFilterDropdowns();
-
-  // GeoJSON laden
-  await this.loadGeoJson();
-
-  // Erst jetzt Erhebung aktivieren
-  this.enableErhebungDropdown();
-
-  // Filterstatus korrekt bestimmen
-  this.isFiltered =
-    this._activeFilter &&
-    this._activeFilter.erhID &&
-    this._activeFilter.jahr &&
-    this._activeFilter.nummer;
-
-  // Daten filtern oder Rohdaten
-  const filteredData = this.isFiltered
-    ? this.getFilteredData()
-    : rawData;
-
-  // Map-Daten vorbereiten
-  this.prepareMapData(filteredData);
-
-  // Karte einfärben
-  this.updateGeoLayer();
-
-  // Marker erzeugen
-  this.createAllMarkers();
-
-  // PLZs extrahieren
-  const filteredPLZs = this.isFiltered
-    ? filteredData
-        .map(d => d["dimension_plz_0"]?.id?.trim())
-        .filter(plz => plz && plz !== "@NullMember")
-    : Object.keys(this.allMarkers);
-
-  // Marker anzeigen
-  this.updateMarkers(filteredPLZs);
-
-  // Tabelle NICHT automatisch rendern
-
-  this.hideSpinner();
-}
 
 
 
