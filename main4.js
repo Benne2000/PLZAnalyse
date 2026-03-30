@@ -525,11 +525,22 @@
 
 .filter-container select,
 .filter-container button {
-  width: 100%;
-  margin-top: 5px;
-  padding: 6px;
-  font-size: 0.9rem;
+  color: white !important;   /* Schrift IMMER weiß */
+  background: #ccc;          /* Standard disabled */
+  border: none;
 }
+
+.filter-container button:disabled {
+  background: #ccc !important;  /* Hellgrau */
+  color: white !important;       /* Weiß bleibt */
+  opacity: 0.7;
+}
+
+.filter-container button:not(:disabled) {
+  background: #b41821 !important; /* Aktiv: Rot */
+  color: white !important;
+}
+
 
 
 /* --------------------------------------------- */
@@ -725,12 +736,6 @@ select:disabled {
 @keyframes fadeIn {
   from { opacity: 0.3; }
   to   { opacity: 1; }
-}
-
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 
