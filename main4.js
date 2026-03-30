@@ -617,19 +617,29 @@
 }
 
 #umsatz-mode-switch {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
   transform: scale(0.85);
   transform-origin: left center;
-  margin-bottom: 4px;
+
+  margin-bottom: 6px;
 }
+
 
 /* ⭐ Kompakter 2×2 Grid */
 .umsatz-grid {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
   gap: 6px !important;
 }
 
 .umsatz-grid .map-toggle {
   padding: 4px 6px !important;
   font-size: 0.82rem !important;
+  text-align: center;
 }
 
 .map-toggle {
@@ -751,7 +761,17 @@
   background: #ddd;
   border-radius: 4px;
 }
+#wk-extra label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.82rem;
+}
 
+#chk-doppelbestreuung {
+  transform: scale(0.9);
+}
 
     </style>
 <div class="layout">
