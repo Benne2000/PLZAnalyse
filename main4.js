@@ -148,18 +148,29 @@
   border: 1px solid #b41821;
   margin-top: 30px;
 }
-
 .side-popup th {
   background-color: #b41821;
   color: white;
   font-weight: bold;
   padding: 6px;
   text-align: left;
-  border: 1px solid #b41821;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  border: none; /* NEU */
 }
+
+.side-popup td {
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  color: black;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border: none; /* NEU */
+}
+
 
 .side-popup th.subtitle-cell {
   background-color: #f3f3f3;
@@ -169,16 +180,6 @@
   font-size: 0.85rem;
 }
 
-.side-popup td {
-  border: 1px solid #b41821;
-  font-size: 0.85rem;
-  padding: 4px 8px;
-  color: black;
-  font-weight: bold;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .side-popup td.label-cell {
   width: 70%;
@@ -190,6 +191,17 @@
   text-align: right;
   font-weight: normal;
 }
+
+.side-popup .section-title {
+  background: #f3f3f3;
+  color: #000;
+  font-weight: bold;
+  padding: 6px 8px;
+  font-size: 0.85rem;
+  border-top: 1px solid #b41821;   /* optional */
+  border-bottom: 1px solid #b41821; /* optional */
+}
+
 
 /* Ausgrau-Logik */
 .side-popup tr.disabled td {
