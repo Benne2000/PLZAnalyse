@@ -2054,13 +2054,12 @@ showUmsatzPopup(plz, values) {
     this.neighbours = computeNeighbours(filteredMarkers);
   }
 
-
 applyFilter(erhID, jahr, nummer) {
 
   if (!erhID || !jahr || !nummer) {
-  console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
-  return;
-}
+    console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
+    return;
+  }
 
   // 🧹 Wenn NL-Tabelle offen ist → schließen
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
@@ -2081,10 +2080,33 @@ applyFilter(erhID, jahr, nummer) {
   const filteredData = this.getFilteredData();
   this.filteredData = filteredData;
 
-  // ⭐ 2️⃣ Umsatzwerte pro PLZ vorbereiten (NEU!)
+  // 2️⃣ Umsatzwerte vorbereiten (immer!)
   this.prepareUmsatzPLZWerte();
 
-  // 3️⃣ HZ-Flags neu berechnen (nur WK)
+  // ⭐ 3️⃣ MapMode korrekt setzen, falls Benutzer Umsatz gewählt hat
+  const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
+  const btnWK = this._shadowRoot.getElementById("btn-wk");
+
+  if (btnUmsatz?.classList.contains("active")) {
+    this.currentMapMode = "umsatz-multi";
+
+    // Kategorien aktivieren, falls leer
+    if (!this.activeCategories || this.activeCategories.size === 0) {
+      this.activeCategories = new Set(["stationaer", "pluscard", "ra", "online"]);
+    }
+
+    // Umsatz-Panel sichtbar machen
+    this._shadowRoot.getElementById("wk-extra").style.display = "none";
+    this._shadowRoot.getElementById("umsatz-extra").style.display = "block";
+  } else {
+    this.currentMapMode = "wk";
+
+    // WK-Panel sichtbar machen
+    this._shadowRoot.getElementById("wk-extra").style.display = "block";
+    this._shadowRoot.getElementById("umsatz-extra").style.display = "none";
+  }
+
+  // 4️⃣ HZ-Flags neu berechnen
   this.hzFlags = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
@@ -2092,31 +2114,32 @@ applyFilter(erhID, jahr, nummer) {
     if (plz) this.hzFlags[plz] = hz === "X";
   });
 
-  // 4️⃣ PLZ-Liste extrahieren
+  // 5️⃣ PLZ-Liste extrahieren
   this.filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  // 5️⃣ Karte einfärben
+  // 6️⃣ Karte einfärben
   this.updateGeoLayer();
 
-  // 6️⃣ NL-Marker aktualisieren
+  // 7️⃣ NL-Marker aktualisieren
   this.updateMarkers();
 
-  // 7️⃣ Radius anwenden (nur WK)
+  // 8️⃣ Radius anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
 
-  // 8️⃣ Tabelle rendern
+  // 9️⃣ Tabelle rendern
   this.renderDataTable(this.filteredKennwerte);
 
-  // 9️⃣ Zoom
+  // 🔟 Zoom
   this.zoomToFilteredPLZ();
 
-  // 🔟 Erhebungsinfo
+  // 1️⃣1️⃣ Erhebungsinfo aktualisieren
   this.prepareErhebungsInfo();
 }
+
 
 
 
