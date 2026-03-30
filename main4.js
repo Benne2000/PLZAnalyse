@@ -802,6 +802,14 @@
     </label>
   </div>
 
+  <!-- ⭐ Radiusfilter (nur Umsatz) -->
+  <div id="umsatz-radius-extra" style="margin-top:10px; display:none;">
+     <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+       <input type="checkbox" id="chk-radiusfilter" checked />
+       Radiusfilter aktiv
+     </label>
+  </div>
+
   <!-- Umsatzanalyse-Bereich -->
   <div id="umsatz-panel" class="hidden">
 
@@ -1382,6 +1390,7 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
+
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
@@ -1391,6 +1400,7 @@ initializeMapBase() {
   this.umsatzMode = "abs";
   this.activeCategories = new Set(["stationaer"]);
   this.showBestreuung = false;
+  this.useRadiusFilter = true;
 
   // LayerGroups
   this.filteredGroup = L.layerGroup().addTo(this.map);
@@ -1413,48 +1423,51 @@ initializeMapBase() {
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
   const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
 
-btnWK.addEventListener("click", () => {
-  btnWK.classList.add("active");
-  btnUmsatz.classList.remove("active");
-  umsatzPanel.classList.add("hidden");
+  btnWK.addEventListener("click", () => {
+    btnWK.classList.add("active");
+    btnUmsatz.classList.remove("active");
+    umsatzPanel.classList.add("hidden");
 
-  panel.classList.remove("expanded");
+    panel.classList.remove("expanded");
 
-  this.currentMapMode = "wk";
+    this.currentMapMode = "wk";
 
-  // ⭐ Sichtbarkeit
-  this._shadowRoot.getElementById("wk-extra").style.display = "block";
-  this._shadowRoot.getElementById("umsatz-extra").style.display = "none";
+    this._shadowRoot.getElementById("wk-extra").style.display = "block";
+    this._shadowRoot.getElementById("umsatz-extra").style.display = "none";
+    this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "none";
 
-  // Popups schließen
-  this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
-  this._shadowRoot.getElementById("side-popup").classList.remove("show");
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupU) popupU.classList.remove("show");
 
-  this.updateGeoLayer();
-});
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    if (popupWK) popupWK.classList.remove("show");
 
-btnUmsatz.addEventListener("click", () => {
-  btnUmsatz.classList.add("active");
-  btnWK.classList.remove("active");
-  umsatzPanel.classList.remove("hidden");
+    this.updateGeoLayer();
+  });
 
-  panel.classList.add("expanded");
+  btnUmsatz.addEventListener("click", () => {
+    btnUmsatz.classList.add("active");
+    btnWK.classList.remove("active");
+    umsatzPanel.classList.remove("hidden");
 
-  this.currentMapMode = "umsatz-multi";
+    panel.classList.add("expanded");
 
-  this.prepareUmsatzPLZWerte();
+    this.currentMapMode = "umsatz-multi";
 
-  // ⭐ Sichtbarkeit
-  this._shadowRoot.getElementById("wk-extra").style.display = "none";
-  this._shadowRoot.getElementById("umsatz-extra").style.display = "block";
+    this.prepareUmsatzPLZWerte();
 
-  // Popups schließen
-  this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
-  this._shadowRoot.getElementById("side-popup").classList.remove("show");
+    this._shadowRoot.getElementById("wk-extra").style.display = "none";
+    this._shadowRoot.getElementById("umsatz-extra").style.display = "block";
+    this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "block";
 
-  this.updateGeoLayer();
-});
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupU) popupU.classList.remove("show");
 
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    if (popupWK) popupWK.classList.remove("show");
+
+    this.updateGeoLayer();
+  });
 
   // HH/ABS Switch
   const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
@@ -1464,9 +1477,11 @@ btnUmsatz.addEventListener("click", () => {
     const isHH = modeSwitch.classList.toggle("hh");
     this.umsatzMode = isHH ? "hh" : "abs";
 
-    // Popups schließen
-    this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
-    this._shadowRoot.getElementById("side-popup").classList.remove("show");
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupU) popupU.classList.remove("show");
+
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    if (popupWK) popupWK.classList.remove("show");
 
     this.updateGeoLayer();
   });
@@ -1486,66 +1501,71 @@ btnUmsatz.addEventListener("click", () => {
 
       this.currentMapMode = "umsatz-multi";
 
-      // Popups schließen
-      this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
-      this._shadowRoot.getElementById("side-popup").classList.remove("show");
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupU) popupU.classList.remove("show");
+
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      if (popupWK) popupWK.classList.remove("show");
 
       this.updateGeoLayer();
     });
   });
- // ⭐ Doppelbestreuung (Critical-Marker) Checkbox
-const chkDoppel = this._shadowRoot.getElementById("chk-doppelbestreuung");
 
-// Standard: aktiviert
-this.showCritical = true;
+  // Doppelbestreuung
+  const chkDoppel = this._shadowRoot.getElementById("chk-doppelbestreuung");
+  this.showCritical = true;
 
-chkDoppel.addEventListener("change", () => {
-  this.showCritical = chkDoppel.checked;
+  chkDoppel.addEventListener("change", () => {
+    this.showCritical = chkDoppel.checked;
 
-  // Popups schließen
-  this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
-  this._shadowRoot.getElementById("side-popup").classList.remove("show");
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupU) popupU.classList.remove("show");
 
-  // Karte neu rendern
-  this.updateGeoLayer();
-});
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    if (popupWK) popupWK.classList.remove("show");
 
-  // ⭐ Bestreuungs-Checkbox
+    this.updateGeoLayer();
+  });
+
+  // Bestreuung
   const chkBestreuung = this._shadowRoot.getElementById("chk-bestreuung");
   chkBestreuung.addEventListener("change", () => {
     this.showBestreuung = chkBestreuung.checked;
 
-    // Popups schließen
-    this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
-    this._shadowRoot.getElementById("side-popup").classList.remove("show");
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupU) popupU.classList.remove("show");
+
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    if (popupWK) popupWK.classList.remove("show");
 
     this.updateBestreuungMarkers();
   });
+
+  // ⭐ Radiusfilter
+  const chkRadius = this._shadowRoot.getElementById("chk-radiusfilter");
+  this.useRadiusFilter = true;
+
+  chkRadius.addEventListener("change", () => {
+    this.useRadiusFilter = chkRadius.checked;
+
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupU) popupU.classList.remove("show");
+
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    if (popupWK) popupWK.classList.remove("show");
+
+    if (!this.useRadiusFilter) {
+      this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
+      this.updateGeoLayer();
+      this.renderDataTable(this.filteredKennwerte);
+      return;
+    }
+
+    const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+    this.applyRadiusFilter(radius);
+  });
 }
 
-
-
-getDynamicHeatColor(value, max) {
-  value = Number(value);
-  max = Number(max);
-
-  // ❗ Kein Wert → Standardgrau
-  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(max) || max <= 0) {
-    return "#cfd4da";
-  }
-
-  const ratio = value / max;
-
-  if (ratio > 0.95) return "#7a0f17";  // sehr dunkelrot
-  if (ratio > 0.85) return "#9d131b";  // dunkles rot
-  if (ratio > 0.75) return "#b41821";  // signature red
-  if (ratio > 0.65) return "#d9483b";  // rot-orange
-  if (ratio > 0.55) return "#e96a3a";  // orange
-  if (ratio > 0.45) return "#f08a3c";  // hellorange
-  if (ratio > 0.35) return "#f6b65b";  // gelb-orange
-  if (ratio > 0.20) return "#ffe89c";  // hellgelb
-  return "#fff6d6";                    // sehr helles gelb
-}
 
 
 updateBestreuungMarkers() {
@@ -1778,9 +1798,12 @@ showPopup(feature) {
   const note = feature.properties?.note || "Keine Notiz";
 
   // 🔥 Umsatz-Popup schließen
-  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-  popupUmsatz.classList.remove("show");
-  popupUmsatz.classList.add("hidden");
+const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+if (popupUmsatz) {
+  popupU.classList.remove("show");
+  popupU.classList.add("hidden");
+}
+
 
   // 🔥 Daten der aktiven Erhebung holen
   const daten = this.filteredKennwerte?.[plz];
@@ -3121,9 +3144,15 @@ getPolygonCenter(layer) {
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-  this.streuverlust = null;
+  // Umsatzmodus → Radiusfilter optional
+  if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter === false) {
+    this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
+    this.updateGeoLayer();
+    this.renderDataTable(this.filteredKennwerte);
+    return;
+  }
 
-  console.log("🎚 applyRadiusFilter():", radiusKm);
+  this.streuverlust = null;
 
   const plzImRadius = new Set();
 
@@ -3149,15 +3178,12 @@ applyRadiusFilter(radiusKm) {
 
   this.plzImRadius = plzImRadius;
 
-  // 🔥 Radius-Kennzahlen neu berechnen (inkl. Streuverlust)
   this.getFilteredDataWithRadius();
 
-  // 🔥 Karte neu einfärben
   this.updateGeoLayer();
-
-  // 🔥 Tabelle neu rendern
   this.renderDataTable(this.filteredKennwerte);
 }
+
 
 toggleNLSelection(nl) {
   if (!this._selectedNLs) this._selectedNLs = new Set();
@@ -3474,6 +3500,7 @@ showEmptyUmsatzPopup(plz) {
     popup.classList.add("hidden");
   };
 }
+
 
 
   prepareDropdownData(data) {
