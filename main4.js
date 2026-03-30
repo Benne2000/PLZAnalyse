@@ -2472,7 +2472,6 @@ updateGeoLayer() {
 }
 
 
-
 updateMarkers(filteredPLZs = null) {
   if (!this.filteredGroup || !this.allMarkers) return;
 
@@ -2481,7 +2480,6 @@ updateMarkers(filteredPLZs = null) {
   const data = this.filteredData || [];
   if (!data.length) return;
 
-  // 🔍 Welche NLs kommen in den gefilterten Daten vor?
   const erhNLs = new Set(
     data
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
@@ -2496,7 +2494,6 @@ updateMarkers(filteredPLZs = null) {
     const nl = marker.options.plzs?.[0];
     if (!nl || !erhNLs.has(nl)) return;
 
-    // Wenn PLZ-Filter aktiv ist → Marker nur anzeigen, wenn PLZ enthalten
     if (filteredPLZs && Array.isArray(filteredPLZs)) {
       if (!filteredPLZs.includes(nl)) return;
     }
@@ -2544,6 +2541,7 @@ updateMarkers(filteredPLZs = null) {
 
 
 
+
 onMarkerClick(nl) {
   if (this._selectedNLs.has(nl)) {
     this._selectedNLs.delete(nl);
@@ -2563,7 +2561,6 @@ onMarkerClick(nl) {
 }
 
 
-
 setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
@@ -2575,9 +2572,7 @@ setupFilterDropdowns() {
     return;
   }
 
-  // ---------------------------------------------------------
-  // 🧹 RESET
-  // ---------------------------------------------------------
+  // 🧹 Reset
   erhSelect.innerHTML = "";
   jahrSelect.innerHTML = "";
   nummerSelect.innerHTML = "";
@@ -2586,13 +2581,7 @@ setupFilterDropdowns() {
   nummerSelect.disabled = true;
   filterButton.disabled = true;
 
-  erhSelect.classList.add("loading");
-  jahrSelect.classList.add("loading");
-  nummerSelect.classList.add("loading");
-
-  // ---------------------------------------------------------
   // 🏷️ Platzhalter
-  // ---------------------------------------------------------
   const createPlaceholder = (text) => {
     const opt = document.createElement("option");
     opt.value = "";
@@ -2606,9 +2595,7 @@ setupFilterDropdowns() {
   jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
   nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
 
-  // ---------------------------------------------------------
-  // 🧩 Erhebungsstruktur füllen (aber NICHT aktivieren!)
-  // ---------------------------------------------------------
+  // 🧩 ErhebungsIDs einfügen
   Object.keys(this._erhData).forEach(erhID => {
     if (erhID !== "@NullMember") {
       const opt = document.createElement("option");
@@ -2618,9 +2605,7 @@ setupFilterDropdowns() {
     }
   });
 
-  // ---------------------------------------------------------
-  // 🔥 Dropdown-Aktivierungslogik
-  // ---------------------------------------------------------
+  // 🔄 Filterbutton-Logik
   const updateFilterButtonState = () => {
     const enabled =
       erhSelect.value &&
@@ -2628,18 +2613,10 @@ setupFilterDropdowns() {
       nummerSelect.value;
 
     filterButton.disabled = !enabled;
-
-    if (enabled) {
-      filterButton.style.transition = "background 0.3s ease";
-      filterButton.style.background = "#b41821";
-    } else {
-      filterButton.style.background = "#888";
-    }
+    filterButton.style.background = enabled ? "#b41821" : "#888";
   };
 
-  // ---------------------------------------------------------
   // 🔄 Erhebung → Jahr aktivieren
-  // ---------------------------------------------------------
   erhSelect.addEventListener("change", () => {
     jahrSelect.innerHTML = "";
     nummerSelect.innerHTML = "";
@@ -2649,9 +2626,7 @@ setupFilterDropdowns() {
 
     nummerSelect.disabled = true;
 
-    // Fade-In + Spinner entfernen
     jahrSelect.disabled = false;
-    jahrSelect.classList.remove("loading");
     jahrSelect.classList.add("dropdown-enabled");
 
     const selectedID = erhSelect.value;
@@ -2667,16 +2642,12 @@ setupFilterDropdowns() {
     updateFilterButtonState();
   });
 
-  // ---------------------------------------------------------
   // 🔄 Jahr → Nummer aktivieren
-  // ---------------------------------------------------------
   jahrSelect.addEventListener("change", () => {
     nummerSelect.innerHTML = "";
     nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
 
-    // Fade-In + Spinner entfernen
     nummerSelect.disabled = false;
-    nummerSelect.classList.remove("loading");
     nummerSelect.classList.add("dropdown-enabled");
 
     const selectedID = erhSelect.value;
@@ -2694,16 +2665,10 @@ setupFilterDropdowns() {
     updateFilterButtonState();
   });
 
-  // ---------------------------------------------------------
-  // 🔄 Nummer → Filter-Button aktivieren
-  // ---------------------------------------------------------
-  nummerSelect.addEventListener("change", () => {
-    updateFilterButtonState();
-  });
+  // 🔄 Nummer → Filterbutton aktivieren
+  nummerSelect.addEventListener("change", updateFilterButtonState);
 
-  // ---------------------------------------------------------
-  // 🟢 Filter-Button
-  // ---------------------------------------------------------
+  // 🟢 Filterbutton
   if (filterButton) {
     filterButton.addEventListener("click", () => {
       const selectedID = erhSelect.value;
@@ -2716,6 +2681,7 @@ setupFilterDropdowns() {
     });
   }
 }
+
 
 
 disableAllDropdowns() {
@@ -3636,7 +3602,8 @@ closeNLTable() {
       });
     }
   }
-async render() {
+
+  async render() {
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
     return;
@@ -3665,7 +3632,7 @@ async render() {
   this.isFiltered = !!this._activeFilter;
   const filteredData = this.isFiltered ? this.getFilteredData() : rawData;
 
-  // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+  // 📦 Daten vorbereiten
   this.prepareMapData(filteredData);
 
   // 🗺️ Karte einfärben
@@ -3674,7 +3641,7 @@ async render() {
   // 📍 Marker erzeugen
   this.createAllMarkers();
 
-  // 📌 PLZs extrahieren für Marker-Filterung
+  // 📌 PLZs extrahieren
   const filteredPLZs = this.isFiltered
     ? filteredData
         .map(d => d["dimension_plz_0"]?.id?.trim())
@@ -3688,10 +3655,8 @@ async render() {
   this.renderDataTable(this.filteredKennwerte);
 
   this.hideSpinner();
-
-  this.enableErhebungDropdown();
-
 }
+
 
 
 
