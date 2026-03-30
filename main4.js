@@ -3358,7 +3358,9 @@ getFilteredDataWithRadius() {
   const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
   this.filteredKennwerte = {};
-  this.filteredPLZWerte = {};
+    this.filteredKennwerte = {};
+  // ❗ filteredPLZWerte NICHT vorher leeren, wir mergen
+  // this.filteredPLZWerte = {};
 
   Object.entries(aggregated).forEach(([plz, entry]) => {
     const sum = entry.sum;
@@ -3371,12 +3373,10 @@ getFilteredDataWithRadius() {
     const umsatzNetto = sum.umsatzNetto;
     const hzKosten = sum.hzKosten;
 
-    // WK normal (gefiltert)
     const wkPercent = umsatzNetto > 0
       ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
       : 0;
 
-    // WK inkl. Nachbarn (ungefilterter Umsatz)
     const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
     const wkNachbarn = unfilteredUmsatz > 0
       ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
@@ -3399,7 +3399,7 @@ getFilteredDataWithRadius() {
       value_hr_n_umsatz_0: { raw: umsatzNetto },
       value_umsatz_p_hh_0: { raw: avgHaushalte > 0 ? Number((umsatzNetto / avgHaushalte).toFixed(2)) : 0 },
       value_wk_in_percent_0: { raw: wkPercent },
-      value_wk_nachbar_0: { raw: wkNachbarn },   // ✔ NEU
+      value_wk_nachbar_0: { raw: wkNachbarn },
       value_hz_kosten_0: { raw: hzKosten },
       value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
       value_haushalte_0: { raw: avgHaushalte },
@@ -3412,13 +3412,29 @@ getFilteredDataWithRadius() {
       value_wk_potentiell_0: { raw: potHzPercent }
     };
 
+    // 🔥 Umsatzstruktur aus prepareUmsatzPLZWerte() erhalten & mergen
+    const old = this.filteredPLZWerte?.[plz] || {};
+
     this.filteredPLZWerte[plz] = {
+      // WK-Heatmap-Werte (Radius-basiert)
       wk: wkPercent,
-      wkNachbarn: wkNachbarn,   // ✔ NEU
+      wkNachbarn: wkNachbarn,
       wkPot: potHzPercent,
-      hz: isHZ
+      hz: isHZ,
+
+      // Umsatz-Heatmap-Werte (aus prepareUmsatzPLZWerte)
+      umsatz: old.umsatz,
+      ra: old.ra,
+      onlineshop: old.onlineshop,
+      pluscard: old.pluscard,
+      umsatzProHaushalt: old.umsatzProHaushalt,
+      raProHaushalt: old.raProHaushalt,
+      onlineshopProHaushalt: old.onlineshopProHaushalt,
+      pluscardProHaushalt: old.pluscardProHaushalt,
+      haushalte: old.haushalte
     };
   });
+
 
   // 6️⃣ Streuverlust final berechnen
   this.streuverlust = {
