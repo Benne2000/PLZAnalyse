@@ -1380,16 +1380,16 @@ openPopupFromTable(plz) {
 
   // Popups referenzieren
   const popupWK = this._shadowRoot.getElementById("side-popup");
-  const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
 
   // Beide schließen (safe)
   if (popupWK) {
     popupWK.classList.remove("show");
     popupWK.classList.add("hidden");
   }
-  if (popupU) {
-    popupU.classList.remove("show");
-    popupU.classList.add("hidden");
+  if (popupUmsatz) {
+    popupUmsatz.classList.remove("show");
+    popupUmsatz.classList.add("hidden");
   }
 
   // Umsatzmodus → Umsatz-Popup öffnen
@@ -2507,31 +2507,35 @@ updateGeoLayer() {
     // ---------------------------------------------------------
     layer.off("click");
 
-    layer.on("click", () => {
-      const values = this.filteredPLZWerte?.[plz];
+   layer.on("click", () => {
+  const values = this.filteredPLZWerte?.[plz];
 
-      if (this.currentMapMode === "umsatz-multi") {
-        if (values) {
-          this.showUmsatzPopup(plz, values);
-        } else {
-          this.showEmptyUmsatzPopup(plz);
-        }
-      } else {
-        this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
-      }
+  if (this.currentMapMode === "umsatz-multi") {
+    // zuerst WK-Popup schließen
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    if (popupWK) {
+      popupWK.classList.remove("show");
+      popupWK.classList.add("hidden");
+    }
 
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) {
-        popupWK.classList.remove("show");
-        popupWK.classList.add("hidden");
-      }
+    if (values) {
+      this.showUmsatzPopup(plz, values);
+    } else {
+      this.showEmptyUmsatzPopup(plz);
+    }
 
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupU && this.currentMapMode !== "umsatz-multi") {
-        popupU.classList.remove("show");
-        popupU.classList.add("hidden");
-      }
-    });
+  } else {
+    // zuerst Umsatz-Popup schließen
+    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupUmsatz) {
+      popupUmsatz.classList.remove("show");
+      popupUmsatz.classList.add("hidden");
+    }
+
+    this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+  }
+});
+
 
     // ---------------------------------------------------------
     // ⚠️ CRITICAL-MARKER NUR IM WK-MODUS
