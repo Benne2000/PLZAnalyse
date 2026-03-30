@@ -1364,23 +1364,52 @@ highlightTableRowByPLZ(plz) {
 }
 
    
-// openPopupFromTable(plz)
 openPopupFromTable(plz) {
   if (!this._geoLayer) return;
 
-  let targetFeature = null;
+  let targetLayer = null;
 
+  // Layer finden
   this._geoLayer.eachLayer(layer => {
-    if (layer.feature?.properties?.plz === plz) {
-      targetFeature = layer.feature;
+    if (String(layer.feature?.properties?.plz).padStart(5, "0") === plz) {
+      targetLayer = layer;
     }
   });
 
-  if (!targetFeature) return;
+  if (!targetLayer) return;
 
-  const daten = this.filteredKennwerte?.[plz] || {};
-  this.showPopup(targetFeature, daten);
+  // Popups referenzieren
+  const popupWK = this._shadowRoot.getElementById("side-popup");
+  const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+
+  // Beide schließen (safe)
+  if (popupWK) {
+    popupWK.classList.remove("show");
+    popupWK.classList.add("hidden");
+  }
+  if (popupU) {
+    popupU.classList.remove("show");
+    popupU.classList.add("hidden");
+  }
+
+  // Umsatzmodus → Umsatz-Popup öffnen
+  if (this.currentMapMode === "umsatz-multi") {
+    const values = this.filteredPLZWerte?.[plz];
+
+    if (values) {
+      this.showUmsatzPopup(plz, values);
+    } else {
+      this.showEmptyUmsatzPopup(plz);
+    }
+
+    return;
+  }
+
+  // WK-Modus → WK-Popup öffnen
+  const kennwerte = this.filteredKennwerte?.[plz] || {};
+  this.showPopup(targetLayer.feature, kennwerte);
 }
+
 
       
 // highlightMapArea(plz)
