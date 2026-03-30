@@ -1533,7 +1533,6 @@ btnWK.addEventListener("click", () => {
   this._shadowRoot.getElementById("wk-extra").style.display = "block";
   this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
 
-  // Popups schließen
   const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
   if (popupUmsatz) popupUmsatz.classList.remove("show");
 
@@ -1541,19 +1540,15 @@ btnWK.addEventListener("click", () => {
   if (popupWK) popupWK.classList.remove("show");
 
   // ⭐ WICHTIG: WK-Daten neu berechnen
-  const filteredData = this.getFilteredData();
-  this.filteredData = filteredData;
-
-  // ⭐ Radius neu anwenden
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.applyRadiusFilter(radius);
-
-  // ⭐ Tabelle neu rendern
-  this.renderDataTable(this.filteredKennwerte);
+  this.filteredKennwerte = this.getFilteredDataWithRadius();
 
   // ⭐ Karte neu einfärben
   this.updateGeoLayer();
+
+  // ⭐ Tabelle neu rendern
+  this.renderDataTable(this.filteredKennwerte);
 });
+
 
 
   btnUmsatz.addEventListener("click", () => {
