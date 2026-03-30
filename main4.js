@@ -1877,7 +1877,6 @@ showPopup(feature) {
 
 
 
-
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -1888,13 +1887,19 @@ showUmsatzPopup(plz, values) {
 
   const modeHH = this.umsatzMode === "hh";
 
+  // Gesamtwerte
   const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
   const pluscard   = modeHH ? values.pluscardProHaushalt : values.pluscard;
   const ra         = modeHH ? values.raProHaushalt : values.ra;
   const online     = modeHH ? values.onlineshopProHaushalt : values.onlineshop;
 
-  const hh = values.haushalte;
+  // Pro-Haushalt-Werte
+  const stHH = values.umsatzProHaushalt;
+  const pcHH = values.pluscardProHaushalt;
+  const raHH = values.raProHaushalt;
+  const osHH = values.onlineshopProHaushalt;
 
+  const hh = values.haushalte;
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
   const active = {
@@ -1917,6 +1922,9 @@ showUmsatzPopup(plz, values) {
   popup.innerHTML = `
     <button class="close-btn">×</button>
 
+    <!-- =============================== -->
+    <!--   TABELLE 1: GESAMT-KENNZAHLEN  -->
+    <!-- =============================== -->
     <table>
       <thead>
         <tr><th colspan="2" class="title-cell">${note}</th></tr>
@@ -1949,6 +1957,7 @@ showUmsatzPopup(plz, values) {
       </tbody>
     </table>
 
+    <!-- Umsatz-Balken -->
     <div class="umsatz-share-bar">
       ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
       ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>`   : ""}
@@ -1963,14 +1972,36 @@ showUmsatzPopup(plz, values) {
       <span><span style="color:#f6b65b;">⬤</span> Onlineshop</span>
     </div>
 
+    <!-- ===================================== -->
+    <!--   TABELLE 2: PRO-HAUSHALT-KENNZAHLEN  -->
+    <!-- ===================================== -->
     <table class="hh-table">
-      <thead><tr><th colspan="2">Kennzahlen pro Haushalt</th></tr></thead>
+      <thead>
+        <tr><th colspan="2" class="subtitle-cell">Kennzahlen pro Haushalt</th></tr>
+      </thead>
+
       <tbody>
         <tr><td class="label-cell">Haushalte</td><td class="value-cell">${hh.toLocaleString("de-DE")}</td></tr>
-        <tr><td class="label-cell">Stationär pro HH</td><td class="value-cell">${fmtHH(values.umsatzProHaushalt)}</td></tr>
-        <tr><td class="label-cell">Pluscard pro HH</td><td class="value-cell">${fmtHH(values.pluscardProHaushalt)}</td></tr>
-        <tr><td class="label-cell">R&A pro HH</td><td class="value-cell">${fmtHH(values.raProHaushalt)}</td></tr>
-        <tr><td class="label-cell">Onlineshop pro HH</td><td class="value-cell">${fmtHH(values.onlineshopProHaushalt)}</td></tr>
+
+        <tr class="${active.stationaer ? "" : "disabled"}">
+          <td class="label-cell">Stationär pro HH</td>
+          <td class="value-cell">${fmtHH(stHH)}</td>
+        </tr>
+
+        <tr class="${active.pluscard ? "" : "disabled"}">
+          <td class="label-cell">Pluscard pro HH</td>
+          <td class="value-cell">${fmtHH(pcHH)}</td>
+        </tr>
+
+        <tr class="${active.ra ? "" : "disabled"}">
+          <td class="label-cell">R&A pro HH</td>
+          <td class="value-cell">${fmtHH(raHH)}</td>
+        </tr>
+
+        <tr class="${active.online ? "" : "disabled"}">
+          <td class="label-cell">Onlineshop pro HH</td>
+          <td class="value-cell">${fmtHH(osHH)}</td>
+        </tr>
       </tbody>
     </table>
   `;
@@ -1984,6 +2015,7 @@ showUmsatzPopup(plz, values) {
     popup.classList.add("hidden");
   };
 }
+
 
 
   updateNeighbours(filteredData) {
