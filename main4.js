@@ -1429,23 +1429,48 @@ initializeMapBase() {
     this.updateGeoLayer();
   });
 
-  btnUmsatz.addEventListener("click", () => {
-    btnUmsatz.classList.add("active");
-    btnWK.classList.remove("active");
-    umsatzPanel.classList.remove("hidden");
+btnWK.addEventListener("click", () => {
+  btnWK.classList.add("active");
+  btnUmsatz.classList.remove("active");
+  umsatzPanel.classList.add("hidden");
 
-    panel.classList.add("expanded");
+  panel.classList.remove("expanded");
 
-    this.currentMapMode = "umsatz-multi";
+  this.currentMapMode = "wk";
 
-    this.prepareUmsatzPLZWerte();
+  // ⭐ Sichtbarkeit der Checkboxen
+  this._shadowRoot.getElementById("wk-extra").style.display = "block";
+  this._shadowRoot.getElementById("chk-bestreuung").closest(".umsatz-extra").style.display = "none";
 
-    // Popups schließen
-    this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
-    this._shadowRoot.getElementById("side-popup").classList.remove("show");
+  // Popups schließen
+  this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
+  this._shadowRoot.getElementById("side-popup").classList.remove("show");
 
-    this.updateGeoLayer();
-  });
+  this.updateGeoLayer();
+});
+
+
+btnUmsatz.addEventListener("click", () => {
+  btnUmsatz.classList.add("active");
+  btnWK.classList.remove("active");
+  umsatzPanel.classList.remove("hidden");
+
+  panel.classList.add("expanded");
+
+  this.currentMapMode = "umsatz-multi";
+
+  this.prepareUmsatzPLZWerte();
+
+  // ⭐ Sichtbarkeit der Checkboxen
+  this._shadowRoot.getElementById("wk-extra").style.display = "none";
+  this._shadowRoot.getElementById("chk-bestreuung").closest(".umsatz-extra").style.display = "block";
+
+  // Popups schließen
+  this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
+  this._shadowRoot.getElementById("side-popup").classList.remove("show");
+
+  this.updateGeoLayer();
+});
 
   // HH/ABS Switch
   const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
