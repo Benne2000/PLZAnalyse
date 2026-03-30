@@ -421,7 +421,12 @@
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden; /* bleibt! */
+  padding: 0;       /* wichtig */
+  border-radius: 0; /* damit Header bündig sitzt */
 
   /* Startposition: komplett unten */
   transform: translateY(100%);
