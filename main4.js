@@ -952,31 +952,35 @@ style: feature => {
   };
 }
 ,
-
 onEachFeature: (feature, layer) => {
   layer.on("click", (e) => {
 
-    // PLZ IMMER normalisieren
     const plz = String(e.target.feature.properties.plz).padStart(5, "0");
 
-    // Highlight
     this.highlightMapArea(plz);
     this.highlightTableRowByPLZ(plz);
 
-    // Popups referenzieren
+    // Popups referenzieren (KORREKT!)
     const wkPopup = this._shadowRoot.getElementById("side-popup");
-    const umsatzPopup = this._shadowRoot.getElementById("popup-umsatz");
+    const umsatzPopup = this._shadowRoot.getElementById("side-popup-umsatz");
 
-    // Immer beide schließen
-    wkPopup.classList.remove("show");
-    umsatzPopup.classList.add("hidden");
+    // Immer beide schließen – aber SAFE!
+    if (wkPopup) {
+      wkPopup.classList.remove("show");
+      wkPopup.classList.add("hidden");
+    }
+
+    if (umsatzPopup) {
+      umsatzPopup.classList.remove("show");
+      umsatzPopup.classList.add("hidden");
+    }
 
     // Umsatz-Modus
     if (this.currentMapMode === "umsatz-multi") {
       const values = this.filteredPLZWerte?.[plz];
 
       if (!values) {
-        console.warn("❌ Keine Umsatzwerte für PLZ", plz);
+        this.showEmptyUmsatzPopup(plz);
         return;
       }
 
