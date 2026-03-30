@@ -2554,13 +2554,14 @@ updateGeoLayer() {
     // ---------------------------------------------------------
     // ⚠️ CRITICAL-MARKER NUR IM WK-MODUS
     // ---------------------------------------------------------
-    if (!showCritical) {
-      if (this.criticalMarkers[plz]) {
-        this.map.removeLayer(this.criticalMarkers[plz]);
-        delete this.criticalMarkers[plz];
-      }
-      return;
-    }
+if (!showCritical) {
+  if (this.criticalMarkers[plz]) {
+    this.map.removeLayer(this.criticalMarkers[plz]);
+    delete this.criticalMarkers[plz];
+  }
+  // ❗ WICHTIG: Kein return!
+}
+
 
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
