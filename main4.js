@@ -278,7 +278,7 @@
   right: 0;
   bottom: 0;
   width: 25%;
-  height: 12%; /* WK-Modus */
+  height: 15%; /* WK-Modus */
   background: #f7f7f7;
   border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
@@ -286,13 +286,19 @@
   box-sizing: border-box;
   font-family: sans-serif;
   z-index: 99998;
-  overflow: hidden;
+
+  /* ⭐ Scrollbar aktiv */
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 90vh;
+
   transition: height 0.35s ease;
 }
 
 #map-control-panel.expanded {
-  height: 30%; /* Umsatz-Modus */
+  height: 30%; /* kompakterer Umsatz-Modus */
 }
+
 
 #map-control-panel::-webkit-scrollbar {
   width: 6px;
@@ -302,12 +308,15 @@
   background: #b41821;
   border-radius: 4px;
 }
+
+/* Titel */
 #map-control-panel h4 {
   margin: 0 0 6px 0;
   color: #b41821;
   font-size: 0.9rem;
 }
 
+/* Buttons */
 #map-control-panel button {
   padding: 6px;
   border: 1px solid #b41821;
@@ -607,13 +616,20 @@
   background: #ffecec;
 }
 
+#umsatz-mode-switch {
+  transform: scale(0.85);
+  transform-origin: left center;
+  margin-bottom: 4px;
+}
 
-
+/* ⭐ Kompakter 2×2 Grid */
 .umsatz-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 6px !important;
+}
+
+.umsatz-grid .map-toggle {
+  padding: 4px 6px !important;
+  font-size: 0.82rem !important;
 }
 
 .map-toggle {
@@ -711,7 +727,16 @@
 }
 
 #umsatz-options-row {
-  display: flex;
+  gap: 12px !important;
+  margin-top: 6px !important;
+}
+
+#umsatz-options-row label {
+  font-size: 0.82rem !important;
+}
+
+#umsatz-options-row input[type="checkbox"] {
+  transform: scale(0.9);
 }
 
 .umsatz-share-bar.empty {
