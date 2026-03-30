@@ -2368,28 +2368,26 @@ updateGeoLayer() {
     // ---------------------------------------------------------
     layer.off("click");
 
-    if (this.currentMapMode === "wk") {
-      layer.on("click", () => {
-        this.showPopup(layer.feature);
+layer.on("click", () => {
+  const values = this.filteredPLZWerte?.[plz];
 
-        // Umsatz-Popup schließen
-        const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-        popupU.classList.remove("show");
-        popupU.classList.add("hidden");
-      });
+  if (this.currentMapMode === "umsatz-multi") {
+    if (values) {
+      this.showUmsatzPopup(plz, values);
+    } else {
+      this.showEmptyUmsatzPopup(plz);
     }
+  } else {
+    this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+  }
 
-    if (this.currentMapMode === "umsatz-multi") {
-      layer.on("click", () => {
-        const values = this.filteredPLZWerte?.[plz];
-        if (values) this.showUmsatzPopup(plz, values);
+  const popupWK = this._shadowRoot.getElementById("side-popup");
+  if (popupWK) {
+    popupWK.classList.remove("show");
+    popupWK.classList.add("hidden");
+  }
+});
 
-        // WK-Popup schließen
-        const popupWK = this._shadowRoot.getElementById("side-popup");
-        popupWK.classList.remove("show");
-        popupWK.classList.add("hidden");
-      });
-    }
 
     // ---------------------------------------------------------
     // ⚠️ CRITICAL-MARKER NUR IM WK-MODUS
@@ -3236,6 +3234,8 @@ getColorForPLZ(plz) {
 
   return this.getColor(value, isHZ);
 }
+
+
 getFilteredDataWithRadius() {
   if (!this.filteredData) return [];
 
@@ -3357,83 +3357,81 @@ getFilteredDataWithRadius() {
   // 5️⃣ Aggregation
   const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-  this.filteredKennwerte = {};
-    this.filteredKennwerte = {};
-  // ❗ filteredPLZWerte NICHT vorher leeren, wir mergen
-  // this.filteredPLZWerte = {};
+// WK + Umsatz zusammenführen
+const mergedPLZWerte = {};
 
-  Object.entries(aggregated).forEach(([plz, entry]) => {
-    const sum = entry.sum;
-    const avgArr = entry.avgArrays;
+Object.entries(aggregated).forEach(([plz, entry]) => {
+  const sum = entry.sum;
+  const avgArr = entry.avgArrays;
 
-    const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
-    const avgHaushalte = avg(avgArr.haushalte);
-    const avgKaufkraft = avg(avgArr.kaufkraft);
+  const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
+  const avgHaushalte = avg(avgArr.haushalte);
+  const avgKaufkraft = avg(avgArr.kaufkraft);
 
-    const umsatzNetto = sum.umsatzNetto;
-    const hzKosten = sum.hzKosten;
+  const umsatzNetto = sum.umsatzNetto;
+  const hzKosten = sum.hzKosten;
 
-    const wkPercent = umsatzNetto > 0
-      ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
-      : 0;
+  const wkPercent = umsatzNetto > 0
+    ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
+    : 0;
 
-    const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
-    const wkNachbarn = unfilteredUmsatz > 0
-      ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
-      : 0;
+  const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
+  const wkNachbarn = unfilteredUmsatz > 0
+    ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
+    : 0;
 
-    const bon = sum.kdErhebung > 0
-      ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2))
-      : 0;
+  const potHzPercent = umsatzNetto > 0
+    ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1))
+    : 0;
 
-    const potHzPercent = umsatzNetto > 0
-      ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1))
-      : 0;
+  const isHZ = entry.hzCount > 0;
+  const isCritical = entry.hzCount > 1;
 
-    const isHZ = entry.hzCount > 0;
-    const isCritical = entry.hzCount > 1;
+  // WK-Kennwerte
+  this.filteredKennwerte[plz] = {
+    isHZ,
+    isCritical,
+    value_hr_n_umsatz_0: { raw: umsatzNetto },
+    value_wk_in_percent_0: { raw: wkPercent },
+    value_wk_nachbar_0: { raw: wkNachbarn },
+    value_hz_kosten_0: { raw: hzKosten },
+    value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
+    value_haushalte_0: { raw: avgHaushalte },
+    value_kaufkraft_0: { raw: avgKaufkraft },
+    value_ums_erhebung_0: { raw: sum.umsatzErhebung },
+    value_kd_erhebung_0: { raw: sum.kdErhebung },
+    value_bon_erhebung_0: { raw: sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0 },
+    value_auflage_0: { raw: sum.auflage },
+    value_hz_potentiell_0: { raw: sum.potHzAbs },
+    value_wk_potentiell_0: { raw: potHzPercent }
+  };
 
-    this.filteredKennwerte[plz] = {
-      isHZ,
-      isCritical,
-      value_hr_n_umsatz_0: { raw: umsatzNetto },
-      value_umsatz_p_hh_0: { raw: avgHaushalte > 0 ? Number((umsatzNetto / avgHaushalte).toFixed(2)) : 0 },
-      value_wk_in_percent_0: { raw: wkPercent },
-      value_wk_nachbar_0: { raw: wkNachbarn },
-      value_hz_kosten_0: { raw: hzKosten },
-      value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
-      value_haushalte_0: { raw: avgHaushalte },
-      value_kaufkraft_0: { raw: avgKaufkraft },
-      value_ums_erhebung_0: { raw: sum.umsatzErhebung },
-      value_kd_erhebung_0: { raw: sum.kdErhebung },
-      value_bon_erhebung_0: { raw: bon },
-      value_auflage_0: { raw: sum.auflage },
-      value_hz_potentiell_0: { raw: sum.potHzAbs },
-      value_wk_potentiell_0: { raw: potHzPercent }
-    };
+  // Umsatzwerte aus prepareUmsatzPLZWerte übernehmen
+  const old = this.filteredPLZWerte?.[plz] || {};
 
-    // 🔥 Umsatzstruktur aus prepareUmsatzPLZWerte() erhalten & mergen
-    const old = this.filteredPLZWerte?.[plz] || {};
+  mergedPLZWerte[plz] = {
+    // WK
+    wk: wkPercent,
+    wkNachbarn,
+    wkPot: potHzPercent,
+    hz: isHZ,
 
-    this.filteredPLZWerte[plz] = {
-      // WK-Heatmap-Werte (Radius-basiert)
-      wk: wkPercent,
-      wkNachbarn: wkNachbarn,
-      wkPot: potHzPercent,
-      hz: isHZ,
+    // Umsatz
+    umsatz: old.umsatz ?? 0,
+    ra: old.ra ?? 0,
+    onlineshop: old.onlineshop ?? 0,
+    pluscard: old.pluscard ?? 0,
+    haushalte: old.haushalte ?? 0,
+    umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
+    raProHaushalt: old.raProHaushalt ?? 0,
+    onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
+    pluscardProHaushalt: old.pluscardProHaushalt ?? 0
+  };
+});
 
-      // Umsatz-Heatmap-Werte (aus prepareUmsatzPLZWerte)
-      umsatz: old.umsatz,
-      ra: old.ra,
-      onlineshop: old.onlineshop,
-      pluscard: old.pluscard,
-      umsatzProHaushalt: old.umsatzProHaushalt,
-      raProHaushalt: old.raProHaushalt,
-      onlineshopProHaushalt: old.onlineshopProHaushalt,
-      pluscardProHaushalt: old.pluscardProHaushalt,
-      haushalte: old.haushalte
-    };
-  });
+// final speichern
+this.filteredPLZWerte = mergedPLZWerte;
+
 
 
   // 6️⃣ Streuverlust final berechnen
@@ -3456,6 +3454,26 @@ closeNLTable() {
   filterContainer?.classList.remove("nl-info-active");
 }
 
+showEmptyUmsatzPopup(plz) {
+  const popup = this._shadowRoot.getElementById("side-popup-umsatz");
+  if (!popup) return;
+
+  popup.innerHTML = `
+    <button class="close-btn">×</button>
+    <div style="padding:10px;font-size:0.9rem;">
+      Keine Umsatzdaten für PLZ ${plz}.
+    </div>
+  `;
+
+  popup.classList.remove("hidden");
+  void popup.offsetWidth;
+  popup.classList.add("show");
+
+  popup.querySelector(".close-btn").onclick = () => {
+    popup.classList.remove("show");
+    popup.classList.add("hidden");
+  };
+}
 
 
   prepareDropdownData(data) {
