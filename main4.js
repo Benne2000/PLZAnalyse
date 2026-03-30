@@ -1521,27 +1521,40 @@ initializeMapBase() {
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
   const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
 
-  btnWK.addEventListener("click", () => {
-    btnWK.classList.add("active");
-    btnUmsatz.classList.remove("active");
-    umsatzPanel.classList.add("hidden");
+btnWK.addEventListener("click", () => {
+  btnWK.classList.add("active");
+  btnUmsatz.classList.remove("active");
+  umsatzPanel.classList.add("hidden");
 
-    panel.classList.remove("expanded");
+  panel.classList.remove("expanded");
 
-    this.currentMapMode = "wk";
+  this.currentMapMode = "wk";
 
-    this._shadowRoot.getElementById("wk-extra").style.display = "block";
-    this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
+  this._shadowRoot.getElementById("wk-extra").style.display = "block";
+  this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
 
+  // Popups schließen
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+  if (popupUmsatz) popupUmsatz.classList.remove("show");
 
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) popupUmsatz.classList.remove("show");
+  const popupWK = this._shadowRoot.getElementById("side-popup");
+  if (popupWK) popupWK.classList.remove("show");
 
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) popupWK.classList.remove("show");
+  // ⭐ WICHTIG: WK-Daten neu berechnen
+  const filteredData = this.getFilteredData();
+  this.filteredData = filteredData;
 
-    this.updateGeoLayer();
-  });
+  // ⭐ Radius neu anwenden
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.applyRadiusFilter(radius);
+
+  // ⭐ Tabelle neu rendern
+  this.renderDataTable(this.filteredKennwerte);
+
+  // ⭐ Karte neu einfärben
+  this.updateGeoLayer();
+});
+
 
   btnUmsatz.addEventListener("click", () => {
     btnUmsatz.classList.add("active");
