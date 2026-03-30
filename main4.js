@@ -3180,21 +3180,25 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
-
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-  // Umsatzmodus → Radiusfilter optional
+  // ⭐ Umsatzmodus → Radiusfilter deaktiviert → ALLE PLZs der Erhebung
   if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter === false) {
-    // Alle PLZ gelten als "im Radius"
-    this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
 
+    this.plzImRadius = new Set(
+      this.filteredData
+        .map(row => row["dimension_plz_0"]?.id?.trim())
+        .filter(plz => plz && plz !== "@NullMember")
+    );
+
+    // Umsatzwerte NICHT neu berechnen
     this.updateGeoLayer();
     this.renderDataTable(this.filteredKennwerte);
     return;
   }
 
-  // WK-Modus oder Umsatzmodus mit aktivem Radiusfilter
+  // ⭐ WK-Modus oder Umsatzmodus mit aktivem Radiusfilter
   this.streuverlust = null;
 
   const plzImRadius = new Set();
@@ -3221,7 +3225,7 @@ applyRadiusFilter(radiusKm) {
 
   this.plzImRadius = plzImRadius;
 
-  // Umsatzwerte NICHT überschreiben → nur WK-Werte neu berechnen
+  // WK-Werte neu berechnen, Umsatzwerte behalten
   this.getFilteredDataWithRadius();
 
   this.updateGeoLayer();
