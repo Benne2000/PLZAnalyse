@@ -2560,14 +2560,13 @@ onMarkerClick(nl) {
   this.renderDataTable(this.filteredKennwerte);
 }
 
-
 setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
   const nummerSelect = this._shadowRoot.getElementById("nummer-select");
-  const filterButton = this._shadowRoot.getElementById("filter-button");
+  const filterContainer = this._shadowRoot.querySelector(".filter-container");
 
-  if (!erhSelect || !jahrSelect || !nummerSelect) {
+  if (!erhSelect || !jahrSelect || !nummerSelect || !filterContainer) {
     console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
     return;
   }
@@ -2576,10 +2575,8 @@ setupFilterDropdowns() {
   erhSelect.innerHTML = "";
   jahrSelect.innerHTML = "";
   nummerSelect.innerHTML = "";
-
   jahrSelect.disabled = true;
   nummerSelect.disabled = true;
-  filterButton.disabled = true;
 
   // 🏷️ Platzhalter
   const createPlaceholder = (text) => {
@@ -2605,18 +2602,41 @@ setupFilterDropdowns() {
     }
   });
 
-  // 🔄 Filterbutton-Logik
-  const updateFilterButtonState = () => {
-    const enabled =
-      erhSelect.value &&
-      jahrSelect.value &&
-      nummerSelect.value;
+  // ---------------------------------------------------------
+  // 🔥 NL-INFO CONTAINER (nur einmal erzeugen)
+  // ---------------------------------------------------------
+  let nlInfo = this._shadowRoot.getElementById("nl-info-container");
+  if (!nlInfo) {
+    nlInfo = document.createElement("div");
+    nlInfo.classList.add("nl-info-container");
+    nlInfo.id = "nl-info-container";
+    filterContainer.appendChild(nlInfo);
+  }
 
-    filterButton.disabled = !enabled;
-    filterButton.style.background = enabled ? "#b41821" : "#888";
-  };
+  // ---------------------------------------------------------
+  // 🔥 BUTTON: Erhebungsübersicht (dynamisch erzeugt)
+  // ---------------------------------------------------------
+  let infoBtn = this._shadowRoot.getElementById("erhebungsinfo-button");
 
-  // 🔄 Erhebung → Jahr aktivieren
+  if (!infoBtn) {
+    infoBtn = document.createElement("button");
+    infoBtn.id = "erhebungsinfo-button";
+    infoBtn.textContent = "Erhebungsübersicht";
+    infoBtn.style.marginTop = "10px";
+    infoBtn.style.padding = "6px";
+    infoBtn.style.background = "#b41821";
+    infoBtn.style.color = "white";
+    infoBtn.style.border = "none";
+    infoBtn.style.cursor = "pointer";
+    infoBtn.style.borderRadius = "4px";
+    infoBtn.disabled = true; // ⭐ Start: ausgegraut
+
+    filterContainer.appendChild(infoBtn);
+  }
+
+  // ---------------------------------------------------------
+  // 🔄 Erhebung → Jahr aktivieren + Info-Button aktivieren
+  // ---------------------------------------------------------
   erhSelect.addEventListener("change", () => {
     jahrSelect.innerHTML = "";
     nummerSelect.innerHTML = "";
@@ -2624,10 +2644,11 @@ setupFilterDropdowns() {
     jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
     nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
 
+    jahrSelect.disabled = false;
     nummerSelect.disabled = true;
 
-    jahrSelect.disabled = false;
-    jahrSelect.classList.add("dropdown-enabled");
+    // ⭐ Info-Button aktivieren
+    infoBtn.disabled = false;
 
     const selectedID = erhSelect.value;
     const jahre = Object.keys(this._erhData[selectedID] || {}).filter(j => j !== "@NullMember");
@@ -2638,17 +2659,16 @@ setupFilterDropdowns() {
       opt.textContent = j;
       jahrSelect.appendChild(opt);
     });
-
-    updateFilterButtonState();
   });
 
+  // ---------------------------------------------------------
   // 🔄 Jahr → Nummer aktivieren
+  // ---------------------------------------------------------
   jahrSelect.addEventListener("change", () => {
     nummerSelect.innerHTML = "";
     nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
 
     nummerSelect.disabled = false;
-    nummerSelect.classList.add("dropdown-enabled");
 
     const selectedID = erhSelect.value;
     const selectedJahr = jahrSelect.value;
@@ -2661,14 +2681,33 @@ setupFilterDropdowns() {
       opt.textContent = n;
       nummerSelect.appendChild(opt);
     });
-
-    updateFilterButtonState();
   });
 
-  // 🔄 Nummer → Filterbutton aktivieren
-  nummerSelect.addEventListener("change", updateFilterButtonState);
+  // ---------------------------------------------------------
+  // 🔥 BUTTON: Erhebungsübersicht (TOGGLE)
+  // ---------------------------------------------------------
+  infoBtn.addEventListener("click", () => {
+    const nlBox = this._shadowRoot.getElementById("nl-info-container");
 
+    if (!nlBox) return;
+
+    if (nlBox.classList.contains("show")) {
+      nlBox.classList.remove("show");
+      filterContainer.classList.remove("nl-info-active");
+      return;
+    }
+
+    this.prepareErhebungsInfo();
+    this.renderErhebungsInfoTable();
+
+    nlBox.classList.add("show");
+    filterContainer.classList.add("nl-info-active");
+  });
+
+  // ---------------------------------------------------------
   // 🟢 Filterbutton
+  // ---------------------------------------------------------
+  const filterButton = this._shadowRoot.getElementById("filter-button");
   if (filterButton) {
     filterButton.addEventListener("click", () => {
       const selectedID = erhSelect.value;
@@ -2677,10 +2716,13 @@ setupFilterDropdowns() {
 
       if (selectedID && selectedJahr && selectedNummer) {
         this.applyFilter(selectedID, selectedJahr, selectedNummer);
+      } else {
+        console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
       }
     });
   }
 }
+
 
 
 
