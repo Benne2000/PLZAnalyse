@@ -335,7 +335,7 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;
   overflow: hidden;
-  display: flex;
+  display: none;
   flex-direction: column;
   height: 100%;
   padding: 0;
@@ -2158,6 +2158,8 @@ applyFilter(erhID, jahr, nummer) {
 
   // 8️⃣ Tabelle rendern
   this.renderDataTable(this.filteredKennwerte);
+  this._shadowRoot.getElementById("table-container").style.display = "block";
+
 
   // 9️⃣ Zoom
   this.zoomToFilteredPLZ();
@@ -2616,15 +2618,22 @@ setupFilterDropdowns() {
   });
 
   // ⭐ Button-Aktivierungslogik
-  const updateFilterButtonState = () => {
-    const enabled =
-      erhSelect.value &&
-      jahrSelect.value &&
-      nummerSelect.value;
+const updateFilterButtonState = () => {
+  const enabled =
+    erhSelect.value &&
+    jahrSelect.value &&
+    nummerSelect.value;
 
-    filterButton.disabled = !enabled;
-    filterButton.style.background = enabled ? "#b41821" : "#888";
-  };
+  filterButton.disabled = !enabled;
+
+  if (enabled) {
+    filterButton.style.background = "#b41821";
+    filterButton.style.color = "white";
+  } else {
+    filterButton.style.background = "#ccc";   // Einheitliches Hellgrau
+    filterButton.style.color = "white";       // Schrift immer weiß
+  }
+};
 
   // Erhebung → Jahr aktivieren
   erhSelect.addEventListener("change", () => {
