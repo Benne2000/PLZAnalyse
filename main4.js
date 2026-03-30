@@ -407,7 +407,7 @@
   background: white;
   padding: 10px;
   border-top: 2px solid #b41821;
-  z-index: 10;
+  z-index: 5;
   transition: transform 0.35s ease;
 }
 
@@ -437,6 +437,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  z-index: 10;
 }
 
 
@@ -803,18 +804,19 @@
     <button id="filter-button">Anzeigen</button>
 
     <!-- 📊 Tabellenbereich -->
-    <div class="table-container">
+<div class="table-container">
 
-      <!-- PLZ-Tabelle -->
-      <div class="table-wrapper" id="table-container"></div>
-
-      <!-- NL-Tabelle -->
-      <div id="nl-info-container"></div>
-
-      <!-- Sticky Streuverlust -->
+  <!-- PLZ-Tabelle -->
+  <div class="table-wrapper" id="table-container">
+      <!-- PLZ-Tabelle + Sticky Footer gehören zusammen -->
       <div id="streuverlust-box"></div>
+  </div>
 
-    </div> <!-- END table-container -->
+  <!-- NL-Tabelle -->
+  <div id="nl-info-container"></div>
+
+</div>
+
 
   </div> <!-- END filter-container -->
 
