@@ -2565,7 +2565,6 @@ onMarkerClick(nl) {
 }
 
 
-
 setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
@@ -2623,22 +2622,22 @@ setupFilterDropdowns() {
   });
 
   // ⭐ Button-Aktivierungslogik
-const updateFilterButtonState = () => {
-  const enabled =
-    erhSelect.value &&
-    jahrSelect.value &&
-    nummerSelect.value;
+  const updateFilterButtonState = () => {
+    const enabled =
+      erhSelect.value &&
+      jahrSelect.value &&
+      nummerSelect.value;
 
-  filterButton.disabled = !enabled;
+    filterButton.disabled = !enabled;
 
-  if (enabled) {
-    filterButton.style.background = "#b41821";
-    filterButton.style.color = "white";
-  } else {
-    filterButton.style.background = "#ccc";   // Einheitliches Hellgrau
-    filterButton.style.color = "white";       // Schrift immer weiß
-  }
-};
+    if (enabled) {
+      filterButton.style.background = "#b41821";
+      filterButton.style.color = "white";
+    } else {
+      filterButton.style.background = "#ccc";   // Einheitliches Hellgrau
+      filterButton.style.color = "white";       // Schrift immer weiß
+    }
+  };
 
   // Erhebung → Jahr aktivieren
   erhSelect.addEventListener("change", () => {
@@ -2699,6 +2698,9 @@ const updateFilterButtonState = () => {
 
       // ⭐ Jetzt erst Erhebungsübersicht aktivieren
       infoBtn.disabled = false;
+
+      // ⭐ PLZ-Tabelle sichtbar machen
+      this._shadowRoot.getElementById("table-container").style.display = "block";
     }
   });
 
