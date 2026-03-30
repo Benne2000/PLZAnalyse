@@ -3642,8 +3642,7 @@ closeNLTable() {
       });
     }
   }
-
-  async render() {
+async render() {
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
     return;
@@ -3668,11 +3667,19 @@ closeNLTable() {
   // ⭐ Jetzt erst Erhebung aktivieren
   this.enableErhebungDropdown();
 
-  // 🔍 Filter anwenden oder Rohdaten verwenden
-  this.isFiltered = !!this._activeFilter;
-  const filteredData = this.isFiltered ? this.getFilteredData() : rawData;
+  // ⭐ Filterstatus korrekt bestimmen
+  this.isFiltered =
+    this._activeFilter &&
+    this._activeFilter.erhID &&
+    this._activeFilter.jahr &&
+    this._activeFilter.nummer;
 
-  // 📦 Daten vorbereiten
+  // 🔍 Filter anwenden oder Rohdaten verwenden
+  const filteredData = this.isFiltered
+    ? this.getFilteredData()
+    : rawData;
+
+  // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
   this.prepareMapData(filteredData);
 
   // 🗺️ Karte einfärben
@@ -3681,7 +3688,7 @@ closeNLTable() {
   // 📍 Marker erzeugen
   this.createAllMarkers();
 
-  // 📌 PLZs extrahieren
+  // 📌 PLZs extrahieren für Marker-Filterung
   const filteredPLZs = this.isFiltered
     ? filteredData
         .map(d => d["dimension_plz_0"]?.id?.trim())
@@ -3691,13 +3698,11 @@ closeNLTable() {
   // 📍 Marker anzeigen
   this.updateMarkers(filteredPLZs);
 
+  // 📊 Tabelle NICHT automatisch rendern!
+  //    → passiert erst in applyFilter()
 
   this.hideSpinner();
 }
-
-
-
-
 
 
 
