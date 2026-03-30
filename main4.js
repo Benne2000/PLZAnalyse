@@ -3186,11 +3186,10 @@ getDistanceKm(lat1, lon1, lat2, lon2) {
 getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
-
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-  // ⭐ Umsatzmodus → Radiusfilter deaktiviert → ALLE PLZs der Erhebung
+  // Umsatzmodus → Radiusfilter deaktiviert
   if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter === false) {
 
     this.plzImRadius = new Set(
@@ -3199,13 +3198,13 @@ applyRadiusFilter(radiusKm) {
         .filter(plz => plz && plz !== "@NullMember")
     );
 
-    // Umsatzwerte NICHT neu berechnen
+    this.prepareUmsatzPLZWerte();   // ⭐ WICHTIG
     this.updateGeoLayer();
     this.renderDataTable(this.filteredKennwerte);
     return;
   }
 
-  // ⭐ WK-Modus oder Umsatzmodus mit aktivem Radiusfilter
+  // Radiusfilter aktiv
   this.streuverlust = null;
 
   const plzImRadius = new Set();
@@ -3232,7 +3231,10 @@ applyRadiusFilter(radiusKm) {
 
   this.plzImRadius = plzImRadius;
 
-  // WK-Werte neu berechnen, Umsatzwerte behalten
+  // ⭐ Umsatzwerte neu aufbauen, damit ALLE PLZs wieder drin sind
+  this.prepareUmsatzPLZWerte();
+
+  // ⭐ WK-Werte neu berechnen
   this.getFilteredDataWithRadius();
 
   this.updateGeoLayer();
