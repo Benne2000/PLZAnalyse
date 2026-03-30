@@ -711,6 +711,31 @@
 }
 
 
+/* Disabled Dropdown */
+select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Fade-In Animation */
+.dropdown-enabled {
+  animation: fadeIn 0.35s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0.3; }
+  to   { opacity: 1; }
+}
+
+/* Spinner rechts im Dropdown */
+select.loading {
+  background-image: url("data:image/svg+xml,%3Csvg width='24' height='24' viewBox='0 0 100 100' fill='%23b41821' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='50' cy='50' r='35' stroke='%23b41821' stroke-width='10' stroke-linecap='round' fill='none' stroke-dasharray='164' stroke-dashoffset='82'%3E%3CanimateTransform attributeName='transform' type='rotate' dur='1s' repeatCount='indefinite' from='0 50 50' to='360 50 50'/%3E%3C/circle%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 18px;
+}
+
+
 
     </style>
 <div class="layout">
@@ -973,6 +998,9 @@ onEachFeature: (feature, layer) => {
     const kennwerte = this.filteredKennwerte?.[plz];
     this.showPopup(e.target.feature, kennwerte);
   });
+
+  this.enableErhebungDropdown();
+
 }
 
 
@@ -1648,6 +1676,7 @@ updateBestreuungMarkers() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
+
    createAllMarkers() {
   if (!this.filteredGroup) return;
 
@@ -2530,25 +2559,35 @@ onMarkerClick(nl) {
 
 
 
-
 setupFilterDropdowns() {
   const erhSelect = this._shadowRoot.getElementById("erhebung-select");
   const jahrSelect = this._shadowRoot.getElementById("jahr-select");
   const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+  const filterButton = this._shadowRoot.getElementById("filter-button");
 
   if (!erhSelect || !jahrSelect || !nummerSelect) {
     console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
     return;
   }
 
-  // 🧹 Reset
+  // ---------------------------------------------------------
+  // 🧹 RESET
+  // ---------------------------------------------------------
   erhSelect.innerHTML = "";
   jahrSelect.innerHTML = "";
   nummerSelect.innerHTML = "";
+
   jahrSelect.disabled = true;
   nummerSelect.disabled = true;
+  filterButton.disabled = true;
 
+  erhSelect.classList.add("loading");
+  jahrSelect.classList.add("loading");
+  nummerSelect.classList.add("loading");
+
+  // ---------------------------------------------------------
   // 🏷️ Platzhalter
+  // ---------------------------------------------------------
   const createPlaceholder = (text) => {
     const opt = document.createElement("option");
     opt.value = "";
@@ -2559,6 +2598,12 @@ setupFilterDropdowns() {
   };
 
   erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
+  jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
+  nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
+
+  // ---------------------------------------------------------
+  // 🧩 Erhebungsstruktur füllen (aber NICHT aktivieren!)
+  // ---------------------------------------------------------
   Object.keys(this._erhData).forEach(erhID => {
     if (erhID !== "@NullMember") {
       const opt = document.createElement("option");
@@ -2568,13 +2613,42 @@ setupFilterDropdowns() {
     }
   });
 
+  // ---------------------------------------------------------
+  // 🔥 Dropdown-Aktivierungslogik
+  // ---------------------------------------------------------
+  const updateFilterButtonState = () => {
+    const enabled =
+      erhSelect.value &&
+      jahrSelect.value &&
+      nummerSelect.value;
+
+    filterButton.disabled = !enabled;
+
+    if (enabled) {
+      filterButton.style.transition = "background 0.3s ease";
+      filterButton.style.background = "#b41821";
+    } else {
+      filterButton.style.background = "#888";
+    }
+  };
+
+  // ---------------------------------------------------------
+  // 🔄 Erhebung → Jahr aktivieren
+  // ---------------------------------------------------------
   erhSelect.addEventListener("change", () => {
     jahrSelect.innerHTML = "";
     nummerSelect.innerHTML = "";
-    jahrSelect.disabled = false;
-    nummerSelect.disabled = true;
 
     jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
+    nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
+
+    nummerSelect.disabled = true;
+
+    // Fade-In + Spinner entfernen
+    jahrSelect.disabled = false;
+    jahrSelect.classList.remove("loading");
+    jahrSelect.classList.add("dropdown-enabled");
+
     const selectedID = erhSelect.value;
     const jahre = Object.keys(this._erhData[selectedID] || {}).filter(j => j !== "@NullMember");
 
@@ -2584,16 +2658,26 @@ setupFilterDropdowns() {
       opt.textContent = j;
       jahrSelect.appendChild(opt);
     });
+
+    updateFilterButtonState();
   });
 
+  // ---------------------------------------------------------
+  // 🔄 Jahr → Nummer aktivieren
+  // ---------------------------------------------------------
   jahrSelect.addEventListener("change", () => {
     nummerSelect.innerHTML = "";
-    nummerSelect.disabled = false;
-
     nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
+
+    // Fade-In + Spinner entfernen
+    nummerSelect.disabled = false;
+    nummerSelect.classList.remove("loading");
+    nummerSelect.classList.add("dropdown-enabled");
+
     const selectedID = erhSelect.value;
     const selectedJahr = jahrSelect.value;
-    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []).filter(n => n !== "@NullMember");
+    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || [])
+      .filter(n => n !== "@NullMember");
 
     nummern.forEach(n => {
       const opt = document.createElement("option");
@@ -2601,9 +2685,20 @@ setupFilterDropdowns() {
       opt.textContent = n;
       nummerSelect.appendChild(opt);
     });
+
+    updateFilterButtonState();
   });
 
-  const filterButton = this._shadowRoot.getElementById("filter-button");
+  // ---------------------------------------------------------
+  // 🔄 Nummer → Filter-Button aktivieren
+  // ---------------------------------------------------------
+  nummerSelect.addEventListener("change", () => {
+    updateFilterButtonState();
+  });
+
+  // ---------------------------------------------------------
+  // 🟢 Filter-Button
+  // ---------------------------------------------------------
   if (filterButton) {
     filterButton.addEventListener("click", () => {
       const selectedID = erhSelect.value;
@@ -2612,59 +2707,67 @@ setupFilterDropdowns() {
 
       if (selectedID && selectedJahr && selectedNummer) {
         this.applyFilter(selectedID, selectedJahr, selectedNummer);
-      } else {
-        console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
       }
     });
   }
-
-  // ---------------------------------------------------------
-  // 🔥 NL-INFO CONTAINER (nur einmal erzeugen)
-  // ---------------------------------------------------------
-  let nlInfo = this._shadowRoot.getElementById("nl-info-container");
-  if (!nlInfo) {
-    nlInfo = document.createElement("div");
-    nlInfo.classList.add("nl-info-container");
-    nlInfo.id = "nl-info-container";
-    this._shadowRoot.querySelector(".filter-container").appendChild(nlInfo);
-  }
-
-  // ---------------------------------------------------------
-  // 🔥 BUTTON: Erhebungsübersicht (TOGGLE)
-  // ---------------------------------------------------------
-  const infoBtn = document.createElement("button");
-  infoBtn.textContent = "Erhebungsübersicht";
-  infoBtn.style.marginTop = "10px";
-  infoBtn.style.padding = "6px";
-  infoBtn.style.background = "#b41821";
-  infoBtn.style.color = "white";
-  infoBtn.style.border = "none";
-  infoBtn.style.cursor = "pointer";
-  infoBtn.style.borderRadius = "4px";
-
-infoBtn.addEventListener("click", () => {
-  const nlBox = this._shadowRoot.getElementById("nl-info-container");
-  const filter = this._shadowRoot.querySelector(".filter-container");
-
-  if (!nlBox) return;
-
-  if (nlBox.classList.contains("show")) {
-    nlBox.classList.remove("show");
-    filter.classList.remove("nl-info-active");
-    return;
-  }
-
-  this.prepareErhebungsInfo();
-  this.renderErhebungsInfoTable();
-
-  nlBox.classList.add("show");
-  filter.classList.add("nl-info-active");
-});
-
-
-
-  this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
 }
+
+
+disableAllDropdowns() {
+  const erh = this._shadowRoot.getElementById("erhebung-select");
+  const jahr = this._shadowRoot.getElementById("jahr-select");
+  const nummer = this._shadowRoot.getElementById("nummer-select");
+  const btn = this._shadowRoot.getElementById("filter-button");
+
+  erh.disabled = true;
+  jahr.disabled = true;
+  nummer.disabled = true;
+  btn.disabled = true;
+
+  erh.classList.add("loading");
+  jahr.classList.add("loading");
+  nummer.classList.add("loading");
+}
+
+enableErhebungDropdown() {
+  const erh = this._shadowRoot.getElementById("erhebung-select");
+  erh.disabled = false;
+  erh.classList.remove("loading");
+  erh.classList.add("dropdown-enabled");
+}
+
+enableJahrDropdown() {
+  const jahr = this._shadowRoot.getElementById("jahr-select");
+  jahr.disabled = false;
+  jahr.classList.remove("loading");
+  jahr.classList.add("dropdown-enabled");
+}
+
+enableNummerDropdown() {
+  const nummer = this._shadowRoot.getElementById("nummer-select");
+  nummer.disabled = false;
+  nummer.classList.remove("loading");
+  nummer.classList.add("dropdown-enabled");
+}
+
+updateFilterButtonState() {
+  const erh = this._shadowRoot.getElementById("erhebung-select");
+  const jahr = this._shadowRoot.getElementById("jahr-select");
+  const nummer = this._shadowRoot.getElementById("nummer-select");
+  const btn = this._shadowRoot.getElementById("filter-button");
+
+  const enabled = erh.value && jahr.value && nummer.value;
+
+  btn.disabled = !enabled;
+
+  if (enabled) {
+    btn.style.transition = "background 0.3s ease";
+    btn.style.background = "#b41821";
+  } else {
+    btn.style.background = "#888";
+  }
+}
+
 
 
 restoreFilterUI() {
@@ -3529,31 +3632,31 @@ closeNLTable() {
     }
   }
 
-  async render() {
-    if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-      console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-      return;
-    }
+async render() {
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+    return;
+  }
 
-    this.showSpinner();
+  this.showSpinner();
 
-    const rawData = this._myDataSource.data;
+  // ⭐ Dropdowns blockieren
+  this.disableAllDropdowns();
 
-    // 🔧 Filterstruktur & Dropdowns vorbereiten
-    this._erhData = this.buildErhebungsStruktur(rawData);
-    this.setupFilterDropdowns();
+  const rawData = this._myDataSource.data;
 
-    // 🔍 Filter anwenden oder Rohdaten verwenden
-    const isFiltered = !!this._activeFilter;
-    const filteredData = isFiltered ? this.getFilteredData() : rawData;
+  // 🔧 Filterstruktur vorbereiten
+  this._erhData = this.buildErhebungsStruktur(rawData);
 
-    // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
-    this.prepareMapData(filteredData);
+  // Dropdowns füllen (aber NICHT aktivieren)
+  this.setupFilterDropdowns();
 
+  // 🌍 GeoJSON laden
+  await this.loadGeoJson();
 
+  // ⭐ Jetzt erst Erhebung aktivieren
+  this.enableErhebungDropdown();
 
-    // 🌍 GeoJSON laden & Layer aktualisieren
-    await this.loadGeoJson();
 
     this.updateGeoLayer();
       this.createAllMarkers();
