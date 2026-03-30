@@ -2107,37 +2107,37 @@ showUmsatzPopup(plz, values) {
     this.neighbours = computeNeighbours(filteredMarkers);
   }
 
-
 applyFilter(erhID, jahr, nummer) {
 
   if (!erhID || !jahr || !nummer) {
-  console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
-  return;
-}
+    console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
+    return;
+  }
 
-  // 🧹 Wenn NL-Tabelle offen ist → schließen
+  // Filter setzen
+  this._activeFilter = { erhID, jahr, nummer };
+
+  // NL-Tabelle schließen
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
   if (filterContainer?.classList.contains("nl-info-active")) {
     this.closeNLTable();
   }
 
-  this._activeFilter = { erhID, jahr, nummer };
-
-  // 🔄 NL-Auswahl zurücksetzen
+  // NL-Auswahl zurücksetzen
   if (!this._selectedNLs) {
     this._selectedNLs = new Set();
   } else {
     this._selectedNLs.clear();
   }
 
-  // 1️⃣ Daten filtern (Erhebung)
+  // Daten filtern
   const filteredData = this.getFilteredData();
   this.filteredData = filteredData;
 
-  // ⭐ 2️⃣ Umsatzwerte pro PLZ vorbereiten (NEU!)
+  // Umsatzwerte vorbereiten
   this.prepareUmsatzPLZWerte();
 
-  // 3️⃣ HZ-Flags neu berechnen (nur WK)
+  // HZ-Flags
   this.hzFlags = {};
   filteredData.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
@@ -2145,34 +2145,32 @@ applyFilter(erhID, jahr, nummer) {
     if (plz) this.hzFlags[plz] = hz === "X";
   });
 
-  // 4️⃣ PLZ-Liste extrahieren
+  // PLZ-Liste
   this.filteredPLZs = filteredData
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
 
-  // 5️⃣ Karte einfärben
+  // Karte einfärben
   this.updateGeoLayer();
 
-  // 6️⃣ NL-Marker aktualisieren
-  this.updateMarkers();
+  // Marker aktualisieren (mit PLZ-Liste!)
+  this.updateMarkers(this.filteredPLZs);
 
-  // 7️⃣ Radius anwenden (nur WK)
+  // Radius anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
 
-  // 8️⃣ Tabelle rendern
+  // Tabelle rendern
   this.renderDataTable(this.filteredKennwerte);
   this._shadowRoot.getElementById("table-container").style.display = "block";
 
-
-  // 9️⃣ Zoom
+  // Zoom
   this.zoomToFilteredPLZ();
 
-  // 🔟 Erhebungsinfo
+  // Erhebungsinfo vorbereiten
   this.prepareErhebungsInfo();
 }
-
 
 
 
@@ -3644,6 +3642,8 @@ closeNLTable() {
       });
     }
   }
+
+
 async render() {
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
@@ -3652,60 +3652,58 @@ async render() {
 
   this.showSpinner();
 
-  // ⭐ Dropdowns blockieren
+  // Dropdowns blockieren
   this.disableAllDropdowns();
 
   const rawData = this._myDataSource.data;
 
-  // 🔧 Erhebungsstruktur vorbereiten
+  // Erhebungsstruktur
   this._erhData = this.buildErhebungsStruktur(rawData);
 
-  // Dropdowns füllen (aber NICHT aktivieren)
+  // Dropdowns füllen
   this.setupFilterDropdowns();
 
-  // 🌍 GeoJSON laden
+  // GeoJSON laden
   await this.loadGeoJson();
 
-  // ⭐ Jetzt erst Erhebung aktivieren
+  // Erst jetzt Erhebung aktivieren
   this.enableErhebungDropdown();
 
-  // ⭐ Filterstatus korrekt bestimmen
+  // Filterstatus korrekt bestimmen
   this.isFiltered =
     this._activeFilter &&
     this._activeFilter.erhID &&
     this._activeFilter.jahr &&
     this._activeFilter.nummer;
 
-  // 🔍 Filter anwenden oder Rohdaten verwenden
+  // Daten filtern oder Rohdaten
   const filteredData = this.isFiltered
     ? this.getFilteredData()
     : rawData;
 
-  // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+  // Map-Daten vorbereiten
   this.prepareMapData(filteredData);
 
-  // 🗺️ Karte einfärben
+  // Karte einfärben
   this.updateGeoLayer();
 
-  // 📍 Marker erzeugen
+  // Marker erzeugen
   this.createAllMarkers();
 
-  // 📌 PLZs extrahieren für Marker-Filterung
+  // PLZs extrahieren
   const filteredPLZs = this.isFiltered
     ? filteredData
         .map(d => d["dimension_plz_0"]?.id?.trim())
         .filter(plz => plz && plz !== "@NullMember")
     : Object.keys(this.allMarkers);
 
-  // 📍 Marker anzeigen
+  // Marker anzeigen
   this.updateMarkers(filteredPLZs);
 
-  // 📊 Tabelle NICHT automatisch rendern!
-  //    → passiert erst in applyFilter()
+  // Tabelle NICHT automatisch rendern
 
   this.hideSpinner();
 }
-
 
 
 
