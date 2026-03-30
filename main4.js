@@ -658,6 +658,7 @@
   color: #b41821;
   font-weight: bold;
   text-align: center;
+
 }
 
 .map-toggle.active {
@@ -678,7 +679,7 @@
   margin-top: 16px;
   user-select: none;
   cursor: pointer;
-
+  width: 100%;
   background: white;
   border: 2px solid #b41821;
   border-radius: 12px;
