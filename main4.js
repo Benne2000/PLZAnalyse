@@ -999,7 +999,6 @@ onEachFeature: (feature, layer) => {
     this.showPopup(e.target.feature, kennwerte);
   });
 
-  this.enableErhebungDropdown();
 
 }
 
@@ -3689,6 +3688,9 @@ async render() {
   this.renderDataTable(this.filteredKennwerte);
 
   this.hideSpinner();
+
+  this.enableErhebungDropdown();
+
 }
 
 
