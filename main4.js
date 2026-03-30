@@ -786,6 +786,14 @@
     <button id="btn-umsatz" class="analysis-btn">Umsatz</button>
   </div>
 
+  <!-- ⭐ WK-Panel: Doppelbestreuung -->
+  <div id="wk-extra" style="margin-top:10px;">
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+      <input type="checkbox" id="chk-doppelbestreuung" checked />
+      Doppelbestreuung anzeigen
+    </label>
+  </div>
+
   <!-- Umsatzanalyse-Bereich -->
   <div id="umsatz-panel" class="hidden">
 
@@ -817,8 +825,6 @@
   </div>
 
 </div>
-
-
 
 
 
@@ -1478,6 +1484,22 @@ initializeMapBase() {
       this.updateGeoLayer();
     });
   });
+ // ⭐ Doppelbestreuung (Critical-Marker) Checkbox
+const chkDoppel = this._shadowRoot.getElementById("chk-doppelbestreuung");
+
+// Standard: aktiviert
+this.showCritical = true;
+
+chkDoppel.addEventListener("change", () => {
+  this.showCritical = chkDoppel.checked;
+
+  // Popups schließen
+  this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
+  this._shadowRoot.getElementById("side-popup").classList.remove("show");
+
+  // Karte neu rendern
+  this.updateGeoLayer();
+});
 
   // ⭐ Bestreuungs-Checkbox
   const chkBestreuung = this._shadowRoot.getElementById("chk-bestreuung");
@@ -2198,7 +2220,8 @@ updateGeoLayer() {
   this.criticalMarkers = this.criticalMarkers || {};
 
   // Nur im WK-Modus sollen Critical-Marker sichtbar sein
-  const showCritical = this.currentMapMode === "wk";
+  const showCritical = this.currentMapMode === "wk" && this.showCritical;
+
 
   // ---------------------------------------------------------
   // 1️⃣ MAX-WERT GLOBAL BERECHNEN
