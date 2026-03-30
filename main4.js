@@ -2474,17 +2474,17 @@ updateGeoLayer() {
 
 
 
-
-updateMarkers() {
+updateMarkers(filteredPLZs = null) {
   if (!this.filteredGroup || !this.allMarkers) return;
 
   this.filteredGroup.clearLayers();
 
-  const filteredData = this.filteredData || [];
-  if (!filteredData.length) return;
+  const data = this.filteredData || [];
+  if (!data.length) return;
 
+  // 🔍 Welche NLs kommen in den gefilterten Daten vor?
   const erhNLs = new Set(
-    filteredData
+    data
       .map(row => row["dimension_niederlassung_0"]?.id?.trim())
       .filter(Boolean)
   );
@@ -2496,6 +2496,11 @@ updateMarkers() {
   this.allMarkers.forEach(marker => {
     const nl = marker.options.plzs?.[0];
     if (!nl || !erhNLs.has(nl)) return;
+
+    // Wenn PLZ-Filter aktiv ist → Marker nur anzeigen, wenn PLZ enthalten
+    if (filteredPLZs && Array.isArray(filteredPLZs)) {
+      if (!filteredPLZs.includes(nl)) return;
+    }
 
     this.filteredGroup.addLayer(marker);
 
@@ -2536,6 +2541,7 @@ updateMarkers() {
     marker
   }));
 }
+
 
 
 
@@ -3631,7 +3637,6 @@ closeNLTable() {
       });
     }
   }
-
 async render() {
   if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
     console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
@@ -3645,7 +3650,7 @@ async render() {
 
   const rawData = this._myDataSource.data;
 
-  // 🔧 Filterstruktur vorbereiten
+  // 🔧 Erhebungsstruktur vorbereiten
   this._erhData = this.buildErhebungsStruktur(rawData);
 
   // Dropdowns füllen (aber NICHT aktivieren)
@@ -3657,24 +3662,34 @@ async render() {
   // ⭐ Jetzt erst Erhebung aktivieren
   this.enableErhebungDropdown();
 
+  // 🔍 Filter anwenden oder Rohdaten verwenden
+  this.isFiltered = !!this._activeFilter;
+  const filteredData = this.isFiltered ? this.getFilteredData() : rawData;
 
-    this.updateGeoLayer();
-      this.createAllMarkers();
-    // 📌 PLZs extrahieren für Marker-Filterung
-    const filteredPLZs = isFiltered
-      ? filteredData
-          .map(d => d["dimension_plz_0"]?.id?.trim())
-          .filter(plz => plz && plz !== "@NullMember")
-      : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
+  // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+  this.prepareMapData(filteredData);
 
-    // 📍 Marker anzeigen (gefiltert oder vollständig)
-    this.updateMarkers(filteredPLZs);
+  // 🗺️ Karte einfärben
+  this.updateGeoLayer();
 
-    // 📊 Tabelle aktualisieren
-    this.renderDataTable(this.filteredKennwerte);
+  // 📍 Marker erzeugen
+  this.createAllMarkers();
 
-    this.hideSpinner();
-  }
+  // 📌 PLZs extrahieren für Marker-Filterung
+  const filteredPLZs = this.isFiltered
+    ? filteredData
+        .map(d => d["dimension_plz_0"]?.id?.trim())
+        .filter(plz => plz && plz !== "@NullMember")
+    : Object.keys(this.allMarkers);
+
+  // 📍 Marker anzeigen
+  this.updateMarkers(filteredPLZs);
+
+  // 📊 Tabelle aktualisieren
+  this.renderDataTable(this.filteredKennwerte);
+
+  this.hideSpinner();
+}
 
 
 
