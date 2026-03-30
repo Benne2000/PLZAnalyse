@@ -710,6 +710,9 @@
   color: #b41821;
 }
 
+#umsatz-options-row {
+  display: flex;
+}
 
 
     </style>
@@ -794,21 +797,25 @@
     </label>
   </div>
 
-  <!-- ⭐ Umsatz-Checkbox (NEU: gleiche Position wie WK) -->
-  <div id="umsatz-extra" style="margin-top:10px; display:none;">
+<!-- ⭐ Umsatz-Optionen nebeneinander -->
+<div id="umsatz-options-row" style="margin-top:10px; display:none; gap:20px; align-items:center;">
+
+  <div id="umsatz-extra">
     <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
       <input type="checkbox" id="chk-bestreuung" />
       Bestreuung anzeigen
     </label>
   </div>
 
-  <!-- ⭐ Radiusfilter (nur Umsatz) -->
-  <div id="umsatz-radius-extra" style="margin-top:10px; display:none;">
-     <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-       <input type="checkbox" id="chk-radiusfilter" checked />
-       Radiusfilter aktiv
-     </label>
+  <div id="umsatz-radius-extra">
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+      <input type="checkbox" id="chk-radiusfilter" checked />
+      Radiusfilter aktiv
+    </label>
   </div>
+
+</div>
+
 
   <!-- Umsatzanalyse-Bereich -->
   <div id="umsatz-panel" class="hidden">
@@ -1433,8 +1440,8 @@ initializeMapBase() {
     this.currentMapMode = "wk";
 
     this._shadowRoot.getElementById("wk-extra").style.display = "block";
-    this._shadowRoot.getElementById("umsatz-extra").style.display = "none";
-    this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "none";
+    this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
+
 
     const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
     if (popupUmsatz) popupUmsatz.classList.remove("show");
@@ -1457,8 +1464,8 @@ initializeMapBase() {
     this.prepareUmsatzPLZWerte();
 
     this._shadowRoot.getElementById("wk-extra").style.display = "none";
-    this._shadowRoot.getElementById("umsatz-extra").style.display = "block";
-    this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "block";
+    this._shadowRoot.getElementById("umsatz-options-row").style.display = "flex";
+
 
     const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
     if (popupUmsatz) popupUmsatz.classList.remove("show");
