@@ -270,34 +270,103 @@
   margin-top: 12px;
 }
 
-#side-popup .umsatz-box {
-  border: 1px solid #b41821;
-  border-radius: 4px;
-  padding: 8px;
-  background: #fff;
+/* Umsatz-Popup nutzt exakt dieselbe Struktur wie WK-Popup */
+#popup-umsatz {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 25%;
+  height: 70%;
+  background: white;
+  border-left: 2px solid #b41821;
+  padding: 10px;
+  font-family: sans-serif;
+  color: #b41821;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 99999;
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-#side-popup .umsatz-box-title {
+#popup-umsatz.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+#popup-umsatz .close-btn {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  background: #b41821;
+  color: white;
+  border: none;
+  padding: 2px 6px;
+  font-size: 12px;
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+/* Tabellenstil wie WK-Popup */
+#popup-umsatz table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  border: 1px solid #b41821;
+  margin-top: 30px;
+}
+
+#popup-umsatz th {
+  background-color: #b41821;
+  color: white;
   font-weight: bold;
-  color: #b41821;
-  margin-bottom: 4px;
+  padding: 6px;
+  text-align: left;
+  border: 1px solid #b41821;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#popup-umsatz th.subtitle-cell {
+  background-color: #f3f3f3;
+  color: black;
+  font-weight: bold;
+  padding: 6px;
   font-size: 0.85rem;
 }
 
-#side-popup .umsatz-box-value {
-  font-size: 0.95rem;
-  font-weight: bold;
+#popup-umsatz td {
+  border: 1px solid #b41821;
+  font-size: 0.85rem;
+  padding: 4px 8px;
   color: black;
-  text-align: right;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
+#popup-umsatz td.label-cell {
+  width: 70%;
+  text-align: left;
+}
+
+#popup-umsatz td.value-cell {
+  width: 30%;
+  text-align: right;
+  font-weight: normal;
+}
+
 /* ausgegraute Kategorien */
-.umsatz-box.disabled {
+#popup-umsatz tr.disabled td {
   opacity: 0.35;
   filter: grayscale(100%);
 }
 
 /* Anteil-Balken */
-.umsatz-share-bar {
+#popup-umsatz .umsatz-share-bar {
   margin-top: 16px;
   height: 18px;
   border-radius: 6px;
@@ -306,7 +375,7 @@
   display: flex;
 }
 
-.share-segment {
+#popup-umsatz .share-segment {
   height: 100%;
 }
 
@@ -1740,13 +1809,11 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
-
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("popup-umsatz");
 
   const modeHH = this.umsatzMode === "hh";
 
-  // Werte holen
   const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
   const pluscard   = modeHH ? values.pluscardProHaushalt : values.pluscard;
   const ra         = modeHH ? values.raProHaushalt : values.ra;
@@ -1754,7 +1821,6 @@ showUmsatzPopup(plz, values) {
 
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-  // Welche Kategorien sind aktiv?
   const active = {
     stationaer: this.activeCategories.has("stationaer"),
     pluscard:   this.activeCategories.has("pluscard"),
@@ -1762,7 +1828,6 @@ showUmsatzPopup(plz, values) {
     online:     this.activeCategories.has("online")
   };
 
-  // Gesamtsumme NUR aktive Kategorien
   const total =
     (active.stationaer ? stationaer : 0) +
     (active.pluscard   ? pluscard   : 0) +
@@ -1770,8 +1835,6 @@ showUmsatzPopup(plz, values) {
     (active.online     ? online     : 0);
 
   const fmt = x => modeHH ? x.toFixed(3) : x.toLocaleString("de-DE");
-
-  // Prozentfunktion
   const pct = x => total > 0 ? (x / total) * 100 : 0;
 
   popup.innerHTML = `
@@ -1780,7 +1843,7 @@ showUmsatzPopup(plz, values) {
     <table>
       <thead>
         <tr>
-          <th colspan="2" class="title-cell">${plz} – ${note}</th>
+          <th colspan="2" class="title-cell">${note}</th>
         </tr>
 
         <tr>
@@ -1793,31 +1856,31 @@ showUmsatzPopup(plz, values) {
           </th>
         </tr>
       </thead>
+
+      <tbody>
+
+        <tr class="${active.stationaer ? "" : "disabled"}">
+          <td class="label-cell">Stationär</td>
+          <td class="value-cell">${fmt(stationaer)}</td>
+        </tr>
+
+        <tr class="${active.pluscard ? "" : "disabled"}">
+          <td class="label-cell">Pluscard</td>
+          <td class="value-cell">${fmt(pluscard)}</td>
+        </tr>
+
+        <tr class="${active.ra ? "" : "disabled"}">
+          <td class="label-cell">R&A</td>
+          <td class="value-cell">${fmt(ra)}</td>
+        </tr>
+
+        <tr class="${active.online ? "" : "disabled"}">
+          <td class="label-cell">Onlineshop</td>
+          <td class="value-cell">${fmt(online)}</td>
+        </tr>
+
+      </tbody>
     </table>
-
-    <div class="umsatz-grid">
-
-      <div class="umsatz-box ${active.stationaer ? "" : "disabled"}">
-        <div class="umsatz-box-title">Stationär</div>
-        <div class="umsatz-box-value">${fmt(stationaer)}</div>
-      </div>
-
-      <div class="umsatz-box ${active.pluscard ? "" : "disabled"}">
-        <div class="umsatz-box-title">Pluscard</div>
-        <div class="umsatz-box-value">${fmt(pluscard)}</div>
-      </div>
-
-      <div class="umsatz-box ${active.ra ? "" : "disabled"}">
-        <div class="umsatz-box-title">R&A</div>
-        <div class="umsatz-box-value">${fmt(ra)}</div>
-      </div>
-
-      <div class="umsatz-box ${active.online ? "" : "disabled"}">
-        <div class="umsatz-box-title">Onlineshop</div>
-        <div class="umsatz-box-value">${fmt(online)}</div>
-      </div>
-
-    </div>
 
     <div class="umsatz-share-bar">
       ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
@@ -2137,7 +2200,7 @@ getFilteredData() {
   }
   }
 
-  updateGeoLayer() {
+updateGeoLayer() {
   if (!this._geoLayer) return;
 
   console.group("🧪 updateGeoLayer()");
@@ -2150,6 +2213,9 @@ getFilteredData() {
 
   // Marker-Cache initialisieren
   this.criticalMarkers = this.criticalMarkers || {};
+
+  // Nur im WK-Modus sollen Critical-Marker sichtbar sein
+  const showCritical = this.currentMapMode === "wk";
 
   // ---------------------------------------------------------
   // 1️⃣ MAX-WERT GLOBAL BERECHNEN
@@ -2204,6 +2270,7 @@ getFilteredData() {
       });
       layer.options.interactive = false;
 
+      // Marker IMMER entfernen, wenn nicht WK-Modus
       if (this.criticalMarkers[plz]) {
         this.map.removeLayer(this.criticalMarkers[plz]);
         delete this.criticalMarkers[plz];
@@ -2260,8 +2327,18 @@ getFilteredData() {
     layer.options.interactive = true;
 
     // ---------------------------------------------------------
-    // ⚠️ CRITICAL-MARKER WIEDER EINBLENDEN
+    // ⚠️ CRITICAL-MARKER NUR IM WK-MODUS
     // ---------------------------------------------------------
+    if (!showCritical) {
+      // Marker entfernen, falls vorhanden
+      if (this.criticalMarkers[plz]) {
+        this.map.removeLayer(this.criticalMarkers[plz]);
+        delete this.criticalMarkers[plz];
+      }
+      return;
+    }
+
+    // WK-Modus → Critical prüfen
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
     if (isCritical) {
@@ -2299,7 +2376,6 @@ getFilteredData() {
     }
   });
 }
-
 
 
 
