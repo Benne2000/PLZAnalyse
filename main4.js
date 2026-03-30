@@ -87,191 +87,11 @@
         border-radius: 4px;
       }
 
-#side-popup {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 25%;
-  height: 70%; /* nur obere 70% */
-  background: white;
-  border-left: 2px solid #b41821;
-  padding: 10px;
-  font-family: sans-serif;
-  color: #b41821;
-  box-sizing: border-box;
-  overflow-y: auto;
-  z-index: 99999;
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-  #side-popup table {
-    width: 100%;
-    table-layout: fixed; /* verhindert Breitenverschiebung */
-    border-collapse: collapse;
-    border: 1px solid #b41821;
-    margin-top: 30px;
-
-  }
-
-  #side-popup th {
-    background-color: #b41821;
-    color: white;
-    font-weight: bold;
-    padding: 6px;
-    text-align: left;
-    border: 1px solid #b41821;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  #side-popup th.title-cell {
-    max-width: 100%;
-  }
-
-  #side-popup th.subtitle-cell {
-    background-color: #f3f3f3;
-    color: black;
-    font-weight: bold;
-    padding: 6px;
-    text-align: left;
-    font-size: 0.85rem;
-    padding: 4px 8px;
-    
-  }
-
-  #side-popup td {
-    border: 1px solid #b41821;
-    font-size: 0.85rem;
-    padding: 4px 8px;
-    color: black;
-    font-weight: bold;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  #side-popup td:first-child {
-    width: 40%;
-  }
-  /* Entfernt Rahmen für Kennzahlen-Zeilen */
-  #side-popup tr.kennzahl-row td {
-    border: none;
-  }
-
-  #side-popup .section-title {
-    background-color: #f3f3f3;
-    color: black;
-    font-weight: bold;
-    padding: 6px;
-    text-align: left;
-  }
-
-  #side-popup td:last-child {
-    font-weight: bold;
-  }
-  #side-popup td.label-cell {
-    text-align: left;
-    width: 75%;
-  }
-
-  #side-popup td.value-cell {
-    text-align: right;
-    width: 25%;
-    font-weight: normal;
-  }
-
-      #side-popup.show {
-        opacity: 1;
-        transform: translateX(0);
-      }
-
-      #side-popup .close-btn {
-        position: absolute;
-        top: 5px;
-        right: 8px;
-        background: #b41821;
-        color: white;
-        border: none;
-        padding: 2px 6px;
-        font-size: 12px;
-        cursor: pointer;
-        border-radius: 3px;
-      }
-
-
-  #side-popup .extra-table {
-    display: table;
-    visibility: visible;
-    table-layout: fixed;
-    width: 100%;
-    margin-top: 20px;
-    border-collapse: collapse;
-    border: 1px solid #b41821; /* Außenrahmen */
-    font-size: 0.85rem;
-    
-  }
-
-  /* Kopfzeile mit Rahmen */
-  #side-popup .extra-table th {
-    border: 1px solid #b41821;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    background-color: #f3f3f3;
-    color: black;
-    font-weight: bold;
-    padding: 6px;
-    text-align: left;
-  }
-
-  /* Zellen ohne Innenrahmen */
-  #side-popup .extra-table td {
-    padding: 6px;
-    text-align: right;
-    border: none; /* keine Zellrahmen */
-    font-weight: bold;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  #side-popup .extra-table td.label-cell {
-    text-align: left;
-    width: 75%;
-  }
-
-  #side-popup .extra-table td.value-cell {
-    text-align: right;
-    width: 25%;
-    font-weight: normal;
-  }
-
 /* ------------------------------------------------------ */
-/* Umsatz-Popup Layout (gleicher Stil wie WK-Popup)       */
+/* Gemeinsames Popup-Layout für WK & Umsatz               */
 /* ------------------------------------------------------ */
 
-#side-popup .umsatz-total-row {
-  background-color: #f3f3f3;
-  color: black;
-  font-weight: bold;
-  padding: 6px 8px;
-  text-align: left;
-  border: 1px solid #b41821;
-  font-size: 0.9rem;
-}
-
-#side-popup .umsatz-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-top: 12px;
-}
-
-/* Umsatz-Popup nutzt exakt dieselbe Struktur wie WK-Popup */
-#popup-umsatz {
+.side-popup {
   position: absolute;
   right: 0;
   top: 0;
@@ -285,17 +105,26 @@
   box-sizing: border-box;
   overflow-y: auto;
   z-index: 99999;
+
+  /* Animation */
   opacity: 0;
   transform: translateX(20px);
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-#popup-umsatz.show {
+.side-popup.show {
   opacity: 1;
   transform: translateX(0);
 }
 
-#popup-umsatz .close-btn {
+.side-popup.hidden {
+  opacity: 0;
+  transform: translateX(20px);
+  pointer-events: none;
+}
+
+/* Close-Button */
+.side-popup .close-btn {
   position: absolute;
   top: 5px;
   right: 8px;
@@ -308,8 +137,11 @@
   border-radius: 3px;
 }
 
-/* Tabellenstil wie WK-Popup */
-#popup-umsatz table {
+/* ------------------------------------------------------ */
+/* Tabellen-Layout (identisch für WK & Umsatz)            */
+/* ------------------------------------------------------ */
+
+.side-popup table {
   width: 100%;
   table-layout: fixed;
   border-collapse: collapse;
@@ -317,7 +149,7 @@
   margin-top: 30px;
 }
 
-#popup-umsatz th {
+.side-popup th {
   background-color: #b41821;
   color: white;
   font-weight: bold;
@@ -329,7 +161,7 @@
   white-space: nowrap;
 }
 
-#popup-umsatz th.subtitle-cell {
+.side-popup th.subtitle-cell {
   background-color: #f3f3f3;
   color: black;
   font-weight: bold;
@@ -337,7 +169,7 @@
   font-size: 0.85rem;
 }
 
-#popup-umsatz td {
+.side-popup td {
   border: 1px solid #b41821;
   font-size: 0.85rem;
   padding: 4px 8px;
@@ -348,25 +180,28 @@
   white-space: nowrap;
 }
 
-#popup-umsatz td.label-cell {
+.side-popup td.label-cell {
   width: 70%;
   text-align: left;
 }
 
-#popup-umsatz td.value-cell {
+.side-popup td.value-cell {
   width: 30%;
   text-align: right;
   font-weight: normal;
 }
 
-/* ausgegraute Kategorien */
-#popup-umsatz tr.disabled td {
+/* Ausgrau-Logik */
+.side-popup tr.disabled td {
   opacity: 0.35;
   filter: grayscale(100%);
 }
 
-/* Anteil-Balken */
-#popup-umsatz .umsatz-share-bar {
+/* ------------------------------------------------------ */
+/* Umsatz-Balken + Legende                                */
+/* ------------------------------------------------------ */
+
+.umsatz-share-bar {
   margin-top: 16px;
   height: 18px;
   border-radius: 6px;
@@ -375,7 +210,7 @@
   display: flex;
 }
 
-#popup-umsatz .share-segment {
+.share-segment {
   height: 100%;
 }
 
@@ -383,6 +218,47 @@
 .share-pluscard   { background: #d9483b; }
 .share-ra         { background: #f0803c; }
 .share-online     { background: #f6b65b; }
+
+/* Legende */
+.umsatz-legend {
+  margin-top: 6px;
+  font-size: 0.75rem;
+  color: black;
+}
+
+.umsatz-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-right: 10px;
+}
+
+/* ------------------------------------------------------ */
+/* HH-Kennzahlen-Tabelle                                  */
+/* ------------------------------------------------------ */
+
+.side-popup .hh-table {
+  margin-top: 20px;
+}
+
+.side-popup .hh-table th {
+  background-color: #f3f3f3;
+  color: black;
+  font-weight: bold;
+  padding: 6px;
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------ */
+/* Umsatz-Panel Zusatzbereich                             */
+/* ------------------------------------------------------ */
+
+.umsatz-extra {
+  margin-top: 15px;
+  padding-top: 10px;
+  border-top: 1px solid #ccc;
+  font-size: 0.85rem;
+}
 
 
 #map-control-panel {
@@ -879,41 +755,15 @@
 
   </div> <!-- END map-container -->
 
-  <!-- 📌 Popup für Details (70%) -->
-  <div id="side-popup"></div>
-  <div id="popup-umsatz" class="popup-umsatz hidden">
-  <button class="close-btn">×</button>
+  <!-- 📌 Popup für WK -->
+  <div id="side-popup" class="side-popup hidden"></div>
 
-  <h2 id="popup-umsatz-total"></h2>
+  <!-- 📌 Popup für Umsatz -->
+  <div id="side-popup-umsatz" class="side-popup hidden"></div>
 
-  <div class="popup-umsatz-list">
-    <div class="popup-row">
-      <span>Stationär</span>
-      <span id="popup-stationaer"></span>
-    </div>
-    <div class="popup-row">
-      <span>Pluscard</span>
-      <span id="popup-pluscard"></span>
-    </div>
-    <div class="popup-row">
-      <span>R&A</span>
-      <span id="popup-ra"></span>
-    </div>
-    <div class="popup-row">
-      <span>Onlineshop</span>
-      <span id="popup-online"></span>
-    </div>
-  </div>
-
-  <div class="popup-bar">
-    <div id="bar-stationaer" class="bar-segment"></div>
-    <div id="bar-pluscard" class="bar-segment"></div>
-    <div id="bar-ra" class="bar-segment"></div>
-    <div id="bar-online" class="bar-segment"></div>
-  </div>
 </div>
 
-  <!-- 🎛️ Steuerzentrale für Kartenansichten (30%) -->
+<!-- 🎛️ Steuerzentrale für Kartenansichten -->
 <div id="map-control-panel">
 
   <h4>Kartenansicht</h4>
@@ -928,16 +778,13 @@
   <div id="umsatz-panel" class="hidden">
 
     <!-- Globaler Switch -->
-<div id="umsatz-mode-switch" class="mode-selector">
-  <span class="mode-left">Absolut</span>
-  <div class="mode-track">
-    <div class="mode-dot"></div>
-  </div>
-  <span class="mode-right">pro Haushalt</span>
-</div>
-
-
-
+    <div id="umsatz-mode-switch" class="mode-selector">
+      <span class="mode-left">Absolut</span>
+      <div class="mode-track">
+        <div class="mode-dot"></div>
+      </div>
+      <span class="mode-right">pro Haushalt</span>
+    </div>
 
     <!-- 2×2 Grid -->
     <div class="umsatz-grid">
@@ -945,6 +792,14 @@
       <div class="map-toggle" data-cat="pluscard">Pluscard</div>
       <div class="map-toggle" data-cat="ra">R&A</div>
       <div class="map-toggle" data-cat="online">Onlineshop</div>
+    </div>
+
+    <!-- ⭐ Bestreuungs-Checkbox -->
+    <div class="umsatz-extra">
+      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="checkbox" id="chk-bestreuung" />
+        Bestreuung anzeigen
+      </label>
     </div>
 
   </div>
@@ -1509,8 +1364,6 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
-
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
@@ -1519,26 +1372,25 @@ initializeMapBase() {
   this.currentMapMode = "wk";
   this.umsatzMode = "abs";
   this.activeCategories = new Set(["stationaer"]);
+  this.showBestreuung = false;
 
-  // LayerGroups sicher anlegen
+  // LayerGroups
   this.filteredGroup = L.layerGroup().addTo(this.map);
   this.neighbourGroup = L.layerGroup().addTo(this.map);
   this.radiusGroup = L.layerGroup().addTo(this.map);
+  this.bestreuungGroup = L.layerGroup().addTo(this.map);
 
   // Rendering starten
   this.render();
   this.initRadiusSlider();
 
-  // ⭐ Kartenstil-Button
+  // Kartenstil-Button
   const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
-  if (tileBtn) {
-    tileBtn.addEventListener("click", () => this.toggleMapTiles());
-  }
+  if (tileBtn) tileBtn.addEventListener("click", () => this.toggleMapTiles());
 
-  // ⭐ Steuerpanel (für Animation)
   const panel = this._shadowRoot.getElementById("map-control-panel");
 
-  // ⭐ Umschalter WK ↔ Umsatz
+  // Umschalter WK ↔ Umsatz
   const btnWK = this._shadowRoot.getElementById("btn-wk");
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
   const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
@@ -1548,44 +1400,51 @@ initializeMapBase() {
     btnUmsatz.classList.remove("active");
     umsatzPanel.classList.add("hidden");
 
-    panel.classList.remove("expanded"); // Panel klein
+    panel.classList.remove("expanded");
 
     this.currentMapMode = "wk";
+
+    // Popups schließen
+    this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
+    this._shadowRoot.getElementById("side-popup").classList.remove("show");
+
     this.updateGeoLayer();
   });
 
-btnUmsatz.addEventListener("click", () => {
-  btnUmsatz.classList.add("active");
-  btnWK.classList.remove("active");
-  umsatzPanel.classList.remove("hidden");
+  btnUmsatz.addEventListener("click", () => {
+    btnUmsatz.classList.add("active");
+    btnWK.classList.remove("active");
+    umsatzPanel.classList.remove("hidden");
 
-  panel.classList.add("expanded");
+    panel.classList.add("expanded");
 
-  this.currentMapMode = "umsatz-multi";
+    this.currentMapMode = "umsatz-multi";
 
-  // ⭐ NEU: Umsatzwerte sicherstellen
-  this.prepareUmsatzPLZWerte();
+    this.prepareUmsatzPLZWerte();
 
-  this.updateGeoLayer();
-});
+    // Popups schließen
+    this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
+    this._shadowRoot.getElementById("side-popup").classList.remove("show");
 
+    this.updateGeoLayer();
+  });
 
-  // ⭐ Neutraler Haushalte/Absolut-Switch
-const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
+  // HH/ABS Switch
+  const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
+  this.umsatzMode = "abs";
 
-// Standardzustand: Absolut
-this.umsatzMode = "abs";
+  modeSwitch.addEventListener("click", () => {
+    const isHH = modeSwitch.classList.toggle("hh");
+    this.umsatzMode = isHH ? "hh" : "abs";
 
-modeSwitch.addEventListener("click", () => {
-  const isHH = modeSwitch.classList.toggle("hh");
+    // Popups schließen
+    this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
+    this._shadowRoot.getElementById("side-popup").classList.remove("show");
 
-  this.umsatzMode = isHH ? "hh" : "abs";
+    this.updateGeoLayer();
+  });
 
-  this.updateGeoLayer();
-});
-
-
-  // ⭐ Umsatzkategorien (2×2 Grid)
+  // Kategorien
   this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
     toggle.addEventListener("click", () => {
       const cat = toggle.dataset.cat;
@@ -1599,8 +1458,25 @@ modeSwitch.addEventListener("click", () => {
       }
 
       this.currentMapMode = "umsatz-multi";
+
+      // Popups schließen
+      this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
+      this._shadowRoot.getElementById("side-popup").classList.remove("show");
+
       this.updateGeoLayer();
     });
+  });
+
+  // ⭐ Bestreuungs-Checkbox
+  const chkBestreuung = this._shadowRoot.getElementById("chk-bestreuung");
+  chkBestreuung.addEventListener("change", () => {
+    this.showBestreuung = chkBestreuung.checked;
+
+    // Popups schließen
+    this._shadowRoot.getElementById("side-popup-umsatz").classList.remove("show");
+    this._shadowRoot.getElementById("side-popup").classList.remove("show");
+
+    this.updateBestreuungMarkers();
   });
 }
 
@@ -1629,6 +1505,47 @@ getDynamicHeatColor(value, max) {
 }
 
 
+updateBestreuungMarkers() {
+  // Erst alles löschen
+  this.bestreuungGroup.clearLayers();
+
+  if (!this.showBestreuung) return;
+
+  if (!this._geoLayer) return;
+
+  this._geoLayer.eachLayer(layer => {
+    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+
+    const daten = this.filteredKennwerte?.[plz];
+    if (!daten) return;
+
+    // Nur HZ-Flag X anzeigen
+    if (daten.isHZ !== true) return;
+
+    const center = layer.getBounds().getCenter();
+
+    const icon = L.divIcon({
+      html: `<div style="
+        background:#ffffff;
+        border:2px solid #1565c0;
+        border-radius:50%;
+        width:22px;
+        height:22px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:14px;
+        font-weight:bold;
+        color:#1565c0;
+      ">H</div>`,
+      className: "",
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+
+    L.marker(center, { icon, interactive: false }).addTo(this.bestreuungGroup);
+  });
+}
 
 
 
@@ -1809,117 +1726,162 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
-showUmsatzPopup(plz, values) {
-  const popup = this._shadowRoot.getElementById("popup-umsatz");
 
-  const modeHH = this.umsatzMode === "hh";
+showPopup(feature) {
+  const plz = String(feature.properties?.plz ?? "")
+    .padStart(5, "0")
+    .trim();
 
-  const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
-  const pluscard   = modeHH ? values.pluscardProHaushalt : values.pluscard;
-  const ra         = modeHH ? values.raProHaushalt : values.ra;
-  const online     = modeHH ? values.onlineshopProHaushalt : values.onlineshop;
+  const note = feature.properties?.note || "Keine Notiz";
 
-  const note = this.geoNotes?.[plz] || "Keine Notiz";
+  // 🔥 Umsatz-Popup schließen
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+  popupUmsatz.classList.remove("show");
+  popupUmsatz.classList.add("hidden");
 
-  const active = {
-    stationaer: this.activeCategories.has("stationaer"),
-    pluscard:   this.activeCategories.has("pluscard"),
-    ra:         this.activeCategories.has("ra"),
-    online:     this.activeCategories.has("online")
+  // 🔥 Daten der aktiven Erhebung holen
+  const daten = this.filteredKennwerte?.[plz];
+
+  if (!daten) {
+    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
+  }
+
+  // 🔥 Symbol bestimmen (kritisch > HZ > normal)
+  let symbol = "🔴";
+  if (daten?.isCritical) {
+    symbol = "⚠️";
+  } else if (daten?.isHZ) {
+    symbol = "🟢";
+  }
+
+  // Beschriftungen für Haupttabelle
+  const beschreibungen = {
+    value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
+    value_umsatz_p_hh_0: "Umsatz p. HH",
+    value_wk_in_percent_0: "Werbekosten (%)",
+    value_wk_nachbar_0: "WK (%) incl. Nachb.",
+    value_hz_kosten_0: "HZ-Werbekosten",
+    value_werbeverweigerer_0: "Werbeverweigerer (%)",
+    value_haushalte_0: "Haushalte",
+    value_kaufkraft_0: "BM-Kaufkraft-Idx",
+    value_ums_erhebung_0: "Umsatz",
+    value_kd_erhebung_0: "Anzahl Kunden",
+    value_bon_erhebung_0: "Ø-Bon",
+    value_auflage_0: "Auflage"
   };
 
-  const total =
-    (active.stationaer ? stationaer : 0) +
-    (active.pluscard   ? pluscard   : 0) +
-    (active.ra         ? ra         : 0) +
-    (active.online     ? online     : 0);
+  const beschreibungenSide = {
+    value_wk_potentiell_0: "WK in %",
+    value_hz_potentiell_0: "HZ-Werbekosten"
+  };
 
-  const fmt = x => modeHH ? x.toFixed(3) : x.toLocaleString("de-DE");
-  const pct = x => total > 0 ? (x / total) * 100 : 0;
+  // 🔥 Haupttabelle aufbauen
+  let rows = "";
 
-  popup.innerHTML = `
+  Object.entries(beschreibungen).forEach(([id, label], index) => {
+    const rawValue = daten?.[id]?.raw;
+    const wert = typeof rawValue === "number"
+      ? rawValue.toLocaleString("de-DE")
+      : "–";
+
+    if (index === 8) {
+      rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
+    }
+
+    rows += `
+      <tr class="kennzahl-row">
+        <td class="label-cell">${label}</td>
+        <td class="value-cell">${wert}</td>
+      </tr>
+    `;
+  });
+
+  // 🔥 WK-Popup holen
+  const sidePopup = this._shadowRoot.getElementById('side-popup');
+
+  // 🔥 Inhalt setzen
+  sidePopup.innerHTML = `
     <button class="close-btn">×</button>
-
     <table>
       <thead>
         <tr>
-          <th colspan="2" class="title-cell">${note}</th>
-        </tr>
-
-        <tr>
-          <th colspan="2" class="subtitle-cell">
-            Gesamtumsatz: ${
-              modeHH
-                ? total.toFixed(3) + " pro HH"
-                : total.toLocaleString("de-DE") + " €"
-            }
+          <th colspan="2" class="title-cell" title="${note}">
+            ${symbol} ${note}
           </th>
         </tr>
+        <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
       </thead>
-
-      <tbody>
-
-        <tr class="${active.stationaer ? "" : "disabled"}">
-          <td class="label-cell">Stationär</td>
-          <td class="value-cell">${fmt(stationaer)}</td>
-        </tr>
-
-        <tr class="${active.pluscard ? "" : "disabled"}">
-          <td class="label-cell">Pluscard</td>
-          <td class="value-cell">${fmt(pluscard)}</td>
-        </tr>
-
-        <tr class="${active.ra ? "" : "disabled"}">
-          <td class="label-cell">R&A</td>
-          <td class="value-cell">${fmt(ra)}</td>
-        </tr>
-
-        <tr class="${active.online ? "" : "disabled"}">
-          <td class="label-cell">Onlineshop</td>
-          <td class="value-cell">${fmt(online)}</td>
-        </tr>
-
-      </tbody>
+      <tbody>${rows}</tbody>
     </table>
-
-    <div class="umsatz-share-bar">
-      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
-      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>`   : ""}
-      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(ra)}%"></div>`         : ""}
-      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online)}%"></div>`     : ""}
-    </div>
   `;
 
-  popup.classList.remove("hidden");
+  // 🔥 Zusatzwerte
+  const isHZ = daten?.isHZ === false;
+  const umsatz = daten?.value_hr_n_umsatz_0?.raw;
 
-  void popup.offsetWidth;
-  popup.classList.add("show");
+  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
+    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
+    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
 
-  popup.querySelector(".close-btn").onclick = () => {
-    popup.classList.remove("show");
-    popup.classList.add("hidden");
+    const wkPotentiell = typeof wkPotentiellRaw === "number"
+      ? wkPotentiellRaw.toLocaleString("de-DE")
+      : "–";
+
+    const hzPotentiell = typeof hzPotentiellRaw === "number"
+      ? hzPotentiellRaw.toLocaleString("de-DE")
+      : "–";
+
+    const extraTable = `
+      <table class="extra-table">
+        <thead>
+          <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
+            <td class="value-cell">${wkPotentiell}</td>
+          </tr>
+          <tr>
+            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
+            <td class="value-cell">${hzPotentiell}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+    sidePopup.insertAdjacentHTML('beforeend', extraTable);
+  }
+
+  // 🔥 Animation
+  sidePopup.classList.remove("hidden");
+  void sidePopup.offsetWidth;
+  sidePopup.classList.add("show");
+
+  // Close-Button
+  sidePopup.querySelector('.close-btn').onclick = () => {
+    sidePopup.classList.remove('show');
+    sidePopup.classList.add('hidden');
   };
 }
 
 
 
+
 showUmsatzPopup(plz, values) {
-  const popup = this._shadowRoot.getElementById("popup-umsatz");
+  const popup = this._shadowRoot.getElementById("side-popup-umsatz");
+  const popupWK = this._shadowRoot.getElementById("side-popup");
+
+  // WK-Popup schließen
+  popupWK.classList.remove("show");
+  popupWK.classList.add("hidden");
 
   const modeHH = this.umsatzMode === "hh";
 
-  // Umsatzwerte
   const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
   const pluscard   = modeHH ? values.pluscardProHaushalt : values.pluscard;
   const ra         = modeHH ? values.raProHaushalt : values.ra;
   const online     = modeHH ? values.onlineshopProHaushalt : values.onlineshop;
 
-  // HH-Kennzahlen
   const hh = values.haushalte;
-  const stHH = values.umsatzProHaushalt;
-  const pcHH = values.pluscardProHaushalt;
-  const raHH = values.raProHaushalt;
-  const osHH = values.onlineshopProHaushalt;
 
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
@@ -1938,56 +1900,43 @@ showUmsatzPopup(plz, values) {
 
   const fmt = x => modeHH ? x.toFixed(3) : x.toLocaleString("de-DE");
   const fmtHH = x => Number(x).toFixed(3);
-
   const pct = x => total > 0 ? (x / total) * 100 : 0;
 
   popup.innerHTML = `
     <button class="close-btn">×</button>
 
-    <!-- Titel -->
     <table>
       <thead>
-        <tr>
-          <th colspan="2" class="title-cell">${note}</th>
-        </tr>
-        <tr>
-          <th colspan="2" class="subtitle-cell">
-            Gesamtumsatz: ${
-              modeHH
-                ? total.toFixed(3) + " pro HH"
-                : total.toLocaleString("de-DE") + " €"
-            }
-          </th>
-        </tr>
+        <tr><th colspan="2" class="title-cell">${note}</th></tr>
+        <tr><th colspan="2" class="subtitle-cell">
+          Gesamtumsatz: ${
+            modeHH
+              ? total.toFixed(3) + " pro HH"
+              : total.toLocaleString("de-DE") + " €"
+          }
+        </th></tr>
       </thead>
 
-      <!-- Umsatz-Kategorien -->
       <tbody>
-
         <tr class="${active.stationaer ? "" : "disabled"}">
           <td class="label-cell">Stationär</td>
           <td class="value-cell">${fmt(stationaer)}</td>
         </tr>
-
         <tr class="${active.pluscard ? "" : "disabled"}">
           <td class="label-cell">Pluscard</td>
           <td class="value-cell">${fmt(pluscard)}</td>
         </tr>
-
         <tr class="${active.ra ? "" : "disabled"}">
           <td class="label-cell">R&A</td>
           <td class="value-cell">${fmt(ra)}</td>
         </tr>
-
         <tr class="${active.online ? "" : "disabled"}">
           <td class="label-cell">Onlineshop</td>
           <td class="value-cell">${fmt(online)}</td>
         </tr>
-
       </tbody>
     </table>
 
-    <!-- Umsatz-Balken -->
     <div class="umsatz-share-bar">
       ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
       ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>`   : ""}
@@ -1995,47 +1944,21 @@ showUmsatzPopup(plz, values) {
       ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online)}%"></div>`     : ""}
     </div>
 
-    <!-- Legende -->
-    <div style="margin-top:6px; font-size:0.75rem; color:black;">
-      <span style="color:#b41821;">⬤</span> Stationär &nbsp;
-      <span style="color:#d9483b;">⬤</span> Pluscard &nbsp;
-      <span style="color:#f0803c;">⬤</span> R&A &nbsp;
-      <span style="color:#f6b65b;">⬤</span> Onlineshop
+    <div class="umsatz-legend">
+      <span><span style="color:#b41821;">⬤</span> Stationär</span>
+      <span><span style="color:#d9483b;">⬤</span> Pluscard</span>
+      <span><span style="color:#f0803c;">⬤</span> R&A</span>
+      <span><span style="color:#f6b65b;">⬤</span> Onlineshop</span>
     </div>
 
-    <!-- HH-Kennzahlen -->
-    <table style="margin-top:20px;">
-      <thead>
-        <tr>
-          <th colspan="2" class="subtitle-cell">Kennzahlen pro Haushalt</th>
-        </tr>
-      </thead>
-
+    <table class="hh-table">
+      <thead><tr><th colspan="2">Kennzahlen pro Haushalt</th></tr></thead>
       <tbody>
-        <tr>
-          <td class="label-cell">Haushalte</td>
-          <td class="value-cell">${hh.toLocaleString("de-DE")}</td>
-        </tr>
-
-        <tr>
-          <td class="label-cell">Stationär pro HH</td>
-          <td class="value-cell">${fmtHH(stHH)}</td>
-        </tr>
-
-        <tr>
-          <td class="label-cell">Pluscard pro HH</td>
-          <td class="value-cell">${fmtHH(pcHH)}</td>
-        </tr>
-
-        <tr>
-          <td class="label-cell">R&A pro HH</td>
-          <td class="value-cell">${fmtHH(raHH)}</td>
-        </tr>
-
-        <tr>
-          <td class="label-cell">Onlineshop pro HH</td>
-          <td class="value-cell">${fmtHH(osHH)}</td>
-        </tr>
+        <tr><td class="label-cell">Haushalte</td><td class="value-cell">${hh.toLocaleString("de-DE")}</td></tr>
+        <tr><td class="label-cell">Stationär pro HH</td><td class="value-cell">${fmtHH(values.umsatzProHaushalt)}</td></tr>
+        <tr><td class="label-cell">Pluscard pro HH</td><td class="value-cell">${fmtHH(values.pluscardProHaushalt)}</td></tr>
+        <tr><td class="label-cell">R&A pro HH</td><td class="value-cell">${fmtHH(values.raProHaushalt)}</td></tr>
+        <tr><td class="label-cell">Onlineshop pro HH</td><td class="value-cell">${fmtHH(values.onlineshopProHaushalt)}</td></tr>
       </tbody>
     </table>
   `;
@@ -2215,6 +2138,7 @@ getFilteredData() {
   }
   }
 
+
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -2268,7 +2192,7 @@ updateGeoLayer() {
   console.groupEnd();
 
   // ---------------------------------------------------------
-  // 2️⃣ LAYER FÄRBEN + CRITICAL-MARKER
+  // 2️⃣ LAYER FÄRBEN + CRITICAL-MARKER + POPUP-KLICK
   // ---------------------------------------------------------
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
@@ -2285,7 +2209,6 @@ updateGeoLayer() {
       });
       layer.options.interactive = false;
 
-      // Marker IMMER entfernen, wenn nicht WK-Modus
       if (this.criticalMarkers[plz]) {
         this.map.removeLayer(this.criticalMarkers[plz]);
         delete this.criticalMarkers[plz];
@@ -2342,10 +2265,37 @@ updateGeoLayer() {
     layer.options.interactive = true;
 
     // ---------------------------------------------------------
+    // 3️⃣ POPUP-KLICK (nur Fläche, keine Marker)
+    // ---------------------------------------------------------
+    layer.off("click");
+
+    if (this.currentMapMode === "wk") {
+      layer.on("click", () => {
+        this.showPopup(layer.feature);
+
+        // Umsatz-Popup schließen
+        const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+        popupU.classList.remove("show");
+        popupU.classList.add("hidden");
+      });
+    }
+
+    if (this.currentMapMode === "umsatz-multi") {
+      layer.on("click", () => {
+        const values = this.filteredPLZWerte?.[plz];
+        if (values) this.showUmsatzPopup(plz, values);
+
+        // WK-Popup schließen
+        const popupWK = this._shadowRoot.getElementById("side-popup");
+        popupWK.classList.remove("show");
+        popupWK.classList.add("hidden");
+      });
+    }
+
+    // ---------------------------------------------------------
     // ⚠️ CRITICAL-MARKER NUR IM WK-MODUS
     // ---------------------------------------------------------
     if (!showCritical) {
-      // Marker entfernen, falls vorhanden
       if (this.criticalMarkers[plz]) {
         this.map.removeLayer(this.criticalMarkers[plz]);
         delete this.criticalMarkers[plz];
@@ -2353,7 +2303,6 @@ updateGeoLayer() {
       return;
     }
 
-    // WK-Modus → Critical prüfen
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
     if (isCritical) {
@@ -2390,7 +2339,11 @@ updateGeoLayer() {
       }
     }
   });
+
+  // ⭐ Bestreuungsmarker aktualisieren
+  this.updateBestreuungMarkers();
 }
+
 
 
 
@@ -2814,10 +2767,10 @@ prepareUmsatzPLZWerte() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  // NEU: Immer frisches Objekt erzeugen
+  // ⭐ Immer frisches Objekt erzeugen
   const plzWerte = {};
 
-  // Nur Zeilen der aktiven Erhebung
+  // ⭐ Nur Zeilen der aktiven Erhebung
   const rows = raw.filter(row =>
     row["dimension_erhebung_0"]?.id == erhID &&
     row["dimension_jahr_0"]?.id == jahr &&
@@ -2828,6 +2781,7 @@ prepareUmsatzPLZWerte() {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
 
+    // ⭐ Struktur initialisieren
     if (!plzWerte[plz]) {
       plzWerte[plz] = {
         haushalte: 0,
@@ -2846,17 +2800,17 @@ prepareUmsatzPLZWerte() {
 
     const v = plzWerte[plz];
 
-    // Haushalte
+    // ⭐ Haushalte
     const hh = safe(row["value_haushalte_0"]?.raw);
     v.haushalte += hh;
 
-    // Umsatzarten
+    // ⭐ Umsatzarten
     v.umsatz     += safe(row["value_hr_n_umsatz_0"]?.raw);
     v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
     v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
     v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
 
-    // Pro-Haushalt
+    // ⭐ Pro-Haushalt (nur wenn HH > 0)
     if (v.haushalte > 0) {
       v.umsatzProHaushalt     = v.umsatz     / v.haushalte;
       v.raProHaushalt         = v.ra         / v.haushalte;
@@ -2865,6 +2819,7 @@ prepareUmsatzPLZWerte() {
     }
   });
 
+  // ⭐ Final speichern
   this.filteredPLZWerte = plzWerte;
 
   console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(plzWerte).length);
