@@ -2467,6 +2467,30 @@ layer.on("click", () => {
 
 
 
+getDynamicHeatColor(value, max) {
+  value = Number(value);
+  max = Number(max);
+
+  // ❗ Kein Wert → Standardgrau
+  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(max) || max <= 0) {
+    return "#cfd4da";
+  }
+
+  const ratio = value / max;
+
+  if (ratio > 0.95) return "#7a0f17";  // sehr dunkelrot
+  if (ratio > 0.85) return "#9d131b";  // dunkles rot
+  if (ratio > 0.75) return "#b41821";  // signature red
+  if (ratio > 0.65) return "#d9483b";  // rot-orange
+  if (ratio > 0.55) return "#e96a3a";  // orange
+  if (ratio > 0.45) return "#f08a3c";  // hellorange
+  if (ratio > 0.35) return "#f6b65b";  // gelb-orange
+  if (ratio > 0.20) return "#ffe89c";  // hellgelb
+  return "#fff6d6";                    // sehr helles gelb
+}
+
+
+
 updateMarkers() {
   if (!this.filteredGroup || !this.allMarkers) return;
 
