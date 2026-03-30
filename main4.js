@@ -1436,8 +1436,8 @@ initializeMapBase() {
     this._shadowRoot.getElementById("umsatz-extra").style.display = "none";
     this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "none";
 
-    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupU) popupU.classList.remove("show");
+    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupUmsatz) popupUmsatz.classList.remove("show");
 
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) popupWK.classList.remove("show");
@@ -1460,8 +1460,8 @@ initializeMapBase() {
     this._shadowRoot.getElementById("umsatz-extra").style.display = "block";
     this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "block";
 
-    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupU) popupU.classList.remove("show");
+    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupUmsatz) popupUmsatz.classList.remove("show");
 
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) popupWK.classList.remove("show");
@@ -1477,8 +1477,8 @@ initializeMapBase() {
     const isHH = modeSwitch.classList.toggle("hh");
     this.umsatzMode = isHH ? "hh" : "abs";
 
-    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupU) popupU.classList.remove("show");
+    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupUmsatz) popupUmsatz.classList.remove("show");
 
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) popupWK.classList.remove("show");
@@ -1501,8 +1501,8 @@ initializeMapBase() {
 
       this.currentMapMode = "umsatz-multi";
 
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupU) popupU.classList.remove("show");
+      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupUmsatz) popupUmsatz.classList.remove("show");
 
       const popupWK = this._shadowRoot.getElementById("side-popup");
       if (popupWK) popupWK.classList.remove("show");
@@ -1518,8 +1518,8 @@ initializeMapBase() {
   chkDoppel.addEventListener("change", () => {
     this.showCritical = chkDoppel.checked;
 
-    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupU) popupU.classList.remove("show");
+    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupUmsatz) popupUmsatz.classList.remove("show");
 
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) popupWK.classList.remove("show");
@@ -1532,8 +1532,8 @@ initializeMapBase() {
   chkBestreuung.addEventListener("change", () => {
     this.showBestreuung = chkBestreuung.checked;
 
-    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupU) popupU.classList.remove("show");
+    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupUmsatz) popupUmsatz.classList.remove("show");
 
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) popupWK.classList.remove("show");
@@ -1548,8 +1548,8 @@ initializeMapBase() {
   chkRadius.addEventListener("change", () => {
     this.useRadiusFilter = chkRadius.checked;
 
-    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupU) popupU.classList.remove("show");
+    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupUmsatz) popupUmsatz.classList.remove("show");
 
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) popupWK.classList.remove("show");
@@ -1800,8 +1800,8 @@ showPopup(feature) {
   // 🔥 Umsatz-Popup schließen
 const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
 if (popupUmsatz) {
-  popupU.classList.remove("show");
-  popupU.classList.add("hidden");
+  popupUmsatz.classList.remove("show");
+  popupUmsatz.classList.add("hidden");
 }
 
 
