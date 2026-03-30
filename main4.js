@@ -714,6 +714,19 @@
   display: flex;
 }
 
+.umsatz-share-bar.empty {
+  height: 12px;
+  background: #eee;
+  border-radius: 4px;
+}
+
+.share-segment.empty {
+  width: 100%;
+  height: 100%;
+  background: #ddd;
+  border-radius: 4px;
+}
+
 
     </style>
 <div class="layout">
@@ -3546,11 +3559,70 @@ showEmptyUmsatzPopup(plz) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   if (!popup) return;
 
+  const note = this.geoNotes?.[plz] || "Keine Notiz";
+
   popup.innerHTML = `
     <button class="close-btn">×</button>
-    <div style="padding:10px;font-size:0.9rem;">
-      Keine Umsatzdaten für PLZ ${plz}.
+
+    <!-- =============================== -->
+    <!--   TABELLE 1: GESAMT-KENNZAHLEN  -->
+    <!-- =============================== -->
+    <table>
+      <thead>
+        <tr><th colspan="2" class="title-cell">${note}</th></tr>
+        <tr><th colspan="2" class="subtitle-cell">
+          Keine Umsatzdaten für PLZ ${plz}
+        </th></tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td class="label-cell">Stationär</td>
+          <td class="value-cell">–</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Pluscard</td>
+          <td class="value-cell">–</td>
+        </tr>
+        <tr>
+          <td class="label-cell">R&A</td>
+          <td class="value-cell">–</td>
+        </tr>
+        <tr>
+          <td class="label-cell">Onlineshop</td>
+          <td class="value-cell">–</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Umsatz-Balken (leer) -->
+    <div class="umsatz-share-bar empty">
+      <div class="share-segment empty"></div>
     </div>
+
+    <div class="umsatz-legend">
+      <span><span style="color:#b41821;">⬤</span> Stationär</span>
+      <span><span style="color:#d9483b;">⬤</span> Pluscard</span>
+      <span><span style="color:#f0803c;">⬤</span> R&A</span>
+      <span><span style="color:#f6b65b;">⬤</span> Onlineshop</span>
+    </div>
+
+    <!-- ===================================== -->
+    <!--   TABELLE 2: PRO-HAUSHALT-KENNZAHLEN  -->
+    <!-- ===================================== -->
+    <table class="hh-table">
+      <thead>
+        <tr><th colspan="2" class="subtitle-cell">Kennzahlen pro Haushalt</th></tr>
+      </thead>
+
+      <tbody>
+        <tr><td class="label-cell">Haushalte</td><td class="value-cell">–</td></tr>
+        <tr><td class="label-cell">Stationär pro HH</td><td class="value-cell">–</td></tr>
+        <tr><td class="label-cell">Pluscard pro HH</td><td class="value-cell">–</td></tr>
+        <tr><td class="label-cell">R&A pro HH</td><td class="value-cell">–</td></tr>
+        <tr><td class="label-cell">Onlineshop pro HH</td><td class="value-cell">–</td></tr>
+      </tbody>
+    </table>
   `;
 
   popup.classList.remove("hidden");
@@ -3562,6 +3634,7 @@ showEmptyUmsatzPopup(plz) {
     popup.classList.add("hidden");
   };
 }
+
 
 
 
