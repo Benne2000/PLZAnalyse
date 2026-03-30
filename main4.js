@@ -2229,15 +2229,15 @@ applyFilter(erhID, jahr, nummer) {
     }
 
     this._shadowRoot.getElementById("wk-extra").style.display = "none";
-    this._shadowRoot.getElementById("umsatz-extra").style.display = "block";
-    this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "block";
+    this._shadowRoot.getElementById("umsatz-options-row").style.display = "flex";
+
 
   } else {
     this.currentMapMode = "wk";
 
     this._shadowRoot.getElementById("wk-extra").style.display = "block";
-    this._shadowRoot.getElementById("umsatz-extra").style.display = "none";
-    this._shadowRoot.getElementById("umsatz-radius-extra").style.display = "none";
+    this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
+
   }
 
   // 4️⃣ HZ-Flags neu berechnen
