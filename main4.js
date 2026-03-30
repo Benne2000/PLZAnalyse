@@ -343,7 +343,7 @@
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   font-family: sans-serif;
-  overflow: visible;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   height: 100%;
@@ -356,6 +356,7 @@
   flex-direction: column;
   min-height: 0;
   transition: transform 0.35s ease;
+  overflow: visible;
 }
 
 .table-scroll {
