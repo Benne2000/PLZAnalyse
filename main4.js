@@ -1903,138 +1903,153 @@ showUmsatzPopup(plz, values) {
 
 
 
+showUmsatzPopup(plz, values) {
+  const popup = this._shadowRoot.getElementById("popup-umsatz");
 
-showPopup(feature) {
-  const plz = String(feature.properties?.plz ?? "")
-    .padStart(5, "0")
-    .trim();
+  const modeHH = this.umsatzMode === "hh";
 
-  const note = feature.properties?.note || "Keine Notiz";
+  // Umsatzwerte
+  const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
+  const pluscard   = modeHH ? values.pluscardProHaushalt : values.pluscard;
+  const ra         = modeHH ? values.raProHaushalt : values.ra;
+  const online     = modeHH ? values.onlineshopProHaushalt : values.onlineshop;
 
-  // 🔥 Daten der aktiven Erhebung holen
-  const daten = this.filteredKennwerte?.[plz];
+  // HH-Kennzahlen
+  const hh = values.haushalte;
+  const stHH = values.umsatzProHaushalt;
+  const pcHH = values.pluscardProHaushalt;
+  const raHH = values.raProHaushalt;
+  const osHH = values.onlineshopProHaushalt;
 
-  if (!daten) {
-    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
-  }
+  const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-  // 🔥 Symbol bestimmen (kritisch > HZ > normal)
-  let symbol = "🔴";
-  if (daten?.isCritical) {
-    symbol = "⚠️";
-  } else if (daten?.isHZ) {
-    symbol = "🟢";
-  }
-
-  // Beschriftungen für Haupttabelle
-  const beschreibungen = {
-    value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
-    value_umsatz_p_hh_0: "Umsatz p. HH",
-    value_wk_in_percent_0: "Werbekosten (%)",
-    value_wk_nachbar_0: "WK (%) incl. Nachb.",
-    value_hz_kosten_0: "HZ-Werbekosten",
-    value_werbeverweigerer_0: "Werbeverweigerer (%)",
-    value_haushalte_0: "Haushalte",
-    value_kaufkraft_0: "BM-Kaufkraft-Idx",
-    value_ums_erhebung_0: "Umsatz",
-    value_kd_erhebung_0: "Anzahl Kunden",
-    value_bon_erhebung_0: "Ø-Bon",
-    value_auflage_0: "Auflage"
+  const active = {
+    stationaer: this.activeCategories.has("stationaer"),
+    pluscard:   this.activeCategories.has("pluscard"),
+    ra:         this.activeCategories.has("ra"),
+    online:     this.activeCategories.has("online")
   };
 
-  // Beschriftungen für Zusatzwerte
-  const beschreibungenSide = {
-    value_wk_potentiell_0: "WK in %",
-    value_hz_potentiell_0: "HZ-Werbekosten"
-  };
+  const total =
+    (active.stationaer ? stationaer : 0) +
+    (active.pluscard   ? pluscard   : 0) +
+    (active.ra         ? ra         : 0) +
+    (active.online     ? online     : 0);
 
-  // 🔥 Haupttabelle aufbauen
-  let rows = "";
+  const fmt = x => modeHH ? x.toFixed(3) : x.toLocaleString("de-DE");
+  const fmtHH = x => Number(x).toFixed(3);
 
-  Object.entries(beschreibungen).forEach(([id, label], index) => {
-    const rawValue = daten?.[id]?.raw;
-    const wert = typeof rawValue === "number"
-      ? rawValue.toLocaleString("de-DE")
-      : "–";
+  const pct = x => total > 0 ? (x / total) * 100 : 0;
 
-    // Abschnittstrenner
-    if (index === 8) {
-      rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
-    }
-
-    rows += `
-      <tr class="kennzahl-row">
-        <td class="label-cell">${label}</td>
-        <td class="value-cell">${wert}</td>
-      </tr>
-    `;
-  });
-
-  // 🔥 Popup-Container holen
-  const sidePopup = this._shadowRoot.getElementById('side-popup');
-
-  // 🔥 Popup-Hauptinhalt setzen (inkl. Symbol + PLZ + Note)
-  sidePopup.innerHTML = `
+  popup.innerHTML = `
     <button class="close-btn">×</button>
+
+    <!-- Titel -->
     <table>
       <thead>
         <tr>
-          <th colspan="2" class="title-cell" title="${note}">
-            ${symbol} ${note}
+          <th colspan="2" class="title-cell">${note}</th>
+        </tr>
+        <tr>
+          <th colspan="2" class="subtitle-cell">
+            Gesamtumsatz: ${
+              modeHH
+                ? total.toFixed(3) + " pro HH"
+                : total.toLocaleString("de-DE") + " €"
+            }
           </th>
         </tr>
-        <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
       </thead>
-      <tbody>${rows}</tbody>
+
+      <!-- Umsatz-Kategorien -->
+      <tbody>
+
+        <tr class="${active.stationaer ? "" : "disabled"}">
+          <td class="label-cell">Stationär</td>
+          <td class="value-cell">${fmt(stationaer)}</td>
+        </tr>
+
+        <tr class="${active.pluscard ? "" : "disabled"}">
+          <td class="label-cell">Pluscard</td>
+          <td class="value-cell">${fmt(pluscard)}</td>
+        </tr>
+
+        <tr class="${active.ra ? "" : "disabled"}">
+          <td class="label-cell">R&A</td>
+          <td class="value-cell">${fmt(ra)}</td>
+        </tr>
+
+        <tr class="${active.online ? "" : "disabled"}">
+          <td class="label-cell">Onlineshop</td>
+          <td class="value-cell">${fmt(online)}</td>
+        </tr>
+
+      </tbody>
+    </table>
+
+    <!-- Umsatz-Balken -->
+    <div class="umsatz-share-bar">
+      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
+      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>`   : ""}
+      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(ra)}%"></div>`         : ""}
+      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online)}%"></div>`     : ""}
+    </div>
+
+    <!-- Legende -->
+    <div style="margin-top:6px; font-size:0.75rem; color:black;">
+      <span style="color:#b41821;">⬤</span> Stationär &nbsp;
+      <span style="color:#d9483b;">⬤</span> Pluscard &nbsp;
+      <span style="color:#f0803c;">⬤</span> R&A &nbsp;
+      <span style="color:#f6b65b;">⬤</span> Onlineshop
+    </div>
+
+    <!-- HH-Kennzahlen -->
+    <table style="margin-top:20px;">
+      <thead>
+        <tr>
+          <th colspan="2" class="subtitle-cell">Kennzahlen pro Haushalt</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        <tr>
+          <td class="label-cell">Haushalte</td>
+          <td class="value-cell">${hh.toLocaleString("de-DE")}</td>
+        </tr>
+
+        <tr>
+          <td class="label-cell">Stationär pro HH</td>
+          <td class="value-cell">${fmtHH(stHH)}</td>
+        </tr>
+
+        <tr>
+          <td class="label-cell">Pluscard pro HH</td>
+          <td class="value-cell">${fmtHH(pcHH)}</td>
+        </tr>
+
+        <tr>
+          <td class="label-cell">R&A pro HH</td>
+          <td class="value-cell">${fmtHH(raHH)}</td>
+        </tr>
+
+        <tr>
+          <td class="label-cell">Onlineshop pro HH</td>
+          <td class="value-cell">${fmtHH(osHH)}</td>
+        </tr>
+      </tbody>
     </table>
   `;
 
-  // 🔥 Zusatzwerte nur bei Nicht-HZ + Umsatz > 0
-  const isHZ = daten?.isHZ === false;
-  const umsatz = daten?.value_hr_n_umsatz_0?.raw;
+  popup.classList.remove("hidden");
+  void popup.offsetWidth;
+  popup.classList.add("show");
 
-  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
-    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
-
-    const wkPotentiell = typeof wkPotentiellRaw === "number"
-      ? wkPotentiellRaw.toLocaleString("de-DE")
-      : "–";
-
-    const hzPotentiell = typeof hzPotentiellRaw === "number"
-      ? hzPotentiellRaw.toLocaleString("de-DE")
-      : "–";
-
-    const extraTable = `
-      <table class="extra-table">
-        <thead>
-          <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-            <td class="value-cell">${wkPotentiell}</td>
-          </tr>
-          <tr>
-            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-            <td class="value-cell">${hzPotentiell}</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    sidePopup.insertAdjacentHTML('beforeend', extraTable);
-  }
-
-  // Animation triggern
-  void sidePopup.offsetWidth;
-  setTimeout(() => sidePopup.classList.add('show'), 10);
-
-  // Close-Button
-  const closeBtn = sidePopup.querySelector('.close-btn');
-  closeBtn.addEventListener('click', () => {
-    sidePopup.classList.remove('show');
-  });
+  popup.querySelector(".close-btn").onclick = () => {
+    popup.classList.remove("show");
+    popup.classList.add("hidden");
+  };
 }
+
 
   updateNeighbours(filteredData) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
