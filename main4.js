@@ -2066,13 +2066,13 @@ showUmsatzPopup(plz, values) {
   const modeHH = this.umsatzMode === "hh";
 
 // IMMER absolute Werte oben
-const stationaer = values.stationaer;
+const stationaer = values.umsatz;
 const pluscard   = values.pluscard;
 const ra         = values.ra;
 const online     = values.onlineshop;
 
 // IMMER pro Haushalt unten
-const stHH = values.stationaerProHaushalt;
+const stHH = values.umsatzProHaushalt;
 const pcHH = values.pluscardProHaushalt;
 const raHH = values.raProHaushalt;
 const osHH = values.onlineshopProHaushalt;
