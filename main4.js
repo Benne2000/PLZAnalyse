@@ -2116,11 +2116,8 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
       <thead>
         <tr><th colspan="2" class="title-cell">${note}</th></tr>
         <tr><th colspan="2" class="subtitle-cell">
-          Gesamtumsatz: ${
-            modeHH
-              ? total.toFixed(3) + " pro HH"
-              : total.toLocaleString("de-DE") + " €"
-          }
+          Gesamtumsatz: ${totalAbs.toLocaleString("de-DE")} €
+
         </th></tr>
       </thead>
 
