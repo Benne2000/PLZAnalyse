@@ -1547,21 +1547,30 @@ btnWK.addEventListener("click", () => {
   this._shadowRoot.getElementById("wk-extra").style.display = "block";
   this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
 
-  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-  if (popupUmsatz) popupUmsatz.classList.remove("show");
+  // Popups schließen
+  this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+  this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
 
-  const popupWK = this._shadowRoot.getElementById("side-popup");
-  if (popupWK) popupWK.classList.remove("show");
+  // ⭐ 1. WK-Basisdaten neu berechnen
+  this.filteredData = this.getFilteredData(); // Rohdaten
 
-  // ⭐ WICHTIG: WK-Daten neu berechnen
-  this.filteredKennwerte = this.getFilteredDataWithRadius();
+  // ⭐ 2. WK-Kennwerte neu berechnen
+  this.filteredKennwerte = this.getFilteredKennwerte(this.filteredData);
 
-  // ⭐ Karte neu einfärben
-  this.updateGeoLayer();
+  // ⭐ 3. PLZ-Werte neu berechnen
+  this.filteredPLZWerte = this.getPLZWerteFromKennwerte(this.filteredKennwerte);
 
-  // ⭐ Tabelle neu rendern
+  // ⭐ 4. Radius neu anwenden
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.applyRadiusFilter(radius);
+
+  // ⭐ 5. Tabelle neu rendern
   this.renderDataTable(this.filteredKennwerte);
+
+  // ⭐ 6. Karte neu einfärben
+  this.updateGeoLayer();
 });
+
 
 
 
