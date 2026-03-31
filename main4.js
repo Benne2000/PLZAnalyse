@@ -2163,7 +2163,7 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
      <thead>
         <tr>
            <th colspan="2" class="subtitle-cell">
-             Gesamtumsatz pro HH (Summe: ${fmtHH(totalHH)})
+             Gesamtumsatz pro HH: ${fmtHH(totalHH)})
            </th>
         </tr>
       </thead>
