@@ -3098,7 +3098,7 @@ prepareUmsatzPLZWerte() {
     v.haushalte += hh;
 
     // ⭐ Umsatzarten
-    v.umsatz     += safe(row["value_hr_n_umsatz_0"]?.raw);
+    v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
     v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
     v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
     v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
