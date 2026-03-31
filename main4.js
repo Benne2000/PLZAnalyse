@@ -1551,25 +1551,20 @@ btnWK.addEventListener("click", () => {
   this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
   this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
 
-  // ⭐ 1. WK-Basisdaten neu berechnen
-  this.filteredData = this.getFilteredData(); // Rohdaten
+  // ⭐ WK-Datenbasis korrekt aufbauen
+  const erhID = this._activeFilter?.erhID;
+  const jahr = this._activeFilter?.jahr;
+  const nummer = this._activeFilter?.nummer;
 
-  // ⭐ 2. WK-Kennwerte neu berechnen
-  this.filteredKennwerte = this.getFilteredKennwerte(this.filteredData);
-
-  // ⭐ 3. PLZ-Werte neu berechnen
-  this.filteredPLZWerte = this.getPLZWerteFromKennwerte(this.filteredKennwerte);
-
-  // ⭐ 4. Radius neu anwenden
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.applyRadiusFilter(radius);
-
-  // ⭐ 5. Tabelle neu rendern
-  this.renderDataTable(this.filteredKennwerte);
-
-  // ⭐ 6. Karte neu einfärben
-  this.updateGeoLayer();
+  if (erhID && jahr && nummer) {
+    // 👉 applyFilter baut ALLES korrekt auf
+    this.applyFilter(erhID, jahr, nummer);
+  } else {
+    // 👉 Falls noch keine Erhebung gewählt wurde
+    this.updateGeoLayer();
+  }
 });
+
 
 
 
