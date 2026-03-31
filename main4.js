@@ -2065,37 +2065,46 @@ showUmsatzPopup(plz, values) {
 
   const modeHH = this.umsatzMode === "hh";
 
-  // Gesamtwerte
-  const stationaer = modeHH ? values.umsatzProHaushalt : values.umsatz;
-  const pluscard   = modeHH ? values.pluscardProHaushalt : values.pluscard;
-  const ra         = modeHH ? values.raProHaushalt : values.ra;
-  const online     = modeHH ? values.onlineshopProHaushalt : values.onlineshop;
+// IMMER absolute Werte oben
+const stationaer = values.stationaer;
+const pluscard   = values.pluscard;
+const ra         = values.ra;
+const online     = values.onlineshop;
 
-  // Pro-Haushalt-Werte
-  const stHH = values.umsatzProHaushalt;
-  const pcHH = values.pluscardProHaushalt;
-  const raHH = values.raProHaushalt;
-  const osHH = values.onlineshopProHaushalt;
+// IMMER pro Haushalt unten
+const stHH = values.stationaerProHaushalt;
+const pcHH = values.pluscardProHaushalt;
+const raHH = values.raProHaushalt;
+const osHH = values.onlineshopProHaushalt;
 
-  const hh = values.haushalte;
-  const note = this.geoNotes?.[plz] || "Keine Notiz";
+const hh = values.haushalte;
+const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-  const active = {
-    stationaer: this.activeCategories.has("stationaer"),
-    pluscard:   this.activeCategories.has("pluscard"),
-    ra:         this.activeCategories.has("ra"),
-    online:     this.activeCategories.has("online")
-  };
+const active = {
+  stationaer: this.activeCategories.has("stationaer"),
+  pluscard:   this.activeCategories.has("pluscard"),
+  ra:         this.activeCategories.has("ra"),
+  online:     this.activeCategories.has("online")
+};
 
-  const total =
-    (active.stationaer ? stationaer : 0) +
-    (active.pluscard   ? pluscard   : 0) +
-    (active.ra         ? ra         : 0) +
-    (active.online     ? online     : 0);
+// Gesamt absolut (für Balken + Kopfzeile oben)
+const totalAbs =
+  (active.stationaer ? stationaer : 0) +
+  (active.pluscard   ? pluscard   : 0) +
+  (active.ra         ? ra         : 0) +
+  (active.online     ? online     : 0);
 
-  const fmt = x => modeHH ? x.toFixed(3) : x.toLocaleString("de-DE");
-  const fmtHH = x => Number(x).toFixed(3);
-  const pct = x => total > 0 ? (x / total) * 100 : 0;
+// ⭐ NEU: Gesamt pro Haushalt (für Kopfzeile unten)
+const totalHH =
+  (active.stationaer ? stHH : 0) +
+  (active.pluscard   ? pcHH : 0) +
+  (active.ra         ? raHH : 0) +
+  (active.online     ? osHH : 0);
+
+const fmtAbs = x => x.toLocaleString("de-DE");
+const fmtHH  = x => Number(x).toFixed(3);
+const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
+
 
   popup.innerHTML = `
     <button class="close-btn">×</button>
@@ -2154,9 +2163,14 @@ showUmsatzPopup(plz, values) {
     <!--   TABELLE 2: PRO-HAUSHALT-KENNZAHLEN  -->
     <!-- ===================================== -->
     <table class="hh-table">
-      <thead>
-        <tr><th colspan="2" class="subtitle-cell">Kennzahlen pro Haushalt</th></tr>
+     <thead>
+        <tr>
+           <th colspan="2" class="subtitle-cell">
+             Gesamtumsatz pro HH (Summe: ${fmtHH(totalHH)})
+           </th>
+        </tr>
       </thead>
+
 
       <tbody>
         <tr><td class="label-cell">Haushalte</td><td class="value-cell">${hh.toLocaleString("de-DE")}</td></tr>
