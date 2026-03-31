@@ -2124,19 +2124,19 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
       <tbody>
         <tr class="${active.stationaer ? "" : "disabled"}">
           <td class="label-cell">Stationär</td>
-          <td class="value-cell">${fmt(stationaer)}</td>
+          <td class="value-cell">${fmtAbs(stationaer)}</td>
         </tr>
         <tr class="${active.pluscard ? "" : "disabled"}">
           <td class="label-cell">Pluscard</td>
-          <td class="value-cell">${fmt(pluscard)}</td>
+          <td class="value-cell">${fmtAbs(pluscard)}</td>
         </tr>
         <tr class="${active.ra ? "" : "disabled"}">
           <td class="label-cell">R&A</td>
-          <td class="value-cell">${fmt(ra)}</td>
+          <td class="value-cell">${fmtAbs(ra)}</td>
         </tr>
         <tr class="${active.online ? "" : "disabled"}">
           <td class="label-cell">Onlineshop</td>
-          <td class="value-cell">${fmt(online)}</td>
+          <td class="value-cell">${fmtAbs(online)}</td>
         </tr>
       </tbody>
     </table>
