@@ -3538,7 +3538,8 @@ getFilteredDataWithRadius() {
         avgArrays: {
           werbeverweigerer: [],
           haushalte: [],
-          kaufkraft: []
+          kaufkraft: [],
+          potHzKosten: []   // ⭐ NEU: Array für Durchschnitt
         }
       };
     }
@@ -3553,7 +3554,12 @@ getFilteredDataWithRadius() {
     entry.sum.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
     entry.sum.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
     entry.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
-    entry.sum.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
+
+    // ⭐ NEU: potentielle HZ-Kosten als Durchschnitt, nicht Summe
+    const potHz = row["value_hz_potentiell_0"]?.raw;
+    if (typeof potHz === "number") {
+      entry.avgArrays.potHzKosten.push(potHz); // Durchschnitt
+    }
 
     const wv2 = row["value_werbeverweigerer_0"]?.raw;
     if (typeof wv2 === "number") entry.avgArrays.werbeverweigerer.push(wv2);
@@ -3568,82 +3574,86 @@ getFilteredDataWithRadius() {
   // 5️⃣ Aggregation
   const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
 
-// WK + Umsatz zusammenführen
-const mergedPLZWerte = {};
+  const mergedPLZWerte = {};
 
-Object.entries(aggregated).forEach(([plz, entry]) => {
-  const sum = entry.sum;
-  const avgArr = entry.avgArrays;
+  Object.entries(aggregated).forEach(([plz, entry]) => {
+    const sum = entry.sum;
+    const avgArr = entry.avgArrays;
 
-  const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
-  const avgHaushalte = avg(avgArr.haushalte);
-  const avgKaufkraft = avg(avgArr.kaufkraft);
+    const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
+    const avgHaushalte = avg(avgArr.haushalte);
+    const avgKaufkraft = avg(avgArr.kaufkraft);
 
-  const umsatzNetto = sum.umsatzNetto;
-  const hzKosten = sum.hzKosten;
+    // ⭐ NEU: Durchschnitt der potenziellen HZ-Kosten
+    const avgPotHzKosten = avg(avgArr.potHzKosten);
 
-  const wkPercent = umsatzNetto > 0
-    ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
-    : 0;
+    const umsatzNetto = sum.umsatzNetto;
+    const hzKosten = sum.hzKosten;
 
-  const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
-  const wkNachbarn = unfilteredUmsatz > 0
-    ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
-    : 0;
+    const wkPercent = umsatzNetto > 0
+      ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
+      : 0;
 
-  const potHzPercent = umsatzNetto > 0
-    ? Number(((sum.potHzAbs / umsatzNetto) * 100).toFixed(1))
-    : 0;
+    const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
+    const wkNachbarn = unfilteredUmsatz > 0
+      ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
+      : 0;
 
-  const isHZ = entry.hzCount > 0;
-  const isCritical = entry.hzCount > 1;
+    // ⭐ NEU: potHzPercent basiert auf Durchschnitt, nicht Summe
+    const potHzPercent = umsatzNetto > 0
+      ? Number(((avgPotHzKosten / umsatzNetto) * 100).toFixed(1))
+      : 0;
 
-  // WK-Kennwerte
-  this.filteredKennwerte[plz] = {
-    isHZ,
-    isCritical,
-    value_hr_n_umsatz_0: { raw: umsatzNetto },
-    value_wk_in_percent_0: { raw: wkPercent },
-    value_wk_nachbar_0: { raw: wkNachbarn },
-    value_hz_kosten_0: { raw: hzKosten },
-    value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
-    value_haushalte_0: { raw: avgHaushalte },
-    value_kaufkraft_0: { raw: avgKaufkraft },
-    value_ums_erhebung_0: { raw: sum.umsatzErhebung },
-    value_kd_erhebung_0: { raw: sum.kdErhebung },
-    value_bon_erhebung_0: { raw: sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0 },
-    value_auflage_0: { raw: sum.auflage },
-    value_hz_potentiell_0: { raw: sum.potHzAbs },
-    value_wk_potentiell_0: { raw: potHzPercent }
-  };
+    const isHZ = entry.hzCount > 0;
+    const isCritical = entry.hzCount > 1;
 
-  // Umsatzwerte aus prepareUmsatzPLZWerte übernehmen
-  const old = this.filteredPLZWerte?.[plz] || {};
+    // WK-Kennwerte
+    this.filteredKennwerte[plz] = {
+      isHZ,
+      isCritical,
+      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      value_wk_in_percent_0: { raw: wkPercent },
+      value_wk_nachbar_0: { raw: wkNachbarn },
+      value_hz_kosten_0: { raw: hzKosten },
+      value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
+      value_haushalte_0: { raw: avgHaushalte },
+      value_kaufkraft_0: { raw: avgKaufkraft },
+      value_ums_erhebung_0: { raw: sum.umsatzErhebung },
+      value_kd_erhebung_0: { raw: sum.kdErhebung },
+      value_bon_erhebung_0: { raw: sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0 },
+      value_auflage_0: { raw: sum.auflage },
 
-  mergedPLZWerte[plz] = {
-    // WK
-    wk: wkPercent,
-    wkNachbarn,
-    wkPot: potHzPercent,
-    hz: isHZ,
+      // ⭐ NEU: Durchschnittliche potenzielle HZ-Kosten
+      value_hz_potentiell_avg_0: { raw: avgPotHzKosten },
 
-    // Umsatz
-    umsatz: old.umsatz ?? 0,
-    ra: old.ra ?? 0,
-    onlineshop: old.onlineshop ?? 0,
-    pluscard: old.pluscard ?? 0,
-    haushalte: old.haushalte ?? 0,
-    umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
-    raProHaushalt: old.raProHaushalt ?? 0,
-    onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
-    pluscardProHaushalt: old.pluscardProHaushalt ?? 0
-  };
-});
+      // ⭐ NEU: Prozentwert basierend auf Durchschnitt
+      value_wk_potentiell_0: { raw: potHzPercent }
+    };
 
-// final speichern
-this.filteredPLZWerte = mergedPLZWerte;
+    // Umsatzwerte aus prepareUmsatzPLZWerte übernehmen
+    const old = this.filteredPLZWerte?.[plz] || {};
 
+    mergedPLZWerte[plz] = {
+      // WK
+      wk: wkPercent,
+      wkNachbarn,
+      wkPot: potHzPercent,
+      hz: isHZ,
 
+      // Umsatz
+      umsatz: old.umsatz ?? 0,
+      ra: old.ra ?? 0,
+      onlineshop: old.onlineshop ?? 0,
+      pluscard: old.pluscard ?? 0,
+      haushalte: old.haushalte ?? 0,
+      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
+      raProHaushalt: old.raProHaushalt ?? 0,
+      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
+      pluscardProHaushalt: old.pluscardProHaushalt ?? 0
+    };
+  });
+
+  this.filteredPLZWerte = mergedPLZWerte;
 
   // 6️⃣ Streuverlust final berechnen
   this.streuverlust = {
@@ -3655,6 +3665,7 @@ this.filteredPLZWerte = mergedPLZWerte;
 
   return result;
 }
+
 
 
 closeNLTable() {
