@@ -2565,8 +2565,10 @@ if (!showCritical) {
 
     const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
-    if (isCritical) {
-      if (!this.criticalMarkers[plz]) {
+// Critical-Marker nur im WK-Modus und nur wenn aktiviert
+if (showCritical && isCritical) {
+
+    if (!this.criticalMarkers[plz]) {
         const center = layer.getBounds().getCenter();
 
         const icon = L.divIcon({
@@ -2591,13 +2593,16 @@ if (!showCritical) {
           icon,
           interactive: false
         }).addTo(this.map);
-      }
-    } else {
-      if (this.criticalMarkers[plz]) {
+    }
+
+} else {
+    // Marker entfernen, falls vorhanden
+    if (this.criticalMarkers[plz]) {
         this.map.removeLayer(this.criticalMarkers[plz]);
         delete this.criticalMarkers[plz];
-      }
     }
+}
+
   });
 
   // ⭐ Bestreuungsmarker aktualisieren
