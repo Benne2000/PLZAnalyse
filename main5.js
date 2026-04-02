@@ -1152,6 +1152,77 @@ updateStreuverlustFooter() {
   `;
 }
 
+computeStreuverlust() {
+  if (!this.filteredData) return;
+
+  const result = {
+    umsatz: 0,
+    hzKosten: 0,
+    umsatzErhebung: 0,
+    kdErhebung: 0,
+    auflage: 0,
+    potHzAbs: 0,
+    avg: {
+      werbeverweigerer: 0,
+      haushalte: 0,
+      kaufkraft: 0
+    }
+  };
+
+  const avgArrays = {
+    werbeverweigerer: [],
+    haushalte: [],
+    kaufkraft: []
+  };
+
+  let totalErhebungUmsatz = 0;
+
+  this.filteredData.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ || "").padStart(5, "0");
+
+    // NL-Filter
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
+
+    // Gesamtumsatz der Erhebung (für Anteil)
+    totalErhebungUmsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+
+    // PLZ im Radius → kein Streuverlust
+    if (this.plzImRadius instanceof Set && this.plzImRadius.has(plz)) return;
+
+    // PLZ außerhalb Radius → Streuverlust
+    result.umsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    result.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+    result.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
+    result.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
+    result.auflage += row["value_auflage_0"]?.raw ?? 0;
+    result.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
+
+    const wv = row["value_werbeverweigerer_0"]?.raw;
+    if (typeof wv === "number") avgArrays.werbeverweigerer.push(wv);
+
+    const hh = row["value_haushalte_0"]?.raw;
+    if (typeof hh === "number") avgArrays.haushalte.push(hh);
+
+    const kk = row["value_kaufkraft_0"]?.raw;
+    if (typeof kk === "number") avgArrays.kaufkraft.push(kk);
+  });
+
+  const avg = arr =>
+    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+  result.avg.werbeverweigerer = avg(avgArrays.werbeverweigerer);
+  result.avg.haushalte = avg(avgArrays.haushalte);
+  result.avg.kaufkraft = avg(avgArrays.kaufkraft);
+
+  result.anteil =
+    totalErhebungUmsatz > 0
+      ? result.umsatz / totalErhebungUmsatz
+      : 0;
+
+  this.streuverlust = result;
+}
 
 
 sortTableByColumn(columnIndex) {
@@ -1872,6 +1943,7 @@ applyNLFilter(selectedNLs) {
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
   this.prepareUmsatzPLZWerte();
+  this.computeStreuverlust();
 
 }
 
@@ -2246,6 +2318,8 @@ applyFilter(erhID, jahr, nummer) {
   // 2️⃣ Umsatzwerte vorbereiten
   this.prepareUmsatzPLZWerte();
   this.computeWKKennwerte();
+  this.computeStreuverlust();
+
 
   // 3️⃣ MapMode korrekt setzen
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
@@ -3345,6 +3419,8 @@ getDistanceKm(lat1, lon1, lat2, lon2) {
 getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
+
+
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
@@ -3391,6 +3467,7 @@ applyRadiusFilter(radiusKm) {
 
   // 4) Karte + Tabelle aktualisieren
 this.computeWKKennwerte();
+this.computeStreuverlust();
 this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
@@ -4001,6 +4078,8 @@ showEmptyUmsatzPopup(plz) {
 
 // WK neu berechnen
 this.computeWKKennwerte();
+this.computeStreuverlust();
+
 
 
 
