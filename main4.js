@@ -1841,9 +1841,7 @@ updateBestreuungMarkers() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-
-
-createAllMarkers() {
+   createAllMarkers() {
   if (!this.filteredGroup) return;
 
   this.filteredGroup.clearLayers();
@@ -1912,6 +1910,41 @@ createAllMarkers() {
 
   this.updateGeoLayer();
   this.updateNLSelectionUI?.();
+}
+
+
+applyNLFilter(selectedNLs) {
+  if (!this._selectedNLs) this._selectedNLs = new Set();
+  this._selectedNLs = new Set(selectedNLs);
+
+  console.log("🔵 applyNLFilter():", [...this._selectedNLs]);
+
+  if (!this.filteredData || this.filteredData.length === 0) {
+    console.warn("⚠️ applyNLFilter(): Keine Erhebungsdaten vorhanden!");
+    return;
+  }
+
+
+
+  // 1️⃣ PLZ-Liste nach NL-Filter
+  this.filteredPLZs = this.filteredData
+    .filter(row => {
+      const nl = row["dimension_niederlassung_0"]?.id?.trim();
+      return this._selectedNLs.size === 0 || this._selectedNLs.has(nl);
+    })
+    .map(row => row["dimension_plz_0"]?.id?.trim())
+    .filter(plz => plz && plz !== "@NullMember");
+
+  // 2️⃣ Marker aktualisieren (aktive vs. Phantom)
+  this.updateMarkers();
+  this.computeWKKennwerte();
+  // 3️⃣ Radius erneut anwenden
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.currentRadius = radius;
+  this.applyRadiusFilter(radius);
+  this.prepareUmsatzPLZWerte();
+  this.computeStreuverlust();
+
 }
 
 
@@ -2682,6 +2715,8 @@ getDynamicHeatColor(value, max) {
   return "#fff6d6";                    // sehr helles gelb
 }
 
+
+
 updateMarkers() {
   if (!this.filteredGroup || !this.allMarkers) return;
 
@@ -3301,10 +3336,8 @@ renderErhebungsInfo() {
 
         this.render();
       }
-
 prepareMapData(filteredData) {
-  console.log("DEBUG prepareMapData input:", filteredData);
-
+  const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
   // Reset
@@ -3365,10 +3398,7 @@ prepareMapData(filteredData) {
       };
     }
   });
-
-  console.log("DEBUG nlKoordinaten:", this.nlKoordinaten);
 }
-
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
 getDistanceKm(lat1, lon1, lat2, lon2) {
