@@ -1874,14 +1874,20 @@ createAllMarkers() {
       })
     };
   }
+console.log("DEBUG _niederlassungen:", this._niederlassungen);
 
-  // 1️⃣ NL-Marker erzeugen
-  this.nlMarkers = this._niederlassungen.map(nl => {
-    return L.marker([nl.lat, nl.lng], {
-      icon: this._markerIcons.nl,
-      zIndexOffset: 1000
-    }).addTo(this.map);
-  });
+if (!Array.isArray(this._niederlassungen)) {
+  console.error("Niederlassungen nicht geladen:", this._niederlassungen);
+  return;
+}
+
+this.nlMarkers = this._niederlassungen.map(nl => {
+  return L.marker([nl.lat, nl.lng], {
+    icon: this._markerIcons.nl,
+    zIndexOffset: 1000
+  }).addTo(this.map);
+});
+
 
   // 2️⃣ Phantom-Marker erzeugen
   this.phantomMarkers = this._niederlassungen.map(nl => {
