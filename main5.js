@@ -3050,7 +3050,6 @@ prepareErhebungsInfo() {
     };
   });
 }
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3063,63 +3062,93 @@ prepareUmsatzPLZWerte() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  // ⭐ Immer frisches Objekt erzeugen
-  const plzWerte = {};
+  // ⭐ 1) Cache für vollständige Erhebungsdaten (nur einmal berechnen)
+  if (!this._umsatzCache) this._umsatzCache = {};
 
-  // ⭐ Nur Zeilen der aktiven Erhebung
-  const rows = raw.filter(row =>
-    row["dimension_erhebung_0"]?.id == erhID &&
-    row["dimension_jahr_0"]?.id == jahr &&
-    row["dimension_erhebungsnummer_0"]?.id == nummer
-  );
+  const cacheKey = `${erhID}_${jahr}_${nummer}`;
 
-  rows.forEach(row => {
-    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = String(rawPLZ).padStart(5, "0");
+  if (!this._umsatzCache[cacheKey]) {
+    const rows = raw.filter(row =>
+      row["dimension_erhebung_0"]?.id == erhID &&
+      row["dimension_jahr_0"]?.id == jahr &&
+      row["dimension_erhebungsnummer_0"]?.id == nummer
+    );
 
-    // ⭐ Struktur initialisieren
-    if (!plzWerte[plz]) {
-      plzWerte[plz] = {
-        haushalte: 0,
+    const aggregated = {};
 
-        umsatz: 0,
-        ra: 0,
-        onlineshop: 0,
-        pluscard: 0,
+    rows.forEach(row => {
+      const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+      const plz = String(rawPLZ).padStart(5, "0");
 
-        umsatzProHaushalt: 0,
-        raProHaushalt: 0,
-        onlineshopProHaushalt: 0,
-        pluscardProHaushalt: 0
-      };
+      if (!aggregated[plz]) {
+        aggregated[plz] = {
+          haushalte: 0,
+          umsatz: 0,
+          ra: 0,
+          onlineshop: 0,
+          pluscard: 0
+        };
+      }
+
+      const v = aggregated[plz];
+
+      v.haushalte += safe(row["value_haushalte_0"]?.raw);
+      v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
+      v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
+      v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
+      v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+    });
+
+    // Pro-Haushalt berechnen
+    Object.values(aggregated).forEach(v => {
+      if (v.haushalte > 0) {
+        v.umsatzProHaushalt     = v.umsatz     / v.haushalte;
+        v.raProHaushalt         = v.ra         / v.haushalte;
+        v.onlineshopProHaushalt = v.onlineshop / v.haushalte;
+        v.pluscardProHaushalt   = v.pluscard   / v.haushalte;
+      } else {
+        v.umsatzProHaushalt = 0;
+        v.raProHaushalt = 0;
+        v.onlineshopProHaushalt = 0;
+        v.pluscardProHaushalt = 0;
+      }
+    });
+
+    this._umsatzCache[cacheKey] = aggregated;
+  }
+
+  const full = this._umsatzCache[cacheKey];
+
+  // ⭐ 2) Jetzt nur noch Subset bilden (NL + Radius)
+  const result = {};
+
+  Object.entries(full).forEach(([plz, v]) => {
+    // NL-Filter
+    if (this._selectedNLs.size > 0) {
+      const rowsForPLZ = this.filteredData.filter(r => {
+        const rawPLZ = r["dimension_plz_0"]?.id ?? r["dimension_plz_0"]?.raw;
+        const p = String(rawPLZ).padStart(5, "0");
+        return p === plz;
+      });
+
+      const nlMatch = rowsForPLZ.some(r =>
+        this._selectedNLs.has(r["dimension_niederlassung_0"]?.id?.trim())
+      );
+
+      if (!nlMatch) return;
     }
 
-    const v = plzWerte[plz];
-
-    // ⭐ Haushalte
-    const hh = safe(row["value_haushalte_0"]?.raw);
-    v.haushalte += hh;
-
-    // ⭐ Umsatzarten
-    v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
-    v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
-    v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-    v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
-
-    // ⭐ Pro-Haushalt (nur wenn HH > 0)
-    if (v.haushalte > 0) {
-      v.umsatzProHaushalt     = v.umsatz     / v.haushalte;
-      v.raProHaushalt         = v.ra         / v.haushalte;
-      v.onlineshopProHaushalt = v.onlineshop / v.haushalte;
-      v.pluscardProHaushalt   = v.pluscard   / v.haushalte;
+    // Radiusfilter (nur wenn aktiviert)
+    if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter) {
+      if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
+
+    result[plz] = v;
   });
 
-  // ⭐ Final speichern
-  this.filteredPLZWerte = plzWerte;
+  this.filteredPLZWerte = result;
 
-  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(plzWerte).length);
-  console.log("🧪 Beispiel:", Object.entries(plzWerte).slice(0, 5));
+  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(result).length);
 }
 
 
