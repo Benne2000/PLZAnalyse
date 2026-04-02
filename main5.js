@@ -2395,33 +2395,71 @@ getFilteredData() {
                             "#cfd4da";    // Grau
   }
   }
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
   console.group("🧪 updateGeoLayer()");
   console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzMode);
 
-  const plzWerte = this.filteredPLZWerte || {};
-  const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
+  // 1️⃣ Max-Wert global berechnen (für Umsatz-Heatmap)
+  this.computeMaxValue();
 
+  // 2️⃣ Alle Layer aktualisieren
+  this._geoLayer.eachLayer(layer => {
+    this.applyStyleToLayer(layer);
+  });
+
+  // 3️⃣ Bestreuungsmarker aktualisieren
+  this.updateBestreuungMarkers();
+
+  console.groupEnd();
+}
+
+
+computeFillColor(plz) {
+  const v = this.filteredPLZWerte?.[plz];
+  if (!v) return "#cfd4da";
+
+  // WK-Modus
+  if (this.currentMapMode === "wk") {
+    const value = v.hz ? v.wk : v.wkPot;
+    return this.getColor(value, v.hz);
+  }
+
+  // Umsatzmodus
+  if (this.currentMapMode === "umsatz-multi") {
+    const safe = x => Number.isFinite(x) ? x : 0;
+
+    let sum = 0;
+    if (this.activeCategories.has("stationaer"))
+      sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
+
+    if (this.activeCategories.has("pluscard"))
+      sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
+
+    if (this.activeCategories.has("ra"))
+      sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
+
+    if (this.activeCategories.has("online"))
+      sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
+
+    return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
+  }
+
+  return "#cfd4da";
+}
+
+
+computeMaxValue() {
+  const plzWerte = this.filteredPLZWerte || {};
   const safe = x => Number.isFinite(x) ? x : 0;
 
-  // Marker-Cache initialisieren
-  this.criticalMarkers = this.criticalMarkers || {};
-
-  // Nur im WK-Modus sollen Critical-Marker sichtbar sein
-  const showCritical = this.currentMapMode === "wk" && this.showCritical;
-
-  // ---------------------------------------------------------
-  // 1️⃣ MAX-WERT GLOBAL BERECHNEN
-  // ---------------------------------------------------------
   let maxValue = 0;
 
   if (this.currentMapMode === "wk") {
     Object.values(plzWerte).forEach(v => {
       const val = safe(v.hz ? v.wk : v.wkPot);
-      maxValue = Math.max(maxValue, val);
+      if (val > maxValue) maxValue = val;
     });
   }
 
@@ -2441,189 +2479,138 @@ updateGeoLayer() {
       if (this.activeCategories.has("online"))
         sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
 
-      maxValue = Math.max(maxValue, sum);
+      if (sum > maxValue) maxValue = sum;
     });
   }
 
-  console.log("➡️ maxValue:", maxValue);
-  console.groupEnd();
+  this._maxValueCache = maxValue || 1;
+  return this._maxValueCache;
+}
 
-  // ---------------------------------------------------------
-  // 2️⃣ LAYER FÄRBEN + CRITICAL-MARKER + POPUP-KLICK
-  // ---------------------------------------------------------
-  this._geoLayer.eachLayer(layer => {
-    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
-    const v = plzWerte[plz];
+applyStyleToLayer(layer) {
+  const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+  const v = this.filteredPLZWerte?.[plz];
 
-    // Radiuslogik
-    let inRadius = true;
-    if (this.currentMapMode === "umsatz-multi") {
-      if (this.useRadiusFilter && hasRadius) {
-        inRadius = this.plzImRadius.has(plz);
-      } else {
-        inRadius = true; // Radius ignorieren
-      }
-    } else {
-      // WK-Modus → Radiusfilter immer aktiv, falls vorhanden
-      inRadius = !hasRadius || this.plzImRadius.has(plz);
-    }
+  // -----------------------------
+  // 1) Radiuslogik
+  // -----------------------------
+  const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
+  let inRadius = true;
 
-    // Hilfsfunktion: grau + Marker entfernen
-    const setGrey = () => {
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.45,
-        color: "#ffffff",
-        weight: 1
-      });
-      layer.options.interactive = false;
+  if (this.currentMapMode === "umsatz-multi") {
+    inRadius = !this.useRadiusFilter || !hasRadius || this.plzImRadius.has(plz);
+  } else {
+    inRadius = !hasRadius || this.plzImRadius.has(plz);
+  }
 
-      if (this.criticalMarkers[plz]) {
-        this.map.removeLayer(this.criticalMarkers[plz]);
-        delete this.criticalMarkers[plz];
-      }
-    };
-
-    // 1️⃣ PLZ ohne Werte → grau
-    if (!v) {
-      setGrey();
-      return;
-    }
-
-    // 2️⃣ PLZ außerhalb Radius → grau
-    if (!inRadius) {
-      setGrey();
-      return;
-    }
-
-    // 3️⃣ PLZ im Radius → farbig
-    let value = 0;
-    let fillColor = "#cccccc";
-
-    if (this.currentMapMode === "wk") {
-      value = safe(v.hz ? v.wk : v.wkPot);
-      fillColor = this.getColor(value, v.hz);
-    }
-
-    if (this.currentMapMode === "umsatz-multi") {
-      let sum = 0;
-
-      if (this.activeCategories.has("stationaer"))
-        sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
-
-      if (this.activeCategories.has("pluscard"))
-        sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
-
-      if (this.activeCategories.has("ra"))
-        sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
-
-      if (this.activeCategories.has("online"))
-        sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
-
-      value = safe(sum);
-      fillColor = this.getDynamicHeatColor(value, maxValue);
-    }
-
+  // -----------------------------
+  // 2) PLZ ohne Werte oder außerhalb Radius → grau
+  // -----------------------------
+  if (!v || !inRadius) {
     layer.setStyle({
-      fillColor,
-      fillOpacity: 0.7,
+      fillColor: "#cfd4da",
+      fillOpacity: 0.45,
       color: "#ffffff",
       weight: 1
     });
 
-    layer.options.interactive = true;
+    layer.options.interactive = false;
 
-    // ---------------------------------------------------------
-    // 3️⃣ POPUP-KLICK (nur Fläche, keine Marker)
-    // ---------------------------------------------------------
-    layer.off("click");
-
-   layer.on("click", () => {
-  const values = this.filteredPLZWerte?.[plz];
-
-  if (this.currentMapMode === "umsatz-multi") {
-    // zuerst WK-Popup schließen
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) {
-      popupWK.classList.remove("show");
-      popupWK.classList.add("hidden");
+    // Critical-Marker entfernen
+    if (this.criticalMarkers?.[plz]) {
+      this.map.removeLayer(this.criticalMarkers[plz]);
+      delete this.criticalMarkers[plz];
     }
 
-    if (values) {
-      this.showUmsatzPopup(plz, values);
-    } else {
-      this.showEmptyUmsatzPopup(plz);
-    }
-
-  } else {
-    // zuerst Umsatz-Popup schließen
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) {
-      popupUmsatz.classList.remove("show");
-      popupUmsatz.classList.add("hidden");
-    }
-
-    this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+    return;
   }
-});
 
+  // -----------------------------
+  // 3) Farbe berechnen
+  // -----------------------------
+  const fillColor = this.computeFillColor(plz);
 
-    // ---------------------------------------------------------
-    // ⚠️ CRITICAL-MARKER NUR IM WK-MODUS
-    // ---------------------------------------------------------
-if (!showCritical) {
-  if (this.criticalMarkers[plz]) {
-    this.map.removeLayer(this.criticalMarkers[plz]);
-    delete this.criticalMarkers[plz];
-  }
-  // ❗ WICHTIG: Kein return!
-}
-
-
-    const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
-
-// Critical-Marker nur im WK-Modus und nur wenn aktiviert
-if (showCritical && isCritical) {
-
-    if (!this.criticalMarkers[plz]) {
-        const center = layer.getBounds().getCenter();
-
-        const icon = L.divIcon({
-          html: `<div style="
-            background:#ffffff;
-            border:2px solid #b41821;
-            border-radius:50%;
-            width:22px;
-            height:22px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:14px;
-            font-weight:bold;
-          ">⚠️</div>`,
-          className: "",
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
-        });
-
-        this.criticalMarkers[plz] = L.marker(center, {
-          icon,
-          interactive: false
-        }).addTo(this.map);
-    }
-
-} else {
-    // Marker entfernen, falls vorhanden
-    if (this.criticalMarkers[plz]) {
-        this.map.removeLayer(this.criticalMarkers[plz]);
-        delete this.criticalMarkers[plz];
-    }
-}
-
+  layer.setStyle({
+    fillColor,
+    fillOpacity: 0.7,
+    color: "#ffffff",
+    weight: 1
   });
 
-  // ⭐ Bestreuungsmarker aktualisieren
-  this.updateBestreuungMarkers();
+  layer.options.interactive = true;
+
+  // -----------------------------
+  // 4) Click-Handler neu setzen
+  // -----------------------------
+  layer.off("click");
+
+  layer.on("click", () => {
+    const values = this.filteredPLZWerte?.[plz];
+
+    if (this.currentMapMode === "umsatz-multi") {
+      // WK-Popup schließen
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      popupWK?.classList.remove("show");
+      popupWK?.classList.add("hidden");
+
+      if (values) {
+        this.showUmsatzPopup(plz, values);
+      } else {
+        this.showEmptyUmsatzPopup(plz);
+      }
+    } else {
+      // Umsatz-Popup schließen
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      popupU?.classList.remove("show");
+      popupU?.classList.add("hidden");
+
+      this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+    }
+  });
+
+  // -----------------------------
+  // 5) Critical-Marker (nur WK-Modus)
+  // -----------------------------
+  const showCritical = this.currentMapMode === "wk" && this.showCritical;
+  const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
+
+  if (!showCritical || !isCritical) {
+    if (this.criticalMarkers?.[plz]) {
+      this.map.removeLayer(this.criticalMarkers[plz]);
+      delete this.criticalMarkers[plz];
+    }
+    return;
+  }
+
+  // Critical-Marker erzeugen (falls nicht vorhanden)
+  if (!this.criticalMarkers) this.criticalMarkers = {};
+
+  if (!this.criticalMarkers[plz]) {
+    const center = layer.getBounds().getCenter();
+
+    const icon = L.divIcon({
+      html: `<div style="
+        background:#ffffff;
+        border:2px solid #b41821;
+        border-radius:50%;
+        width:22px;
+        height:22px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:14px;
+        font-weight:bold;
+      ">⚠️</div>`,
+      className: "",
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+
+    this.criticalMarkers[plz] = L.marker(center, {
+      icon,
+      interactive: false
+    }).addTo(this.map);
+  }
 }
 
 
