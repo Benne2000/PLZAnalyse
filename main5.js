@@ -3316,41 +3316,40 @@ getPolygonCenter(layer) {
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-  // Umsatzmodus → Radiusfilter deaktiviert
-  if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter === false) {
-
-    this.plzImRadius = new Set(
-      this.filteredData
-        .map(row => row["dimension_plz_0"]?.id?.trim())
-        .filter(plz => plz && plz !== "@NullMember")
-    );
-
-    this.prepareUmsatzPLZWerte();   // ⭐ WICHTIG
-    this.updateGeoLayer();
-    this.renderDataTable(this.filteredKennwerte);
-    return;
-  }
-
-  // Radiusfilter aktiv
-  this.streuverlust = null;
+  // Cache initialisieren
+  if (!this._plzCenterCache) this._plzCenterCache = {};
+  if (!this._distanceCache) this._distanceCache = {};
 
   const plzImRadius = new Set();
 
   this._geoLayer.eachLayer(layer => {
-    const plz = String(layer.feature?.properties?.plz ?? "")
-      .padStart(5, "0")
-      .trim();
-
+    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
     if (!plz) return;
 
-    const center = this.getPolygonCenter(layer);
+    // 1) PLZ-Zentrum cachen
+    if (!this._plzCenterCache[plz]) {
+      this._plzCenterCache[plz] = layer.getBounds().getCenter();
+    }
+    const center = this._plzCenterCache[plz];
 
-    const minDist = Math.min(
-      ...this.nlMarkers.map(nl =>
-        this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng)
-      )
-    );
+    // 2) Distanz zu NLs cachen
+    if (!this._distanceCache[plz]) this._distanceCache[plz] = {};
 
+    let minDist = Infinity;
+
+    for (const nl of this.nlMarkers) {
+      const key = nl.lat + "," + nl.lng;
+
+      if (!this._distanceCache[plz][key]) {
+        this._distanceCache[plz][key] =
+          this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng);
+      }
+
+      const d = this._distanceCache[plz][key];
+      if (d < minDist) minDist = d;
+    }
+
+    // 3) Radiusentscheidung
     if (minDist <= radiusKm) {
       plzImRadius.add(plz);
     }
@@ -3358,12 +3357,7 @@ applyRadiusFilter(radiusKm) {
 
   this.plzImRadius = plzImRadius;
 
-  // ⭐ Umsatzwerte neu aufbauen, damit ALLE PLZs wieder drin sind
-  this.prepareUmsatzPLZWerte();
-
-  // ⭐ WK-Werte neu berechnen
-  this.getFilteredDataWithRadius();
-
+  // 4) Karte + Tabelle aktualisieren
   this.updateGeoLayer();
   this.renderDataTable(this.filteredKennwerte);
 }
