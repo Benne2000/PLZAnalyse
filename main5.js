@@ -3296,6 +3296,8 @@ renderErhebungsInfo() {
         this.render();
       }
 prepareMapData(filteredData) {
+  console.log("DEBUG prepareMapData input:", filteredData);
+
   const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
@@ -3357,6 +3359,9 @@ prepareMapData(filteredData) {
       };
     }
   });
+
+  console.log("DEBUG _niederlassungen:", this._niederlassungen);
+
 }
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
