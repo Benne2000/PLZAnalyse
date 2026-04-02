@@ -3295,6 +3295,8 @@ renderErhebungsInfo() {
 
         this.render();
       }
+
+
 prepareMapData(filteredData) {
   console.log("DEBUG prepareMapData input:", filteredData);
 
@@ -3360,7 +3362,15 @@ prepareMapData(filteredData) {
     }
   });
 
-  console.log("DEBUG _niederlassungen:", this._niederlassungen);
+// --- Niederlassungen in Array-Form für Marker umwandeln ---
+this._niederlassungen = Object.entries(this.nlKoordinaten).map(([nlKey, coords]) => ({
+  nlKey,
+  lat: coords.lat,
+  lng: coords.lng
+}));
+
+console.log("DEBUG _niederlassungen (final):", this._niederlassungen);
+
 
 }
 
