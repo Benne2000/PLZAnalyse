@@ -1841,69 +1841,76 @@ updateBestreuungMarkers() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
+   createAllMarkers() {
+  if (!this.filteredGroup) return;
 
+  this.filteredGroup.clearLayers();
+  this.neighbourGroup?.clearLayers();
+  this.radiusGroup?.clearLayers();
 
+  this.allMarkers = [];
+  this.nlMarkers = [];
 
-createAllMarkers() {
-  if (!this._geoLayer) return;
+  if (!this.Niederlassung || !this.nlKoordinaten) return;
 
-  // Cache initialisieren
-  if (!this.nlMarkers) this.nlMarkers = [];
-  if (!this.phantomMarkers) this.phantomMarkers = [];
+  const seen = new Set();
 
-  // Falls Marker schon existieren → nicht erneut erzeugen
-  if (this.nlMarkers.length > 0 && this.phantomMarkers.length > 0) {
-    this.updateMarkers();
-    return;
-  }
+  // Haupt-Niederlassungen
+  Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
+    const coords = this.nlKoordinaten[nlKey];
+    if (!coords || seen.has(nlKey)) return;
 
-  // Icon-Cache
-  if (!this._markerIcons) {
-    this._markerIcons = {
-      nl: L.divIcon({
-        html: `<div class="nl-marker"></div>`,
-        className: "",
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
-      }),
-      phantom: L.divIcon({
-        html: `<div class="nl-marker phantom"></div>`,
-        className: "",
-        iconSize: [18, 18],
-        iconAnchor: [9, 9]
-      })
-    };
-  }
-console.log("DEBUG _niederlassungen:", this._niederlassungen);
+    const marker = L.marker([coords.lat, coords.lon], {
+      icon: this.createMarkerIcon(nlName),
+      title: nlName,
+      plzs: [nlKey]
+    });
 
-if (!Array.isArray(this._niederlassungen)) {
-  console.error("Niederlassungen nicht geladen:", this._niederlassungen);
-  return;
-}
+    marker.setZIndexOffset(1000);
+    marker.on("click", () => this.toggleNLSelection(nlKey));
 
-this.nlMarkers = this._niederlassungen.map(nl => {
-  return L.marker([nl.lat, nl.lng], {
-    icon: this._markerIcons.nl,
-    zIndexOffset: 1000
-  }).addTo(this.map);
-});
+    this.allMarkers.push(marker);
+    this.filteredGroup.addLayer(marker);
 
-
-  // 2️⃣ Phantom-Marker erzeugen
-  this.phantomMarkers = this._niederlassungen.map(nl => {
-    return L.marker([nl.lat, nl.lng], {
-      icon: this._markerIcons.phantom,
-      zIndexOffset: 500
-    }).addTo(this.map);
+    this.nlMarkers.push({ lat: coords.lat, lng: coords.lon, marker });
+    seen.add(nlKey);
   });
 
-  // 3️⃣ Hover-Effekte (CSS-only)
-  this.map.on("zoomend", () => this.updateMarkers());
-  this.map.on("moveend", () => this.updateMarkers());
+  // Extra-Niederlassungen
+  if (Array.isArray(this.extraNLs)) {
+    this.extraNLs.forEach(({ nl, lat, lon }) => {
+      const marker = L.marker([lat, lon], {
+        icon: this.createMarkerIcon(nl),
+        title: nl,
+        plzs: [nl]
+      });
 
-  this.updateMarkers();
+      marker.setZIndexOffset(1000);
+      marker.on("click", () => this.toggleNLSelection(nl));
+
+      this.allMarkers.push(marker);
+      this.filteredGroup.addLayer(marker);
+
+      this.nlMarkers.push({ lat, lng: lon, marker });
+    });
+  }
+
+  // NL-Auswahl initialisieren
+  this.allNLs = [
+    ...Object.keys(this.Niederlassung),
+    ...(this.extraNLs?.map(e => e.nl) ?? [])
+  ];
+
+  this._selectedNLs = new Set(this.allNLs);
+
+  this.applyNLFilter([...this._selectedNLs]);
+
+  const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
+  this.applyRadiusFilter(radius);
+
+  this.updateGeoLayer();
+  this.updateNLSelectionUI?.();
 }
-
 
 
 applyNLFilter(selectedNLs) {
@@ -2709,33 +2716,67 @@ getDynamicHeatColor(value, max) {
 }
 
 
+
 updateMarkers() {
-  if (!this.nlMarkers || !this.phantomMarkers) return;
+  if (!this.filteredGroup || !this.allMarkers) return;
 
-  const selected = this._selectedNLs;
-  const hasFilter = selected && selected.size > 0;
+  this.filteredGroup.clearLayers();
 
-  this.nlMarkers.forEach((marker, i) => {
-    const nl = this._niederlassungen[i];
-    const isActive = !hasFilter || selected.has(nl.id);
+  const filteredData = this.filteredData || [];
+  if (!filteredData.length) return;
 
-    if (isActive) {
-      if (!this.map.hasLayer(marker)) marker.addTo(this.map);
+  const erhNLs = new Set(
+    filteredData
+      .map(row => row["dimension_niederlassung_0"]?.id?.trim())
+      .filter(Boolean)
+  );
+
+  const hasNLFilter = this._selectedNLs?.size > 0;
+
+  const activeMarkers = [];
+
+  this.allMarkers.forEach(marker => {
+    const nl = marker.options.plzs?.[0];
+    if (!nl || !erhNLs.has(nl)) return;
+
+    this.filteredGroup.addLayer(marker);
+
+    const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
+
+    marker.setIcon(this.createMarkerIcon(nl, !isSelected));
+
+    marker.off("mouseover");
+    marker.off("mouseout");
+
+    marker.on("mouseover", () => {
+      const el = marker.getElement();
+      if (el) {
+        el.style.filter = "brightness(1.35)";
+        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
+      }
+    });
+
+    marker.on("mouseout", () => {
+      const el = marker.getElement();
+      if (el) {
+        el.style.filter = "brightness(1)";
+        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
+      }
+    });
+
+    if (isSelected) {
+      marker.setZIndexOffset(1000);
+      activeMarkers.push(marker);
     } else {
-      if (this.map.hasLayer(marker)) this.map.removeLayer(marker);
+      marker.setZIndexOffset(100);
     }
   });
 
-  this.phantomMarkers.forEach((marker, i) => {
-    const nl = this._niederlassungen[i];
-    const isActive = !hasFilter || selected.has(nl.id);
-
-    if (!isActive) {
-      if (!this.map.hasLayer(marker)) marker.addTo(this.map);
-    } else {
-      if (this.map.hasLayer(marker)) this.map.removeLayer(marker);
-    }
-  });
+  this.nlMarkers = activeMarkers.map(marker => ({
+    lat: marker.getLatLng().lat,
+    lng: marker.getLatLng().lng,
+    marker
+  }));
 }
 
 
@@ -3295,11 +3336,7 @@ renderErhebungsInfo() {
 
         this.render();
       }
-
-
 prepareMapData(filteredData) {
-  console.log("DEBUG prepareMapData input:", filteredData);
-
   const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
@@ -3361,17 +3398,6 @@ prepareMapData(filteredData) {
       };
     }
   });
-
-// --- Niederlassungen in Array-Form für Marker umwandeln ---
-this._niederlassungen = Object.entries(this.nlKoordinaten).map(([nlKey, coords]) => ({
-  nlKey,
-  lat: coords.lat,
-  lng: coords.lng
-}));
-
-console.log("DEBUG _niederlassungen (final):", this._niederlassungen);
-
-
 }
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
