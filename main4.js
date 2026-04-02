@@ -226,10 +226,11 @@
   height: 100%;
 }
 
-.share-stationaer { background: #b41821; }
-.share-pluscard   { background: #d9483b; }
-.share-ra         { background: #f0803c; }
-.share-online     { background: #f6b65b; }
+.share-stationaer { background: #b41821; } /* Rot */
+.share-pluscard   { background: #1f78b4; } /* Blau */
+.share-ra         { background: #33a02c; } /* Grün */
+.share-online     { background: #ffb000; } /* Amber */
+
 
 /* Legende */
 .umsatz-legend {
@@ -2151,9 +2152,10 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
 
     <div class="umsatz-legend">
       <span><span style="color:#b41821;">⬤</span> Stationär</span>
-      <span><span style="color:#d9483b;">⬤</span> Pluscard</span>
-      <span><span style="color:#f0803c;">⬤</span> R&A</span>
-      <span><span style="color:#f6b65b;">⬤</span> Onlineshop</span>
+      <span><span style="color:#1f78b4;">⬤</span> Pluscard</span>
+      <span><span style="color:#33a02c;">⬤</span> R&A</span>
+      <span><span style="color:#ffb000;">⬤</span> Onlineshop</span>
+
     </div>
 
     <!-- ===================================== -->
@@ -3733,10 +3735,11 @@ showEmptyUmsatzPopup(plz) {
     </div>
 
     <div class="umsatz-legend">
-      <span><span style="color:#b41821;">⬤</span> Stationär</span>
-      <span><span style="color:#d9483b;">⬤</span> Pluscard</span>
-      <span><span style="color:#f0803c;">⬤</span> R&A</span>
-      <span><span style="color:#f6b65b;">⬤</span> Onlineshop</span>
+<span><span style="color:#b41821;">⬤</span> Stationär</span>
+<span><span style="color:#1f78b4;">⬤</span> Pluscard</span>
+<span><span style="color:#33a02c;">⬤</span> R&A</span>
+<span><span style="color:#ffb000;">⬤</span> Onlineshop</span>
+
     </div>
 
     <!-- ===================================== -->
