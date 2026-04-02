@@ -3366,6 +3366,7 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
+
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
@@ -3443,11 +3444,11 @@ computeWKKennwerte() {
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
 
-    // Basisdaten (Haushalte, Kaufkraft, etc.) aus bisherigem filteredKennwerte übernehmen
+    // ⭐ Basisdaten (Haushalte, Kaufkraft, Auflage, KD, Bon, etc.) übernehmen
     const baseEntry = base[plz] || {};
 
     newFilteredKennwerte[plz] = {
-      ...baseEntry,
+      ...baseEntry, // ← ALLE anderen Kennwerte bleiben erhalten
       isHZ,
       isCritical,
       value_hr_n_umsatz_0: { raw: umsatzNetto },
@@ -3465,7 +3466,7 @@ computeWKKennwerte() {
     newFilteredPLZWerte[plz].hz = isHZ;
   });
 
-  // Nur noch PLZ behalten, die im aktuellen Aggregat liegen
+  // ⭐ Nur PLZ behalten, die im Aggregat liegen
   this.filteredKennwerte = newFilteredKennwerte;
   this.filteredPLZWerte = newFilteredPLZWerte;
 }
