@@ -3366,7 +3366,6 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
-
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
@@ -3382,7 +3381,7 @@ computeWKKennwerte() {
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
   });
 
-  // 2️⃣ Aggregation nur für PLZ im Radius
+  // 2️⃣ Aggregation nur für PLZ im Radius + NL-Filter
   this.filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
@@ -3391,16 +3390,15 @@ computeWKKennwerte() {
     // NL-Filter
     if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
 
-    // Radiusfilter
-    const inRadius = this.plzImRadius?.has(plz);
-    if (!inRadius) return;
+    // Radiusfilter (falls gesetzt)
+    if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
 
     if (!aggregated[plz]) {
       aggregated[plz] = {
         hzCount: 0,
         umsatzNetto: 0,
         hzKosten: 0,
-        potHzKosten: [],
+        potHzKosten: []
       };
     }
 
@@ -3416,7 +3414,11 @@ computeWKKennwerte() {
     if (typeof potHz === "number") entry.potHzKosten.push(potHz);
   });
 
-  // 3️⃣ WK-Kennwerte final berechnen
+  // 3️⃣ WK-Kennwerte final berechnen und gefilterte PLZ-Menge neu aufbauen
+  const base = this.filteredKennwerte || {};
+  const newFilteredKennwerte = {};
+  const newFilteredPLZWerte = this.filteredPLZWerte ? { ...this.filteredPLZWerte } : {};
+
   Object.entries(aggregated).forEach(([plz, entry]) => {
     const umsatzNetto = entry.umsatzNetto;
     const hzKosten = entry.hzKosten;
@@ -3441,9 +3443,11 @@ computeWKKennwerte() {
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
 
-    // WK-Kennwerte in filteredKennwerte schreiben
-    this.filteredKennwerte[plz] = {
-      ...this.filteredKennwerte[plz],
+    // Basisdaten (Haushalte, Kaufkraft, etc.) aus bisherigem filteredKennwerte übernehmen
+    const baseEntry = base[plz] || {};
+
+    newFilteredKennwerte[plz] = {
+      ...baseEntry,
       isHZ,
       isCritical,
       value_hr_n_umsatz_0: { raw: umsatzNetto },
@@ -3455,12 +3459,15 @@ computeWKKennwerte() {
     };
 
     // WK-Werte auch in filteredPLZWerte schreiben (für Heatmap)
-    if (this.filteredPLZWerte[plz]) {
-      this.filteredPLZWerte[plz].wk = wkPercent;
-      this.filteredPLZWerte[plz].wkPot = potHzPercent;
-      this.filteredPLZWerte[plz].hz = isHZ;
-    }
+    if (!newFilteredPLZWerte[plz]) newFilteredPLZWerte[plz] = {};
+    newFilteredPLZWerte[plz].wk = wkPercent;
+    newFilteredPLZWerte[plz].wkPot = potHzPercent;
+    newFilteredPLZWerte[plz].hz = isHZ;
   });
+
+  // Nur noch PLZ behalten, die im aktuellen Aggregat liegen
+  this.filteredKennwerte = newFilteredKennwerte;
+  this.filteredPLZWerte = newFilteredPLZWerte;
 }
 
 
