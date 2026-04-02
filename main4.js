@@ -1152,6 +1152,77 @@ updateStreuverlustFooter() {
   `;
 }
 
+computeStreuverlust() {
+  if (!this.filteredData) return;
+
+  const result = {
+    umsatz: 0,
+    hzKosten: 0,
+    umsatzErhebung: 0,
+    kdErhebung: 0,
+    auflage: 0,
+    potHzAbs: 0,
+    avg: {
+      werbeverweigerer: 0,
+      haushalte: 0,
+      kaufkraft: 0
+    }
+  };
+
+  const avgArrays = {
+    werbeverweigerer: [],
+    haushalte: [],
+    kaufkraft: []
+  };
+
+  let totalErhebungUmsatz = 0;
+
+  this.filteredData.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ || "").padStart(5, "0");
+
+    // NL-Filter
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
+
+    // Gesamtumsatz der Erhebung (für Anteil)
+    totalErhebungUmsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+
+    // PLZ im Radius → kein Streuverlust
+    if (this.plzImRadius instanceof Set && this.plzImRadius.has(plz)) return;
+
+    // PLZ außerhalb Radius → Streuverlust
+    result.umsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    result.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+    result.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
+    result.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
+    result.auflage += row["value_auflage_0"]?.raw ?? 0;
+    result.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
+
+    const wv = row["value_werbeverweigerer_0"]?.raw;
+    if (typeof wv === "number") avgArrays.werbeverweigerer.push(wv);
+
+    const hh = row["value_haushalte_0"]?.raw;
+    if (typeof hh === "number") avgArrays.haushalte.push(hh);
+
+    const kk = row["value_kaufkraft_0"]?.raw;
+    if (typeof kk === "number") avgArrays.kaufkraft.push(kk);
+  });
+
+  const avg = arr =>
+    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
+
+  result.avg.werbeverweigerer = avg(avgArrays.werbeverweigerer);
+  result.avg.haushalte = avg(avgArrays.haushalte);
+  result.avg.kaufkraft = avg(avgArrays.kaufkraft);
+
+  result.anteil =
+    totalErhebungUmsatz > 0
+      ? result.umsatz / totalErhebungUmsatz
+      : 0;
+
+  this.streuverlust = result;
+}
 
 
 sortTableByColumn(columnIndex) {
@@ -1770,7 +1841,9 @@ updateBestreuungMarkers() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-   createAllMarkers() {
+
+
+createAllMarkers() {
   if (!this.filteredGroup) return;
 
   this.filteredGroup.clearLayers();
@@ -1839,38 +1912,6 @@ updateBestreuungMarkers() {
 
   this.updateGeoLayer();
   this.updateNLSelectionUI?.();
-}
-
-
-applyNLFilter(selectedNLs) {
-  if (!this._selectedNLs) this._selectedNLs = new Set();
-  this._selectedNLs = new Set(selectedNLs);
-
-  console.log("🔵 applyNLFilter():", [...this._selectedNLs]);
-
-  if (!this.filteredData || this.filteredData.length === 0) {
-    console.warn("⚠️ applyNLFilter(): Keine Erhebungsdaten vorhanden!");
-    return;
-  }
-
-  // 1️⃣ PLZ-Liste nach NL-Filter
-  this.filteredPLZs = this.filteredData
-    .filter(row => {
-      const nl = row["dimension_niederlassung_0"]?.id?.trim();
-      return this._selectedNLs.size === 0 || this._selectedNLs.has(nl);
-    })
-    .map(row => row["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember");
-
-  // 2️⃣ Marker aktualisieren (aktive vs. Phantom)
-  this.updateMarkers();
-
-  // 3️⃣ Radius erneut anwenden
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.currentRadius = radius;
-  this.applyRadiusFilter(radius);
-  this.prepareUmsatzPLZWerte();
-
 }
 
 
@@ -2243,6 +2284,9 @@ applyFilter(erhID, jahr, nummer) {
 
   // 2️⃣ Umsatzwerte vorbereiten
   this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
+
 
   // 3️⃣ MapMode korrekt setzen
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
@@ -2395,33 +2439,71 @@ getFilteredData() {
                             "#cfd4da";    // Grau
   }
   }
-
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
   console.group("🧪 updateGeoLayer()");
   console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzMode);
 
-  const plzWerte = this.filteredPLZWerte || {};
-  const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
+  // 1️⃣ Max-Wert global berechnen (für Umsatz-Heatmap)
+  this.computeMaxValue();
 
+  // 2️⃣ Alle Layer aktualisieren
+  this._geoLayer.eachLayer(layer => {
+    this.applyStyleToLayer(layer);
+  });
+
+  // 3️⃣ Bestreuungsmarker aktualisieren
+  this.updateBestreuungMarkers();
+
+  console.groupEnd();
+}
+
+
+computeFillColor(plz) {
+  const v = this.filteredPLZWerte?.[plz];
+  if (!v) return "#cfd4da";
+
+  // WK-Modus
+  if (this.currentMapMode === "wk") {
+    const value = v.hz ? v.wk : v.wkPot;
+    return this.getColor(value, v.hz);
+  }
+
+  // Umsatzmodus
+  if (this.currentMapMode === "umsatz-multi") {
+    const safe = x => Number.isFinite(x) ? x : 0;
+
+    let sum = 0;
+    if (this.activeCategories.has("stationaer"))
+      sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
+
+    if (this.activeCategories.has("pluscard"))
+      sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
+
+    if (this.activeCategories.has("ra"))
+      sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
+
+    if (this.activeCategories.has("online"))
+      sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
+
+    return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
+  }
+
+  return "#cfd4da";
+}
+
+
+computeMaxValue() {
+  const plzWerte = this.filteredPLZWerte || {};
   const safe = x => Number.isFinite(x) ? x : 0;
 
-  // Marker-Cache initialisieren
-  this.criticalMarkers = this.criticalMarkers || {};
-
-  // Nur im WK-Modus sollen Critical-Marker sichtbar sein
-  const showCritical = this.currentMapMode === "wk" && this.showCritical;
-
-  // ---------------------------------------------------------
-  // 1️⃣ MAX-WERT GLOBAL BERECHNEN
-  // ---------------------------------------------------------
   let maxValue = 0;
 
   if (this.currentMapMode === "wk") {
     Object.values(plzWerte).forEach(v => {
       const val = safe(v.hz ? v.wk : v.wkPot);
-      maxValue = Math.max(maxValue, val);
+      if (val > maxValue) maxValue = val;
     });
   }
 
@@ -2441,189 +2523,138 @@ updateGeoLayer() {
       if (this.activeCategories.has("online"))
         sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
 
-      maxValue = Math.max(maxValue, sum);
+      if (sum > maxValue) maxValue = sum;
     });
   }
 
-  console.log("➡️ maxValue:", maxValue);
-  console.groupEnd();
+  this._maxValueCache = maxValue || 1;
+  return this._maxValueCache;
+}
 
-  // ---------------------------------------------------------
-  // 2️⃣ LAYER FÄRBEN + CRITICAL-MARKER + POPUP-KLICK
-  // ---------------------------------------------------------
-  this._geoLayer.eachLayer(layer => {
-    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
-    const v = plzWerte[plz];
+applyStyleToLayer(layer) {
+  const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+  const v = this.filteredPLZWerte?.[plz];
 
-    // Radiuslogik
-    let inRadius = true;
-    if (this.currentMapMode === "umsatz-multi") {
-      if (this.useRadiusFilter && hasRadius) {
-        inRadius = this.plzImRadius.has(plz);
-      } else {
-        inRadius = true; // Radius ignorieren
-      }
-    } else {
-      // WK-Modus → Radiusfilter immer aktiv, falls vorhanden
-      inRadius = !hasRadius || this.plzImRadius.has(plz);
-    }
+  // -----------------------------
+  // 1) Radiuslogik
+  // -----------------------------
+  const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
+  let inRadius = true;
 
-    // Hilfsfunktion: grau + Marker entfernen
-    const setGrey = () => {
-      layer.setStyle({
-        fillColor: "#cfd4da",
-        fillOpacity: 0.45,
-        color: "#ffffff",
-        weight: 1
-      });
-      layer.options.interactive = false;
+  if (this.currentMapMode === "umsatz-multi") {
+    inRadius = !this.useRadiusFilter || !hasRadius || this.plzImRadius.has(plz);
+  } else {
+    inRadius = !hasRadius || this.plzImRadius.has(plz);
+  }
 
-      if (this.criticalMarkers[plz]) {
-        this.map.removeLayer(this.criticalMarkers[plz]);
-        delete this.criticalMarkers[plz];
-      }
-    };
-
-    // 1️⃣ PLZ ohne Werte → grau
-    if (!v) {
-      setGrey();
-      return;
-    }
-
-    // 2️⃣ PLZ außerhalb Radius → grau
-    if (!inRadius) {
-      setGrey();
-      return;
-    }
-
-    // 3️⃣ PLZ im Radius → farbig
-    let value = 0;
-    let fillColor = "#cccccc";
-
-    if (this.currentMapMode === "wk") {
-      value = safe(v.hz ? v.wk : v.wkPot);
-      fillColor = this.getColor(value, v.hz);
-    }
-
-    if (this.currentMapMode === "umsatz-multi") {
-      let sum = 0;
-
-      if (this.activeCategories.has("stationaer"))
-        sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
-
-      if (this.activeCategories.has("pluscard"))
-        sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
-
-      if (this.activeCategories.has("ra"))
-        sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
-
-      if (this.activeCategories.has("online"))
-        sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
-
-      value = safe(sum);
-      fillColor = this.getDynamicHeatColor(value, maxValue);
-    }
-
+  // -----------------------------
+  // 2) PLZ ohne Werte oder außerhalb Radius → grau
+  // -----------------------------
+  if (!v || !inRadius) {
     layer.setStyle({
-      fillColor,
-      fillOpacity: 0.7,
+      fillColor: "#cfd4da",
+      fillOpacity: 0.45,
       color: "#ffffff",
       weight: 1
     });
 
-    layer.options.interactive = true;
+    layer.options.interactive = false;
 
-    // ---------------------------------------------------------
-    // 3️⃣ POPUP-KLICK (nur Fläche, keine Marker)
-    // ---------------------------------------------------------
-    layer.off("click");
-
-   layer.on("click", () => {
-  const values = this.filteredPLZWerte?.[plz];
-
-  if (this.currentMapMode === "umsatz-multi") {
-    // zuerst WK-Popup schließen
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) {
-      popupWK.classList.remove("show");
-      popupWK.classList.add("hidden");
+    // Critical-Marker entfernen
+    if (this.criticalMarkers?.[plz]) {
+      this.map.removeLayer(this.criticalMarkers[plz]);
+      delete this.criticalMarkers[plz];
     }
 
-    if (values) {
-      this.showUmsatzPopup(plz, values);
-    } else {
-      this.showEmptyUmsatzPopup(plz);
-    }
-
-  } else {
-    // zuerst Umsatz-Popup schließen
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) {
-      popupUmsatz.classList.remove("show");
-      popupUmsatz.classList.add("hidden");
-    }
-
-    this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+    return;
   }
-});
 
+  // -----------------------------
+  // 3) Farbe berechnen
+  // -----------------------------
+  const fillColor = this.computeFillColor(plz);
 
-    // ---------------------------------------------------------
-    // ⚠️ CRITICAL-MARKER NUR IM WK-MODUS
-    // ---------------------------------------------------------
-if (!showCritical) {
-  if (this.criticalMarkers[plz]) {
-    this.map.removeLayer(this.criticalMarkers[plz]);
-    delete this.criticalMarkers[plz];
-  }
-  // ❗ WICHTIG: Kein return!
-}
-
-
-    const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
-
-// Critical-Marker nur im WK-Modus und nur wenn aktiviert
-if (showCritical && isCritical) {
-
-    if (!this.criticalMarkers[plz]) {
-        const center = layer.getBounds().getCenter();
-
-        const icon = L.divIcon({
-          html: `<div style="
-            background:#ffffff;
-            border:2px solid #b41821;
-            border-radius:50%;
-            width:22px;
-            height:22px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            font-size:14px;
-            font-weight:bold;
-          ">⚠️</div>`,
-          className: "",
-          iconSize: [22, 22],
-          iconAnchor: [11, 11]
-        });
-
-        this.criticalMarkers[plz] = L.marker(center, {
-          icon,
-          interactive: false
-        }).addTo(this.map);
-    }
-
-} else {
-    // Marker entfernen, falls vorhanden
-    if (this.criticalMarkers[plz]) {
-        this.map.removeLayer(this.criticalMarkers[plz]);
-        delete this.criticalMarkers[plz];
-    }
-}
-
+  layer.setStyle({
+    fillColor,
+    fillOpacity: 0.7,
+    color: "#ffffff",
+    weight: 1
   });
 
-  // ⭐ Bestreuungsmarker aktualisieren
-  this.updateBestreuungMarkers();
+  layer.options.interactive = true;
+
+  // -----------------------------
+  // 4) Click-Handler neu setzen
+  // -----------------------------
+  layer.off("click");
+
+  layer.on("click", () => {
+    const values = this.filteredPLZWerte?.[plz];
+
+    if (this.currentMapMode === "umsatz-multi") {
+      // WK-Popup schließen
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      popupWK?.classList.remove("show");
+      popupWK?.classList.add("hidden");
+
+      if (values) {
+        this.showUmsatzPopup(plz, values);
+      } else {
+        this.showEmptyUmsatzPopup(plz);
+      }
+    } else {
+      // Umsatz-Popup schließen
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      popupU?.classList.remove("show");
+      popupU?.classList.add("hidden");
+
+      this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+    }
+  });
+
+  // -----------------------------
+  // 5) Critical-Marker (nur WK-Modus)
+  // -----------------------------
+  const showCritical = this.currentMapMode === "wk" && this.showCritical;
+  const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
+
+  if (!showCritical || !isCritical) {
+    if (this.criticalMarkers?.[plz]) {
+      this.map.removeLayer(this.criticalMarkers[plz]);
+      delete this.criticalMarkers[plz];
+    }
+    return;
+  }
+
+  // Critical-Marker erzeugen (falls nicht vorhanden)
+  if (!this.criticalMarkers) this.criticalMarkers = {};
+
+  if (!this.criticalMarkers[plz]) {
+    const center = layer.getBounds().getCenter();
+
+    const icon = L.divIcon({
+      html: `<div style="
+        background:#ffffff;
+        border:2px solid #b41821;
+        border-radius:50%;
+        width:22px;
+        height:22px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:14px;
+        font-weight:bold;
+      ">⚠️</div>`,
+      className: "",
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+
+    this.criticalMarkers[plz] = L.marker(center, {
+      icon,
+      interactive: false
+    }).addTo(this.map);
+  }
 }
 
 
@@ -2650,8 +2681,6 @@ getDynamicHeatColor(value, max) {
   if (ratio > 0.20) return "#ffe89c";  // hellgelb
   return "#fff6d6";                    // sehr helles gelb
 }
-
-
 
 updateMarkers() {
   if (!this.filteredGroup || !this.allMarkers) return;
@@ -3060,7 +3089,6 @@ prepareErhebungsInfo() {
     };
   });
 }
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3073,63 +3101,93 @@ prepareUmsatzPLZWerte() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  // ⭐ Immer frisches Objekt erzeugen
-  const plzWerte = {};
+  // ⭐ 1) Cache für vollständige Erhebungsdaten (nur einmal berechnen)
+  if (!this._umsatzCache) this._umsatzCache = {};
 
-  // ⭐ Nur Zeilen der aktiven Erhebung
-  const rows = raw.filter(row =>
-    row["dimension_erhebung_0"]?.id == erhID &&
-    row["dimension_jahr_0"]?.id == jahr &&
-    row["dimension_erhebungsnummer_0"]?.id == nummer
-  );
+  const cacheKey = `${erhID}_${jahr}_${nummer}`;
 
-  rows.forEach(row => {
-    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = String(rawPLZ).padStart(5, "0");
+  if (!this._umsatzCache[cacheKey]) {
+    const rows = raw.filter(row =>
+      row["dimension_erhebung_0"]?.id == erhID &&
+      row["dimension_jahr_0"]?.id == jahr &&
+      row["dimension_erhebungsnummer_0"]?.id == nummer
+    );
 
-    // ⭐ Struktur initialisieren
-    if (!plzWerte[plz]) {
-      plzWerte[plz] = {
-        haushalte: 0,
+    const aggregated = {};
 
-        umsatz: 0,
-        ra: 0,
-        onlineshop: 0,
-        pluscard: 0,
+    rows.forEach(row => {
+      const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+      const plz = String(rawPLZ).padStart(5, "0");
 
-        umsatzProHaushalt: 0,
-        raProHaushalt: 0,
-        onlineshopProHaushalt: 0,
-        pluscardProHaushalt: 0
-      };
+      if (!aggregated[plz]) {
+        aggregated[plz] = {
+          haushalte: 0,
+          umsatz: 0,
+          ra: 0,
+          onlineshop: 0,
+          pluscard: 0
+        };
+      }
+
+      const v = aggregated[plz];
+
+      v.haushalte += safe(row["value_haushalte_0"]?.raw);
+      v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
+      v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
+      v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
+      v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+    });
+
+    // Pro-Haushalt berechnen
+    Object.values(aggregated).forEach(v => {
+      if (v.haushalte > 0) {
+        v.umsatzProHaushalt     = v.umsatz     / v.haushalte;
+        v.raProHaushalt         = v.ra         / v.haushalte;
+        v.onlineshopProHaushalt = v.onlineshop / v.haushalte;
+        v.pluscardProHaushalt   = v.pluscard   / v.haushalte;
+      } else {
+        v.umsatzProHaushalt = 0;
+        v.raProHaushalt = 0;
+        v.onlineshopProHaushalt = 0;
+        v.pluscardProHaushalt = 0;
+      }
+    });
+
+    this._umsatzCache[cacheKey] = aggregated;
+  }
+
+  const full = this._umsatzCache[cacheKey];
+
+  // ⭐ 2) Jetzt nur noch Subset bilden (NL + Radius)
+  const result = {};
+
+  Object.entries(full).forEach(([plz, v]) => {
+    // NL-Filter
+    if (this._selectedNLs.size > 0) {
+      const rowsForPLZ = this.filteredData.filter(r => {
+        const rawPLZ = r["dimension_plz_0"]?.id ?? r["dimension_plz_0"]?.raw;
+        const p = String(rawPLZ).padStart(5, "0");
+        return p === plz;
+      });
+
+      const nlMatch = rowsForPLZ.some(r =>
+        this._selectedNLs.has(r["dimension_niederlassung_0"]?.id?.trim())
+      );
+
+      if (!nlMatch) return;
     }
 
-    const v = plzWerte[plz];
-
-    // ⭐ Haushalte
-    const hh = safe(row["value_haushalte_0"]?.raw);
-    v.haushalte += hh;
-
-    // ⭐ Umsatzarten
-    v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
-    v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
-    v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-    v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
-
-    // ⭐ Pro-Haushalt (nur wenn HH > 0)
-    if (v.haushalte > 0) {
-      v.umsatzProHaushalt     = v.umsatz     / v.haushalte;
-      v.raProHaushalt         = v.ra         / v.haushalte;
-      v.onlineshopProHaushalt = v.onlineshop / v.haushalte;
-      v.pluscardProHaushalt   = v.pluscard   / v.haushalte;
+    // Radiusfilter (nur wenn aktiviert)
+    if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter) {
+      if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
+
+    result[plz] = v;
   });
 
-  // ⭐ Final speichern
-  this.filteredPLZWerte = plzWerte;
+  this.filteredPLZWerte = result;
 
-  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(plzWerte).length);
-  console.log("🧪 Beispiel:", Object.entries(plzWerte).slice(0, 5));
+  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(result).length);
 }
 
 
@@ -3243,8 +3301,10 @@ renderErhebungsInfo() {
 
         this.render();
       }
+
 prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
+  console.log("DEBUG prepareMapData input:", filteredData);
+
   const geoFeatures = this._geoData?.features || [];
 
   // Reset
@@ -3305,7 +3365,10 @@ prepareMapData(filteredData) {
       };
     }
   });
+
+  console.log("DEBUG nlKoordinaten:", this.nlKoordinaten);
 }
+
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
 getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -3326,44 +3389,45 @@ getDistanceKm(lat1, lon1, lat2, lon2) {
 getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
+
+
 applyRadiusFilter(radiusKm) {
   if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-  // Umsatzmodus → Radiusfilter deaktiviert
-  if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter === false) {
-
-    this.plzImRadius = new Set(
-      this.filteredData
-        .map(row => row["dimension_plz_0"]?.id?.trim())
-        .filter(plz => plz && plz !== "@NullMember")
-    );
-
-    this.prepareUmsatzPLZWerte();   // ⭐ WICHTIG
-    this.updateGeoLayer();
-    this.renderDataTable(this.filteredKennwerte);
-    return;
-  }
-
-  // Radiusfilter aktiv
-  this.streuverlust = null;
+  // Cache initialisieren
+  if (!this._plzCenterCache) this._plzCenterCache = {};
+  if (!this._distanceCache) this._distanceCache = {};
 
   const plzImRadius = new Set();
 
   this._geoLayer.eachLayer(layer => {
-    const plz = String(layer.feature?.properties?.plz ?? "")
-      .padStart(5, "0")
-      .trim();
-
+    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
     if (!plz) return;
 
-    const center = this.getPolygonCenter(layer);
+    // 1) PLZ-Zentrum cachen
+    if (!this._plzCenterCache[plz]) {
+      this._plzCenterCache[plz] = layer.getBounds().getCenter();
+    }
+    const center = this._plzCenterCache[plz];
 
-    const minDist = Math.min(
-      ...this.nlMarkers.map(nl =>
-        this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng)
-      )
-    );
+    // 2) Distanz zu NLs cachen
+    if (!this._distanceCache[plz]) this._distanceCache[plz] = {};
 
+    let minDist = Infinity;
+
+    for (const nl of this.nlMarkers) {
+      const key = nl.lat + "," + nl.lng;
+
+      if (!this._distanceCache[plz][key]) {
+        this._distanceCache[plz][key] =
+          this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng);
+      }
+
+      const d = this._distanceCache[plz][key];
+      if (d < minDist) minDist = d;
+    }
+
+    // 3) Radiusentscheidung
     if (minDist <= radiusKm) {
       plzImRadius.add(plz);
     }
@@ -3371,16 +3435,117 @@ applyRadiusFilter(radiusKm) {
 
   this.plzImRadius = plzImRadius;
 
-  // ⭐ Umsatzwerte neu aufbauen, damit ALLE PLZs wieder drin sind
-  this.prepareUmsatzPLZWerte();
+  // 4) Karte + Tabelle aktualisieren
+this.computeWKKennwerte();
+this.computeStreuverlust();
+this.updateGeoLayer();
+this.renderDataTable(this.filteredKennwerte);
 
-  // ⭐ WK-Werte neu berechnen
-  this.getFilteredDataWithRadius();
-
-  this.updateGeoLayer();
-  this.renderDataTable(this.filteredKennwerte);
 }
 
+computeWKKennwerte() {
+  if (!this.filteredData) return;
+
+  const aggregated = {};
+  const unfilteredUmsatzByPLZ = {};
+
+  // 1️⃣ Ungefilterter Umsatz pro PLZ (für WK inkl. Nachbarn)
+  this.filteredData.forEach(row => {
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ || "").padStart(5, "0");
+    const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+
+    unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
+  });
+
+  // 2️⃣ Aggregation nur für PLZ im Radius + NL-Filter
+  this.filteredData.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ || "").padStart(5, "0");
+
+    // NL-Filter
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
+
+    // Radiusfilter (falls gesetzt)
+    if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
+
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
+        hzCount: 0,
+        umsatzNetto: 0,
+        hzKosten: 0,
+        potHzKosten: []
+      };
+    }
+
+    const entry = aggregated[plz];
+
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    if (hz) entry.hzCount++;
+
+    entry.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    entry.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+
+    const potHz = row["value_hz_potentiell_0"]?.raw;
+    if (typeof potHz === "number") entry.potHzKosten.push(potHz);
+  });
+
+  // 3️⃣ WK-Kennwerte final berechnen und gefilterte PLZ-Menge neu aufbauen
+  const base = this.filteredKennwerte || {};
+  const newFilteredKennwerte = {};
+  const newFilteredPLZWerte = this.filteredPLZWerte ? { ...this.filteredPLZWerte } : {};
+
+  Object.entries(aggregated).forEach(([plz, entry]) => {
+    const umsatzNetto = entry.umsatzNetto;
+    const hzKosten = entry.hzKosten;
+
+    const wkPercent =
+      umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
+
+    const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
+    const wkNachbarn =
+      unfilteredUmsatz > 0
+        ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
+        : 0;
+
+    const avgPotHz =
+      entry.potHzKosten.length > 0
+        ? entry.potHzKosten.reduce((a, b) => a + b, 0) / entry.potHzKosten.length
+        : 0;
+
+    const potHzPercent =
+      umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0;
+
+    const isHZ = entry.hzCount > 0;
+    const isCritical = entry.hzCount > 1;
+
+    // ⭐ Basisdaten (Haushalte, Kaufkraft, Auflage, KD, Bon, etc.) übernehmen
+    const baseEntry = base[plz] || {};
+
+    newFilteredKennwerte[plz] = {
+      ...baseEntry, // ← ALLE anderen Kennwerte bleiben erhalten
+      isHZ,
+      isCritical,
+      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      value_wk_in_percent_0: { raw: wkPercent },
+      value_wk_nachbar_0: { raw: wkNachbarn },
+      value_hz_kosten_0: { raw: hzKosten },
+      value_hz_potentiell_0: { raw: avgPotHz },
+      value_wk_potentiell_0: { raw: potHzPercent }
+    };
+
+    // WK-Werte auch in filteredPLZWerte schreiben (für Heatmap)
+    if (!newFilteredPLZWerte[plz]) newFilteredPLZWerte[plz] = {};
+    newFilteredPLZWerte[plz].wk = wkPercent;
+    newFilteredPLZWerte[plz].wkPot = potHzPercent;
+    newFilteredPLZWerte[plz].hz = isHZ;
+  });
+
+  // ⭐ Nur PLZ behalten, die im Aggregat liegen
+  this.filteredKennwerte = newFilteredKennwerte;
+  this.filteredPLZWerte = newFilteredPLZWerte;
+}
 
 
 toggleNLSelection(nl) {
@@ -3879,7 +4044,12 @@ showEmptyUmsatzPopup(plz) {
     const filteredData = isFiltered ? this.getFilteredData() : rawData;
 
     // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
-    this.prepareMapData(filteredData);
+  this.prepareMapData(filteredData);
+
+// WK neu berechnen
+this.computeWKKennwerte();
+this.computeStreuverlust();
+
 
 
 
