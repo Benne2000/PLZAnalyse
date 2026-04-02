@@ -1853,6 +1853,8 @@ applyNLFilter(selectedNLs) {
     return;
   }
 
+
+
   // 1️⃣ PLZ-Liste nach NL-Filter
   this.filteredPLZs = this.filteredData
     .filter(row => {
@@ -1864,7 +1866,7 @@ applyNLFilter(selectedNLs) {
 
   // 2️⃣ Marker aktualisieren (aktive vs. Phantom)
   this.updateMarkers();
-
+  this.computeWKKennwerte();
   // 3️⃣ Radius erneut anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
@@ -2243,6 +2245,7 @@ applyFilter(erhID, jahr, nummer) {
 
   // 2️⃣ Umsatzwerte vorbereiten
   this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
 
   // 3️⃣ MapMode korrekt setzen
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
@@ -3358,10 +3361,107 @@ applyRadiusFilter(radiusKm) {
   this.plzImRadius = plzImRadius;
 
   // 4) Karte + Tabelle aktualisieren
-  this.updateGeoLayer();
-  this.renderDataTable(this.filteredKennwerte);
+this.computeWKKennwerte();
+this.updateGeoLayer();
+this.renderDataTable(this.filteredKennwerte);
+
 }
 
+computeWKKennwerte() {
+  if (!this.filteredData) return;
+
+  const aggregated = {};
+  const unfilteredUmsatzByPLZ = {};
+
+  // 1️⃣ Ungefilterter Umsatz pro PLZ (für WK inkl. Nachbarn)
+  this.filteredData.forEach(row => {
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ || "").padStart(5, "0");
+    const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+
+    unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
+  });
+
+  // 2️⃣ Aggregation nur für PLZ im Radius
+  this.filteredData.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ || "").padStart(5, "0");
+
+    // NL-Filter
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
+
+    // Radiusfilter
+    const inRadius = this.plzImRadius?.has(plz);
+    if (!inRadius) return;
+
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
+        hzCount: 0,
+        umsatzNetto: 0,
+        hzKosten: 0,
+        potHzKosten: [],
+      };
+    }
+
+    const entry = aggregated[plz];
+
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    if (hz) entry.hzCount++;
+
+    entry.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    entry.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+
+    const potHz = row["value_hz_potentiell_0"]?.raw;
+    if (typeof potHz === "number") entry.potHzKosten.push(potHz);
+  });
+
+  // 3️⃣ WK-Kennwerte final berechnen
+  Object.entries(aggregated).forEach(([plz, entry]) => {
+    const umsatzNetto = entry.umsatzNetto;
+    const hzKosten = entry.hzKosten;
+
+    const wkPercent =
+      umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
+
+    const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
+    const wkNachbarn =
+      unfilteredUmsatz > 0
+        ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
+        : 0;
+
+    const avgPotHz =
+      entry.potHzKosten.length > 0
+        ? entry.potHzKosten.reduce((a, b) => a + b, 0) / entry.potHzKosten.length
+        : 0;
+
+    const potHzPercent =
+      umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0;
+
+    const isHZ = entry.hzCount > 0;
+    const isCritical = entry.hzCount > 1;
+
+    // WK-Kennwerte in filteredKennwerte schreiben
+    this.filteredKennwerte[plz] = {
+      ...this.filteredKennwerte[plz],
+      isHZ,
+      isCritical,
+      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      value_wk_in_percent_0: { raw: wkPercent },
+      value_wk_nachbar_0: { raw: wkNachbarn },
+      value_hz_kosten_0: { raw: hzKosten },
+      value_hz_potentiell_0: { raw: avgPotHz },
+      value_wk_potentiell_0: { raw: potHzPercent }
+    };
+
+    // WK-Werte auch in filteredPLZWerte schreiben (für Heatmap)
+    if (this.filteredPLZWerte[plz]) {
+      this.filteredPLZWerte[plz].wk = wkPercent;
+      this.filteredPLZWerte[plz].wkPot = potHzPercent;
+      this.filteredPLZWerte[plz].hz = isHZ;
+    }
+  });
+}
 
 
 toggleNLSelection(nl) {
@@ -3860,7 +3960,10 @@ showEmptyUmsatzPopup(plz) {
     const filteredData = isFiltered ? this.getFilteredData() : rawData;
 
     // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
-    this.prepareMapData(filteredData);
+  this.prepareMapData(filteredData);
+
+// WK neu berechnen
+this.computeWKKennwerte();
 
 
 
