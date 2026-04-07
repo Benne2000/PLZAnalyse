@@ -262,41 +262,8 @@
   font-size: 0.85rem;
 }
 
-/* ------------------------------------------------------ */
-/* Umsatz-Panel Zusatzbereich                             */
-/* ------------------------------------------------------ */
-
-.umsatz-extra {
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid #ccc;
-  font-size: 0.85rem;
-}
-
-
-#map-control-panel {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 25%;
-  height: 30%; /* WK-Modus */
-  background: #f7f7f7;
-  border-left: 2px solid #b41821;
-  border-top: 2px solid #b41821;
-  padding: 10px;
-  box-sizing: border-box;
-  font-family: sans-serif;
-  z-index: 99998;
-
-  /* ⭐ Scrollbar aktiv */
-  overflow-y: auto;
-  overflow-x: hidden;
-  max-height: 90vh;
-
-  transition: height 0.35s ease;
-}
 /* ============================================
-   MODERNES PANEL-DESIGN
+   PANEL-HÖHE & ANIMATION
    ============================================ */
 
 #map-control-panel {
@@ -304,7 +271,8 @@
   right: 0;
   bottom: 0;
   width: 25%;
-  max-height: 90vh;
+  height: 20%;              /* ⭐ Standardhöhe */
+  max-height: 30%;          /* ⭐ Obergrenze */
   overflow-y: auto;
   background: #fafafa;
   border-left: 2px solid #b41821;
@@ -316,7 +284,14 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  transition: height 0.35s ease;   /* ⭐ Smooth expand */
 }
+
+/* Wenn Umsatz aktiv → Panel wächst */
+#map-control-panel.expanded {
+  height: 30%;
+}
+
 
 /* Karten-Panel Cards */
 .panel-card {
@@ -735,18 +710,42 @@
 .analysis-btn:not(.active):hover {
   background: #ffecec;
 }
+/* ============================================
+   Untergeordneter ABS/HH Switch
+   ============================================ */
 
 #umsatz-mode-switch {
-  width: 100%;
+  margin-top: 4px;
+  background: #f0f0f0;
+  border-radius: 6px;
+  padding: 3px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  transform: scale(0.85);
-  transform-origin: left center;
-
-  margin-bottom: 6px;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
 }
+
+#umsatz-mode-switch span {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  font-size: 0.75rem;       /* ⭐ kleiner */
+  font-weight: 600;
+  border-radius: 4px;
+  transition: 0.2s;
+  color: #666;
+}
+
+#umsatz-mode-switch.active-left .mode-left {
+  background: #b41821;
+  color: white;
+}
+
+#umsatz-mode-switch.active-right .mode-right {
+  background: #b41821;
+  color: white;
+}
+
 
 
 /* ⭐ Kompakter 2×2 Grid */
@@ -1648,48 +1647,60 @@ initializeMapBase() {
   const umsatzOptionsRow = this._shadowRoot.getElementById("umsatz-options-row");
 
   if (btnWK && btnUmsatz && umsatzPanel && panel && wkExtra && umsatzOptionsRow) {
-    btnWK.addEventListener("click", () => {
-      btnWK.classList.add("active");
-      btnUmsatz.classList.remove("active");
-      umsatzPanel.classList.add("hidden");
+ btnWK.addEventListener("click", () => {
+  btnWK.classList.add("active");
+  btnUmsatz.classList.remove("active");
+  umsatzPanel.classList.add("hidden");
 
-      this.currentMapMode = "wk";
+  this.currentMapMode = "wk";
 
-      wkExtra.style.display = "block";
-      umsatzOptionsRow.style.display = "none";
+  wkExtra.style.display = "block";
+  umsatzOptionsRow.style.display = "none";
 
-      // Popups schließen
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+  // ⭐ Panel zurück auf 20%
+  panel.classList.remove("expanded");
 
-      const erhID = this._activeFilter?.erhID;
-      const jahr = this._activeFilter?.jahr;
-      const nummer = this._activeFilter?.nummer;
+  this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+  this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
 
-      if (erhID && jahr && nummer) {
-        this.applyFilter(erhID, jahr, nummer);
-      } else {
-        this.updateGeoLayer();
-      }
-    });
+  const erhID = this._activeFilter?.erhID;
+  const jahr = this._activeFilter?.jahr;
+  const nummer = this._activeFilter?.nummer;
 
-    btnUmsatz.addEventListener("click", () => {
-      btnUmsatz.classList.add("active");
-      btnWK.classList.remove("active");
-      umsatzPanel.classList.remove("hidden");
+  if (erhID && jahr && nummer) {
+    this.applyFilter(erhID, jahr, nummer);
+  } else {
+    this.updateGeoLayer();
+  }
+});
 
-      this.currentMapMode = "umsatz-multi";
 
-      this.prepareUmsatzPLZWerte();
+btnUmsatz.addEventListener("click", () => {
+  btnUmsatz.classList.add("active");
+  btnWK.classList.remove("active");
+  umsatzPanel.classList.remove("hidden");
 
-      wkExtra.style.display = "none";
-      umsatzOptionsRow.style.display = "flex";
+  this.currentMapMode = "umsatz-multi";
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+  this.prepareUmsatzPLZWerte();
 
-      this.updateGeoLayer();
-    });
+  wkExtra.style.display = "none";
+  umsatzOptionsRow.style.display = "flex";
+
+  // ⭐ Panel auf 30% erweitern
+  panel.classList.add("expanded");
+
+  // ⭐ Smooth scroll zum Umsatz-Panel
+  setTimeout(() => {
+    umsatzPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 150);
+
+  this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+  this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+
+  this.updateGeoLayer();
+});
+
   }
 
   // HH/ABS Switch (Segmented Control)
