@@ -785,6 +785,67 @@
   transform: scale(0.9);
 }
 
+/* 4-Wege-Switch */
+.umsatz-source-switch {
+  display: flex;
+  gap: 6px;
+  margin: 10px 0;
+}
+
+.umsatz-source-switch .mode-btn {
+  padding: 6px 10px;
+  border: 1px solid #b41821;
+  background: white;
+  color: #b41821;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.umsatz-source-switch .mode-btn.active {
+  background: #b41821;
+  color: white;
+}
+
+/* 2-Wege-Switch */
+.umsatz-scale-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 15px 0;
+  font-size: 0.75rem;
+}
+
+.umsatz-scale-switch .toggle {
+  width: 40px;
+  height: 18px;
+  background: #ccc;
+  border-radius: 20px;
+  position: relative;
+  cursor: pointer;
+}
+
+.umsatz-scale-switch .toggle::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: all 0.2s ease;
+}
+
+.umsatz-scale-switch.hh .toggle {
+  background: #b41821;
+}
+
+.umsatz-scale-switch.hh .toggle::after {
+  left: 23px;
+}
+
+
     </style>
 
 
@@ -805,19 +866,17 @@
     <button id="filter-button">Anzeigen</button>
 
     <!-- 📊 Tabellenbereich -->
-<div class="table-container">
+    <div class="table-container">
 
-  <!-- PLZ-Tabelle -->
-  <div class="table-wrapper" id="table-container">
-      <!-- PLZ-Tabelle + Sticky Footer gehören zusammen -->
-      <div id="streuverlust-box"></div>
-  </div>
+      <!-- PLZ-Tabelle -->
+      <div class="table-wrapper" id="table-container">
+        <div id="streuverlust-box"></div>
+      </div>
 
-  <!-- NL-Tabelle -->
-  <div id="nl-info-container"></div>
+      <!-- NL-Tabelle -->
+      <div id="nl-info-container"></div>
 
-</div>
-
+    </div>
 
   </div> <!-- END filter-container -->
 
@@ -870,39 +929,46 @@
     </label>
   </div>
 
-<!-- ⭐ Umsatz-Optionen nebeneinander -->
-<div id="umsatz-options-row" style="margin-top:10px; display:none; gap:20px; align-items:center;">
+  <!-- ⭐ Umsatz-Optionen -->
+  <div id="umsatz-options-row" style="margin-top:10px; display:none; gap:20px; align-items:center;">
 
-  <div id="umsatz-extra">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-bestreuung" />
-      Bestreuung anzeigen
-    </label>
-  </div>
-
-  <div id="umsatz-radius-extra">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-radiusfilter" checked />
-      Radiusfilter aktiv
-    </label>
-  </div>
-
-</div>
-
-
-  <!-- Umsatzanalyse-Bereich -->
-  <div id="umsatz-panel" class="hidden">
-
-    <!-- Globaler Switch -->
-    <div id="umsatz-mode-switch" class="mode-selector">
-      <span class="mode-left">Absolut</span>
-      <div class="mode-track">
-        <div class="mode-dot"></div>
-      </div>
-      <span class="mode-right">pro Haushalt</span>
+    <div id="umsatz-extra">
+      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="checkbox" id="chk-bestreuung" />
+        Bestreuung anzeigen
+      </label>
     </div>
 
-    <!-- 2×2 Grid -->
+    <div id="umsatz-radius-extra">
+      <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="checkbox" id="chk-radiusfilter" checked />
+        Radiusfilter aktiv
+      </label>
+    </div>
+
+  </div>
+
+  <!-- =============================== -->
+  <!--   UMSATZANALYSE-BEREICH         -->
+  <!-- =============================== -->
+  <div id="umsatz-panel" class="hidden">
+
+    <!-- ⭐ NEU: 4-Wege-Umsatzswitch -->
+    <div id="umsatz-source-switch" class="umsatz-source-switch">
+      <button class="mode-btn active" data-mode="normal">Normal</button>
+      <button class="mode-btn" data-mode="werbung">Werbung</button>
+      <button class="mode-btn" data-mode="zusatz">Zusatz</button>
+      <button class="mode-btn" data-mode="combined">Kombiniert</button>
+    </div>
+
+    <!-- ⭐ NEU: 2-Wege-Skalen-Switch -->
+    <div id="umsatz-scale-switch" class="umsatz-scale-switch">
+      <span class="label-abs">Absolut</span>
+      <div class="toggle"></div>
+      <span class="label-hh">pro Haushalt</span>
+    </div>
+
+    <!-- 2×2 Grid (Kategorien) -->
     <div class="umsatz-grid">
       <div class="map-toggle active" data-cat="stationaer">Stationär</div>
       <div class="map-toggle" data-cat="pluscard">Pluscard</div>
@@ -913,6 +979,7 @@
   </div>
 
 </div>
+
 
 
 
@@ -934,6 +1001,9 @@
         this._tilesVisible = false;
         this._sortState = { column: null, direction: "asc" };
         this.umsatzMode = "abs";        // "abs" oder "hh"
+        this.umsatzSource = "normal"; // normal | werbung | zusatz | combined
+        this.umsatzScale = "abs";     // abs | hh
+
         this.activeCategories = new Set(); // stationaer, pluscard, ra, online
 
       }
@@ -1301,8 +1371,10 @@ renderDataTableFromEntries(entries) {
   container.style.height = '100%';
   container.style.minHeight = '0';
 
+  // PLZ 00000 entfernen
   entries = entries.filter(([plz]) => plz !== "00000");
 
+  // Radiusfilter
   if (this.plzImRadius && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
   }
@@ -1323,14 +1395,13 @@ renderDataTableFromEntries(entries) {
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
-const headers = [
-  { label: 'PLZ', width: '40px' },
-  { label: 'Gemeinde', width: '90px' },
-  { label: 'HZ', width: '20px' },
-  { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
-  { label: 'WK (%)', width: '50px' }   // ✔ geändert
-];
-
+  const headers = [
+    { label: 'PLZ', width: '40px' },
+    { label: 'Gemeinde', width: '90px' },
+    { label: 'HZ', width: '20px' },
+    { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
+    { label: 'WK (%)', width: '50px' }
+  ];
 
   headers.forEach(({ label, width }, i) => {
     const th = document.createElement('th');
@@ -1367,23 +1438,33 @@ const headers = [
       this.highlightTableRow(tr);
     });
 
+    // Gemeinde-Name aus geoNotes
     let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
     note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
 
-   let symbol = "🔴"; // Standard
+    // Symbol (HZ / kritisch)
+    let symbol = "🔴";
+    if (this.filteredKennwerte[plz]?.isCritical) {
+      symbol = "⚠️";
+    } else if (this.filteredKennwerte[plz]?.isHZ) {
+      symbol = "🟢";
+    }
 
-if (this.filteredKennwerte[plz]?.isCritical) {
-  symbol = "⚠️";
-} else if (this.filteredKennwerte[plz]?.isHZ) {
-  symbol = "🟢";
-}
+    // ⭐ NEU: Umsatz korrekt über zentrale Logik
+    const umsatz = [...this.activeCategories]
+      .map(cat => this.getUmsatzValue(plz, cat))
+      .reduce((a, b) => a + b, 0);
 
+    // WK bleibt wie bisher
+    const wk = kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–';
 
-    const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
-    const wk = kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–';  // ✔ geändert
-
-const rowValues = [plz, note, symbol, umsatz, wk];
-
+    const rowValues = [
+      plz,
+      note,
+      symbol,
+      umsatz.toLocaleString('de-DE'),
+      wk
+    ];
 
     rowValues.forEach((text, i) => {
       const td = document.createElement('td');
@@ -1419,9 +1500,10 @@ const rowValues = [plz, note, symbol, umsatz, wk];
   if (this._sortState?.column != null) {
     this.updateSortIcons(this._sortState.column);
   }
-  this.updateStreuverlustFooter();
 
+  this.updateStreuverlustFooter();
 }
+
 
 
 
@@ -1669,9 +1751,36 @@ btnWK.addEventListener("click", () => {
   const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
   this.umsatzMode = "abs";
 
-  modeSwitch.addEventListener("click", () => {
-    const isHH = modeSwitch.classList.toggle("hh");
-    this.umsatzMode = isHH ? "hh" : "abs";
+modeSwitch.addEventListener("click", () => {
+  const isHH = modeSwitch.classList.toggle("hh");
+  this.umsatzMode = isHH ? "hh" : "abs";
+
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+  if (popupUmsatz) popupUmsatz.classList.remove("show");
+
+  const popupWK = this._shadowRoot.getElementById("side-popup");
+  if (popupWK) popupWK.classList.remove("show");
+
+  // ⭐ HIER
+  this.computeMaxValue();
+  this.updateGeoLayer();
+});
+
+
+  // Kategorien
+this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
+  toggle.addEventListener("click", () => {
+    const cat = toggle.dataset.cat;
+
+    if (this.activeCategories.has(cat)) {
+      this.activeCategories.delete(cat);
+      toggle.classList.remove("active");
+    } else {
+      this.activeCategories.add(cat);
+      toggle.classList.add("active");
+    }
+
+    this.currentMapMode = "umsatz-multi";
 
     const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
     if (popupUmsatz) popupUmsatz.classList.remove("show");
@@ -1679,33 +1788,12 @@ btnWK.addEventListener("click", () => {
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) popupWK.classList.remove("show");
 
+    // ⭐ HIER
+    this.computeMaxValue();
     this.updateGeoLayer();
   });
+});
 
-  // Kategorien
-  this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
-    toggle.addEventListener("click", () => {
-      const cat = toggle.dataset.cat;
-
-      if (this.activeCategories.has(cat)) {
-        this.activeCategories.delete(cat);
-        toggle.classList.remove("active");
-      } else {
-        this.activeCategories.add(cat);
-        toggle.classList.add("active");
-      }
-
-      this.currentMapMode = "umsatz-multi";
-
-      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) popupWK.classList.remove("show");
-
-      this.updateGeoLayer();
-    });
-  });
 
   // Doppelbestreuung
   const chkDoppel = this._shadowRoot.getElementById("chk-doppelbestreuung");
@@ -2128,59 +2216,76 @@ if (popupUmsatz) {
   };
 }
 
-
-
-showUmsatzPopup(plz, values) {
+showUmsatzPopup(plz) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
 
+  if (!popup) return;
+
   // WK-Popup schließen
-  popupWK.classList.remove("show");
-  popupWK.classList.add("hidden");
+  if (popupWK) {
+    popupWK.classList.remove("show");
+    popupWK.classList.add("hidden");
+  }
 
-  const modeHH = this.umsatzMode === "hh";
+  const v = this.filteredPLZWerte?.[plz];
+  if (!v) return;
 
-// IMMER absolute Werte oben
-const stationaer = values.umsatz;
-const pluscard   = values.pluscard;
-const ra         = values.ra;
-const online     = values.onlineshop;
+  const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-// IMMER pro Haushalt unten
-const stHH = values.umsatzProHaushalt;
-const pcHH = values.pluscardProHaushalt;
-const raHH = values.raProHaushalt;
-const osHH = values.onlineshopProHaushalt;
+  // -----------------------------
+  // 1) Kategorien & Werte holen
+  // -----------------------------
+  const cats = ["stationaer", "pluscard", "ra", "online"];
 
-const hh = values.haushalte;
-const note = this.geoNotes?.[plz] || "Keine Notiz";
+  const valuesAbs = {};
+  const valuesHH  = {};
 
-const active = {
-  stationaer: this.activeCategories.has("stationaer"),
-  pluscard:   this.activeCategories.has("pluscard"),
-  ra:         this.activeCategories.has("ra"),
-  online:     this.activeCategories.has("online")
-};
+  cats.forEach(cat => {
+    // Absolut
+    this.umsatzScale = "abs";
+    valuesAbs[cat] = this.getUmsatzValue(plz, cat);
 
-// Gesamt absolut (für Balken + Kopfzeile oben)
-const totalAbs =
-  (active.stationaer ? stationaer : 0) +
-  (active.pluscard   ? pluscard   : 0) +
-  (active.ra         ? ra         : 0) +
-  (active.online     ? online     : 0);
+    // pro Haushalt
+    this.umsatzScale = "hh";
+    valuesHH[cat] = this.getUmsatzValue(plz, cat);
+  });
 
-// ⭐ NEU: Gesamt pro Haushalt (für Kopfzeile unten)
-const totalHH =
-  (active.stationaer ? stHH : 0) +
-  (active.pluscard   ? pcHH : 0) +
-  (active.ra         ? raHH : 0) +
-  (active.online     ? osHH : 0);
+  // Skala wiederherstellen
+  this.umsatzScale = this.umsatzScale === "hh" ? "hh" : "abs";
 
-const fmtAbs = x => x.toLocaleString("de-DE");
-const fmtHH  = x => Number(x).toFixed(3);
-const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
+  const hh = v.haushalte ?? 0;
 
+  // -----------------------------
+  // 2) Aktive Kategorien
+  // -----------------------------
+  const active = {
+    stationaer: this.activeCategories.has("stationaer"),
+    pluscard:   this.activeCategories.has("pluscard"),
+    ra:         this.activeCategories.has("ra"),
+    online:     this.activeCategories.has("online")
+  };
 
+  // -----------------------------
+  // 3) Summen berechnen
+  // -----------------------------
+  const totalAbs = cats.reduce(
+    (sum, cat) => sum + (active[cat] ? valuesAbs[cat] : 0),
+    0
+  );
+
+  const totalHH = cats.reduce(
+    (sum, cat) => sum + (active[cat] ? valuesHH[cat] : 0),
+    0
+  );
+
+  const fmtAbs = x => Number(x).toLocaleString("de-DE");
+  const fmtHH  = x => Number(x).toFixed(3);
+  const pct    = x => totalAbs > 0 ? (Number(x) / totalAbs) * 100 : 0;
+
+  // -----------------------------
+  // 4) Popup HTML
+  // -----------------------------
   popup.innerHTML = `
     <button class="close-btn">×</button>
 
@@ -2191,37 +2296,36 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
       <thead>
         <tr><th colspan="2" class="title-cell">${note}</th></tr>
         <tr><th colspan="2" class="subtitle-cell">
-          Gesamtumsatz: ${totalAbs.toLocaleString("de-DE")} €
-
+          Gesamtumsatz: ${fmtAbs(totalAbs)} €
         </th></tr>
       </thead>
 
       <tbody>
         <tr class="${active.stationaer ? "" : "disabled"}">
           <td class="label-cell">Stationär</td>
-          <td class="value-cell">${fmtAbs(stationaer)}</td>
+          <td class="value-cell">${fmtAbs(valuesAbs.stationaer)}</td>
         </tr>
         <tr class="${active.pluscard ? "" : "disabled"}">
           <td class="label-cell">Pluscard</td>
-          <td class="value-cell">${fmtAbs(pluscard)}</td>
+          <td class="value-cell">${fmtAbs(valuesAbs.pluscard)}</td>
         </tr>
         <tr class="${active.ra ? "" : "disabled"}">
           <td class="label-cell">R&A</td>
-          <td class="value-cell">${fmtAbs(ra)}</td>
+          <td class="value-cell">${fmtAbs(valuesAbs.ra)}</td>
         </tr>
         <tr class="${active.online ? "" : "disabled"}">
           <td class="label-cell">Onlineshop</td>
-          <td class="value-cell">${fmtAbs(online)}</td>
+          <td class="value-cell">${fmtAbs(valuesAbs.online)}</td>
         </tr>
       </tbody>
     </table>
 
     <!-- Umsatz-Balken -->
     <div class="umsatz-share-bar">
-      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
-      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>`   : ""}
-      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(ra)}%"></div>`         : ""}
-      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online)}%"></div>`     : ""}
+      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(valuesAbs.stationaer)}%"></div>` : ""}
+      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(valuesAbs.pluscard)}%"></div>`   : ""}
+      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(valuesAbs.ra)}%"></div>`         : ""}
+      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(valuesAbs.online)}%"></div>`     : ""}
     </div>
 
     <div class="umsatz-legend">
@@ -2229,48 +2333,52 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
       <span><span style="color:#1f78b4;">⬤</span> Pluscard</span>
       <span><span style="color:#33a02c;">⬤</span> R&A</span>
       <span><span style="color:#ffb000;">⬤</span> Onlineshop</span>
-
     </div>
 
     <!-- ===================================== -->
     <!--   TABELLE 2: PRO-HAUSHALT-KENNZAHLEN  -->
     <!-- ===================================== -->
     <table class="hh-table">
-     <thead>
+      <thead>
         <tr>
-           <th colspan="2" class="subtitle-cell">
-             Gesamtumsatz pro HH: ${fmtHH(totalHH)})
-           </th>
+          <th colspan="2" class="subtitle-cell">
+            Gesamtumsatz pro HH: ${fmtHH(totalHH)}
+          </th>
         </tr>
       </thead>
 
-
       <tbody>
-        <tr><td class="label-cell">Haushalte</td><td class="value-cell">${hh.toLocaleString("de-DE")}</td></tr>
+        <tr>
+          <td class="label-cell">Haushalte</td>
+          <td class="value-cell">${hh.toLocaleString("de-DE")}</td>
+        </tr>
 
         <tr class="${active.stationaer ? "" : "disabled"}">
           <td class="label-cell">Stationär pro HH</td>
-          <td class="value-cell">${fmtHH(stHH)}</td>
+          <td class="value-cell">${fmtHH(valuesHH.stationaer)}</td>
         </tr>
 
         <tr class="${active.pluscard ? "" : "disabled"}">
           <td class="label-cell">Pluscard pro HH</td>
-          <td class="value-cell">${fmtHH(pcHH)}</td>
+          <td class="value-cell">${fmtHH(valuesHH.pluscard)}</td>
         </tr>
 
         <tr class="${active.ra ? "" : "disabled"}">
           <td class="label-cell">R&A pro HH</td>
-          <td class="value-cell">${fmtHH(raHH)}</td>
+          <td class="value-cell">${fmtHH(valuesHH.ra)}</td>
         </tr>
 
         <tr class="${active.online ? "" : "disabled"}">
           <td class="label-cell">Onlineshop pro HH</td>
-          <td class="value-cell">${fmtHH(osHH)}</td>
+          <td class="value-cell">${fmtHH(valuesHH.online)}</td>
         </tr>
       </tbody>
     </table>
   `;
 
+  // -----------------------------
+  // 5) Popup anzeigen
+  // -----------------------------
   popup.classList.remove("hidden");
   void popup.offsetWidth;
   popup.classList.add("show");
@@ -2279,6 +2387,267 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
     popup.classList.remove("show");
     popup.classList.add("hidden");
   };
+}
+
+
+initUmsatzSwitches() {
+  this.initUmsatzSourceSwitch();
+  this.initUmsatzScaleSwitch();
+}
+
+initUmsatzSourceSwitch() {
+  const switchEl = this._shadowRoot.getElementById("umsatz-source-switch");
+  if (!switchEl) return;
+
+  this.umsatzSet = "normal";
+
+  switchEl.querySelectorAll(".mode-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const mode = btn.dataset.mode;
+      this.umsatzSet = mode;
+
+      switchEl.querySelectorAll(".mode-btn").forEach(b =>
+        b.classList.toggle("active", b === btn)
+      );
+
+      this.closeAllPopups();
+
+      // ⭐ HIER
+      this.computeMaxValue();
+      this.updateGeoLayer();
+
+      this.renderDataTable(this.filteredKennwerte);
+    });
+  });
+}
+
+
+initUmsatzScaleSwitch() {
+  const scaleEl = this._shadowRoot.getElementById("umsatz-scale-switch");
+  if (!scaleEl) return;
+
+  // Default
+  this.umsatzScale = "abs";
+
+  const toggle = scaleEl.querySelector(".toggle");
+
+  toggle.addEventListener("click", () => {
+    const isHH = scaleEl.classList.toggle("hh");
+
+    this.umsatzScale = isHH ? "hh" : "abs";
+
+    // Popups schließen
+    this.closeAllPopups();
+
+    // Karte + Tabelle aktualisieren
+    this.updateGeoLayer();
+    this.renderDataTable(this.filteredKennwerte);
+  });
+}
+
+closeAllPopups() {
+  const p1 = this._shadowRoot.getElementById("side-popup");
+  const p2 = this._shadowRoot.getElementById("side-popup-umsatz");
+
+  if (p1) {
+    p1.classList.remove("show");
+    p1.classList.add("hidden");
+  }
+  if (p2) {
+    p2.classList.remove("show");
+    p2.classList.add("hidden");
+  }
+}
+
+prepareUmsatzVarianten() {
+  if (!this.filteredPLZWerte) return;
+
+  Object.entries(this.filteredPLZWerte).forEach(([plz, v]) => {
+
+    // -----------------------------
+    // 1) Rohwerte holen (normal)
+    // -----------------------------
+    const norm = {
+      stationaer: v.umsatz ?? 0,
+      pluscard:   v.pluscard ?? 0,
+      ra:         v.ra ?? 0,
+      online:     v.onlineshop ?? 0
+    };
+
+    // -----------------------------
+    // 2) Werbeumsätze holen
+    // -----------------------------
+    const werb = {
+      stationaer: v.umsatzWerbung ?? 0,
+      pluscard:   v.pluscardWerbung ?? 0,
+      ra:         v.raWerbung ?? 0,
+      online:     v.onlineshopWerbung ?? 0
+    };
+
+    // -----------------------------
+    // 3) Zusatzumsätze holen
+    // -----------------------------
+    const zus = {
+      stationaer: v.umsatzZusatz ?? 0,
+      pluscard:   v.pluscardZusatz ?? 0,
+      ra:         v.raZusatz ?? 0,
+      online:     v.onlineshopZusatz ?? 0
+    };
+
+    // -----------------------------
+    // 4) Combined = normal + werbung + zusatz
+    // -----------------------------
+    const comb = {
+      stationaer: norm.stationaer + werb.stationaer + zus.stationaer,
+      pluscard:   norm.pluscard   + werb.pluscard   + zus.pluscard,
+      ra:         norm.ra         + werb.ra         + zus.ra,
+      online:     norm.online     + werb.online     + zus.online
+    };
+
+    // -----------------------------
+    // 5) Pro Haushalt
+    // -----------------------------
+    const hh = v.haushalte ?? 0;
+
+    const toHH = (x) => (hh > 0 ? x / hh : 0);
+
+    const normHH = {
+      stationaer: toHH(norm.stationaer),
+      pluscard:   toHH(norm.pluscard),
+      ra:         toHH(norm.ra),
+      online:     toHH(norm.online)
+    };
+
+    const werbHH = {
+      stationaer: toHH(werb.stationaer),
+      pluscard:   toHH(werb.pluscard),
+      ra:         toHH(werb.ra),
+      online:     toHH(werb.online)
+    };
+
+    const zusHH = {
+      stationaer: toHH(zus.stationaer),
+      pluscard:   toHH(zus.pluscard),
+      ra:         toHH(zus.ra),
+      online:     toHH(zus.online)
+    };
+
+    const combHH = {
+      stationaer: toHH(comb.stationaer),
+      pluscard:   toHH(comb.pluscard),
+      ra:         toHH(comb.ra),
+      online:     toHH(comb.online)
+    };
+
+    // -----------------------------
+    // 6) Alles zurückschreiben
+    // -----------------------------
+    Object.assign(v, {
+      // Normal
+      umsatz: norm.stationaer,
+      pluscard: norm.pluscard,
+      ra: norm.ra,
+      onlineshop: norm.online,
+
+      // Werbung
+      umsatzWerbung: werb.stationaer,
+      pluscardWerbung: werb.pluscard,
+      raWerbung: werb.ra,
+      onlineshopWerbung: werb.online,
+
+      // Zusatz
+      umsatzZusatz: zus.stationaer,
+      pluscardZusatz: zus.pluscard,
+      raZusatz: zus.ra,
+      onlineshopZusatz: zus.online,
+
+      // Combined
+      umsatzCombined: comb.stationaer,
+      pluscardCombined: comb.pluscard,
+      raCombined: comb.ra,
+      onlineshopCombined: comb.online,
+
+      // Normal HH
+      umsatzProHaushalt: normHH.stationaer,
+      pluscardProHaushalt: normHH.pluscard,
+      raProHaushalt: normHH.ra,
+      onlineshopProHaushalt: normHH.online,
+
+      // Werbung HH
+      umsatzWerbungProHaushalt: werbHH.stationaer,
+      pluscardWerbungProHaushalt: werbHH.pluscard,
+      raWerbungProHaushalt: werbHH.ra,
+      onlineshopWerbungProHaushalt: werbHH.online,
+
+      // Zusatz HH
+      umsatzZusatzProHaushalt: zusHH.stationaer,
+      pluscardZusatzProHaushalt: zusHH.pluscard,
+      raZusatzProHaushalt: zusHH.ra,
+      onlineshopZusatzProHaushalt: zusHH.online,
+
+      // Combined HH
+      umsatzCombinedProHaushalt: combHH.stationaer,
+      pluscardCombinedProHaushalt: combHH.pluscard,
+      raCombinedProHaushalt: combHH.ra,
+      onlineshopCombinedProHaushalt: combHH.online
+    });
+  });
+}
+
+
+getUmsatzValue(plz, category) {
+  const v = this.filteredPLZWerte?.[plz];
+  if (!v) return 0;
+
+  // -----------------------------
+  // 1) Basis-Feldname bestimmen
+  // -----------------------------
+  const baseMap = {
+    stationaer: "umsatz",
+    pluscard:   "pluscard",
+    ra:         "ra",
+    online:     "onlineshop"
+  };
+
+  const base = baseMap[category];
+  if (!base) return 0;
+
+  // -----------------------------
+  // 2) Umsatz-Set bestimmen
+  //    normal | werbung | zusatz | combined
+  // -----------------------------
+  const set = this.umsatzSet || "normal";
+
+  const suffixMap = {
+    normal:   "",
+    werbung:  "Werbung",
+    zusatz:   "Zusatz",
+    combined: "Combined"
+  };
+
+  const suffix = suffixMap[set] ?? "";
+
+  // Beispiel:
+  // base = "umsatz"
+  // suffix = "Werbung"
+  // → keyAbs = "umsatzWerbung"
+  const keyAbs = base + suffix;
+
+  // -----------------------------
+  // 3) Skala bestimmen
+  //    abs | hh
+  // -----------------------------
+  const scale = this.umsatzScale || "abs";
+
+  if (scale === "abs") {
+    return Number(v[keyAbs] ?? 0);
+  }
+
+  // -----------------------------
+  // 4) pro Haushalt
+  // -----------------------------
+  const keyHH = keyAbs + "ProHaushalt";
+  return Number(v[keyHH] ?? 0);
 }
 
 
@@ -2492,35 +2861,29 @@ updateGeoLayer() {
   console.groupEnd();
 }
 
-
 computeFillColor(plz) {
-  const v = this.filteredPLZWerte?.[plz];
-  if (!v) return "#cfd4da";
-
-  // WK-Modus
+  // WK-Modus bleibt wie bisher
   if (this.currentMapMode === "wk") {
-    const value = v.hz ? v.wk : v.wkPot;
-    return this.getColor(value, v.hz);
+    return this.getColorForPLZ(plz);
   }
 
-  // Umsatzmodus
-  if (this.currentMapMode === "umsatz-multi") {
-    const safe = x => Number.isFinite(x) ? x : 0;
-
+  // Umsatz-Modus
+  if (this.currentMapMode === "umsatz") {
     let sum = 0;
-    if (this.activeCategories.has("stationaer"))
-      sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
 
-    if (this.activeCategories.has("pluscard"))
-      sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
+    for (const cat of this.activeCategories) {
+      sum += this.getUmsatzValue(plz, cat);
+    }
 
-    if (this.activeCategories.has("ra"))
-      sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
+    // Falls keine Werte → graue Fläche
+    if (!sum || sum <= 0) {
+      return "#cfd4da";
+    }
 
-    if (this.activeCategories.has("online"))
-      sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
+    // Max-Wert holen (für Farbskala)
+    const max = this._maxValueCache || 1;
 
-    return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
+    return this.getDynamicHeatColor(sum, max);
   }
 
   return "#cfd4da";
@@ -2528,41 +2891,27 @@ computeFillColor(plz) {
 
 
 computeMaxValue() {
-  const plzWerte = this.filteredPLZWerte || {};
-  const safe = x => Number.isFinite(x) ? x : 0;
-
   let maxValue = 0;
 
-  if (this.currentMapMode === "wk") {
-    Object.values(plzWerte).forEach(v => {
-      const val = safe(v.hz ? v.wk : v.wkPot);
-      if (val > maxValue) maxValue = val;
-    });
-  }
+  if (!this.filteredPLZWerte) return 1;
 
-  if (this.currentMapMode === "umsatz-multi") {
-    Object.values(plzWerte).forEach(v => {
-      let sum = 0;
+  Object.keys(this.filteredPLZWerte).forEach(plz => {
+    let sum = 0;
 
-      if (this.activeCategories.has("stationaer"))
-        sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
+    for (const cat of this.activeCategories) {
+      sum += this.getUmsatzValue(plz, cat);
+    }
 
-      if (this.activeCategories.has("pluscard"))
-        sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
-
-      if (this.activeCategories.has("ra"))
-        sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
-
-      if (this.activeCategories.has("online"))
-        sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
-
-      if (sum > maxValue) maxValue = sum;
-    });
-  }
+    if (sum > maxValue) {
+      maxValue = sum;
+    }
+  });
 
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
+
+
 
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
@@ -4055,54 +4404,56 @@ showEmptyUmsatzPopup(plz) {
     }
   }
 
-  async render() {
-    if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-      console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-      return;
-    }
+async render() {
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+    return;
+  }
 
-    this.showSpinner();
+  this.showSpinner();
 
-    const rawData = this._myDataSource.data;
+  const rawData = this._myDataSource.data;
 
-    // 🔧 Filterstruktur & Dropdowns vorbereiten
-    this._erhData = this.buildErhebungsStruktur(rawData);
-    this.setupFilterDropdowns();
+  // 🔧 Filterstruktur & Dropdowns vorbereiten
+  this._erhData = this.buildErhebungsStruktur(rawData);
+  this.setupFilterDropdowns();
 
-    // 🔍 Filter anwenden oder Rohdaten verwenden
-    const isFiltered = !!this._activeFilter;
-    const filteredData = isFiltered ? this.getFilteredData() : rawData;
+  // 🔍 Filter anwenden oder Rohdaten verwenden
+  const isFiltered = !!this._activeFilter;
+  const filteredData = isFiltered ? this.getFilteredData() : rawData;
 
-    // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+  // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
   this.prepareMapData(filteredData);
 
-// WK neu berechnen
-this.computeWKKennwerte();
-this.computeStreuverlust();
+  // ⭐ NEU: Umsatzarten (normal/werbung/zusatz/combined) erzeugen
+  this.prepareUmsatzVarianten();   // ← DAS ist die neue Zeile
 
+  // WK neu berechnen
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
 
+  // 🌍 GeoJSON laden & Layer aktualisieren
+  await this.loadGeoJson();
 
+  this.updateGeoLayer();
+  this.createAllMarkers();
 
-    // 🌍 GeoJSON laden & Layer aktualisieren
-    await this.loadGeoJson();
+  // 📌 PLZs extrahieren für Marker-Filterung
+  const filteredPLZs = isFiltered
+    ? filteredData
+        .map(d => d["dimension_plz_0"]?.id?.trim())
+        .filter(plz => plz && plz !== "@NullMember")
+    : Object.keys(this.allMarkers);
 
-    this.updateGeoLayer();
-      this.createAllMarkers();
-    // 📌 PLZs extrahieren für Marker-Filterung
-    const filteredPLZs = isFiltered
-      ? filteredData
-          .map(d => d["dimension_plz_0"]?.id?.trim())
-          .filter(plz => plz && plz !== "@NullMember")
-      : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
+  // 📍 Marker anzeigen
+  this.updateMarkers(filteredPLZs);
 
-    // 📍 Marker anzeigen (gefiltert oder vollständig)
-    this.updateMarkers(filteredPLZs);
+  // 📊 Tabelle aktualisieren
+  this.renderDataTable(this.filteredKennwerte);
 
-    // 📊 Tabelle aktualisieren
-    this.renderDataTable(this.filteredKennwerte);
+  this.hideSpinner();
+}
 
-    this.hideSpinner();
-  }
 
 
 
