@@ -829,176 +829,6 @@
   left: 23px;
 }
 
-/* ================================
-   PANEL BASIS
-================================ */
-#map-control-panel {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 26%;
-  max-height: 90vh;
-  background: #ffffff;
-  border-left: 2px solid #b41821;
-  border-top: 2px solid #b41821;
-  padding: 14px;
-  box-sizing: border-box;
-  font-family: sans-serif;
-  overflow-y: auto;
-}
-
-/* ================================
-   SEKTIONEN
-================================ */
-.panel-section {
-  margin-bottom: 18px;
-}
-
-.panel-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #b41821;
-  margin-bottom: 8px;
-}
-
-.panel-subtitle {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #555;
-  margin-top: 10px;
-  margin-bottom: 6px;
-}
-
-/* ================================
-   SEGMENTED CONTROL
-================================ */
-.segmented {
-  display: flex;
-  width: 100%;
-}
-
-.seg-btn {
-  flex: 1;
-  padding: 8px 6px;
-  border: 1px solid #b41821;
-  background: white;
-  color: #b41821;
-  font-size: 0.85rem;
-  cursor: pointer;
-  font-weight: 600;
-  border-right: none;
-}
-
-.seg-btn:last-child {
-  border-right: 1px solid #b41821;
-}
-
-.seg-btn.active {
-  background: #b41821;
-  color: white;
-}
-
-/* ================================
-   MINI SWITCH (Umsatzart / ABS-HH)
-================================ */
-.mini-switch {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: white;
-  border: 1px solid #b41821;
-  border-radius: 10px;
-  padding: 6px 10px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.mini-switch .track {
-  width: 42px;
-  height: 20px;
-  background: #ccc;
-  border-radius: 20px;
-  position: relative;
-}
-
-.mini-switch .dot {
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  transition: left 0.25s ease;
-}
-
-.mini-switch.hh .track {
-  background: #b41821;
-}
-
-.mini-switch.hh .dot {
-  left: 23px;
-}
-
-/* ================================
-   KATEGORIEN
-================================ */
-.cat-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.cat-btn {
-  padding: 6px;
-  border: 1px solid #b41821;
-  border-radius: 6px;
-  text-align: center;
-  font-size: 0.82rem;
-  cursor: pointer;
-  color: #b41821;
-  background: white;
-}
-
-.cat-btn.active {
-  background: #fff3f3;
-  box-shadow: 0 0 4px rgba(180,24,33,0.3);
-}
-
-/* ================================
-   FILTER
-================================ */
-.chk {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.82rem;
-  margin-bottom: 6px;
-}
-
-#radius-slider-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 6px 0 10px 0;
-}
-
-#radius-slider {
-  flex: 1;
-}
-
-#radius-value {
-  font-size: 0.82rem;
-  font-weight: 600;
-}
-
-/* ================================
-   INFO
-================================ */
-.info-line {
-  font-size: 0.8rem;
-  margin-bottom: 4px;
-}
 
 
     </style>
@@ -1066,79 +896,97 @@
   <div id="side-popup-umsatz" class="side-popup hidden"></div>
 
 </div>
+
+<!-- 🎛️ Steuerzentrale für Kartenansichten -->
 <div id="map-control-panel">
 
-  <!-- Sektion: Modus -->
-  <div class="panel-section">
-    <div class="panel-title">MODUS</div>
+  <h4>Kartenansicht</h4>
 
-    <div class="segmented">
-      <button id="btn-wk" class="seg-btn active">Werbekosten</button>
-      <button id="btn-umsatz" class="seg-btn">Umsatz</button>
-    </div>
+  <!-- Hauptumschalter -->
+  <div class="analysis-switch">
+    <button id="btn-wk" class="analysis-btn active">Werbekosten</button>
+    <button id="btn-umsatz" class="analysis-btn">Umsatz</button>
   </div>
 
-  <!-- Sektion: Umsatzart -->
-  <div id="umsatz-panel" class="panel-section hidden">
-    <div class="panel-title">UMSATZART</div>
-
-    <div id="umsatz-type-switch" class="mini-switch">
-      <span class="left">Umsatz</span>
-      <div class="track"><div class="dot"></div></div>
-      <span class="right">Werbung</span>
-    </div>
-
-    <div id="werbe-options-row" class="checkbox-group hidden">
-      <label><input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz</label>
-      <label><input type="checkbox" id="chk-mitgekauft"> Mitgekauft</label>
-    </div>
-
-    <div class="panel-subtitle">Anzeige</div>
-    <div id="umsatz-mode-switch" class="mini-switch">
-      <span class="left">Absolut</span>
-      <div class="track"><div class="dot"></div></div>
-      <span class="right">pro HH</span>
-    </div>
+  <!-- ⭐ WK-Checkbox -->
+  <div id="wk-extra" style="margin-top:10px;">
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+      <input type="checkbox" id="chk-doppelbestreuung" checked />
+      Doppelbestreuung anzeigen
+    </label>
   </div>
 
-  <!-- Sektion: Kategorien -->
-  <div id="kategorien-panel" class="panel-section hidden">
-    <div class="panel-title">KATEGORIEN</div>
+<!-- ⭐ Umsatz-Optionen nebeneinander -->
+<div id="umsatz-options-row" style="margin-top:10px; display:none; gap:20px; align-items:center;">
 
-    <div class="cat-grid">
-      <div class="cat-btn active" data-cat="stationaer">Stationär</div>
-      <div class="cat-btn" data-cat="pluscard">Pluscard</div>
-      <div class="cat-btn" data-cat="ra">R&A</div>
-      <div class="cat-btn" data-cat="online">Online</div>
-    </div>
+  <div id="umsatz-extra">
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+      <input type="checkbox" id="chk-bestreuung" />
+      Bestreuung anzeigen
+    </label>
   </div>
 
-  <!-- Sektion: Filter -->
-  <div class="panel-section">
-    <div class="panel-title">FILTER</div>
-
-    <label class="chk"><input type="checkbox" id="chk-radiusfilter" checked> Radiusfilter aktiv</label>
-
-    <div id="radius-slider-wrapper">
-      <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
-      <span id="radius-value">40 km</span>
-    </div>
-
-    <label class="chk"><input type="checkbox" id="chk-bestreuung"> Bestreuung anzeigen</label>
-    <label class="chk"><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung anzeigen</label>
-  </div>
-
-  <!-- Sektion: Info -->
-  <div class="panel-section">
-    <div class="panel-title">INFO</div>
-
-    <div class="info-line">PLZ im Radius: <span id="info-plz">–</span></div>
-    <div class="info-line">Aktive NL: <span id="info-nl">–</span></div>
-    <div class="info-line">Streuverlust: <span id="info-streu">–</span></div>
+  <div id="umsatz-radius-extra">
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+      <input type="checkbox" id="chk-radiusfilter" checked />
+      Radiusfilter aktiv
+    </label>
   </div>
 
 </div>
 
+
+  <!-- Umsatzanalyse-Bereich -->
+
+<div id="umsatz-panel" class="hidden">
+
+<!-- ⭐ NEUER SWITCH: Umsatz ↔ Werbeumsatz -->
+<div id="umsatz-type-switch" class="mode-selector" style="margin-top:10px;">
+  <span class="mode-left">Umsatz</span>
+  <div class="mode-track">
+    <div class="mode-dot"></div>
+  </div>
+  <span class="mode-right">Werbeumsatz</span>
+</div>
+
+<!-- ⭐ Optionen für Werbeumsatz -->
+<div id="werbe-options-row" style="
+    margin-top:10px;
+    display:none;
+    gap:20px;
+    align-items:center;
+    font-size:0.82rem;
+">
+  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+    <input type="checkbox" id="chk-werbeumsatz" checked />
+    Werbeumsatz
+  </label>
+
+  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+    <input type="checkbox" id="chk-mitgekauft" />
+    Mitgekauft
+  </label>
+</div>
+
+
+  <!-- ABSOLUT / PRO HH -->
+  <div id="umsatz-mode-switch" class="mode-selector" style="margin-top:14px;">
+    <span class="mode-left">Absolut</span>
+    <div class="mode-track">
+      <div class="mode-dot"></div>
+    </div>
+    <span class="mode-right">pro Haushalt</span>
+  </div>
+
+  <!-- Kategorien -->
+  <div class="umsatz-grid" style="margin-top:10px;">
+    <div class="map-toggle active" data-cat="stationaer">Stationär</div>
+    <div class="map-toggle" data-cat="pluscard">Pluscard</div>
+    <div class="map-toggle" data-cat="ra">R&A</div>
+    <div class="map-toggle" data-cat="online">Onlineshop</div>
+  </div>
+
+</div>
 
 
 
@@ -1824,220 +1672,303 @@ zoomToFilteredPLZ() {
 
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
+  if (!mapContainer) {
+    console.warn("⚠️ initializeMapBase: #map nicht gefunden");
+    return;
+  }
+
+  // Karte
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
-  /* ============================================================
-     BASISZUSTÄNDE
-  ============================================================ */
+  // Basiszustände
   this.currentMapMode = "wk";
   this.umsatzMode = "abs";
+  this.activeCategories = new Set(["stationaer"]);
+  this.showBestreuung = false;
+  this.useRadiusFilter = true;
+
+  // Umsatztyp (gesamt / werbung + Flags)
   this.umsatzMainMode = "gesamt";
   this.useWerbeUmsatz = true;
   this.useZusatzUmsatz = false;
-  this.activeCategories = new Set(["stationaer"]);
-  this.useRadiusFilter = true;
-  this.showBestreuung = false;
-  this.showCritical = true;
 
-  /* ============================================================
-     LAYERGROUPS
-  ============================================================ */
+  // LayerGroups
   this.filteredGroup = L.layerGroup().addTo(this.map);
   this.neighbourGroup = L.layerGroup().addTo(this.map);
   this.radiusGroup = L.layerGroup().addTo(this.map);
   this.bestreuungGroup = L.layerGroup().addTo(this.map);
 
-  /* ============================================================
-     RENDERING
-  ============================================================ */
+  // Rendering starten
   this.render();
   this.initRadiusSlider();
 
-  /* ============================================================
-     PANEL-ELEMENTE
-  ============================================================ */
   const panel = this._shadowRoot.getElementById("map-control-panel");
+  const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
+  if (tileBtn) {
+    tileBtn.addEventListener("click", () => this.toggleMapTiles());
+  }
 
-  const secUmsatz = this._shadowRoot.getElementById("umsatz-panel");
-  const secKategorien = this._shadowRoot.getElementById("kategorien-panel");
-
+  // Umschalter WK ↔ Umsatz
   const btnWK = this._shadowRoot.getElementById("btn-wk");
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
+  const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
 
-  const chkRadius = this._shadowRoot.getElementById("chk-radiusfilter");
-  const chkBestreuung = this._shadowRoot.getElementById("chk-bestreuung");
-  const chkDoppel = this._shadowRoot.getElementById("chk-doppelbestreuung");
+  const wkExtra = this._shadowRoot.getElementById("wk-extra");
+  const umsatzOptionsRow = this._shadowRoot.getElementById("umsatz-options-row");
 
-  const radiusSlider = this._shadowRoot.getElementById("radius-slider");
-  const radiusValue = this._shadowRoot.getElementById("radius-value");
+  if (btnWK && btnUmsatz && umsatzPanel && panel && wkExtra && umsatzOptionsRow) {
+    btnWK.addEventListener("click", () => {
+      btnWK.classList.add("active");
+      btnUmsatz.classList.remove("active");
+      umsatzPanel.classList.add("hidden");
+      panel.classList.remove("expanded");
 
+      this.currentMapMode = "wk";
+
+      wkExtra.style.display = "block";
+      umsatzOptionsRow.style.display = "none";
+
+      // Popups schließen
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+
+      const erhID = this._activeFilter?.erhID;
+      const jahr = this._activeFilter?.jahr;
+      const nummer = this._activeFilter?.nummer;
+
+      if (erhID && jahr && nummer) {
+        this.applyFilter(erhID, jahr, nummer);
+      } else {
+        this.updateGeoLayer();
+      }
+    });
+
+    btnUmsatz.addEventListener("click", () => {
+      btnUmsatz.classList.add("active");
+      btnWK.classList.remove("active");
+      umsatzPanel.classList.remove("hidden");
+      panel.classList.add("expanded");
+
+      this.currentMapMode = "umsatz-multi";
+
+      // Umsatz-PLZ-Werte vorbereiten (inkl. NL-/Radius-Filter)
+      this.prepareUmsatzPLZWerte();
+
+      wkExtra.style.display = "none";
+      umsatzOptionsRow.style.display = "flex";
+
+      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupUmsatz) popupUmsatz.classList.remove("show");
+
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      if (popupWK) popupWK.classList.remove("show");
+
+      this.updateGeoLayer();
+    });
+  } else {
+    console.warn("⚠️ initializeMapBase: WK/Umsatz-Buttons oder Panel-Elemente fehlen");
+  }
+
+  // HH/ABS Switch
+  const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
+  this.umsatzMode = "abs";
+
+  if (modeSwitch) {
+    modeSwitch.classList.remove("hh"); // Startzustand: absolut
+
+    modeSwitch.addEventListener("click", () => {
+      const isHH = modeSwitch.classList.toggle("hh");
+      this.umsatzMode = isHH ? "hh" : "abs";
+
+      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupUmsatz) popupUmsatz.classList.remove("show");
+
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      if (popupWK) popupWK.classList.remove("show");
+
+      this.updateGeoLayer();
+    });
+  } else {
+    console.warn("⚠️ initializeMapBase: #umsatz-mode-switch nicht gefunden");
+  }
+
+  // ⭐ Umsatztyp-Switch (Gesamt ↔ Werbeumsatz)
   const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
   const werbeRow = this._shadowRoot.getElementById("werbe-options-row");
   const chkWerbe = this._shadowRoot.getElementById("chk-werbeumsatz");
   const chkMit = this._shadowRoot.getElementById("chk-mitgekauft");
 
-  const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
+  // Initialzustand UI
+  if (werbeRow) werbeRow.style.display = "none";
+  if (typeSwitch) typeSwitch.classList.remove("werbung");
+  if (chkWerbe) chkWerbe.checked = true;
+  if (chkMit) chkMit.checked = false;
 
-  /* ============================================================
-     MODUS: WK
-  ============================================================ */
-  btnWK.addEventListener("click", () => {
-    this.currentMapMode = "wk";
+  this.umsatzMainMode = "gesamt";
+  this.useWerbeUmsatz = true;
+  this.useZusatzUmsatz = false;
 
-    btnWK.classList.add("active");
-    btnUmsatz.classList.remove("active");
+  if (typeSwitch) {
+    typeSwitch.addEventListener("click", () => {
+      const isWerbung = typeSwitch.classList.toggle("werbung");
+      this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
 
-    secUmsatz.classList.add("hidden");
-    secKategorien.classList.add("hidden");
+      if (werbeRow) {
+        werbeRow.style.display = isWerbung ? "flex" : "none";
+      }
 
-    this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      if (isWerbung) {
+        this.useWerbeUmsatz = true;
+        this.useZusatzUmsatz = false;
+        if (chkWerbe) chkWerbe.checked = true;
+        if (chkMit) chkMit.checked = false;
+      }
 
-    const { erhID, jahr, nummer } = this._activeFilter || {};
-    if (erhID && jahr && nummer) {
-      this.applyFilter(erhID, jahr, nummer);
-    } else {
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupU) {
+        popupU.classList.remove("show");
+        popupU.classList.add("hidden");
+      }
+
       this.updateGeoLayer();
-    }
-  });
+    });
+  } else {
+    console.warn("⚠️ initializeMapBase: #umsatz-type-switch nicht gefunden");
+  }
 
-  /* ============================================================
-     MODUS: UMSATZ
-  ============================================================ */
-  btnUmsatz.addEventListener("click", () => {
-    this.currentMapMode = "umsatz-multi";
+  // ⭐ Werbeumsatz / Mitgekauft-Checkboxen
+  if (chkWerbe) {
+    chkWerbe.addEventListener("change", () => {
+      this.useWerbeUmsatz = chkWerbe.checked;
 
-    btnUmsatz.classList.add("active");
-    btnWK.classList.remove("active");
+      // Mindestens eine Option aktiv halten
+      if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
+        this.useWerbeUmsatz = true;
+        chkWerbe.checked = true;
+      }
 
-    secUmsatz.classList.remove("hidden");
-    secKategorien.classList.remove("hidden");
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupU) {
+        popupU.classList.remove("show");
+        popupU.classList.add("hidden");
+      }
 
-    this.prepareUmsatzPLZWerte();
-    this.updateGeoLayer();
+      this.updateGeoLayer();
+    });
+  }
 
-    this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-  });
+  if (chkMit) {
+    chkMit.addEventListener("change", () => {
+      this.useZusatzUmsatz = chkMit.checked;
 
-  /* ============================================================
-     UMSATZART-SWITCH (Umsatz ↔ Werbung)
-  ============================================================ */
-  typeSwitch.addEventListener("click", () => {
-    const isWerbung = typeSwitch.classList.toggle("werbung");
+      if (!this.useWerbeUmsatz && !this.useZusatzUmsatz && chkWerbe) {
+        this.useWerbeUmsatz = true;
+        chkWerbe.checked = true;
+      }
 
-    this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupU) {
+        popupU.classList.remove("show");
+        popupU.classList.add("hidden");
+      }
 
-    werbeRow.classList.toggle("hidden", !isWerbung);
+      this.updateGeoLayer();
+    });
+  }
 
-    if (isWerbung) {
-      this.useWerbeUmsatz = true;
-      this.useZusatzUmsatz = false;
-      chkWerbe.checked = true;
-      chkMit.checked = false;
-    }
-
-    this.updateGeoLayer();
-  });
-
-  chkWerbe.addEventListener("change", () => {
-    this.useWerbeUmsatz = chkWerbe.checked;
-
-    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
-      this.useWerbeUmsatz = true;
-      chkWerbe.checked = true;
-    }
-
-    this.updateGeoLayer();
-  });
-
-  chkMit.addEventListener("change", () => {
-    this.useZusatzUmsatz = chkMit.checked;
-
-    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
-      this.useWerbeUmsatz = true;
-      chkWerbe.checked = true;
-    }
-
-    this.updateGeoLayer();
-  });
-
-  /* ============================================================
-     ABSOLUT / PRO HH
-  ============================================================ */
-  modeSwitch.addEventListener("click", () => {
-    const isHH = modeSwitch.classList.toggle("hh");
-    this.umsatzMode = isHH ? "hh" : "abs";
-
-    this.updateGeoLayer();
-  });
-
-  /* ============================================================
-     KATEGORIEN
-  ============================================================ */
-  this._shadowRoot.querySelectorAll(".cat-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const cat = btn.dataset.cat;
+  // Kategorien (stationaer / pluscard / ra / online)
+  this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
+    toggle.addEventListener("click", () => {
+      const cat = toggle.dataset.cat;
+      if (!cat) return;
 
       if (this.activeCategories.has(cat)) {
         this.activeCategories.delete(cat);
-        btn.classList.remove("active");
+        toggle.classList.remove("active");
       } else {
         this.activeCategories.add(cat);
-        btn.classList.add("active");
+        toggle.classList.add("active");
       }
+
+      this.currentMapMode = "umsatz-multi";
+
+      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupUmsatz) popupUmsatz.classList.remove("show");
+
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      if (popupWK) popupWK.classList.remove("show");
 
       this.updateGeoLayer();
     });
   });
 
-  /* ============================================================
-     FILTER: RADIUS
-  ============================================================ */
-  chkRadius.addEventListener("change", () => {
-    this.useRadiusFilter = chkRadius.checked;
+  // Doppelbestreuung
+  const chkDoppel = this._shadowRoot.getElementById("chk-doppelbestreuung");
+  this.showCritical = true;
 
-    if (!this.useRadiusFilter) {
-      this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
+  if (chkDoppel) {
+    chkDoppel.checked = true;
+    chkDoppel.addEventListener("change", () => {
+      this.showCritical = chkDoppel.checked;
+
+      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupUmsatz) popupUmsatz.classList.remove("show");
+
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      if (popupWK) popupWK.classList.remove("show");
+
       this.updateGeoLayer();
-      return;
-    }
+    });
+  }
 
-    const radius = Number(radiusSlider.value);
-    this.applyRadiusFilter(radius);
-  });
+  // Bestreuung
+  const chkBestreuung = this._shadowRoot.getElementById("chk-bestreuung");
+  if (chkBestreuung) {
+    chkBestreuung.checked = false;
+    chkBestreuung.addEventListener("change", () => {
+      this.showBestreuung = chkBestreuung.checked;
 
-  radiusSlider.addEventListener("input", () => {
-    radiusValue.textContent = `${radiusSlider.value} km`;
+      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupUmsatz) popupUmsatz.classList.remove("show");
 
-    if (this.useRadiusFilter) {
-      this.applyRadiusFilter(Number(radiusSlider.value));
-    }
-  });
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      if (popupWK) popupWK.classList.remove("show");
 
-  /* ============================================================
-     FILTER: BESTREUUNG
-  ============================================================ */
-  chkBestreuung.addEventListener("change", () => {
-    this.showBestreuung = chkBestreuung.checked;
-    this.updateBestreuungMarkers();
-  });
+      this.updateBestreuungMarkers();
+    });
+  }
 
-  /* ============================================================
-     FILTER: DOPPELBESTREUUNG
-  ============================================================ */
-  chkDoppel.addEventListener("change", () => {
-    this.showCritical = chkDoppel.checked;
-    this.updateGeoLayer();
-  });
+  // Radiusfilter
+  const chkRadius = this._shadowRoot.getElementById("chk-radiusfilter");
+  this.useRadiusFilter = true;
 
-  /* ============================================================
-     KARTENSTIL-BUTTON
-  ============================================================ */
-  const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
-  tileBtn.addEventListener("click", () => this.toggleMapTiles());
+  if (chkRadius) {
+    chkRadius.checked = true;
+
+    chkRadius.addEventListener("change", () => {
+      this.useRadiusFilter = chkRadius.checked;
+
+      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupUmsatz) popupUmsatz.classList.remove("show");
+
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      if (popupWK) popupWK.classList.remove("show");
+
+      if (!this.useRadiusFilter) {
+        this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
+        this.updateGeoLayer();
+        this.renderDataTable(this.filteredKennwerte);
+        return;
+      }
+
+      const slider = this._shadowRoot.getElementById("radius-slider");
+      const radius = slider ? Number(slider.value) : 0;
+      this.applyRadiusFilter(radius);
+    });
+  } else {
+    console.warn("⚠️ initializeMapBase: #chk-radiusfilter nicht gefunden");
+  }
 }
-
 
 
 
