@@ -279,7 +279,7 @@
   right: 0;
   bottom: 0;
   width: 25%;
-  height: 15%; /* WK-Modus */
+  height: 30%; /* WK-Modus */
   background: #f7f7f7;
   border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
@@ -371,48 +371,41 @@
   font-size: 0.85rem;
   color: #333;
 }
+/* ============================================
+   Moderner Segmented Switch (Apple-Style)
+   ============================================ */
 
-/* Mode Selector (Umsatztyp + ABS/HH) */
 .mode-selector {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  background: #f2f2f2;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
   cursor: pointer;
   user-select: none;
 }
 
-.mode-track {
-  width: 50px;
-  height: 22px;
-  border-radius: 20px;
-  background: #ccc;
-  position: relative;
-  transition: background 0.25s ease;
+.mode-selector span {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: 0.2s;
+  color: #666;
 }
 
-.mode-dot {
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  transition: left 0.25s ease;
-  box-shadow: 0 0 4px rgba(0,0,0,0.3);
-}
-
-.mode-selector.hh .mode-dot {
-  left: 30px;
-}
-
-.mode-selector.werbung .mode-track {
+/* Aktive Seite links */
+.mode-selector.active-left .mode-left {
   background: #b41821;
+  color: white;
 }
 
-.mode-selector.werbung .mode-dot {
-  left: 30px;
+/* Aktive Seite rechts */
+.mode-selector.active-right .mode-right {
+  background: #b41821;
+  color: white;
 }
 
 /* Kategorien */
@@ -1625,7 +1618,7 @@ initializeMapBase() {
   this.showBestreuung = false;
   this.useRadiusFilter = true;
 
-  // Umsatztyp (gesamt / werbung + Flags)
+  // Umsatztyp
   this.umsatzMainMode = "gesamt";
   this.useWerbeUmsatz = true;
   this.useZusatzUmsatz = false;
@@ -1659,7 +1652,6 @@ initializeMapBase() {
       btnWK.classList.add("active");
       btnUmsatz.classList.remove("active");
       umsatzPanel.classList.add("hidden");
-      panel.classList.remove("expanded");
 
       this.currentMapMode = "wk";
 
@@ -1685,112 +1677,88 @@ initializeMapBase() {
       btnUmsatz.classList.add("active");
       btnWK.classList.remove("active");
       umsatzPanel.classList.remove("hidden");
-      panel.classList.add("expanded");
 
       this.currentMapMode = "umsatz-multi";
 
-      // Umsatz-PLZ-Werte vorbereiten (inkl. NL-/Radius-Filter)
       this.prepareUmsatzPLZWerte();
 
       wkExtra.style.display = "none";
       umsatzOptionsRow.style.display = "flex";
 
-      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) popupWK.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
-  } else {
-    console.warn("⚠️ initializeMapBase: WK/Umsatz-Buttons oder Panel-Elemente fehlen");
   }
 
-  // HH/ABS Switch
+  // HH/ABS Switch (Segmented Control)
   const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
   this.umsatzMode = "abs";
 
   if (modeSwitch) {
-    modeSwitch.classList.remove("hh"); // Startzustand: absolut
+    // Startzustand
+    modeSwitch.classList.add("active-left");
 
     modeSwitch.addEventListener("click", () => {
-      const isHH = modeSwitch.classList.toggle("hh");
+      const isHH = this.umsatzMode === "abs";
       this.umsatzMode = isHH ? "hh" : "abs";
 
-      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupUmsatz) popupUmsatz.classList.remove("show");
+      // Segmented Control Klassen
+      modeSwitch.classList.toggle("active-right", isHH);
+      modeSwitch.classList.toggle("active-left", !isHH);
 
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) popupWK.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
-  } else {
-    console.warn("⚠️ initializeMapBase: #umsatz-mode-switch nicht gefunden");
   }
 
-  // ⭐ Umsatztyp-Switch (Gesamt ↔ Werbeumsatz)
+  // Umsatztyp-Switch (Segmented Control)
   const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
   const werbeRow = this._shadowRoot.getElementById("werbe-options-row");
   const chkWerbe = this._shadowRoot.getElementById("chk-werbeumsatz");
   const chkMit = this._shadowRoot.getElementById("chk-mitgekauft");
 
-  // Initialzustand UI
-  if (werbeRow) werbeRow.style.display = "none";
-  if (typeSwitch) typeSwitch.classList.remove("werbung");
-  if (chkWerbe) chkWerbe.checked = true;
-  if (chkMit) chkMit.checked = false;
-
-  this.umsatzMainMode = "gesamt";
-  this.useWerbeUmsatz = true;
-  this.useZusatzUmsatz = false;
-
   if (typeSwitch) {
+    // Startzustand
+    typeSwitch.classList.add("active-left");
+
     typeSwitch.addEventListener("click", () => {
-      const isWerbung = typeSwitch.classList.toggle("werbung");
+      const isWerbung = this.umsatzMainMode === "gesamt";
       this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
 
-      if (werbeRow) {
-        werbeRow.style.display = isWerbung ? "flex" : "none";
-      }
+      // Segmented Control Klassen
+      typeSwitch.classList.toggle("active-right", isWerbung);
+      typeSwitch.classList.toggle("active-left", !isWerbung);
+
+      if (werbeRow) werbeRow.style.display = isWerbung ? "flex" : "none";
 
       if (isWerbung) {
         this.useWerbeUmsatz = true;
         this.useZusatzUmsatz = false;
-        if (chkWerbe) chkWerbe.checked = true;
-        if (chkMit) chkMit.checked = false;
+        chkWerbe.checked = true;
+        chkMit.checked = false;
       }
 
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupU) {
-        popupU.classList.remove("show");
-        popupU.classList.add("hidden");
-      }
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
-  } else {
-    console.warn("⚠️ initializeMapBase: #umsatz-type-switch nicht gefunden");
   }
 
-  // ⭐ Werbeumsatz / Mitgekauft-Checkboxen
+  // Werbeumsatz / Mitgekauft
   if (chkWerbe) {
     chkWerbe.addEventListener("change", () => {
       this.useWerbeUmsatz = chkWerbe.checked;
 
-      // Mindestens eine Option aktiv halten
       if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
         this.useWerbeUmsatz = true;
         chkWerbe.checked = true;
       }
 
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupU) {
-        popupU.classList.remove("show");
-        popupU.classList.add("hidden");
-      }
-
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
       this.updateGeoLayer();
     });
   }
@@ -1799,23 +1767,18 @@ initializeMapBase() {
     chkMit.addEventListener("change", () => {
       this.useZusatzUmsatz = chkMit.checked;
 
-      if (!this.useWerbeUmsatz && !this.useZusatzUmsatz && chkWerbe) {
+      if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
         this.useWerbeUmsatz = true;
         chkWerbe.checked = true;
       }
 
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupU) {
-        popupU.classList.remove("show");
-        popupU.classList.add("hidden");
-      }
-
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
       this.updateGeoLayer();
     });
   }
 
-  // Kategorien (stationaer / pluscard / ra / online)
-  this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
+  // Kategorien
+  this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
     toggle.addEventListener("click", () => {
       const cat = toggle.dataset.cat;
       if (!cat) return;
@@ -1830,11 +1793,8 @@ initializeMapBase() {
 
       this.currentMapMode = "umsatz-multi";
 
-      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) popupWK.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
@@ -1845,15 +1805,11 @@ initializeMapBase() {
   this.showCritical = true;
 
   if (chkDoppel) {
-    chkDoppel.checked = true;
     chkDoppel.addEventListener("change", () => {
       this.showCritical = chkDoppel.checked;
 
-      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) popupWK.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
@@ -1862,15 +1818,11 @@ initializeMapBase() {
   // Bestreuung
   const chkBestreuung = this._shadowRoot.getElementById("chk-bestreuung");
   if (chkBestreuung) {
-    chkBestreuung.checked = false;
     chkBestreuung.addEventListener("change", () => {
       this.showBestreuung = chkBestreuung.checked;
 
-      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) popupWK.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
 
       this.updateBestreuungMarkers();
     });
@@ -1878,19 +1830,12 @@ initializeMapBase() {
 
   // Radiusfilter
   const chkRadius = this._shadowRoot.getElementById("chk-radiusfilter");
-  this.useRadiusFilter = true;
-
   if (chkRadius) {
-    chkRadius.checked = true;
-
     chkRadius.addEventListener("change", () => {
       this.useRadiusFilter = chkRadius.checked;
 
-      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) popupWK.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
 
       if (!this.useRadiusFilter) {
         this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
@@ -1903,10 +1848,9 @@ initializeMapBase() {
       const radius = slider ? Number(slider.value) : 0;
       this.applyRadiusFilter(radius);
     });
-  } else {
-    console.warn("⚠️ initializeMapBase: #chk-radiusfilter nicht gefunden");
   }
 }
+
 
 
 
