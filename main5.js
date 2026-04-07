@@ -891,26 +891,49 @@
 
 
   <!-- Umsatzanalyse-Bereich -->
-  <div id="umsatz-panel" class="hidden">
+<!-- Umsatzanalyse-Bereich -->
+<div id="umsatz-panel" class="hidden">
 
-    <!-- Globaler Switch -->
-    <div id="umsatz-mode-switch" class="mode-selector">
-      <span class="mode-left">Absolut</span>
-      <div class="mode-track">
-        <div class="mode-dot"></div>
-      </div>
-      <span class="mode-right">pro Haushalt</span>
+  <!-- ⭐ NEU: Typ-Switch Umsatz vs. Werbeumsatz -->
+  <div id="umsatz-type-switch" class="mode-selector">
+    <span class="mode-left">Umsatz</span>
+    <div class="mode-track">
+      <div class="mode-dot"></div>
     </div>
-
-    <!-- 2×2 Grid -->
-    <div class="umsatz-grid">
-      <div class="map-toggle active" data-cat="stationaer">Stationär</div>
-      <div class="map-toggle" data-cat="pluscard">Pluscard</div>
-      <div class="map-toggle" data-cat="ra">R&A</div>
-      <div class="map-toggle" data-cat="online">Onlineshop</div>
-    </div>
-
+    <span class="mode-right">Werbeumsatz</span>
   </div>
+
+  <!-- ⭐ NEU: Optionen innerhalb Werbeumsatz -->
+  <div id="werbe-options-row" class="werbe-options" style="margin-top:8px; display:none; gap:16px; align-items:center; font-size:0.8rem;">
+    <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+      <input type="checkbox" id="chk-werbeumsatz" checked />
+      Werbeumsatz
+    </label>
+    <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+      <input type="checkbox" id="chk-mitgekauft" />
+      Mitgekauft
+    </label>
+  </div>
+
+  <!-- Globaler Switch Absolut / pro HH -->
+  <div id="umsatz-mode-switch" class="mode-selector" style="margin-top:10px;">
+    <span class="mode-left">Absolut</span>
+    <div class="mode-track">
+      <div class="mode-dot"></div>
+    </div>
+    <span class="mode-right">pro Haushalt</span>
+  </div>
+
+  <!-- 2×2 Grid Kategorien -->
+  <div class="umsatz-grid">
+    <div class="map-toggle active" data-cat="stationaer">Stationär</div>
+    <div class="map-toggle" data-cat="pluscard">Pluscard</div>
+    <div class="map-toggle" data-cat="ra">R&A</div>
+    <div class="map-toggle" data-cat="online">Onlineshop</div>
+  </div>
+
+</div>
+
 
 </div>
 
@@ -918,25 +941,42 @@
 
     `;
 
-    class GeoMapWidget extends HTMLElement {
-      constructor() {
-        super();
-        this.neighbours = true;
-        this._shadowRoot = this.attachShadow({ mode: 'open' });
-        this._shadowRoot.appendChild(template.content.cloneNode(true));
-        this.map = null;
-        this._tileLayer = null;
-        this._geoLayer = null;
-        this._geoData = null;
-        this._myDataSource = null;
-        this._resizeObserver = null;
-        this._geoLayerVisible = false;
-        this._tilesVisible = false;
-        this._sortState = { column: null, direction: "asc" };
-        this.umsatzMode = "abs";        // "abs" oder "hh"
-        this.activeCategories = new Set(); // stationaer, pluscard, ra, online
+class GeoMapWidget extends HTMLElement {
+  constructor() {
+    super();
+    this.neighbours = true;
+    this._shadowRoot = this.attachShadow({ mode: 'open' });
+    this._shadowRoot.appendChild(template.content.cloneNode(true));
+    this.map = null;
+    this._tileLayer = null;
+    this._geoLayer = null;
+    this._geoData = null;
+    this._myDataSource = null;
+    this._resizeObserver = null;
+    this._geoLayerVisible = false;
+    this._tilesVisible = false;
+    this._sortState = { column: null, direction: "asc" };
 
-      }
+    // Umsatz-Modi
+    this.umsatzMode = "abs";          // "abs" oder "hh"
+    this.currentMapMode = "wk";       // "wk" oder "umsatz-multi"
+
+    // Kategorien (Stationär, Pluscard, R&A, Online)
+    this.activeCategories = new Set(["stationaer"]);
+
+    // ⭐ NEU: Umsatztyp
+    // "gesamt" = bisheriger Umsatz
+    // "werbung" = Werbeumsatz / Mitgekauft-Kombination
+    this.umsatzMainMode = "gesamt";
+    this.useWerbeUmsatz = true;       // innerhalb Werbeumsatz: Werbeumsatz aktiv
+    this.useZusatzUmsatz = false;     // innerhalb Werbeumsatz: Mitgekauft aktiv
+
+    // Radiusfilter
+    this.useRadiusFilter = true;
+
+    // NL-Auswahl
+    this._selectedNLs = new Set();
+  }
 
       connectedCallback() {
         this.showSpinner();
@@ -1575,6 +1615,7 @@ zoomToFilteredPLZ() {
   }
 }
 
+
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
@@ -1585,6 +1626,11 @@ initializeMapBase() {
   this.activeCategories = new Set(["stationaer"]);
   this.showBestreuung = false;
   this.useRadiusFilter = true;
+
+  // Umsatztyp
+  this.umsatzMainMode = "gesamt";
+  this.useWerbeUmsatz = true;
+  this.useZusatzUmsatz = false;
 
   // LayerGroups
   this.filteredGroup = L.layerGroup().addTo(this.map);
@@ -1607,39 +1653,32 @@ initializeMapBase() {
   const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
   const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
 
-btnWK.addEventListener("click", () => {
-  btnWK.classList.add("active");
-  btnUmsatz.classList.remove("active");
-  umsatzPanel.classList.add("hidden");
+  btnWK.addEventListener("click", () => {
+    btnWK.classList.add("active");
+    btnUmsatz.classList.remove("active");
+    umsatzPanel.classList.add("hidden");
 
-  panel.classList.remove("expanded");
+    panel.classList.remove("expanded");
 
-  this.currentMapMode = "wk";
+    this.currentMapMode = "wk";
 
-  this._shadowRoot.getElementById("wk-extra").style.display = "block";
-  this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
+    this._shadowRoot.getElementById("wk-extra").style.display = "block";
+    this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
 
-  // Popups schließen
-  this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-  this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+    // Popups schließen
+    this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
 
-  // ⭐ WK-Datenbasis korrekt aufbauen
-  const erhID = this._activeFilter?.erhID;
-  const jahr = this._activeFilter?.jahr;
-  const nummer = this._activeFilter?.nummer;
+    const erhID = this._activeFilter?.erhID;
+    const jahr = this._activeFilter?.jahr;
+    const nummer = this._activeFilter?.nummer;
 
-  if (erhID && jahr && nummer) {
-    // 👉 applyFilter baut ALLES korrekt auf
-    this.applyFilter(erhID, jahr, nummer);
-  } else {
-    // 👉 Falls noch keine Erhebung gewählt wurde
-    this.updateGeoLayer();
-  }
-});
-
-
-
-
+    if (erhID && jahr && nummer) {
+      this.applyFilter(erhID, jahr, nummer);
+    } else {
+      this.updateGeoLayer();
+    }
+  });
 
   btnUmsatz.addEventListener("click", () => {
     btnUmsatz.classList.add("active");
@@ -1654,7 +1693,6 @@ btnWK.addEventListener("click", () => {
 
     this._shadowRoot.getElementById("wk-extra").style.display = "none";
     this._shadowRoot.getElementById("umsatz-options-row").style.display = "flex";
-
 
     const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
     if (popupUmsatz) popupUmsatz.classList.remove("show");
@@ -1681,6 +1719,80 @@ btnWK.addEventListener("click", () => {
 
     this.updateGeoLayer();
   });
+
+  // ⭐ NEU: Umsatztyp-Switch (Umsatz ↔ Werbeumsatz)
+  const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
+  const werbeRow = this._shadowRoot.getElementById("werbe-options-row");
+  const chkWerbe = this._shadowRoot.getElementById("chk-werbeumsatz");
+  const chkMit = this._shadowRoot.getElementById("chk-mitgekauft");
+
+  this.umsatzMainMode = "gesamt";
+  this.useWerbeUmsatz = true;
+  this.useZusatzUmsatz = false;
+
+  typeSwitch.addEventListener("click", () => {
+    const isWerbung = typeSwitch.classList.toggle("werbung");
+    this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
+
+    if (werbeRow) {
+      werbeRow.style.display = isWerbung ? "flex" : "none";
+    }
+
+    if (isWerbung) {
+      this.useWerbeUmsatz = true;
+      this.useZusatzUmsatz = false;
+      if (chkWerbe) chkWerbe.checked = true;
+      if (chkMit) chkMit.checked = false;
+    }
+
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+    if (popupU) {
+      popupU.classList.remove("show");
+      popupU.classList.add("hidden");
+    }
+
+    this.updateGeoLayer();
+  });
+
+  // ⭐ NEU: Werbeumsatz / Mitgekauft-Checkboxen
+  if (chkWerbe) {
+    chkWerbe.addEventListener("change", () => {
+      this.useWerbeUmsatz = chkWerbe.checked;
+
+      // Mindestens eine Option aktiv halten
+      if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
+        this.useWerbeUmsatz = true;
+        chkWerbe.checked = true;
+      }
+
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupU) {
+        popupU.classList.remove("show");
+        popupU.classList.add("hidden");
+      }
+
+      this.updateGeoLayer();
+    });
+  }
+
+  if (chkMit) {
+    chkMit.addEventListener("change", () => {
+      this.useZusatzUmsatz = chkMit.checked;
+
+      if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
+        this.useWerbeUmsatz = true;
+        chkWerbe.checked = true;
+      }
+
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      if (popupU) {
+        popupU.classList.remove("show");
+        popupU.classList.add("hidden");
+      }
+
+      this.updateGeoLayer();
+    });
+  }
 
   // Kategorien
   this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
@@ -1737,7 +1849,7 @@ btnWK.addEventListener("click", () => {
     this.updateBestreuungMarkers();
   });
 
-  // ⭐ Radiusfilter
+  // Radiusfilter
   const chkRadius = this._shadowRoot.getElementById("chk-radiusfilter");
   this.useRadiusFilter = true;
 
@@ -1761,6 +1873,7 @@ btnWK.addEventListener("click", () => {
     this.applyRadiusFilter(radius);
   });
 }
+
 
 
 
@@ -2129,70 +2242,133 @@ if (popupUmsatz) {
 }
 
 
-
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
 
-  // WK-Popup schließen
-  popupWK.classList.remove("show");
-  popupWK.classList.add("hidden");
+  if (popupWK) {
+    popupWK.classList.remove("show");
+    popupWK.classList.add("hidden");
+  }
 
+  const isWerbungMode = this.umsatzMainMode === "werbung";
+  const useWerbe = this.useWerbeUmsatz !== false;
+  const useZusatz = this.useZusatzUmsatz === true;
   const modeHH = this.umsatzMode === "hh";
 
-// IMMER absolute Werte oben
-const stationaer = values.umsatz;
-const pluscard   = values.pluscard;
-const ra         = values.ra;
-const online     = values.onlineshop;
+  const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-// IMMER pro Haushalt unten
-const stHH = values.umsatzProHaushalt;
-const pcHH = values.pluscardProHaushalt;
-const raHH = values.raProHaushalt;
-const osHH = values.onlineshopProHaushalt;
+  const pickPair = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
+    if (!isWerbungMode) {
+      return {
+        abs: base,
+        hh: baseHH
+      };
+    }
 
-const hh = values.haushalte;
-const note = this.geoNotes?.[plz] || "Keine Notiz";
+    let abs = 0;
+    let hh = 0;
 
-const active = {
-  stationaer: this.activeCategories.has("stationaer"),
-  pluscard:   this.activeCategories.has("pluscard"),
-  ra:         this.activeCategories.has("ra"),
-  online:     this.activeCategories.has("online")
-};
+    if (useWerbe) {
+      abs += werb;
+      hh += werbHH;
+    }
+    if (useZusatz) {
+      abs += zusatz;
+      hh += zusatzHH;
+    }
 
-// Gesamt absolut (für Balken + Kopfzeile oben)
-const totalAbs =
-  (active.stationaer ? stationaer : 0) +
-  (active.pluscard   ? pluscard   : 0) +
-  (active.ra         ? ra         : 0) +
-  (active.online     ? online     : 0);
+    return { abs, hh };
+  };
 
-// ⭐ NEU: Gesamt pro Haushalt (für Kopfzeile unten)
-const totalHH =
-  (active.stationaer ? stHH : 0) +
-  (active.pluscard   ? pcHH : 0) +
-  (active.ra         ? raHH : 0) +
-  (active.online     ? osHH : 0);
+  const st = pickPair(
+    values.umsatz || 0,
+    values.umsatzWerbung || 0,
+    values.umsatzZusatz || 0,
+    values.umsatzProHaushalt || 0,
+    values.umsatzWerbungProHaushalt || 0,
+    values.umsatzZusatzProHaushalt || 0
+  );
 
-const fmtAbs = x => x.toLocaleString("de-DE");
-const fmtHH  = x => Number(x).toFixed(3);
-const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
+  const pc = pickPair(
+    values.pluscard || 0,
+    values.pluscardWerbung || 0,
+    values.pluscardZusatz || 0,
+    values.pluscardProHaushalt || 0,
+    values.pluscardWerbungProHaushalt || 0,
+    values.pluscardZusatzProHaushalt || 0
+  );
 
+  const ra = pickPair(
+    values.ra || 0,
+    values.raWerbung || 0,
+    values.raZusatz || 0,
+    values.raProHaushalt || 0,
+    values.raWerbungProHaushalt || 0,
+    values.raZusatzProHaushalt || 0
+  );
+
+  const os = pickPair(
+    values.onlineshop || 0,
+    values.onlineshopWerbung || 0,
+    values.onlineshopZusatz || 0,
+    values.onlineshopProHaushalt || 0,
+    values.onlineshopWerbungProHaushalt || 0,
+    values.onlineshopZusatzProHaushalt || 0
+  );
+
+  const active = {
+    stationaer: this.activeCategories.has("stationaer"),
+    pluscard:   this.activeCategories.has("pluscard"),
+    ra:         this.activeCategories.has("ra"),
+    online:     this.activeCategories.has("online")
+  };
+
+  const hh = values.haushalte || 0;
+
+  const fmtAbs = x => Number(x || 0).toLocaleString("de-DE");
+  const fmtHH  = x => Number(x || 0).toFixed(3);
+
+  const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
+
+  const stationaer = st.abs;
+  const pluscard   = pc.abs;
+  const raAbs      = ra.abs;
+  const online     = os.abs;
+
+  const stHH = st.hh;
+  const pcHH = pc.hh;
+  const raHH = ra.hh;
+  const osHH = os.hh;
+
+  const totalAbs =
+    (active.stationaer ? stationaer : 0) +
+    (active.pluscard   ? pluscard   : 0) +
+    (active.ra         ? raAbs      : 0) +
+    (active.online     ? online     : 0);
+
+  const totalHH =
+    (active.stationaer ? stHH : 0) +
+    (active.pluscard   ? pcHH : 0) +
+    (active.ra         ? raHH : 0) +
+    (active.online     ? osHH : 0);
+
+  const headerLabel = (() => {
+    if (!isWerbungMode) return "Gesamtumsatz";
+    if (useWerbe && useZusatz) return "Werbeumsatz + Mitgekauft";
+    if (useWerbe) return "Werbeumsatz";
+    return "Mitgekauft";
+  })();
 
   popup.innerHTML = `
     <button class="close-btn">×</button>
 
-    <!-- =============================== -->
-    <!--   TABELLE 1: GESAMT-KENNZAHLEN  -->
-    <!-- =============================== -->
+    <!-- TABELLE 1: GESAMT-KENNZAHLEN -->
     <table>
       <thead>
         <tr><th colspan="2" class="title-cell">${note}</th></tr>
         <tr><th colspan="2" class="subtitle-cell">
-          Gesamtumsatz: ${totalAbs.toLocaleString("de-DE")} €
-
+          ${headerLabel}: ${totalAbs.toLocaleString("de-DE")} €
         </th></tr>
       </thead>
 
@@ -2207,7 +2383,7 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
         </tr>
         <tr class="${active.ra ? "" : "disabled"}">
           <td class="label-cell">R&A</td>
-          <td class="value-cell">${fmtAbs(ra)}</td>
+          <td class="value-cell">${fmtAbs(raAbs)}</td>
         </tr>
         <tr class="${active.online ? "" : "disabled"}">
           <td class="label-cell">Onlineshop</td>
@@ -2218,10 +2394,10 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
 
     <!-- Umsatz-Balken -->
     <div class="umsatz-share-bar">
-      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
-      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>`   : ""}
-      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(ra)}%"></div>`         : ""}
-      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online)}%"></div>`     : ""}
+      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer, totalAbs)}%"></div>` : ""}
+      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard, totalAbs)}%"></div>`   : ""}
+      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(raAbs, totalAbs)}%"></div>`       : ""}
+      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online, totalAbs)}%"></div>`      : ""}
     </div>
 
     <div class="umsatz-legend">
@@ -2229,21 +2405,17 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
       <span><span style="color:#1f78b4;">⬤</span> Pluscard</span>
       <span><span style="color:#33a02c;">⬤</span> R&A</span>
       <span><span style="color:#ffb000;">⬤</span> Onlineshop</span>
-
     </div>
 
-    <!-- ===================================== -->
-    <!--   TABELLE 2: PRO-HAUSHALT-KENNZAHLEN  -->
-    <!-- ===================================== -->
+    <!-- TABELLE 2: PRO-HAUSHALT-KENNZAHLEN -->
     <table class="hh-table">
-     <thead>
+      <thead>
         <tr>
-           <th colspan="2" class="subtitle-cell">
-             Gesamtumsatz pro HH: ${fmtHH(totalHH)})
-           </th>
+          <th colspan="2" class="subtitle-cell">
+            ${headerLabel} pro HH: ${fmtHH(totalHH)}
+          </th>
         </tr>
       </thead>
-
 
       <tbody>
         <tr><td class="label-cell">Haushalte</td><td class="value-cell">${hh.toLocaleString("de-DE")}</td></tr>
@@ -2281,6 +2453,62 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
   };
 }
 
+
+getUmsatzSumForPLZ(v) {
+  const safe = x => Number.isFinite(x) ? x : 0;
+
+  const isWerbungMode = this.umsatzMainMode === "werbung";
+  const useWerbe = this.useWerbeUmsatz !== false;
+  const useZusatz = this.useZusatzUmsatz === true;
+  const useHH = this.umsatzMode === "hh";
+
+  const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
+    if (!isWerbungMode) {
+      return safe(useHH ? baseHH : base);
+    }
+
+    let abs = 0;
+    if (useWerbe) {
+      abs += safe(useHH ? werbHH : werb);
+    }
+    if (useZusatz) {
+      abs += safe(useHH ? zusatzHH : zusatz);
+    }
+    return abs;
+  };
+
+  let sum = 0;
+
+  if (this.activeCategories.has("stationaer")) {
+    sum += pick(
+      v.umsatz, v.umsatzWerbung, v.umsatzZusatz,
+      v.umsatzProHaushalt, v.umsatzWerbungProHaushalt, v.umsatzZusatzProHaushalt
+    );
+  }
+
+  if (this.activeCategories.has("pluscard")) {
+    sum += pick(
+      v.pluscard, v.pluscardWerbung, v.pluscardZusatz,
+      v.pluscardProHaushalt, v.pluscardWerbungProHaushalt, v.pluscardZusatzProHaushalt
+    );
+  }
+
+  if (this.activeCategories.has("ra")) {
+    sum += pick(
+      v.ra, v.raWerbung, v.raZusatz,
+      v.raProHaushalt, v.raWerbungProHaushalt, v.raZusatzProHaushalt
+    );
+  }
+
+  if (this.activeCategories.has("online")) {
+    sum += pick(
+      v.onlineshop, v.onlineshopWerbung, v.onlineshopZusatz,
+      v.onlineshopProHaushalt, v.onlineshopWerbungProHaushalt, v.onlineshopZusatzProHaushalt
+    );
+  }
+
+  return sum;
+}
 
 
   updateNeighbours(filteredData) {
@@ -2503,23 +2731,9 @@ computeFillColor(plz) {
     return this.getColor(value, v.hz);
   }
 
-  // Umsatzmodus
+  // Umsatzmodus (inkl. Werbeumsatz / Mitgekauft)
   if (this.currentMapMode === "umsatz-multi") {
-    const safe = x => Number.isFinite(x) ? x : 0;
-
-    let sum = 0;
-    if (this.activeCategories.has("stationaer"))
-      sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
-
-    if (this.activeCategories.has("pluscard"))
-      sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
-
-    if (this.activeCategories.has("ra"))
-      sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
-
-    if (this.activeCategories.has("online"))
-      sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
-
+    const sum = this.getUmsatzSumForPLZ(v);
     return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
   }
 
@@ -2542,20 +2756,7 @@ computeMaxValue() {
 
   if (this.currentMapMode === "umsatz-multi") {
     Object.values(plzWerte).forEach(v => {
-      let sum = 0;
-
-      if (this.activeCategories.has("stationaer"))
-        sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
-
-      if (this.activeCategories.has("pluscard"))
-        sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
-
-      if (this.activeCategories.has("ra"))
-        sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
-
-      if (this.activeCategories.has("online"))
-        sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
-
+      const sum = this.getUmsatzSumForPLZ(v);
       if (sum > maxValue) maxValue = sum;
     });
   }
@@ -2563,6 +2764,7 @@ computeMaxValue() {
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
+
 
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
@@ -3124,6 +3326,7 @@ prepareErhebungsInfo() {
     };
   });
 }
+
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3136,7 +3339,7 @@ prepareUmsatzPLZWerte() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  // ⭐ 1) Cache für vollständige Erhebungsdaten (nur einmal berechnen)
+  // Cache für vollständige Erhebungsdaten
   if (!this._umsatzCache) this._umsatzCache = {};
 
   const cacheKey = `${erhID}_${jahr}_${nummer}`;
@@ -3157,35 +3360,70 @@ prepareUmsatzPLZWerte() {
       if (!aggregated[plz]) {
         aggregated[plz] = {
           haushalte: 0,
+
+          // Gesamtumsatz
           umsatz: 0,
           ra: 0,
           onlineshop: 0,
-          pluscard: 0
+          pluscard: 0,
+
+          // ⭐ Werbeumsatz
+          umsatzWerbung: 0,
+          raWerbung: 0,
+          onlineshopWerbung: 0,
+          pluscardWerbung: 0,
+
+          // ⭐ Zusatz (Mitgekauft)
+          umsatzZusatz: 0,
+          raZusatz: 0,
+          onlineshopZusatz: 0,
+          pluscardZusatz: 0
         };
       }
 
       const v = aggregated[plz];
 
       v.haushalte += safe(row["value_haushalte_0"]?.raw);
+
+      // Gesamtumsatz
       v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
       v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
       v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
       v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+
+      // Werbeumsatz
+      v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung"]?.raw);
+      v.raWerbung         += safe(row["value_umsatz_ra_werbung"]?.raw);
+      v.onlineshopWerbung += safe(row["value_umsatz_online_werbung"]?.raw);
+      v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung"]?.raw);
+
+      // Zusatz (Mitgekauft)
+      v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz"]?.raw);
+      v.raZusatz         += safe(row["value_umsatz_ra_zusatz"]?.raw);
+      v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz"]?.raw);
+      v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz"]?.raw);
     });
 
     // Pro-Haushalt berechnen
     Object.values(aggregated).forEach(v => {
-      if (v.haushalte > 0) {
-        v.umsatzProHaushalt     = v.umsatz     / v.haushalte;
-        v.raProHaushalt         = v.ra         / v.haushalte;
-        v.onlineshopProHaushalt = v.onlineshop / v.haushalte;
-        v.pluscardProHaushalt   = v.pluscard   / v.haushalte;
-      } else {
-        v.umsatzProHaushalt = 0;
-        v.raProHaushalt = 0;
-        v.onlineshopProHaushalt = 0;
-        v.pluscardProHaushalt = 0;
-      }
+      const hh = v.haushalte;
+
+      const perHH = (val) => (hh > 0 ? val / hh : 0);
+
+      v.umsatzProHaushalt           = perHH(v.umsatz);
+      v.raProHaushalt               = perHH(v.ra);
+      v.onlineshopProHaushalt       = perHH(v.onlineshop);
+      v.pluscardProHaushalt         = perHH(v.pluscard);
+
+      v.umsatzWerbungProHaushalt     = perHH(v.umsatzWerbung);
+      v.raWerbungProHaushalt         = perHH(v.raWerbung);
+      v.onlineshopWerbungProHaushalt = perHH(v.onlineshopWerbung);
+      v.pluscardWerbungProHaushalt   = perHH(v.pluscardWerbung);
+
+      v.umsatzZusatzProHaushalt     = perHH(v.umsatzZusatz);
+      v.raZusatzProHaushalt         = perHH(v.raZusatz);
+      v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
+      v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
     });
 
     this._umsatzCache[cacheKey] = aggregated;
@@ -3193,12 +3431,12 @@ prepareUmsatzPLZWerte() {
 
   const full = this._umsatzCache[cacheKey];
 
-  // ⭐ 2) Jetzt nur noch Subset bilden (NL + Radius)
+  // Subset nach NL + Radius
   const result = {};
 
   Object.entries(full).forEach(([plz, v]) => {
     // NL-Filter
-    if (this._selectedNLs.size > 0) {
+    if (this._selectedNLs && this._selectedNLs.size > 0) {
       const rowsForPLZ = this.filteredData.filter(r => {
         const rawPLZ = r["dimension_plz_0"]?.id ?? r["dimension_plz_0"]?.raw;
         const p = String(rawPLZ).padStart(5, "0");
@@ -3212,7 +3450,7 @@ prepareUmsatzPLZWerte() {
       if (!nlMatch) return;
     }
 
-    // Radiusfilter (nur wenn aktiviert)
+    // Radiusfilter (nur wenn aktiviert und im Umsatzmodus relevant)
     if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
@@ -3472,7 +3710,6 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
-
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
@@ -3494,10 +3731,8 @@ computeWKKennwerte() {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
 
-    // NL-Filter
     if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
 
-    // Radiusfilter (falls gesetzt)
     if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
 
     if (!aggregated[plz]) {
@@ -3550,11 +3785,10 @@ computeWKKennwerte() {
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
 
-    // ⭐ Basisdaten (Haushalte, Kaufkraft, Auflage, KD, Bon, etc.) übernehmen
     const baseEntry = base[plz] || {};
 
     newFilteredKennwerte[plz] = {
-      ...baseEntry, // ← ALLE anderen Kennwerte bleiben erhalten
+      ...baseEntry,
       isHZ,
       isCritical,
       value_hr_n_umsatz_0: { raw: umsatzNetto },
@@ -3565,17 +3799,55 @@ computeWKKennwerte() {
       value_wk_potentiell_0: { raw: potHzPercent }
     };
 
-    // WK-Werte auch in filteredPLZWerte schreiben (für Heatmap)
     if (!newFilteredPLZWerte[plz]) newFilteredPLZWerte[plz] = {};
+
     newFilteredPLZWerte[plz].wk = wkPercent;
     newFilteredPLZWerte[plz].wkPot = potHzPercent;
     newFilteredPLZWerte[plz].hz = isHZ;
+
+    // Umsatzfelder aus bestehendem Eintrag erhalten (inkl. Werbung/Zusatz)
+    const old = this.filteredPLZWerte?.[plz] || {};
+
+    newFilteredPLZWerte[plz] = {
+      ...newFilteredPLZWerte[plz],
+
+      umsatz: old.umsatz ?? 0,
+      ra: old.ra ?? 0,
+      onlineshop: old.onlineshop ?? 0,
+      pluscard: old.pluscard ?? 0,
+      haushalte: old.haushalte ?? 0,
+
+      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
+      raProHaushalt: old.raProHaushalt ?? 0,
+      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
+      pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
+
+      umsatzWerbung: old.umsatzWerbung ?? 0,
+      raWerbung: old.raWerbung ?? 0,
+      onlineshopWerbung: old.onlineshopWerbung ?? 0,
+      pluscardWerbung: old.pluscardWerbung ?? 0,
+
+      umsatzZusatz: old.umsatzZusatz ?? 0,
+      raZusatz: old.raZusatz ?? 0,
+      onlineshopZusatz: old.onlineshopZusatz ?? 0,
+      pluscardZusatz: old.pluscardZusatz ?? 0,
+
+      umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
+      raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
+      onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
+      pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
+
+      umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
+      raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
+      onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
+      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0
+    };
   });
 
-  // ⭐ Nur PLZ behalten, die im Aggregat liegen
   this.filteredKennwerte = newFilteredKennwerte;
   this.filteredPLZWerte = newFilteredPLZWerte;
 }
+
 
 
 toggleNLSelection(nl) {
