@@ -784,10 +784,18 @@
 #chk-doppelbestreuung {
   transform: scale(0.9);
 }
+/* ============================================
+   Umsatztyp-Switch (Umsatz ↔ Werbeumsatz)
+   exakt gleiche Größe wie ABS/HH-Switch
+   ============================================ */
 
 #umsatz-type-switch.mode-selector {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   cursor: pointer;
   user-select: none;
+  font-size: 0.82rem;
 }
 
 #umsatz-type-switch .mode-track {
@@ -797,6 +805,7 @@
   border-radius: 20px;
   position: relative;
   transition: background 0.25s ease;
+  flex-shrink: 0;
 }
 
 #umsatz-type-switch .mode-dot {
@@ -811,7 +820,7 @@
   box-shadow: 0 0 4px rgba(0,0,0,0.3);
 }
 
-/* ⭐ Wenn Werbeumsatz aktiv ist */
+/* ⭐ Wenn Werbeumsatz aktiv */
 #umsatz-type-switch.werbung .mode-track {
   background: #b41821;
 }
@@ -819,6 +828,7 @@
 #umsatz-type-switch.werbung .mode-dot {
   left: 23px;
 }
+
 
 
     </style>
@@ -3479,16 +3489,16 @@ prepareUmsatzPLZWerte() {
       v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
 
       // Werbeumsatz
-      v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung"]?.raw);
-      v.raWerbung         += safe(row["value_umsatz_ra_werbung"]?.raw);
-      v.onlineshopWerbung += safe(row["value_umsatz_online_werbung"]?.raw);
-      v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung"]?.raw);
+      v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
+      v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
+      v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
+      v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
 
       // Zusatz (Mitgekauft)
-      v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz"]?.raw);
-      v.raZusatz         += safe(row["value_umsatz_ra_zusatz"]?.raw);
-      v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz"]?.raw);
-      v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz"]?.raw);
+      v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
+      v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
+      v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
+      v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
     });
 
     // Pro-Haushalt berechnen
