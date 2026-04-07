@@ -295,41 +295,157 @@
 
   transition: height 0.35s ease;
 }
+/* ============================================
+   MODERNES PANEL-DESIGN
+   ============================================ */
 
-#map-control-panel.expanded {
-  height: 30%; /* kompakterer Umsatz-Modus */
+#map-control-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 25%;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #fafafa;
+  border-left: 2px solid #b41821;
+  border-top: 2px solid #b41821;
+  padding: 14px;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  z-index: 99998;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-
-#map-control-panel::-webkit-scrollbar {
-  width: 6px;
+/* Karten-Panel Cards */
+.panel-card {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-#map-control-panel::-webkit-scrollbar-thumb {
-  background: #b41821;
-  border-radius: 4px;
-}
-
-/* Titel */
-#map-control-panel h4 {
-  margin: 0 0 6px 0;
+.panel-title {
+  font-size: 0.95rem;
+  font-weight: 700;
   color: #b41821;
-  font-size: 0.9rem;
+  margin-bottom: 4px;
 }
 
-/* Buttons */
-#map-control-panel button {
-  padding: 6px;
+/* Switch Buttons (WK / Umsatz) */
+.switch-row {
+  display: flex;
+  gap: 8px;
+}
+
+.switch-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  border: 2px solid #b41821;
+  background: white;
+  color: #b41821;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.switch-btn.active {
+  background: #b41821;
+  color: white;
+}
+
+.switch-btn:hover:not(.active) {
+  background: #fff3f3;
+}
+
+/* Option Rows */
+.option-row {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #333;
+}
+
+/* Mode Selector (Umsatztyp + ABS/HH) */
+.mode-selector {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mode-track {
+  width: 50px;
+  height: 22px;
+  border-radius: 20px;
+  background: #ccc;
+  position: relative;
+  transition: background 0.25s ease;
+}
+
+.mode-dot {
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  transition: left 0.25s ease;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+
+.mode-selector.hh .mode-dot {
+  left: 30px;
+}
+
+.mode-selector.werbung .mode-track {
+  background: #b41821;
+}
+
+.mode-selector.werbung .mode-dot {
+  left: 30px;
+}
+
+/* Kategorien */
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.category-toggle {
+  padding: 10px;
+  border-radius: 6px;
   border: 1px solid #b41821;
   background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
   color: #b41821;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
 }
 
-#map-control-panel button:hover {
+.category-toggle.active {
   background: #fff3f3;
+  box-shadow: 0 0 6px rgba(180,24,33,0.4);
+}
+
+/* Radius */
+.radius-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.85rem;
 }
 
 
@@ -673,161 +789,6 @@
 .hidden {
   display: none;
 }
-/* Gesamter Umschalter */
-.mode-selector {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 110px; /* Texte weiter außen */
-  padding: 14px 20px;
-  margin-top: 16px;
-  user-select: none;
-  cursor: pointer;
-  width: 100%;
-  background: white;
-  border: 2px solid #b41821;
-  border-radius: 12px;
-}
-
-/* Labels */
-.mode-left,
-.mode-right {
-  font-size: 1rem;
-  font-weight: 700;
-  min-width: 100px;
-  text-align: center;
-  z-index: 2; /* Punkt überlappt sie nicht */
-  pointer-events: none;
-}
-
-/* Die Schiene, in der der Punkt fährt */
-.mode-track {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 90px;              /* Breite der Schiene */
-  height: 26px;             /* Höhe der Schiene */
-  transform: translate(-50%, -50%);
-  border: 2px solid #b41821;
-  border-radius: 20px;
-  background: white;
-  z-index: 1;
-}
-
-/* Der Punkt */
-.mode-dot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: #b41821;
-  transform: translate(-50%, -50%) translateX(-28px); /* Start links */
-  transition: transform 0.25s ease;
-}
-
-/* Punkt wandert nach rechts */
-.mode-selector.hh .mode-dot {
-  transform: translate(-50%, -50%) translateX(28px);
-}
-
-/* Farben der Labels */
-.mode-selector:not(.hh) .mode-left {
-  color: #b41821;
-}
-.mode-selector:not(.hh) .mode-right {
-  color: #999;
-}
-
-.mode-selector.hh .mode-left {
-  color: #999;
-}
-.mode-selector.hh .mode-right {
-  color: #b41821;
-}
-
-#umsatz-options-row {
-  gap: 12px !important;
-  margin-top: 6px !important;
-}
-
-#umsatz-options-row label {
-  font-size: 0.82rem !important;
-}
-
-#umsatz-options-row input[type="checkbox"] {
-  transform: scale(0.9);
-}
-
-.umsatz-share-bar.empty {
-  height: 12px;
-  background: #eee;
-  border-radius: 4px;
-}
-
-.share-segment.empty {
-  width: 100%;
-  height: 100%;
-  background: #ddd;
-  border-radius: 4px;
-}
-#wk-extra label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 0.82rem;
-}
-
-#chk-doppelbestreuung {
-  transform: scale(0.9);
-}
-/* ============================================
-   Umsatztyp-Switch (Umsatz ↔ Werbeumsatz)
-   exakt gleiche Größe wie ABS/HH-Switch
-   ============================================ */
-
-#umsatz-type-switch.mode-selector {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  user-select: none;
-  font-size: 0.82rem;
-}
-
-#umsatz-type-switch .mode-track {
-  width: 42px;
-  height: 20px;
-  background: #ccc;
-  border-radius: 20px;
-  position: relative;
-  transition: background 0.25s ease;
-  flex-shrink: 0;
-}
-
-#umsatz-type-switch .mode-dot {
-  width: 18px;
-  height: 18px;
-  background: white;
-  border-radius: 50%;
-  position: absolute;
-  top: 1px;
-  left: 1px;
-  transition: left 0.25s ease;
-  box-shadow: 0 0 4px rgba(0,0,0,0.3);
-}
-
-/* ⭐ Wenn Werbeumsatz aktiv */
-#umsatz-type-switch.werbung .mode-track {
-  background: #b41821;
-}
-
-#umsatz-type-switch.werbung .mode-dot {
-  left: 23px;
-}
 
 
 
@@ -897,100 +858,77 @@
 
 </div>
 
-<!-- 🎛️ Steuerzentrale für Kartenansichten -->
 <div id="map-control-panel">
 
-  <h4>Kartenansicht</h4>
+  <!-- CARD 1: ANALYSE-MODUS -->
+  <div class="panel-card">
+    <div class="panel-title">Analyse-Modus</div>
 
-  <!-- Hauptumschalter -->
-  <div class="analysis-switch">
-    <button id="btn-wk" class="analysis-btn active">Werbekosten</button>
-    <button id="btn-umsatz" class="analysis-btn">Umsatz</button>
+    <div class="switch-row">
+      <button id="btn-wk" class="switch-btn active">Werbekosten</button>
+      <button id="btn-umsatz" class="switch-btn">Umsatz</button>
+    </div>
+
+    <div id="wk-extra" class="option-row">
+      <label><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung anzeigen</label>
+    </div>
+
+    <div id="umsatz-options-row" class="option-row hidden">
+      <label><input type="checkbox" id="chk-bestreuung"> Bestreuung anzeigen</label>
+      <label><input type="checkbox" id="chk-radiusfilter" checked> Radiusfilter aktiv</label>
+    </div>
   </div>
 
-  <!-- ⭐ WK-Checkbox -->
-  <div id="wk-extra" style="margin-top:10px;">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-doppelbestreuung" checked />
-      Doppelbestreuung anzeigen
-    </label>
+  <!-- CARD 2: UMSATZ-EINSTELLUNGEN -->
+  <div id="umsatz-panel" class="panel-card hidden">
+
+    <div class="panel-title">Umsatz-Einstellungen</div>
+
+    <!-- Umsatztyp -->
+    <div id="umsatz-type-switch" class="mode-selector">
+      <span class="mode-left">Umsatz</span>
+      <div class="mode-track"><div class="mode-dot"></div></div>
+      <span class="mode-right">Werbeumsatz</span>
+    </div>
+
+    <div id="werbe-options-row" class="option-row hidden">
+      <label><input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz</label>
+      <label><input type="checkbox" id="chk-mitgekauft"> Mitgekauft</label>
+    </div>
+
+    <!-- ABS / HH -->
+    <div id="umsatz-mode-switch" class="mode-selector">
+      <span class="mode-left">Absolut</span>
+      <div class="mode-track"><div class="mode-dot"></div></div>
+      <span class="mode-right">pro Haushalt</span>
+    </div>
+
+    <!-- Kategorien -->
+    <div class="category-grid">
+      <div class="category-toggle active" data-cat="stationaer">Stationär</div>
+      <div class="category-toggle" data-cat="pluscard">Pluscard</div>
+      <div class="category-toggle" data-cat="ra">R&A</div>
+      <div class="category-toggle" data-cat="online">Onlineshop</div>
+    </div>
   </div>
 
-<!-- ⭐ Umsatz-Optionen nebeneinander -->
-<div id="umsatz-options-row" style="margin-top:10px; display:none; gap:20px; align-items:center;">
+  <!-- CARD 3: RADIUS -->
+  <div class="panel-card">
+    <div class="panel-title">Radius</div>
 
-  <div id="umsatz-extra">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-bestreuung" />
-      Bestreuung anzeigen
-    </label>
-  </div>
-
-  <div id="umsatz-radius-extra">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-radiusfilter" checked />
+    <label class="option-row">
+      <input type="checkbox" id="chk-radiusfilter" checked>
       Radiusfilter aktiv
     </label>
-  </div>
 
-</div>
-
-
-  <!-- Umsatzanalyse-Bereich -->
-
-<div id="umsatz-panel" class="hidden">
-
-<!-- ⭐ NEUER SWITCH: Umsatz ↔ Werbeumsatz -->
-<div id="umsatz-type-switch" class="mode-selector" style="margin-top:10px;">
-  <span class="mode-left">Umsatz</span>
-  <div class="mode-track">
-    <div class="mode-dot"></div>
-  </div>
-  <span class="mode-right">Werbeumsatz</span>
-</div>
-
-<!-- ⭐ Optionen für Werbeumsatz -->
-<div id="werbe-options-row" style="
-    margin-top:10px;
-    display:none;
-    gap:20px;
-    align-items:center;
-    font-size:0.82rem;
-">
-  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-    <input type="checkbox" id="chk-werbeumsatz" checked />
-    Werbeumsatz
-  </label>
-
-  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-    <input type="checkbox" id="chk-mitgekauft" />
-    Mitgekauft
-  </label>
-</div>
-
-
-  <!-- ABSOLUT / PRO HH -->
-  <div id="umsatz-mode-switch" class="mode-selector" style="margin-top:14px;">
-    <span class="mode-left">Absolut</span>
-    <div class="mode-track">
-      <div class="mode-dot"></div>
+    <div class="radius-slider-row">
+      <span>Radius: <strong id="radius-value">40</strong> km</span>
+      <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
     </div>
-    <span class="mode-right">pro Haushalt</span>
-  </div>
-
-  <!-- Kategorien -->
-  <div class="umsatz-grid" style="margin-top:10px;">
-    <div class="map-toggle active" data-cat="stationaer">Stationär</div>
-    <div class="map-toggle" data-cat="pluscard">Pluscard</div>
-    <div class="map-toggle" data-cat="ra">R&A</div>
-    <div class="map-toggle" data-cat="online">Onlineshop</div>
   </div>
 
 </div>
 
-
-
-</div>
 
 
 
