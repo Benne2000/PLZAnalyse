@@ -829,6 +829,176 @@
   left: 23px;
 }
 
+/* ================================
+   PANEL BASIS
+================================ */
+#map-control-panel {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 26%;
+  max-height: 90vh;
+  background: #ffffff;
+  border-left: 2px solid #b41821;
+  border-top: 2px solid #b41821;
+  padding: 14px;
+  box-sizing: border-box;
+  font-family: sans-serif;
+  overflow-y: auto;
+}
+
+/* ================================
+   SEKTIONEN
+================================ */
+.panel-section {
+  margin-bottom: 18px;
+}
+
+.panel-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #b41821;
+  margin-bottom: 8px;
+}
+
+.panel-subtitle {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #555;
+  margin-top: 10px;
+  margin-bottom: 6px;
+}
+
+/* ================================
+   SEGMENTED CONTROL
+================================ */
+.segmented {
+  display: flex;
+  width: 100%;
+}
+
+.seg-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border: 1px solid #b41821;
+  background: white;
+  color: #b41821;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-weight: 600;
+  border-right: none;
+}
+
+.seg-btn:last-child {
+  border-right: 1px solid #b41821;
+}
+
+.seg-btn.active {
+  background: #b41821;
+  color: white;
+}
+
+/* ================================
+   MINI SWITCH (Umsatzart / ABS-HH)
+================================ */
+.mini-switch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  border: 1px solid #b41821;
+  border-radius: 10px;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mini-switch .track {
+  width: 42px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 20px;
+  position: relative;
+}
+
+.mini-switch .dot {
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: left 0.25s ease;
+}
+
+.mini-switch.hh .track {
+  background: #b41821;
+}
+
+.mini-switch.hh .dot {
+  left: 23px;
+}
+
+/* ================================
+   KATEGORIEN
+================================ */
+.cat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.cat-btn {
+  padding: 6px;
+  border: 1px solid #b41821;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: #b41821;
+  background: white;
+}
+
+.cat-btn.active {
+  background: #fff3f3;
+  box-shadow: 0 0 4px rgba(180,24,33,0.3);
+}
+
+/* ================================
+   FILTER
+================================ */
+.chk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+}
+
+#radius-slider-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 6px 0 10px 0;
+}
+
+#radius-slider {
+  flex: 1;
+}
+
+#radius-value {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+/* ================================
+   INFO
+================================ */
+.info-line {
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
 
 
     </style>
@@ -896,97 +1066,79 @@
   <div id="side-popup-umsatz" class="side-popup hidden"></div>
 
 </div>
-
-<!-- 🎛️ Steuerzentrale für Kartenansichten -->
 <div id="map-control-panel">
 
-  <h4>Kartenansicht</h4>
+  <!-- Sektion: Modus -->
+  <div class="panel-section">
+    <div class="panel-title">MODUS</div>
 
-  <!-- Hauptumschalter -->
-  <div class="analysis-switch">
-    <button id="btn-wk" class="analysis-btn active">Werbekosten</button>
-    <button id="btn-umsatz" class="analysis-btn">Umsatz</button>
-  </div>
-
-  <!-- ⭐ WK-Checkbox -->
-  <div id="wk-extra" style="margin-top:10px;">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-doppelbestreuung" checked />
-      Doppelbestreuung anzeigen
-    </label>
-  </div>
-
-<!-- ⭐ Umsatz-Optionen nebeneinander -->
-<div id="umsatz-options-row" style="margin-top:10px; display:none; gap:20px; align-items:center;">
-
-  <div id="umsatz-extra">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-bestreuung" />
-      Bestreuung anzeigen
-    </label>
-  </div>
-
-  <div id="umsatz-radius-extra">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-radiusfilter" checked />
-      Radiusfilter aktiv
-    </label>
-  </div>
-
-</div>
-
-
-  <!-- Umsatzanalyse-Bereich -->
-
-<div id="umsatz-panel" class="hidden">
-
-<!-- ⭐ NEUER SWITCH: Umsatz ↔ Werbeumsatz -->
-<div id="umsatz-type-switch" class="mode-selector" style="margin-top:10px;">
-  <span class="mode-left">Umsatz</span>
-  <div class="mode-track">
-    <div class="mode-dot"></div>
-  </div>
-  <span class="mode-right">Werbeumsatz</span>
-</div>
-
-<!-- ⭐ Optionen für Werbeumsatz -->
-<div id="werbe-options-row" style="
-    margin-top:10px;
-    display:none;
-    gap:20px;
-    align-items:center;
-    font-size:0.82rem;
-">
-  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-    <input type="checkbox" id="chk-werbeumsatz" checked />
-    Werbeumsatz
-  </label>
-
-  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-    <input type="checkbox" id="chk-mitgekauft" />
-    Mitgekauft
-  </label>
-</div>
-
-
-  <!-- ABSOLUT / PRO HH -->
-  <div id="umsatz-mode-switch" class="mode-selector" style="margin-top:14px;">
-    <span class="mode-left">Absolut</span>
-    <div class="mode-track">
-      <div class="mode-dot"></div>
+    <div class="segmented">
+      <button id="btn-wk" class="seg-btn active">Werbekosten</button>
+      <button id="btn-umsatz" class="seg-btn">Umsatz</button>
     </div>
-    <span class="mode-right">pro Haushalt</span>
   </div>
 
-  <!-- Kategorien -->
-  <div class="umsatz-grid" style="margin-top:10px;">
-    <div class="map-toggle active" data-cat="stationaer">Stationär</div>
-    <div class="map-toggle" data-cat="pluscard">Pluscard</div>
-    <div class="map-toggle" data-cat="ra">R&A</div>
-    <div class="map-toggle" data-cat="online">Onlineshop</div>
+  <!-- Sektion: Umsatzart -->
+  <div id="umsatz-panel" class="panel-section hidden">
+    <div class="panel-title">UMSATZART</div>
+
+    <div id="umsatz-type-switch" class="mini-switch">
+      <span class="left">Umsatz</span>
+      <div class="track"><div class="dot"></div></div>
+      <span class="right">Werbung</span>
+    </div>
+
+    <div id="werbe-options-row" class="checkbox-group hidden">
+      <label><input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz</label>
+      <label><input type="checkbox" id="chk-mitgekauft"> Mitgekauft</label>
+    </div>
+
+    <div class="panel-subtitle">Anzeige</div>
+    <div id="umsatz-mode-switch" class="mini-switch">
+      <span class="left">Absolut</span>
+      <div class="track"><div class="dot"></div></div>
+      <span class="right">pro HH</span>
+    </div>
+  </div>
+
+  <!-- Sektion: Kategorien -->
+  <div id="kategorien-panel" class="panel-section hidden">
+    <div class="panel-title">KATEGORIEN</div>
+
+    <div class="cat-grid">
+      <div class="cat-btn active" data-cat="stationaer">Stationär</div>
+      <div class="cat-btn" data-cat="pluscard">Pluscard</div>
+      <div class="cat-btn" data-cat="ra">R&A</div>
+      <div class="cat-btn" data-cat="online">Online</div>
+    </div>
+  </div>
+
+  <!-- Sektion: Filter -->
+  <div class="panel-section">
+    <div class="panel-title">FILTER</div>
+
+    <label class="chk"><input type="checkbox" id="chk-radiusfilter" checked> Radiusfilter aktiv</label>
+
+    <div id="radius-slider-wrapper">
+      <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
+      <span id="radius-value">40 km</span>
+    </div>
+
+    <label class="chk"><input type="checkbox" id="chk-bestreuung"> Bestreuung anzeigen</label>
+    <label class="chk"><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung anzeigen</label>
+  </div>
+
+  <!-- Sektion: Info -->
+  <div class="panel-section">
+    <div class="panel-title">INFO</div>
+
+    <div class="info-line">PLZ im Radius: <span id="info-plz">–</span></div>
+    <div class="info-line">Aktive NL: <span id="info-nl">–</span></div>
+    <div class="info-line">Streuverlust: <span id="info-streu">–</span></div>
   </div>
 
 </div>
+
 
 
 
@@ -3436,11 +3588,13 @@ prepareUmsatzPLZWerte() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  // Cache für vollständige Erhebungsdaten
+  // Cache initialisieren
   if (!this._umsatzCache) this._umsatzCache = {};
-
   const cacheKey = `${erhID}_${jahr}_${nummer}`;
 
+  // ---------------------------------------------------------
+  // 1) Vollständige Erhebung aggregieren (nur einmal)
+  // ---------------------------------------------------------
   if (!this._umsatzCache[cacheKey]) {
     const rows = raw.filter(row =>
       row["dimension_erhebung_0"]?.id == erhID &&
@@ -3456,7 +3610,8 @@ prepareUmsatzPLZWerte() {
 
       if (!aggregated[plz]) {
         aggregated[plz] = {
-          haushalte: 0,
+          // Haushalte werden NICHT summiert → Durchschnitt
+          _hhValues: [],
 
           // Gesamtumsatz
           umsatz: 0,
@@ -3464,13 +3619,13 @@ prepareUmsatzPLZWerte() {
           onlineshop: 0,
           pluscard: 0,
 
-          // ⭐ Werbeumsatz
+          // Werbeumsatz
           umsatzWerbung: 0,
           raWerbung: 0,
           onlineshopWerbung: 0,
           pluscardWerbung: 0,
 
-          // ⭐ Zusatz (Mitgekauft)
+          // Zusatzumsatz
           umsatzZusatz: 0,
           raZusatz: 0,
           onlineshopZusatz: 0,
@@ -3480,7 +3635,9 @@ prepareUmsatzPLZWerte() {
 
       const v = aggregated[plz];
 
-      v.haushalte += safe(row["value_haushalte_0"]?.raw);
+      // Haushalte sammeln (Durchschnitt später)
+      const hh = safe(row["value_haushalte_0"]?.raw);
+      if (hh > 0) v._hhValues.push(hh);
 
       // Gesamtumsatz
       v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
@@ -3494,29 +3651,41 @@ prepareUmsatzPLZWerte() {
       v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
       v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
 
-      // Zusatz (Mitgekauft)
+      // Zusatzumsatz
       v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
       v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
       v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
       v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
     });
 
-    // Pro-Haushalt berechnen
+    // ---------------------------------------------------------
+    // 2) Haushalte final bestimmen + Pro-Haushalt berechnen
+    // ---------------------------------------------------------
     Object.values(aggregated).forEach(v => {
+      // Haushalte = Durchschnitt
+      if (v._hhValues.length > 0) {
+        v.haushalte = v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
+      } else {
+        v.haushalte = 0;
+      }
+      delete v._hhValues;
+
       const hh = v.haushalte;
+      const perHH = val => (hh > 0 ? val / hh : 0);
 
-      const perHH = (val) => (hh > 0 ? val / hh : 0);
+      // Gesamt
+      v.umsatzProHaushalt     = perHH(v.umsatz);
+      v.raProHaushalt         = perHH(v.ra);
+      v.onlineshopProHaushalt = perHH(v.onlineshop);
+      v.pluscardProHaushalt   = perHH(v.pluscard);
 
-      v.umsatzProHaushalt           = perHH(v.umsatz);
-      v.raProHaushalt               = perHH(v.ra);
-      v.onlineshopProHaushalt       = perHH(v.onlineshop);
-      v.pluscardProHaushalt         = perHH(v.pluscard);
-
+      // Werbung
       v.umsatzWerbungProHaushalt     = perHH(v.umsatzWerbung);
       v.raWerbungProHaushalt         = perHH(v.raWerbung);
       v.onlineshopWerbungProHaushalt = perHH(v.onlineshopWerbung);
       v.pluscardWerbungProHaushalt   = perHH(v.pluscardWerbung);
 
+      // Zusatz
       v.umsatzZusatzProHaushalt     = perHH(v.umsatzZusatz);
       v.raZusatzProHaushalt         = perHH(v.raZusatz);
       v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
@@ -3528,16 +3697,17 @@ prepareUmsatzPLZWerte() {
 
   const full = this._umsatzCache[cacheKey];
 
-  // Subset nach NL + Radius
+  // ---------------------------------------------------------
+  // 3) Subset nach NL + Radius
+  // ---------------------------------------------------------
   const result = {};
 
   Object.entries(full).forEach(([plz, v]) => {
     // NL-Filter
-    if (this._selectedNLs && this._selectedNLs.size > 0) {
+    if (this._selectedNLs?.size > 0) {
       const rowsForPLZ = this.filteredData.filter(r => {
         const rawPLZ = r["dimension_plz_0"]?.id ?? r["dimension_plz_0"]?.raw;
-        const p = String(rawPLZ).padStart(5, "0");
-        return p === plz;
+        return String(rawPLZ).padStart(5, "0") === plz;
       });
 
       const nlMatch = rowsForPLZ.some(r =>
@@ -3547,7 +3717,7 @@ prepareUmsatzPLZWerte() {
       if (!nlMatch) return;
     }
 
-    // Radiusfilter (nur wenn aktiviert und im Umsatzmodus relevant)
+    // Radiusfilter
     if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
@@ -3559,6 +3729,7 @@ prepareUmsatzPLZWerte() {
 
   console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(result).length);
 }
+
 
 
 
