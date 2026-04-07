@@ -891,10 +891,10 @@
 
 
   <!-- Umsatzanalyse-Bereich -->
-<!-- Umsatzanalyse-Bereich -->
+
 <div id="umsatz-panel" class="hidden">
 
-  <!-- ⭐ NEU: Typ-Switch Umsatz vs. Werbeumsatz -->
+  <!-- ⭐ NEUER SWITCH: Umsatz ↔ Werbeumsatz -->
   <div id="umsatz-type-switch" class="mode-selector">
     <span class="mode-left">Umsatz</span>
     <div class="mode-track">
@@ -903,20 +903,27 @@
     <span class="mode-right">Werbeumsatz</span>
   </div>
 
-  <!-- ⭐ NEU: Optionen innerhalb Werbeumsatz -->
-  <div id="werbe-options-row" class="werbe-options" style="margin-top:8px; display:none; gap:16px; align-items:center; font-size:0.8rem;">
-    <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+  <!-- ⭐ NEUE OPTIONEN: Werbeumsatz / Mitgekauft -->
+  <div id="werbe-options-row" style="
+      margin-top:10px;
+      display:none;
+      gap:20px;
+      align-items:center;
+      font-size:0.82rem;
+  ">
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
       <input type="checkbox" id="chk-werbeumsatz" checked />
       Werbeumsatz
     </label>
-    <label style="display:flex; align-items:center; gap:4px; cursor:pointer;">
+
+    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
       <input type="checkbox" id="chk-mitgekauft" />
       Mitgekauft
     </label>
   </div>
 
-  <!-- Globaler Switch Absolut / pro HH -->
-  <div id="umsatz-mode-switch" class="mode-selector" style="margin-top:10px;">
+  <!-- ABSOLUT / PRO HH -->
+  <div id="umsatz-mode-switch" class="mode-selector" style="margin-top:14px;">
     <span class="mode-left">Absolut</span>
     <div class="mode-track">
       <div class="mode-dot"></div>
@@ -924,8 +931,8 @@
     <span class="mode-right">pro Haushalt</span>
   </div>
 
-  <!-- 2×2 Grid Kategorien -->
-  <div class="umsatz-grid">
+  <!-- Kategorien -->
+  <div class="umsatz-grid" style="margin-top:10px;">
     <div class="map-toggle active" data-cat="stationaer">Stationär</div>
     <div class="map-toggle" data-cat="pluscard">Pluscard</div>
     <div class="map-toggle" data-cat="ra">R&A</div>
@@ -933,6 +940,7 @@
   </div>
 
 </div>
+
 
 
 </div>
