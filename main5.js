@@ -785,6 +785,42 @@
   transform: scale(0.9);
 }
 
+#umsatz-type-switch.mode-selector {
+  cursor: pointer;
+  user-select: none;
+}
+
+#umsatz-type-switch .mode-track {
+  width: 42px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 20px;
+  position: relative;
+  transition: background 0.25s ease;
+}
+
+#umsatz-type-switch .mode-dot {
+  width: 18px;
+  height: 18px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  transition: left 0.25s ease;
+  box-shadow: 0 0 4px rgba(0,0,0,0.3);
+}
+
+/* ⭐ Wenn Werbeumsatz aktiv ist */
+#umsatz-type-switch.werbung .mode-track {
+  background: #b41821;
+}
+
+#umsatz-type-switch.werbung .mode-dot {
+  left: 23px;
+}
+
+
     </style>
 
 
@@ -894,33 +930,34 @@
 
 <div id="umsatz-panel" class="hidden">
 
-  <!-- ⭐ NEUER SWITCH: Umsatz ↔ Werbeumsatz -->
-  <div id="umsatz-type-switch" class="mode-selector">
-    <span class="mode-left">Umsatz</span>
-    <div class="mode-track">
-      <div class="mode-dot"></div>
-    </div>
-    <span class="mode-right">Werbeumsatz</span>
+<!-- ⭐ NEUER SWITCH: Umsatz ↔ Werbeumsatz -->
+<div id="umsatz-type-switch" class="mode-selector" style="margin-top:10px;">
+  <span class="mode-left">Umsatz</span>
+  <div class="mode-track">
+    <div class="mode-dot"></div>
   </div>
+  <span class="mode-right">Werbeumsatz</span>
+</div>
 
-  <!-- ⭐ NEUE OPTIONEN: Werbeumsatz / Mitgekauft -->
-  <div id="werbe-options-row" style="
-      margin-top:10px;
-      display:none;
-      gap:20px;
-      align-items:center;
-      font-size:0.82rem;
-  ">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-werbeumsatz" checked />
-      Werbeumsatz
-    </label>
+<!-- ⭐ Optionen für Werbeumsatz -->
+<div id="werbe-options-row" style="
+    margin-top:10px;
+    display:none;
+    gap:20px;
+    align-items:center;
+    font-size:0.82rem;
+">
+  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+    <input type="checkbox" id="chk-werbeumsatz" checked />
+    Werbeumsatz
+  </label>
 
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-mitgekauft" />
-      Mitgekauft
-    </label>
-  </div>
+  <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+    <input type="checkbox" id="chk-mitgekauft" />
+    Mitgekauft
+  </label>
+</div>
+
 
   <!-- ABSOLUT / PRO HH -->
   <div id="umsatz-mode-switch" class="mode-selector" style="margin-top:14px;">
