@@ -779,6 +779,11 @@
 .umsatz-analysis-row {
   display: none;
 }
+.umsatz-analysis-row .switch-btn {
+  padding: 6px 8px;
+  font-size: 0.75rem;
+  border-width: 1px;
+}
 
 .umsatz-analysis-row.show {
   display: grid;
@@ -786,7 +791,66 @@
   gap: 8px;
   margin-top: 6px;
 }
+.compact-switch {
+  display: flex;
+  background: #f2f2f2;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 3px;
+  cursor: pointer;
+  user-select: none;
+}
 
+.compact-switch span {
+  flex: 1;
+  text-align: center;
+  padding: 5px 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: 0.2s;
+  color: #555;
+}
+
+.compact-switch.active-left .mode-left {
+  background: #b41821;
+  color: white;
+}
+
+.compact-switch.active-right .mode-right {
+  background: #b41821;
+  color: white;
+}
+
+.switch-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: #444;
+}
+
+.big-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 2px solid #b41821;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.big-check:hover {
+  background: #fff3f3;
+}
+
+.big-check input {
+  transform: scale(1.3);
+  accent-color: #b41821;
+}
 
 
     </style>
@@ -874,7 +938,6 @@
     </div>
 
     <div id="umsatz-options-row" class="option-row hidden">
-      <label><input type="checkbox" id="chk-doppelbestreuung"> ⚠️ Doppelbestreuung</label>
       <label><input type="checkbox" id="chk-bestreuung"> 📍 Bestreuung</label>
     </div>
   </div>
@@ -885,17 +948,25 @@
     <div class="panel-title">Umsatz-Einstellungen</div>
 
     <!-- Umsatztyp -->
-    <div id="umsatz-type-switch" class="mode-selector">
-      <span class="mode-left">Umsatz</span>
-      <div class="mode-track"><div class="mode-dot"></div></div>
-      <span class="mode-right">Werbeumsatz</span>
-    </div>
+<div class="switch-label">Umsatztyp</div>
+<div id="umsatz-type-switch" class="compact-switch">
+  <span class="mode-left">Umsatz</span>
+  <span class="mode-right">Werbung</span>
+</div>
+
+<div class="switch-label">Darstellung</div>
+<div id="umsatz-mode-switch" class="compact-switch">
+  <span class="mode-left">Absolut</span>
+  <span class="mode-right">pro HH</span>
+</div>
+
 
     <!-- Werbeoptionen -->
-    <div id="werbe-options-row" class="option-row hidden">
-      <label><input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz</label>
-      <label><input type="checkbox" id="chk-mitgekauft"> Mitgekauft</label>
-    </div>
+ <div id="werbe-options-row" class="option-row hidden">
+  <label class="big-check"><input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz</label>
+  <label class="big-check"><input type="checkbox" id="chk-mitgekauft"> Mitgekauft</label>
+</div>
+
 
     <!-- ABS / HH -->
     <div id="umsatz-mode-switch" class="mode-selector">
