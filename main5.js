@@ -2298,6 +2298,26 @@ showUmsatzPopup(plz, values) {
     values.onlineshopZusatzProHaushalt || 0
   );
 
+
+  // Anteil Werbeumsatz am Gesamtumsatz
+const totalWerbeAbs =
+  (active.stationaer ? values.umsatzWerbung || 0 : 0) +
+  (active.pluscard   ? values.pluscardWerbung || 0 : 0) +
+  (active.ra         ? values.raWerbung || 0 : 0) +
+  (active.online     ? values.onlineshopWerbung || 0 : 0);
+
+const totalNormalAbs =
+  (active.stationaer ? values.umsatz || 0 : 0) +
+  (active.pluscard   ? values.pluscard || 0 : 0) +
+  (active.ra         ? values.ra || 0 : 0) +
+  (active.online     ? values.onlineshop || 0 : 0);
+
+const anteilWerbeUmsatz =
+  totalNormalAbs > 0
+    ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1)
+    : "–";
+
+
   const active = {
     stationaer: this.activeCategories.has("stationaer"),
     pluscard:   this.activeCategories.has("pluscard"),
@@ -2370,6 +2390,11 @@ showUmsatzPopup(plz, values) {
           <td class="label-cell">Onlineshop</td>
           <td class="value-cell">${fmtAbs(online)}</td>
         </tr>
+        <tr>
+  <td class="label-cell">Anteil Werbeumsatz</td>
+  <td class="value-cell">${anteilWerbeUmsatz} %</td>
+ </tr>
+
       </tbody>
     </table>
 
