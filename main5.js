@@ -2297,7 +2297,12 @@ showUmsatzPopup(plz, values) {
     values.onlineshopWerbungProHaushalt || 0,
     values.onlineshopZusatzProHaushalt || 0
   );
-
+  const active = {
+    stationaer: this.activeCategories.has("stationaer"),
+    pluscard:   this.activeCategories.has("pluscard"),
+    ra:         this.activeCategories.has("ra"),
+    online:     this.activeCategories.has("online")
+  };
 
   // Anteil Werbeumsatz am Gesamtumsatz
 const totalWerbeAbs =
@@ -2318,12 +2323,7 @@ const anteilWerbeUmsatz =
     : "–";
 
 
-  const active = {
-    stationaer: this.activeCategories.has("stationaer"),
-    pluscard:   this.activeCategories.has("pluscard"),
-    ra:         this.activeCategories.has("ra"),
-    online:     this.activeCategories.has("online")
-  };
+
 
   const hh = values.haushalte || 0;
 
