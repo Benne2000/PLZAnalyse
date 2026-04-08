@@ -854,7 +854,6 @@
 
 
     </style>
-
 <div class="layout">
 
   <!-- 🔍 Filterbereich -->
@@ -933,10 +932,12 @@
       </button>
     </div>
 
+    <!-- Doppelbestreuung nur im WK-Modus -->
     <div id="wk-extra" class="option-row">
       <label><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung anzeigen</label>
     </div>
 
+    <!-- Umsatz-Optionen (nur im Umsatzmodus) -->
     <div id="umsatz-options-row" class="option-row hidden">
       <label><input type="checkbox" id="chk-bestreuung"> 📍 Bestreuung</label>
     </div>
@@ -948,34 +949,30 @@
     <div class="panel-title">Umsatz-Einstellungen</div>
 
     <!-- Umsatztyp -->
-<div class="switch-label">Umsatztyp</div>
-<div id="umsatz-type-switch" class="compact-switch">
-  <span class="mode-left">Umsatz</span>
-  <span class="mode-right">Werbung</span>
-</div>
-
-<div class="switch-label">Darstellung</div>
-<div id="umsatz-mode-switch" class="compact-switch">
-  <span class="mode-left">Absolut</span>
-  <span class="mode-right">pro HH</span>
-</div>
-
-
-    <!-- Werbeoptionen -->
- <div id="werbe-options-row" class="option-row hidden">
-  <label class="big-check"><input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz</label>
-  <label class="big-check"><input type="checkbox" id="chk-mitgekauft"> Mitgekauft</label>
-</div>
-
-
-    <!-- ABS / HH -->
-    <div id="umsatz-mode-switch" class="mode-selector">
-      <span class="mode-left">Absolut</span>
-      <div class="mode-track"><div class="mode-dot"></div></div>
-      <span class="mode-right">pro Haushalt</span>
+    <div class="switch-label">Umsatztyp</div>
+    <div id="umsatz-type-switch" class="compact-switch">
+      <span class="mode-left">Umsatz</span>
+      <span class="mode-right">Werbung</span>
     </div>
 
-    <!-- ⭐ Umsatzanalyse: Absolut / Werbeanteil -->
+    <!-- Darstellung -->
+    <div class="switch-label">Darstellung</div>
+    <div id="umsatz-mode-switch" class="compact-switch">
+      <span class="mode-left">Absolut</span>
+      <span class="mode-right">pro HH</span>
+    </div>
+
+    <!-- Werbeoptionen (nur bei Werbung sichtbar) -->
+    <div id="werbe-options-row" class="option-row hidden">
+      <label class="big-check">
+        <input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz
+      </label>
+      <label class="big-check">
+        <input type="checkbox" id="chk-mitgekauft"> Mitgekauft
+      </label>
+    </div>
+
+    <!-- ⭐ Umsatzanalyse: Absolut / Werbeanteil (nur bei Werbung sinnvoll) -->
     <div class="switch-row umsatz-analysis-row">
       <button id="btn-umsatz-abs" class="switch-btn active">
         <span class="icon">📊</span> Absolut
@@ -997,6 +994,7 @@
   </div>
 
 </div>
+
 
 
 
@@ -1675,9 +1673,12 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
 initializeMapBase() {
-  const mapContainer = this._shadowRoot.getElementById("map");
+
+  // Helper für DOM
+  const $ = id => this._shadowRoot.getElementById(id);
+
+  const mapContainer = $("map");
   if (!mapContainer) {
     console.warn("⚠️ initializeMapBase: #map nicht gefunden");
     return;
@@ -1708,36 +1709,64 @@ initializeMapBase() {
   this.render();
   this.initRadiusSlider();
 
-  const panel = this._shadowRoot.getElementById("map-control-panel");
-  const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
+  // Panel
+  const panel = $("map-control-panel");
+
+  // Buttons
+  const btnWK = $("btn-wk");
+  const btnUmsatz = $("btn-umsatz");
+
+  // Umsatzpanel
+  const umsatzPanel = $("umsatz-panel");
+
+  // Extra-Bereiche
+  const wkExtra = $("wk-extra");
+  const umsatzOptionsRow = $("umsatz-options-row");
+
+  // Kompakte Switches
+  const typeSwitch = $("umsatz-type-switch");
+  const modeSwitch = $("umsatz-mode-switch");
+
+  // Werbeoptionen
+  const werbeRow = $("werbe-options-row");
+  const chkWerbe = $("chk-werbeumsatz");
+  const chkMit = $("chk-mitgekauft");
+
+  // Umsatzanalyse (Absolut / Werbeanteil)
+  const umsatzAnalysisRow = this._shadowRoot.querySelector(".umsatz-analysis-row");
+  const btnUmsatzAbs = $("btn-umsatz-abs");
+  const btnWerbeAnteil = $("btn-werbeanteil");
+
+  // Bestreuung
+  const chkBestreuung = $("chk-bestreuung");
+
+  // Doppelbestreuung (nur WK)
+  const chkDoppel = $("chk-doppelbestreuung");
+
+  // Radiusfilter
+  const chkRadius = $("chk-radiusfilter");
+
+  // Kartenstil
+  const tileBtn = $("map-tile-toggle-btn");
   if (tileBtn) tileBtn.addEventListener("click", () => this.toggleMapTiles());
 
-  // Umschalter WK ↔ Umsatz
-  const btnWK = this._shadowRoot.getElementById("btn-wk");
-  const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
-  const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
-
-  const wkExtra = this._shadowRoot.getElementById("wk-extra");
-  const umsatzOptionsRow = this._shadowRoot.getElementById("umsatz-options-row");
-
-  // ⭐ Umsatzanalyse-Umschalter (Absolut / Werbeanteil)
-  const umsatzAnalysisRow = this._shadowRoot.querySelector(".umsatz-analysis-row");
-  const btnUmsatzAbs = this._shadowRoot.getElementById("btn-umsatz-abs");
-  const btnWerbeAnteil = this._shadowRoot.getElementById("btn-werbeanteil");
-
-  // WK-Modus
+  // ---------------------------------------------------------
+  // WK-MODUS
+  // ---------------------------------------------------------
   if (btnWK) {
     btnWK.addEventListener("click", () => {
+
       btnWK.classList.add("active");
       btnUmsatz.classList.remove("active");
-      umsatzPanel.classList.add("hidden");
 
       this.currentMapMode = "wk";
 
+      // WK UI
       wkExtra.style.display = "block";
       umsatzOptionsRow.style.display = "none";
+      umsatzPanel.classList.add("hidden");
 
-      // Panel zurück auf 20%
+      // Panel zurückfahren
       panel.classList.remove("expanded");
 
       // Werbeanalyse ausblenden
@@ -1745,8 +1774,9 @@ initializeMapBase() {
       btnUmsatzAbs.classList.add("active");
       btnWerbeAnteil.classList.remove("active");
 
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      // Popups schließen
+      $("side-popup")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
 
       const { erhID, jahr, nummer } = this._activeFilter || {};
       if (erhID && jahr && nummer) this.applyFilter(erhID, jahr, nummer);
@@ -1754,39 +1784,41 @@ initializeMapBase() {
     });
   }
 
-  // Umsatz-Modus
+  // ---------------------------------------------------------
+  // UMSATZ-MODUS
+  // ---------------------------------------------------------
   if (btnUmsatz) {
     btnUmsatz.addEventListener("click", () => {
+
       btnUmsatz.classList.add("active");
       btnWK.classList.remove("active");
-      umsatzPanel.classList.remove("hidden");
 
       this.currentMapMode = "umsatz-multi";
 
       this.prepareUmsatzPLZWerte();
 
+      // UI
       wkExtra.style.display = "none";
       umsatzOptionsRow.style.display = "flex";
+      umsatzPanel.classList.remove("hidden");
 
-      // Panel auf 30% erweitern
+      // Panel erweitern
       panel.classList.add("expanded");
 
-      // Smooth scroll zum Umsatz-Panel
       setTimeout(() => {
         umsatzPanel.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 150);
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
   }
 
-  // HH/ABS Switch
-  const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
-  this.umsatzMode = "abs";
-
+  // ---------------------------------------------------------
+  // ABS / HH Switch
+  // ---------------------------------------------------------
   if (modeSwitch) {
     modeSwitch.classList.add("active-left");
 
@@ -1797,23 +1829,21 @@ initializeMapBase() {
       modeSwitch.classList.toggle("active-right", isHH);
       modeSwitch.classList.toggle("active-left", !isHH);
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
   }
 
-  // Umsatztyp-Switch
-  const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
-  const werbeRow = this._shadowRoot.getElementById("werbe-options-row");
-  const chkWerbe = this._shadowRoot.getElementById("chk-werbeumsatz");
-  const chkMit = this._shadowRoot.getElementById("chk-mitgekauft");
-
+  // ---------------------------------------------------------
+  // UMSATZTYP (Umsatz / Werbung)
+  // ---------------------------------------------------------
   if (typeSwitch) {
     typeSwitch.classList.add("active-left");
 
     typeSwitch.addEventListener("click", () => {
+
       const isWerbung = this.umsatzMainMode === "gesamt";
       this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
 
@@ -1823,13 +1853,11 @@ initializeMapBase() {
       // Werbeoptionen sichtbar?
       werbeRow.style.display = isWerbung ? "flex" : "none";
 
-      // ⭐ Werbeanalyse-Umschalter sichtbar?
+      // Werbeanalyse sichtbar?
       if (isWerbung) {
         umsatzAnalysisRow.classList.add("show");
       } else {
         umsatzAnalysisRow.classList.remove("show");
-
-        // zurück auf Absolut
         btnUmsatzAbs.classList.add("active");
         btnWerbeAnteil.classList.remove("active");
         this.currentMapMode = "umsatz-multi";
@@ -1842,13 +1870,15 @@ initializeMapBase() {
         chkMit.checked = false;
       }
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
   }
 
+  // ---------------------------------------------------------
   // Werbeumsatz / Mitgekauft
+  // ---------------------------------------------------------
   if (chkWerbe) {
     chkWerbe.addEventListener("change", () => {
       this.useWerbeUmsatz = chkWerbe.checked;
@@ -1858,7 +1888,7 @@ initializeMapBase() {
         chkWerbe.checked = true;
       }
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
       this.updateGeoLayer();
     });
   }
@@ -1872,13 +1902,16 @@ initializeMapBase() {
         chkWerbe.checked = true;
       }
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
       this.updateGeoLayer();
     });
   }
 
-  // ⭐ Umsatzanalyse: Absolut / Werbeanteil
+  // ---------------------------------------------------------
+  // Umsatzanalyse: Absolut / Werbeanteil
+  // ---------------------------------------------------------
   if (btnUmsatzAbs && btnWerbeAnteil) {
+
     btnUmsatzAbs.addEventListener("click", () => {
       btnUmsatzAbs.classList.add("active");
       btnWerbeAnteil.classList.remove("active");
@@ -1898,7 +1931,9 @@ initializeMapBase() {
     });
   }
 
+  // ---------------------------------------------------------
   // Kategorien
+  // ---------------------------------------------------------
   this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
     toggle.addEventListener("click", () => {
       const cat = toggle.dataset.cat;
@@ -1914,49 +1949,50 @@ initializeMapBase() {
 
       this.currentMapMode = "umsatz-multi";
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
   });
 
-  // Doppelbestreuung
-  const chkDoppel = this._shadowRoot.getElementById("chk-doppelbestreuung");
-  this.showCritical = true;
-
+  // ---------------------------------------------------------
+  // Doppelbestreuung (nur WK)
+  // ---------------------------------------------------------
   if (chkDoppel) {
     chkDoppel.addEventListener("change", () => {
       this.showCritical = chkDoppel.checked;
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup")?.classList.remove("show");
 
       this.updateGeoLayer();
     });
   }
 
+  // ---------------------------------------------------------
   // Bestreuung
-  const chkBestreuung = this._shadowRoot.getElementById("chk-bestreuung");
+  // ---------------------------------------------------------
   if (chkBestreuung) {
     chkBestreuung.addEventListener("change", () => {
       this.showBestreuung = chkBestreuung.checked;
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup")?.classList.remove("show");
 
       this.updateBestreuungMarkers();
     });
   }
 
+  // ---------------------------------------------------------
   // Radiusfilter
-  const chkRadius = this._shadowRoot.getElementById("chk-radiusfilter");
+  // ---------------------------------------------------------
   if (chkRadius) {
     chkRadius.addEventListener("change", () => {
       this.useRadiusFilter = chkRadius.checked;
 
-      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      $("side-popup-umsatz")?.classList.remove("show");
+      $("side-popup")?.classList.remove("show");
 
       if (!this.useRadiusFilter) {
         this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
@@ -1965,13 +2001,12 @@ initializeMapBase() {
         return;
       }
 
-      const slider = this._shadowRoot.getElementById("radius-slider");
+      const slider = $("radius-slider");
       const radius = slider ? Number(slider.value) : 0;
       this.applyRadiusFilter(radius);
     });
   }
 }
-
 
 
 
@@ -3586,9 +3621,20 @@ prepareUmsatzPLZWerte() {
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
       // ⭐ Werbeanteil am Gesamtumsatz
-      const normal = v.umsatz || 0;
-      const werbe = v.umsatzWerbung || 0;
-      v.werbeAnteil = normal > 0 ? (werbe / normal) : 0;
+ const totalNormal =
+  v.umsatz +
+  v.ra +
+  v.onlineshop +
+  v.pluscard;
+
+const totalWerbe =
+  v.umsatzWerbung +
+  v.raWerbung +
+  v.onlineshopWerbung +
+  v.pluscardWerbung;
+
+v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
+
     });
 
     this._umsatzCache[cacheKey] = aggregated;
@@ -3877,6 +3923,7 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
+
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
@@ -3975,6 +4022,21 @@ computeWKKennwerte() {
     // Umsatzfelder aus bestehendem Eintrag erhalten
     const old = this.filteredPLZWerte?.[plz] || {};
 
+    // ⭐ KORREKTE Werbeanteil-Berechnung
+    const totalNormal =
+      (old.umsatz ?? 0) +
+      (old.ra ?? 0) +
+      (old.onlineshop ?? 0) +
+      (old.pluscard ?? 0);
+
+    const totalWerbe =
+      (old.umsatzWerbung ?? 0) +
+      (old.raWerbung ?? 0) +
+      (old.onlineshopWerbung ?? 0) +
+      (old.pluscardWerbung ?? 0);
+
+    const werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+
     newFilteredPLZWerte[plz] = {
       ...newFilteredPLZWerte[plz],
 
@@ -4009,17 +4071,14 @@ computeWKKennwerte() {
       onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
       pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
 
-      // ⭐ Werbeanteil am Gesamtumsatz
-      werbeAnteil:
-        (old.umsatz ?? 0) > 0
-          ? (old.umsatzWerbung ?? 0) / (old.umsatz ?? 0)
-          : 0
+      werbeAnteil
     };
   });
 
   this.filteredKennwerte = newFilteredKennwerte;
   this.filteredPLZWerte = newFilteredPLZWerte;
 }
+
 
 
 
