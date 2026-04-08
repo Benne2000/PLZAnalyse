@@ -284,13 +284,14 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: height 0.35s ease;   /* ⭐ Smooth expand */
+  transition: height 0.35s ease;
 }
 
-/* Wenn Umsatz aktiv → Panel wächst */
+/* ⭐ Wenn Umsatz aktiv → Panel wächst */
 #map-control-panel.expanded {
   height: 30%;
 }
+
 
 
 /* Karten-Panel Cards */
@@ -407,15 +408,6 @@
   background: #fff3f3;
   box-shadow: 0 0 6px rgba(180,24,33,0.4);
 }
-
-/* Radius */
-.radius-slider-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 0.85rem;
-}
-
 
 
 /* --------------------------------------------- */
@@ -715,20 +707,22 @@
    ============================================ */
 
 #umsatz-mode-switch {
-  margin-top: 4px;
-  background: #f0f0f0;
+  background: #ececec;
   border-radius: 6px;
   padding: 3px;
   display: flex;
   gap: 4px;
   cursor: pointer;
   user-select: none;
+  width: 100%;
+  margin-top: -4px;
+  margin-bottom: 4px;
 }
 
 #umsatz-mode-switch span {
   flex: 1;
   text-align: center;
-  padding: 6px 0;
+  padding: 5px 0;
   font-size: 0.75rem;       /* ⭐ kleiner */
   font-weight: 600;
   border-radius: 4px;
@@ -745,6 +739,7 @@
   background: #b41821;
   color: white;
 }
+
 
 
 
@@ -857,17 +852,24 @@
     <div class="panel-title">Analyse-Modus</div>
 
     <div class="switch-row">
-      <button id="btn-wk" class="switch-btn active">Werbekosten</button>
-      <button id="btn-umsatz" class="switch-btn">Umsatz</button>
+      <button id="btn-wk" class="switch-btn active">
+        <span class="icon">📊</span> WK
+      </button>
+
+      <button id="btn-umsatz" class="switch-btn">
+        <span class="icon">💶</span> Umsatz
+      </button>
     </div>
+
 
     <div id="wk-extra" class="option-row">
       <label><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung anzeigen</label>
     </div>
 
     <div id="umsatz-options-row" class="option-row hidden">
-      <label><input type="checkbox" id="chk-bestreuung"> Bestreuung anzeigen</label>
-      <label><input type="checkbox" id="chk-radiusfilter" checked> Radiusfilter aktiv</label>
+      <label><input type="checkbox" id="chk-doppelbestreuung"> ⚠️ Doppelbestreuung</label>
+      <label><input type="checkbox" id="chk-bestreuung"> 📍 Bestreuung</label>
+
     </div>
   </div>
 
@@ -896,27 +898,13 @@
     </div>
 
     <!-- Kategorien -->
-    <div class="category-grid">
-      <div class="category-toggle active" data-cat="stationaer">Stationär</div>
-      <div class="category-toggle" data-cat="pluscard">Pluscard</div>
-      <div class="category-toggle" data-cat="ra">R&A</div>
-      <div class="category-toggle" data-cat="online">Onlineshop</div>
-    </div>
-  </div>
+      <div class="category-grid">
+        <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
+        <div class="category-toggle" data-cat="pluscard">💳 Pluscard</div>
+        <div class="category-toggle" data-cat="ra">📦 R&A</div>
+        <div class="category-toggle" data-cat="online">🛒 Online</div>
+      </div>
 
-  <!-- CARD 3: RADIUS -->
-  <div class="panel-card">
-    <div class="panel-title">Radius</div>
-
-    <label class="option-row">
-      <input type="checkbox" id="chk-radiusfilter" checked>
-      Radiusfilter aktiv
-    </label>
-
-    <div class="radius-slider-row">
-      <span>Radius: <strong id="radius-value">40</strong> km</span>
-      <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
-    </div>
   </div>
 
 </div>
@@ -1647,7 +1635,8 @@ initializeMapBase() {
   const umsatzOptionsRow = this._shadowRoot.getElementById("umsatz-options-row");
 
   if (btnWK && btnUmsatz && umsatzPanel && panel && wkExtra && umsatzOptionsRow) {
- btnWK.addEventListener("click", () => {
+
+btnWK.addEventListener("click", () => {
   btnWK.classList.add("active");
   btnUmsatz.classList.remove("active");
   umsatzPanel.classList.add("hidden");
@@ -1675,6 +1664,7 @@ initializeMapBase() {
 });
 
 
+
 btnUmsatz.addEventListener("click", () => {
   btnUmsatz.classList.add("active");
   btnWK.classList.remove("active");
@@ -1700,6 +1690,7 @@ btnUmsatz.addEventListener("click", () => {
 
   this.updateGeoLayer();
 });
+
 
   }
 
