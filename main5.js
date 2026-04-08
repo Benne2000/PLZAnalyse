@@ -1587,7 +1587,6 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
 initializeMapBase() {
   const mapContainer = this._shadowRoot.getElementById("map");
   if (!mapContainer) {
@@ -1622,9 +1621,7 @@ initializeMapBase() {
 
   const panel = this._shadowRoot.getElementById("map-control-panel");
   const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
-  if (tileBtn) {
-    tileBtn.addEventListener("click", () => this.toggleMapTiles());
-  }
+  if (tileBtn) tileBtn.addEventListener("click", () => this.toggleMapTiles());
 
   // Umschalter WK ↔ Umsatz
   const btnWK = this._shadowRoot.getElementById("btn-wk");
@@ -1636,77 +1633,67 @@ initializeMapBase() {
 
   if (btnWK && btnUmsatz && umsatzPanel && panel && wkExtra && umsatzOptionsRow) {
 
-btnWK.addEventListener("click", () => {
-  btnWK.classList.add("active");
-  btnUmsatz.classList.remove("active");
-  umsatzPanel.classList.add("hidden");
+    // WK-Modus
+    btnWK.addEventListener("click", () => {
+      btnWK.classList.add("active");
+      btnUmsatz.classList.remove("active");
+      umsatzPanel.classList.add("hidden");
 
-  this.currentMapMode = "wk";
+      this.currentMapMode = "wk";
 
-  wkExtra.style.display = "block";
-  umsatzOptionsRow.style.display = "none";
+      wkExtra.style.display = "block";
+      umsatzOptionsRow.style.display = "none";
 
-  // ⭐ Panel zurück auf 20%
-  panel.classList.remove("expanded");
+      // Panel zurück auf 20%
+      panel.classList.remove("expanded");
 
-  this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-  this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
 
-  const erhID = this._activeFilter?.erhID;
-  const jahr = this._activeFilter?.jahr;
-  const nummer = this._activeFilter?.nummer;
+      const { erhID, jahr, nummer } = this._activeFilter || {};
+      if (erhID && jahr && nummer) this.applyFilter(erhID, jahr, nummer);
+      else this.updateGeoLayer();
+    });
 
-  if (erhID && jahr && nummer) {
-    this.applyFilter(erhID, jahr, nummer);
-  } else {
-    this.updateGeoLayer();
-  }
-});
+    // Umsatz-Modus
+    btnUmsatz.addEventListener("click", () => {
+      btnUmsatz.classList.add("active");
+      btnWK.classList.remove("active");
+      umsatzPanel.classList.remove("hidden");
 
+      this.currentMapMode = "umsatz-multi";
 
+      this.prepareUmsatzPLZWerte();
 
-btnUmsatz.addEventListener("click", () => {
-  btnUmsatz.classList.add("active");
-  btnWK.classList.remove("active");
-  umsatzPanel.classList.remove("hidden");
+      wkExtra.style.display = "none";
+      umsatzOptionsRow.style.display = "flex";
 
-  this.currentMapMode = "umsatz-multi";
+      // Panel auf 30% erweitern
+      panel.classList.add("expanded");
 
-  this.prepareUmsatzPLZWerte();
+      // Smooth scroll zum Umsatz-Panel
+      setTimeout(() => {
+        umsatzPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 150);
 
-  wkExtra.style.display = "none";
-  umsatzOptionsRow.style.display = "flex";
+      this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+      this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
 
-  // ⭐ Panel auf 30% erweitern
-  panel.classList.add("expanded");
-
-  // ⭐ Smooth scroll zum Umsatz-Panel
-  setTimeout(() => {
-    umsatzPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, 150);
-
-  this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-  this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-
-  this.updateGeoLayer();
-});
-
-
+      this.updateGeoLayer();
+    });
   }
 
-  // HH/ABS Switch (Segmented Control)
+  // HH/ABS Switch
   const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
   this.umsatzMode = "abs";
 
   if (modeSwitch) {
-    // Startzustand
     modeSwitch.classList.add("active-left");
 
     modeSwitch.addEventListener("click", () => {
       const isHH = this.umsatzMode === "abs";
       this.umsatzMode = isHH ? "hh" : "abs";
 
-      // Segmented Control Klassen
       modeSwitch.classList.toggle("active-right", isHH);
       modeSwitch.classList.toggle("active-left", !isHH);
 
@@ -1717,21 +1704,19 @@ btnUmsatz.addEventListener("click", () => {
     });
   }
 
-  // Umsatztyp-Switch (Segmented Control)
+  // Umsatztyp-Switch
   const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
   const werbeRow = this._shadowRoot.getElementById("werbe-options-row");
   const chkWerbe = this._shadowRoot.getElementById("chk-werbeumsatz");
   const chkMit = this._shadowRoot.getElementById("chk-mitgekauft");
 
   if (typeSwitch) {
-    // Startzustand
     typeSwitch.classList.add("active-left");
 
     typeSwitch.addEventListener("click", () => {
       const isWerbung = this.umsatzMainMode === "gesamt";
       this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
 
-      // Segmented Control Klassen
       typeSwitch.classList.toggle("active-right", isWerbung);
       typeSwitch.classList.toggle("active-left", !isWerbung);
 
@@ -1852,7 +1837,6 @@ btnUmsatz.addEventListener("click", () => {
     });
   }
 }
-
 
 
 
@@ -2726,7 +2710,6 @@ updateGeoLayer() {
   console.groupEnd();
 }
 
-
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
   if (!v) return "#cfd4da";
@@ -2737,15 +2720,20 @@ computeFillColor(plz) {
     return this.getColor(value, v.hz);
   }
 
-  // Umsatzmodus (inkl. Werbeumsatz / Mitgekauft)
+  // Umsatzmodus
   if (this.currentMapMode === "umsatz-multi") {
     const sum = this.getUmsatzSumForPLZ(v);
     return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
   }
 
+  // ⭐ Werbeanteil-Modus
+  if (this.currentMapMode === "werbeanteil") {
+    const ratio = v.werbeAnteil || 0;
+    return this.getWerbeAnteilColor(ratio);
+  }
+
   return "#cfd4da";
 }
-
 
 computeMaxValue() {
   const plzWerte = this.filteredPLZWerte || {};
@@ -2753,6 +2741,7 @@ computeMaxValue() {
 
   let maxValue = 0;
 
+  // WK
   if (this.currentMapMode === "wk") {
     Object.values(plzWerte).forEach(v => {
       const val = safe(v.hz ? v.wk : v.wkPot);
@@ -2760,11 +2749,18 @@ computeMaxValue() {
     });
   }
 
+  // Umsatz
   if (this.currentMapMode === "umsatz-multi") {
     Object.values(plzWerte).forEach(v => {
       const sum = this.getUmsatzSumForPLZ(v);
       if (sum > maxValue) maxValue = sum;
     });
+  }
+
+  // ⭐ Werbeanteil (immer 0–1)
+  if (this.currentMapMode === "werbeanteil") {
+    this._maxValueCache = 1;
+    return 1;
   }
 
   this._maxValueCache = maxValue || 1;
@@ -2923,6 +2919,16 @@ getDynamicHeatColor(value, max) {
   return "#fff6d6";                    // sehr helles gelb
 }
 
+getWerbeAnteilColor(ratio) {
+  if (!Number.isFinite(ratio) || ratio <= 0) return "#fff6d6";
+
+  if (ratio > 0.80) return "#7a0f17";
+  if (ratio > 0.60) return "#b41821";
+  if (ratio > 0.40) return "#e96a3a";
+  if (ratio > 0.20) return "#f6b65b";
+  if (ratio > 0.10) return "#ffe89c";
+  return "#fff6d6";
+}
 
 
 updateMarkers() {
@@ -3332,7 +3338,6 @@ prepareErhebungsInfo() {
     };
   });
 }
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3367,7 +3372,6 @@ prepareUmsatzPLZWerte() {
 
       if (!aggregated[plz]) {
         aggregated[plz] = {
-          // Haushalte werden NICHT summiert → Durchschnitt
           _hhValues: [],
 
           // Gesamtumsatz
@@ -3392,7 +3396,7 @@ prepareUmsatzPLZWerte() {
 
       const v = aggregated[plz];
 
-      // Haushalte sammeln (Durchschnitt später)
+      // Haushalte sammeln
       const hh = safe(row["value_haushalte_0"]?.raw);
       if (hh > 0) v._hhValues.push(hh);
 
@@ -3419,7 +3423,6 @@ prepareUmsatzPLZWerte() {
     // 2) Haushalte final bestimmen + Pro-Haushalt berechnen
     // ---------------------------------------------------------
     Object.values(aggregated).forEach(v => {
-      // Haushalte = Durchschnitt
       if (v._hhValues.length > 0) {
         v.haushalte = v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
       } else {
@@ -3447,6 +3450,11 @@ prepareUmsatzPLZWerte() {
       v.raZusatzProHaushalt         = perHH(v.raZusatz);
       v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
+
+      // ⭐ Werbeanteil am Gesamtumsatz
+      const normal = v.umsatz || 0;
+      const werbe = v.umsatzWerbung || 0;
+      v.werbeAnteil = normal > 0 ? (werbe / normal) : 0;
     });
 
     this._umsatzCache[cacheKey] = aggregated;
@@ -3741,7 +3749,7 @@ computeWKKennwerte() {
   const aggregated = {};
   const unfilteredUmsatzByPLZ = {};
 
-  // 1️⃣ Ungefilterter Umsatz pro PLZ (für WK inkl. Nachbarn)
+  // 1️⃣ Ungefilterter Umsatz pro PLZ
   this.filteredData.forEach(row => {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
@@ -3750,14 +3758,13 @@ computeWKKennwerte() {
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
   });
 
-  // 2️⃣ Aggregation nur für PLZ im Radius + NL-Filter
+  // 2️⃣ Aggregation für WK
   this.filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
 
     if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
-
     if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
 
     if (!aggregated[plz]) {
@@ -3781,7 +3788,7 @@ computeWKKennwerte() {
     if (typeof potHz === "number") entry.potHzKosten.push(potHz);
   });
 
-  // 3️⃣ WK-Kennwerte final berechnen und gefilterte PLZ-Menge neu aufbauen
+  // 3️⃣ WK-Kennwerte final berechnen
   const base = this.filteredKennwerte || {};
   const newFilteredKennwerte = {};
   const newFilteredPLZWerte = this.filteredPLZWerte ? { ...this.filteredPLZWerte } : {};
@@ -3826,11 +3833,12 @@ computeWKKennwerte() {
 
     if (!newFilteredPLZWerte[plz]) newFilteredPLZWerte[plz] = {};
 
+    // WK
     newFilteredPLZWerte[plz].wk = wkPercent;
     newFilteredPLZWerte[plz].wkPot = potHzPercent;
     newFilteredPLZWerte[plz].hz = isHZ;
 
-    // Umsatzfelder aus bestehendem Eintrag erhalten (inkl. Werbung/Zusatz)
+    // Umsatzfelder aus bestehendem Eintrag erhalten
     const old = this.filteredPLZWerte?.[plz] || {};
 
     newFilteredPLZWerte[plz] = {
@@ -3865,7 +3873,13 @@ computeWKKennwerte() {
       umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
       raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
       onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
-      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0
+      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
+
+      // ⭐ Werbeanteil am Gesamtumsatz
+      werbeAnteil:
+        (old.umsatz ?? 0) > 0
+          ? (old.umsatzWerbung ?? 0) / (old.umsatz ?? 0)
+          : 0
     };
   });
 
