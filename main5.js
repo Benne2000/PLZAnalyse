@@ -3555,171 +3555,165 @@ prepareUmsatzPLZWerte() {
   };
 
   // ============================================
-  // Cache-Key inkl. NL-Filter
+  // (Optional) Cache-Struktur initialisieren – aber NICHT mehr als Short-Cut nutzen
   // ============================================
   if (!this._umsatzCache) this._umsatzCache = {};
   const nlKey = [...(this._selectedNLs || new Set())].sort().join("_") || "ALL";
   const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
 
   // ============================================
-  // 1) Aggregation (nur einmal pro CacheKey)
+  // 1) Aggregation – IMMER NEU BERECHNEN
   // ============================================
-  if (!this._umsatzCache[cacheKey]) {
-    const rows = raw.filter(row =>
-      row["dimension_erhebung_0"]?.id == erhID &&
-      row["dimension_jahr_0"]?.id == jahr &&
-      row["dimension_erhebungsnummer_0"]?.id == nummer
+  const rows = raw.filter(row =>
+    row["dimension_erhebung_0"]?.id == erhID &&
+    row["dimension_jahr_0"]?.id == jahr &&
+    row["dimension_erhebungsnummer_0"]?.id == nummer
+  );
+
+  const aggregated = {};
+
+  rows.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+
+    if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
+      return;
+    }
+
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+
+    if (!rawPLZ || rawPLZ === "@NullMember") return;
+
+    const plz = String(rawPLZ).padStart(5, "0");
+    if (plz === "00000") return;
+
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
+        _hhValues: [],
+
+        umsatz: 0,
+        ra: 0,
+        onlineshop: 0,
+        pluscard: 0,
+
+        umsatzWerbung: 0,
+        raWerbung: 0,
+        onlineshopWerbung: 0,
+        pluscardWerbung: 0,
+
+        umsatzZusatz: 0,
+        raZusatz: 0,
+        onlineshopZusatz: 0,
+        pluscardZusatz: 0
+      };
+    }
+
+    const v = aggregated[plz];
+
+    // Haushalte
+    const rawHH = row["value_haushalte_0"]?.raw;
+    const hh = parseHH(rawHH);
+
+    console.log(
+      `%cHH-DEBUG | PLZ ${plz}`,
+      "color:#b41821; font-weight:bold;",
+      {
+        raw: rawHH,
+        typeof_raw: typeof rawHH,
+        parsed: hh
+      }
     );
 
-    const aggregated = {};
+    if (hh > 0) v._hhValues.push(hh);
 
-    rows.forEach(row => {
-      const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    // Umsatzfelder
+    v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
+    v.ra         += debugSafe("umsatz_ra", row["value_umsatz_ra_0"]?.raw, plz);
+    v.onlineshop += debugSafe("umsatz_online", row["value_umsatz_online_0"]?.raw, plz);
+    v.pluscard   += debugSafe("umsatz_pluscard", row["value_umsatz_grosskunden_0"]?.raw, plz);
 
-      if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
-        return;
+    v.umsatzWerbung     += debugSafe("werbung_stationaer", row["value_umsatz_stationaer_werbung_0"]?.raw, plz);
+    v.raWerbung         += debugSafe("werbung_ra", row["value_umsatz_ra_werbung_0"]?.raw, plz);
+    v.onlineshopWerbung += debugSafe("werbung_online", row["value_umsatz_online_werbung_0"]?.raw, plz);
+    v.pluscardWerbung   += debugSafe("werbung_pluscard", row["value_umsatz_grosskunden_werbung_0"]?.raw, plz);
+
+    v.umsatzZusatz     += debugSafe("zusatz_stationaer", row["value_umsatz_stationaer_zusatz_0"]?.raw, plz);
+    v.raZusatz         += debugSafe("zusatz_ra", row["value_umsatz_ra_zusatz_0"]?.raw, plz);
+    v.onlineshopZusatz += debugSafe("zusatz_online", row["value_umsatz_online_zusatz_0"]?.raw, plz);
+    v.pluscardZusatz   += debugSafe("zusatz_pluscard", row["value_umsatz_grosskunden_zusatz_0"]?.raw, plz);
+  });
+
+  // ============================================
+  // 2) Haushalte + pro HH + Werbeanteil
+  // ============================================
+  Object.entries(aggregated).forEach(([plz, v]) => {
+    if (v._hhValues.length > 0) {
+      v.haushalte =
+        v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
+    } else {
+      v.haushalte = 0;
+    }
+
+    console.log(
+      `%cHH-AVG | PLZ ${plz}`,
+      "color:#1f78b4; font-weight:bold;",
+      {
+        values: v._hhValues,
+        avg: v.haushalte
       }
+    );
 
-      const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    delete v._hhValues;
 
-      if (!rawPLZ || rawPLZ === "@NullMember") return;
+    const hh = v.haushalte;
+    const perHH = val => (hh > 0 ? val / hh : 0);
 
-      const plz = String(rawPLZ).padStart(5, "0");
-      if (plz === "00000") return;
+    v.umsatzProHaushalt     = perHH(v.umsatz);
+    v.raProHaushalt         = perHH(v.ra);
+    v.onlineshopProHaushalt = perHH(v.onlineshop);
+    v.pluscardProHaushalt   = perHH(v.pluscard);
 
-      if (!aggregated[plz]) {
-        aggregated[plz] = {
-          _hhValues: [],
+    v.umsatzWerbungProHaushalt     = perHH(v.umsatzWerbung);
+    v.raWerbungProHaushalt         = perHH(v.raWerbung);
+    v.onlineshopWerbungProHaushalt = perHH(v.onlineshopWerbung);
+    v.pluscardWerbungProHaushalt   = perHH(v.pluscardWerbung);
 
-          umsatz: 0,
-          ra: 0,
-          onlineshop: 0,
-          pluscard: 0,
+    v.umsatzZusatzProHaushalt     = perHH(v.umsatzZusatz);
+    v.raZusatzProHaushalt         = perHH(v.raZusatz);
+    v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
+    v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
-          umsatzWerbung: 0,
-          raWerbung: 0,
-          onlineshopWerbung: 0,
-          pluscardWerbung: 0,
+    const catMapNormal = {
+      stationaer: v.umsatz ?? 0,
+      ra: v.ra ?? 0,
+      onlineshop: v.onlineshop ?? 0,
+      pluscard: v.pluscard ?? 0
+    };
 
-          umsatzZusatz: 0,
-          raZusatz: 0,
-          onlineshopZusatz: 0,
-          pluscardZusatz: 0
-        };
-      }
+    const catMapWerbung = {
+      stationaer: v.umsatzWerbung ?? 0,
+      ra: v.raWerbung ?? 0,
+      onlineshop: v.onlineshopWerbung ?? 0,
+      pluscard: v.pluscardWerbung ?? 0
+    };
 
-      const v = aggregated[plz];
+    let totalNormal = 0;
+    let totalWerbe = 0;
 
-      // ============================================
-      // Haushalte korrekt parsen
-      // ============================================
-      const rawHH = row["value_haushalte_0"]?.raw;
-      const hh = parseHH(rawHH);
+    for (const cat of this.activeCategories) {
+      totalNormal += catMapNormal[cat] ?? 0;
+      totalWerbe  += catMapWerbung[cat] ?? 0;
+    }
 
-      console.log(
-        `%cHH-DEBUG | PLZ ${plz}`,
-        "color:#b41821; font-weight:bold;",
-        {
-          raw: rawHH,
-          typeof_raw: typeof rawHH,
-          parsed: hh
-        }
-      );
+    v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
+  });
 
-      if (hh > 0) v._hhValues.push(hh);
-
-      // ============================================
-      // Umsatzfelder (ALLE mit debugSafe)
-      // ============================================
-      v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
-      v.ra         += debugSafe("umsatz_ra", row["value_umsatz_ra_0"]?.raw, plz);
-      v.onlineshop += debugSafe("umsatz_online", row["value_umsatz_online_0"]?.raw, plz);
-      v.pluscard   += debugSafe("umsatz_pluscard", row["value_umsatz_grosskunden_0"]?.raw, plz);
-
-      v.umsatzWerbung     += debugSafe("werbung_stationaer", row["value_umsatz_stationaer_werbung_0"]?.raw, plz);
-      v.raWerbung         += debugSafe("werbung_ra", row["value_umsatz_ra_werbung_0"]?.raw, plz);
-      v.onlineshopWerbung += debugSafe("werbung_online", row["value_umsatz_online_werbung_0"]?.raw, plz);
-      v.pluscardWerbung   += debugSafe("werbung_pluscard", row["value_umsatz_grosskunden_werbung_0"]?.raw, plz);
-
-      v.umsatzZusatz     += debugSafe("zusatz_stationaer", row["value_umsatz_stationaer_zusatz_0"]?.raw, plz);
-      v.raZusatz         += debugSafe("zusatz_ra", row["value_umsatz_ra_zusatz_0"]?.raw, plz);
-      v.onlineshopZusatz += debugSafe("zusatz_online", row["value_umsatz_online_zusatz_0"]?.raw, plz);
-      v.pluscardZusatz   += debugSafe("zusatz_pluscard", row["value_umsatz_grosskunden_zusatz_0"]?.raw, plz);
-    });
-
-    // ============================================
-    // 2) Haushalte + pro HH + Werbeanteil
-    // ============================================
-    Object.entries(aggregated).forEach(([plz, v]) => {
-      if (v._hhValues.length > 0) {
-        v.haushalte =
-          v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
-      } else {
-        v.haushalte = 0;
-      }
-
-      console.log(
-        `%cHH-AVG | PLZ ${plz}`,
-        "color:#1f78b4; font-weight:bold;",
-        {
-          values: v._hhValues,
-          avg: v.haushalte
-        }
-      );
-
-      delete v._hhValues;
-
-      const hh = v.haushalte;
-      const perHH = val => (hh > 0 ? val / hh : 0);
-
-      v.umsatzProHaushalt     = perHH(v.umsatz);
-      v.raProHaushalt         = perHH(v.ra);
-      v.onlineshopProHaushalt = perHH(v.onlineshop);
-      v.pluscardProHaushalt   = perHH(v.pluscard);
-
-      v.umsatzWerbungProHaushalt     = perHH(v.umsatzWerbung);
-      v.raWerbungProHaushalt         = perHH(v.raWerbung);
-      v.onlineshopWerbungProHaushalt = perHH(v.onlineshopWerbung);
-      v.pluscardWerbungProHaushalt   = perHH(v.pluscardWerbung);
-
-      v.umsatzZusatzProHaushalt     = perHH(v.umsatzZusatz);
-      v.raZusatzProHaushalt         = perHH(v.raZusatz);
-      v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
-      v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
-
-      // Werbeanteil
-      const catMapNormal = {
-        stationaer: v.umsatz ?? 0,
-        ra: v.ra ?? 0,
-        onlineshop: v.onlineshop ?? 0,
-        pluscard: v.pluscard ?? 0
-      };
-
-      const catMapWerbung = {
-        stationaer: v.umsatzWerbung ?? 0,
-        ra: v.raWerbung ?? 0,
-        onlineshop: v.onlineshopWerbung ?? 0,
-        pluscard: v.pluscardWerbung ?? 0
-      };
-
-      let totalNormal = 0;
-      let totalWerbe = 0;
-
-      for (const cat of this.activeCategories) {
-        totalNormal += catMapNormal[cat] ?? 0;
-        totalWerbe  += catMapWerbung[cat] ?? 0;
-      }
-
-      v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
-    });
-
-    this._umsatzCache[cacheKey] = aggregated;
-  }
+  // optional: aktualisierten Aggregat-Cache speichern
+  this._umsatzCache[cacheKey] = aggregated;
 
   // ============================================
   // 3) Radiusfilter
   // ============================================
-  const full = this._umsatzCache[cacheKey];
+  const full = aggregated;
   const result = {};
 
   Object.entries(full).forEach(([plz, v]) => {
@@ -3737,6 +3731,7 @@ prepareUmsatzPLZWerte() {
     { plzCount: Object.keys(result).length }
   );
 }
+
 
 
 
