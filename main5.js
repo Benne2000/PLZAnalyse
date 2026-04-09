@@ -1787,8 +1787,14 @@ initializeMapBase() {
     $("side-popup-umsatz")?.classList.remove("show");
 
     const { erhID, jahr, nummer } = this._activeFilter || {};
-    if (erhID && jahr && nummer) this.applyFilter(erhID, jahr, nummer);
-    else this.updateGeoLayer();
+if (erhID && jahr && nummer) {
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+} else {
+    this.updateGeoLayer();
+}
+
   });
 
   // ---------------------------------------------------------
