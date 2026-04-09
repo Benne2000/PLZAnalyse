@@ -2435,7 +2435,6 @@ panel.classList.add("panel-medium");
     sidePopup.classList.add('hidden');
   };
 }
-
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -2501,6 +2500,13 @@ showUmsatzPopup(plz, values) {
   const fmtHH  = x => Number(x || 0).toFixed(2);
   const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
 
+  const headerLabel = (() => {
+    if (!isWerbungMode) return "Gesamtumsatz";
+    if (useWerbe && useZusatz) return "Werbeumsatz + Mitgekauft";
+    if (useWerbe) return "Werbeumsatz";
+    return "Mitgekauft";
+  })();
+
   popup.innerHTML = `
     <div class="popup-header">
       <span>${note}</span>
@@ -2508,8 +2514,14 @@ showUmsatzPopup(plz, values) {
     </div>
 
     <div class="umsatz-subheader">
-      Gesamtumsatz: ${fmtAbs(totalAbs)} €<br>
+      ${headerLabel}: ${fmtAbs(totalAbs)} €<br>
       pro Haushalt: ${fmtHH(totalHH)} €
+    </div>
+
+    <div class="section-title">Haushalte</div>
+    <div class="umsatz-grid">
+      <div class="label">Haushalte</div>
+      <div class="value">${hh.toLocaleString("de-DE")}</div>
     </div>
 
     <div class="section-title">Umsatz nach Kategorien</div>
