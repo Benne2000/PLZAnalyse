@@ -1795,6 +1795,8 @@ initializeMapBase() {
   // UMSATZ-MODUS
   // ---------------------------------------------------------
   btnUmsatz?.addEventListener("click", () => {
+     const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
+typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
 
     btnUmsatz.classList.add("active");
     btnWK.classList.remove("active");
@@ -3519,7 +3521,10 @@ prepareUmsatzPLZWerte() {
 
   // Cache initialisieren
   if (!this._umsatzCache) this._umsatzCache = {};
-  const cacheKey = `${erhID}_${jahr}_${nummer}`;
+const nlKey = [...this._selectedNLs].sort().join("_") || "ALL";
+const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
+
+
 
   // ---------------------------------------------------------
   // 1) Vollständige Erhebung aggregieren (nur einmal)
@@ -3565,7 +3570,15 @@ prepareUmsatzPLZWerte() {
       const v = aggregated[plz];
 
       // Haushalte sammeln
-      const hh = safe(row["value_haushalte_0"]?.raw);
+      const safe = x => {
+  if (x == null) return 0;
+  if (typeof x === "string") {
+    x = x.replace(/\./g, "").replace(",", ".");
+  }
+  const n = Number(x);
+  return Number.isFinite(n) ? n : 0;
+};
+
       if (hh > 0) v._hhValues.push(hh);
 
       // Gesamtumsatz
