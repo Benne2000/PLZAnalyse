@@ -1776,7 +1776,8 @@ initializeMapBase() {
     umsatzOptionsRow.style.display = "none";
     umsatzPanel.classList.add("hidden");
 
-    panel.classList.remove("expanded");
+panel.classList.remove("panel-large", "panel-medium");
+
 
     // Darstellung zurücksetzen
     this.umsatzDarstellung = "abs";
