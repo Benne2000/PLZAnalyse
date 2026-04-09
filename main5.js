@@ -3196,13 +3196,15 @@ getWerbeAnteilColor(ratio) {
     return "#f7fbff"; // sehr hell
   }
 
-  if (ratio < 0.10) return "#deebf7"; // 0–10%
-  if (ratio < 0.20) return "#9ecae1"; // 10–20%
-  if (ratio < 0.30) return "#6baed6"; // 20–30%
-  if (ratio < 0.40) return "#4292c6"; // 30–40%
-  if (ratio < 0.50) return "#2171b5"; // 40–50%
-  if (ratio < 0.70) return "#08519c"; // 50–70%
-  return "#08306b";                   // >70%
+  if (ratio > 0.6) return "#7a0f17";  // sehr dunkelrot
+  if (ratio > 0.5) return "#9d131b";  // dunkles rot
+  if (ratio > 0.4) return "#b41821";  // signature red
+  if (ratio > 0.3) return "#d9483b";  // rot-orange
+  if (ratio > 0.25) return "#e96a3a";  // orange
+  if (ratio > 0.2) return "#f08a3c";  // hellorange
+  if (ratio > 0.15) return "#f6b65b";  // gelb-orange
+  if (ratio > 0.1) return "#ffe89c";  // hellgelb
+  return "#fff6d6";                    // sehr helles gelb
 }
 
 
@@ -3612,6 +3614,7 @@ prepareErhebungsInfo() {
     };
   });
 }
+
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3619,8 +3622,20 @@ prepareUmsatzPLZWerte() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
   if (!erhID || !jahr || !nummer) return;
 
-  const safe = x => {
-    const n = Number(x);
+  // Zahlen robust parsen (Tausendertrennzeichen / Komma)
+  const safeNumber = x => {
+    const n = Number(
+      String(x ?? "")
+        .replace(/\./g, "")   // Tausenderpunkte entfernen
+        .replace(/,/g, ".")   // Komma als Dezimaltrenner
+    );
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // Haushalte immer als ganze Zahl interpretieren
+  const safeHH = x => {
+    const digits = String(x ?? "").replace(/[^\d]/g, "");
+    const n = Number(digits);
     return Number.isFinite(n) ? n : 0;
   };
 
@@ -3671,27 +3686,27 @@ prepareUmsatzPLZWerte() {
 
       const v = aggregated[plz];
 
-      // Haushalte sammeln
-      const hh = safe(row["value_haushalte_0"]?.raw);
+      // Haushalte sammeln (als ganze Zahl)
+      const hh = safeHH(row["value_haushalte_0"]?.raw);
       if (hh > 0) v._hhValues.push(hh);
 
       // Gesamtumsatz
-      v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
-      v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
-      v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-      v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+      v.umsatz     += safeNumber(row["value_umsatz_stationaer_0"]?.raw);
+      v.ra         += safeNumber(row["value_umsatz_ra_0"]?.raw);
+      v.onlineshop += safeNumber(row["value_umsatz_online_0"]?.raw);
+      v.pluscard   += safeNumber(row["value_umsatz_grosskunden_0"]?.raw);
 
       // Werbeumsatz
-      v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
-      v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
-      v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
-      v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
+      v.umsatzWerbung     += safeNumber(row["value_umsatz_stationaer_werbung_0"]?.raw);
+      v.raWerbung         += safeNumber(row["value_umsatz_ra_werbung_0"]?.raw);
+      v.onlineshopWerbung += safeNumber(row["value_umsatz_online_werbung_0"]?.raw);
+      v.pluscardWerbung   += safeNumber(row["value_umsatz_grosskunden_werbung_0"]?.raw);
 
       // Zusatzumsatz
-      v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
-      v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
-      v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
-      v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
+      v.umsatzZusatz     += safeNumber(row["value_umsatz_stationaer_zusatz_0"]?.raw);
+      v.raZusatz         += safeNumber(row["value_umsatz_ra_zusatz_0"]?.raw);
+      v.onlineshopZusatz += safeNumber(row["value_umsatz_online_zusatz_0"]?.raw);
+      v.pluscardZusatz   += safeNumber(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
     });
 
     // ---------------------------------------------------------
@@ -3699,7 +3714,7 @@ prepareUmsatzPLZWerte() {
     // ---------------------------------------------------------
     Object.values(aggregated).forEach(v => {
 
-      // Haushalte
+      // Haushalte (Durchschnitt aus allen Zeilen)
       if (v._hhValues.length > 0) {
         v.haushalte = v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
       } else {
@@ -3730,6 +3745,7 @@ prepareUmsatzPLZWerte() {
 
       // ---------------------------------------------------------
       // 3) Werbeanteil nach aktiven Kategorien berechnen
+      // (Basiswert, Kategorie-abhängige Variante machst du in computeFillColor)
       // ---------------------------------------------------------
       const catMapNormal = {
         stationaer: v.umsatz ?? 0,
@@ -3750,7 +3766,7 @@ prepareUmsatzPLZWerte() {
 
       for (const cat of this.activeCategories) {
         totalNormal += catMapNormal[cat] ?? 0;
-        totalWerbe += catMapWerbung[cat] ?? 0;
+        totalWerbe  += catMapWerbung[cat] ?? 0;
       }
 
       v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
@@ -3794,6 +3810,7 @@ prepareUmsatzPLZWerte() {
 
   console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(result).length);
 }
+
 
 
 
