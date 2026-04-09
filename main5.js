@@ -3525,6 +3525,7 @@ prepareUmsatzPLZWerte() {
   // 1) Vollständige Erhebung aggregieren (nur einmal)
   // ---------------------------------------------------------
   if (!this._umsatzCache[cacheKey]) {
+
     const rows = raw.filter(row =>
       row["dimension_erhebung_0"]?.id == erhID &&
       row["dimension_jahr_0"]?.id == jahr &&
@@ -3590,6 +3591,8 @@ prepareUmsatzPLZWerte() {
     // 2) Haushalte final bestimmen + Pro-Haushalt berechnen
     // ---------------------------------------------------------
     Object.values(aggregated).forEach(v => {
+
+      // Haushalte
       if (v._hhValues.length > 0) {
         v.haushalte = v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
       } else {
@@ -3618,37 +3621,32 @@ prepareUmsatzPLZWerte() {
       v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
-// --- Werbeanteil korrekt nach aktiven Kategorien berechnen ---
-// --- Werbeanteil korrekt nach aktiven Kategorien berechnen ---
-const catMapNormal = {
-  stationaer: entry.umsatz ?? 0,
-  ra: entry.ra ?? 0,
-  onlineshop: entry.onlineshop ?? 0,
-  pluscard: entry.pluscard ?? 0
-};
+      // ---------------------------------------------------------
+      // 3) Werbeanteil nach aktiven Kategorien berechnen
+      // ---------------------------------------------------------
+      const catMapNormal = {
+        stationaer: v.umsatz ?? 0,
+        ra: v.ra ?? 0,
+        onlineshop: v.onlineshop ?? 0,
+        pluscard: v.pluscard ?? 0
+      };
 
-const catMapWerbung = {
-  stationaer: entry.umsatzWerbung ?? 0,
-  ra: entry.raWerbung ?? 0,
-  onlineshop: entry.onlineshopWerbung ?? 0,
-  pluscard: entry.pluscardWerbung ?? 0
-};
+      const catMapWerbung = {
+        stationaer: v.umsatzWerbung ?? 0,
+        ra: v.raWerbung ?? 0,
+        onlineshop: v.onlineshopWerbung ?? 0,
+        pluscard: v.pluscardWerbung ?? 0
+      };
 
-let totalNormal = 0;
-let totalWerbe = 0;
+      let totalNormal = 0;
+      let totalWerbe = 0;
 
-for (const cat of this.activeCategories) {
-  totalNormal += catMapNormal[cat] ?? 0;
-  totalWerbe += catMapWerbung[cat] ?? 0;
-}
+      for (const cat of this.activeCategories) {
+        totalNormal += catMapNormal[cat] ?? 0;
+        totalWerbe += catMapWerbung[cat] ?? 0;
+      }
 
-entry.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
-
-
-
-
-v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
-
+      v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
     });
 
     this._umsatzCache[cacheKey] = aggregated;
@@ -3657,11 +3655,12 @@ v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
   const full = this._umsatzCache[cacheKey];
 
   // ---------------------------------------------------------
-  // 3) Subset nach NL + Radius
+  // 4) Subset nach NL + Radius
   // ---------------------------------------------------------
   const result = {};
 
   Object.entries(full).forEach(([plz, v]) => {
+
     // NL-Filter
     if (this._selectedNLs?.size > 0) {
       const rowsForPLZ = this.filteredData.filter(r => {
@@ -3677,7 +3676,7 @@ v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
     }
 
     // Radiusfilter
-    if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter) {
+    if ((this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
 
@@ -3688,7 +3687,6 @@ v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
 
   console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(result).length);
 }
-
 
 
 
