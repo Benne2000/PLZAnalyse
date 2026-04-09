@@ -1694,6 +1694,8 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
+
+
 initializeMapBase() {
 
   // Helper
@@ -1706,10 +1708,9 @@ initializeMapBase() {
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
   // Basiszustände
-  this.currentMapMode = "wk";              // wk | umsatz-multi | werbeanteil
-  this.activePopupType = "wk";             // wk | umsatz
-  this.umsatzDarstellung = "abs";          // abs | hh | werbeanteil
-  this.umsatzMainMode = "gesamt";          // gesamt | werbung
+  this.currentMapMode = "wk";
+  this.umsatzDarstellung = "abs";       // abs | hh | werbeanteil
+  this.umsatzMainMode = "gesamt";       // gesamt | werbung
   this.useWerbeUmsatz = true;
   this.useZusatzUmsatz = false;
 
@@ -1766,7 +1767,7 @@ initializeMapBase() {
 
   // Kartenstil
   const tileBtn = $("map-tile-toggle-btn");
-  tileBtn?.addEventListener("click", () => this.toggleMapTiles());
+  if (tileBtn) tileBtn.addEventListener("click", () => this.toggleMapTiles());
 
   // ---------------------------------------------------------
   // INITIAL: Werbeanteil deaktivieren
@@ -1782,7 +1783,6 @@ initializeMapBase() {
     btnUmsatz.classList.remove("active");
 
     this.currentMapMode = "wk";
-    this.activePopupType = "wk";
 
     wkExtra.style.display = "block";
     umsatzOptionsRow.style.display = "none";
@@ -1815,7 +1815,6 @@ initializeMapBase() {
     btnWK.classList.remove("active");
 
     this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
 
     this.prepareUmsatzPLZWerte();
 
@@ -1824,11 +1823,6 @@ initializeMapBase() {
     umsatzPanel.classList.remove("hidden");
 
     panel.classList.add("expanded");
-
-    // Darstellung auf ABS setzen
-    this.umsatzDarstellung = "abs";
-    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-    btnAbs.classList.add("active");
 
     // Werbeanteil deaktivieren (Umsatztyp = gesamt)
     btnWA.classList.add("disabled");
@@ -1854,6 +1848,7 @@ initializeMapBase() {
     typeSwitch.classList.toggle("active-right", isWerbung);
     typeSwitch.classList.toggle("active-left", !isWerbung);
 
+    // Werbeoptionen sichtbar?
     werbeRow.style.display = isWerbung ? "flex" : "none";
 
     if (isWerbung) {
@@ -1911,7 +1906,6 @@ initializeMapBase() {
   btnAbs?.addEventListener("click", () => {
     this.umsatzDarstellung = "abs";
     this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
 
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
@@ -1922,7 +1916,6 @@ initializeMapBase() {
   btnHH?.addEventListener("click", () => {
     this.umsatzDarstellung = "hh";
     this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
 
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnHH.classList.add("active");
@@ -1936,7 +1929,6 @@ initializeMapBase() {
 
     this.umsatzDarstellung = "werbeanteil";
     this.currentMapMode = "werbeanteil";
-    this.activePopupType = "umsatz";
 
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnWA.classList.add("active");
@@ -1969,8 +1961,6 @@ initializeMapBase() {
       }
 
       this.currentMapMode = "umsatz-multi";
-      this.activePopupType = "umsatz";
-
       this.updateGeoLayer();
     });
   });
@@ -3622,21 +3612,21 @@ prepareUmsatzPLZWerte() {
       v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
- const catMapNormal = {
-  stationaer: old.umsatz ?? 0,
-  ra: old.ra ?? 0,
-  onlineshop: old.onlineshop ?? 0,
-  pluscard: old.pluscard ?? 0
+// --- Werbeanteil korrekt nach aktiven Kategorien berechnen ---
+const catMapNormal = {
+  stationaer: entry.umsatz ?? 0,
+  ra: entry.ra ?? 0,
+  onlineshop: entry.onlineshop ?? 0,
+  pluscard: entry.pluscard ?? 0
 };
 
 const catMapWerbung = {
-  stationaer: old.umsatzWerbung ?? 0,
-  ra: old.raWerbung ?? 0,
-  onlineshop: old.onlineshopWerbung ?? 0,
-  pluscard: old.pluscardWerbung ?? 0
+  stationaer: entry.umsatzWerbung ?? 0,
+  ra: entry.raWerbung ?? 0,
+  onlineshop: entry.onlineshopWerbung ?? 0,
+  pluscard: entry.pluscardWerbung ?? 0
 };
 
-// Nur aktive Kategorien berücksichtigen
 let totalNormal = 0;
 let totalWerbe = 0;
 
@@ -3645,7 +3635,8 @@ for (const cat of this.activeCategories) {
   totalWerbe += catMapWerbung[cat] ?? 0;
 }
 
-const werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+entry.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+
 
 
 v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
