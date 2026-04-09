@@ -3507,6 +3507,8 @@ prepareErhebungsInfo() {
     };
   });
 }
+
+
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3538,67 +3540,53 @@ const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
     );
 
     const aggregated = {};
+rows.forEach(row => {
+  const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+  const plz = String(rawPLZ).padStart(5, "0");
 
-    rows.forEach(row => {
-      const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-      const plz = String(rawPLZ).padStart(5, "0");
-
-      if (!aggregated[plz]) {
-        aggregated[plz] = {
-          _hhValues: [],
-
-          // Gesamtumsatz
-          umsatz: 0,
-          ra: 0,
-          onlineshop: 0,
-          pluscard: 0,
-
-          // Werbeumsatz
-          umsatzWerbung: 0,
-          raWerbung: 0,
-          onlineshopWerbung: 0,
-          pluscardWerbung: 0,
-
-          // Zusatzumsatz
-          umsatzZusatz: 0,
-          raZusatz: 0,
-          onlineshopZusatz: 0,
-          pluscardZusatz: 0
-        };
-      }
-
-      const v = aggregated[plz];
-
-      // Haushalte sammeln
-      const safe = x => {
-  if (x == null) return 0;
-  if (typeof x === "string") {
-    x = x.replace(/\./g, "").replace(",", ".");
+  if (!aggregated[plz]) {
+    aggregated[plz] = {
+      _hhValues: [],
+      umsatz: 0,
+      ra: 0,
+      onlineshop: 0,
+      pluscard: 0,
+      umsatzWerbung: 0,
+      raWerbung: 0,
+      onlineshopWerbung: 0,
+      pluscardWerbung: 0,
+      umsatzZusatz: 0,
+      raZusatz: 0,
+      onlineshopZusatz: 0,
+      pluscardZusatz: 0
+    };
   }
-  const n = Number(x);
-  return Number.isFinite(n) ? n : 0;
-};
 
-      if (hh > 0) v._hhValues.push(hh);
+  const v = aggregated[plz];
 
-      // Gesamtumsatz
-      v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
-      v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
-      v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-      v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+  // Haushalte sammeln (KORREKT)
+  const hh = safe(row["value_haushalte_0"]?.raw);
+  if (hh > 0) v._hhValues.push(hh);
 
-      // Werbeumsatz
-      v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
-      v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
-      v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
-      v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
+  // Gesamtumsatz
+  v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
+  v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
+  v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
+  v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
 
-      // Zusatzumsatz
-      v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
-      v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
-      v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
-      v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
-    });
+  // Werbeumsatz
+  v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
+  v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
+  v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
+  v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
+
+  // Zusatzumsatz
+  v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
+  v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
+  v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
+  v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
+});
+
 
     // ---------------------------------------------------------
     // 2) Haushalte final bestimmen + Pro-Haushalt berechnen
