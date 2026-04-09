@@ -3091,7 +3091,7 @@ getDynamicHeatColor(value, max) {
 }
 
 getWerbeAnteilColor(ratio) {
-  if (!Number.isFinite(ratio) || ratio <= 0) return "#fff6d6";
+  if (!Number.isFinite(ratio) || ratio <= 0) return "#cfd4da";
 
   if (ratio > 0.80) return "#7a0f17";
   if (ratio > 0.60) return "#b41821";
@@ -4060,7 +4060,6 @@ computeWKKennwerte() {
       (old.onlineshopWerbung ?? 0) +
       (old.pluscardWerbung ?? 0);
 
-    const werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
 
     newFilteredPLZWerte[plz] = {
       ...newFilteredPLZWerte[plz],
@@ -4096,7 +4095,7 @@ computeWKKennwerte() {
       onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
       pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
 
-      werbeAnteil
+
     };
   });
 
