@@ -3614,7 +3614,6 @@ prepareErhebungsInfo() {
     };
   });
 }
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3622,7 +3621,11 @@ prepareUmsatzPLZWerte() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
   if (!erhID || !jahr || !nummer) return;
 
-  // Zahlen robust parsen (Tausendertrennzeichen / Komma)
+  // ---------------------------------------------------------
+  // ROBUSTES PARSING
+  // ---------------------------------------------------------
+
+  // Umsätze: Dezimalwerte, Tausenderpunkte entfernen
   const safeNumber = x => {
     const n = Number(
       String(x ?? "")
@@ -3632,7 +3635,7 @@ prepareUmsatzPLZWerte() {
     return Number.isFinite(n) ? n : 0;
   };
 
-  // Haushalte immer als ganze Zahl interpretieren
+  // Haushalte: immer ganze Zahlen, alle Nicht-Ziffern entfernen
   const safeHH = x => {
     const digits = String(x ?? "").replace(/[^\d]/g, "");
     const n = Number(digits);
@@ -3644,7 +3647,7 @@ prepareUmsatzPLZWerte() {
   const cacheKey = `${erhID}_${jahr}_${nummer}`;
 
   // ---------------------------------------------------------
-  // 1) Vollständige Erhebung aggregieren (nur einmal)
+  // 1) AGGREGATION (nur einmal)
   // ---------------------------------------------------------
   if (!this._umsatzCache[cacheKey]) {
 
@@ -3710,11 +3713,11 @@ prepareUmsatzPLZWerte() {
     });
 
     // ---------------------------------------------------------
-    // 2) Haushalte final bestimmen + Pro-Haushalt berechnen
+    // 2) HAUSHALTE + PRO-HH BERECHNUNG
     // ---------------------------------------------------------
     Object.values(aggregated).forEach(v => {
 
-      // Haushalte (Durchschnitt aus allen Zeilen)
+      // Haushalte (Durchschnitt)
       if (v._hhValues.length > 0) {
         v.haushalte = v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
       } else {
@@ -3742,34 +3745,6 @@ prepareUmsatzPLZWerte() {
       v.raZusatzProHaushalt         = perHH(v.raZusatz);
       v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
-
-      // ---------------------------------------------------------
-      // 3) Werbeanteil nach aktiven Kategorien berechnen
-      // (Basiswert, Kategorie-abhängige Variante machst du in computeFillColor)
-      // ---------------------------------------------------------
-      const catMapNormal = {
-        stationaer: v.umsatz ?? 0,
-        ra: v.ra ?? 0,
-        onlineshop: v.onlineshop ?? 0,
-        pluscard: v.pluscard ?? 0
-      };
-
-      const catMapWerbung = {
-        stationaer: v.umsatzWerbung ?? 0,
-        ra: v.raWerbung ?? 0,
-        onlineshop: v.onlineshopWerbung ?? 0,
-        pluscard: v.pluscardWerbung ?? 0
-      };
-
-      let totalNormal = 0;
-      let totalWerbe = 0;
-
-      for (const cat of this.activeCategories) {
-        totalNormal += catMapNormal[cat] ?? 0;
-        totalWerbe  += catMapWerbung[cat] ?? 0;
-      }
-
-      v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
     });
 
     this._umsatzCache[cacheKey] = aggregated;
@@ -3778,15 +3753,16 @@ prepareUmsatzPLZWerte() {
   const full = this._umsatzCache[cacheKey];
 
   // ---------------------------------------------------------
-  // 4) Subset nach NL + Radius
+  // 3) SUBSET NACH NL + RADIUS
   // ---------------------------------------------------------
   const result = {};
 
   Object.entries(full).forEach(([plz, v]) => {
 
-    // NL-Filter
+    // NL-Filter (FIXED!)
     if (this._selectedNLs?.size > 0) {
-      const rowsForPLZ = this.filteredData.filter(r => {
+      const rowsForPLZ = raw.filter(r => {
+
         const rawPLZ = r["dimension_plz_0"]?.id ?? r["dimension_plz_0"]?.raw;
         return String(rawPLZ).padStart(5, "0") === plz;
       });
