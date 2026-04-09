@@ -825,18 +825,6 @@
 
 
 
-/* ⭐ Kompakter 2×2 Grid */
-.umsatz-grid {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 6px !important;
-}
-
-.umsatz-grid .map-toggle {
-  padding: 4px 6px !important;
-  font-size: 0.82rem !important;
-  text-align: center;
-}
 
 .map-toggle {
   padding: 10px;
