@@ -2793,7 +2793,7 @@ getFilteredData() {
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
-
+    
     const match = id === erhID && y === jahr && num === nummer;
 
     if (match && plz && plz !== "@NullMember") {
@@ -3494,6 +3494,8 @@ prepareErhebungsInfo() {
     };
   });
 }
+
+
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3562,7 +3564,12 @@ prepareUmsatzPLZWerte() {
       }
 
       const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+
+      // ❌ Ungültige PLZ überspringen
+      if (!rawPLZ || rawPLZ === "@NullMember") return;
+
       const plz = String(rawPLZ).padStart(5, "0");
+      if (plz === "00000") return;
 
       if (!aggregated[plz]) {
         aggregated[plz] = {
