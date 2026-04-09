@@ -3513,7 +3513,6 @@ prepareErhebungsInfo() {
     };
   });
 }
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3536,7 +3535,6 @@ prepareUmsatzPLZWerte() {
 
     const n = Number(x);
 
-    // 🔥 LOG: Parsing-Fehler sichtbar machen
     if (!Number.isFinite(n)) {
       console.warn("❗ SAFE-PARSE-ERROR", { original, parsed: n });
     }
@@ -3544,10 +3542,28 @@ prepareUmsatzPLZWerte() {
     return Number.isFinite(n) ? n : 0;
   };
 
+  // Debug-Safe für Umsatzfelder
+  const debugSafe = (label, value, plz) => {
+    const parsed = safe(value);
+    if (!Number.isFinite(parsed)) {
+      console.warn(`❗ SAFE-PARSE-ERROR @ ${label} | PLZ ${plz}`, {
+        original: value,
+        parsed
+      });
+    }
+    return parsed;
+  };
+
+  // ============================================
+  // Cache-Key inkl. NL-Filter
+  // ============================================
   if (!this._umsatzCache) this._umsatzCache = {};
   const nlKey = [...(this._selectedNLs || new Set())].sort().join("_") || "ALL";
   const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
 
+  // ============================================
+  // 1) Aggregation (nur einmal pro CacheKey)
+  // ============================================
   if (!this._umsatzCache[cacheKey]) {
     const rows = raw.filter(row =>
       row["dimension_erhebung_0"]?.id == erhID &&
@@ -3560,7 +3576,7 @@ prepareUmsatzPLZWerte() {
     rows.forEach(row => {
       const nl = row["dimension_niederlassung_0"]?.id?.trim();
 
-      // NL-Filter
+      // NL-Filter direkt in der Aggregation
       if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
         return;
       }
@@ -3595,7 +3611,7 @@ prepareUmsatzPLZWerte() {
       // HH-LOGGING
       // ============================================
       const rawHH = row["value_haushalte_0"]?.raw;
-      const hh = safe(rawHH);
+      const hh = debugSafe("haushalte", rawHH, plz);
 
       console.log(
         `%cHH-DEBUG | PLZ ${plz}`,
@@ -3613,25 +3629,27 @@ prepareUmsatzPLZWerte() {
 
       if (hh > 0) v._hhValues.push(hh);
 
-      // Umsätze
-      v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
-      v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
-      v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-      v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+      // ============================================
+      // Umsatzfelder (mit Debug)
+      // ============================================
+      v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
+      v.ra         += debugSafe("umsatz_ra", row["value_umsatz_ra_0"]?.raw, plz);
+      v.onlineshop += debugSafe("umsatz_online", row["value_umsatz_online_0"]?.raw, plz);
+      v.pluscard   += debugSafe("umsatz_pluscard", row["value_umsatz_grosskunden_0"]?.raw, plz);
 
-      v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
-      v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
-      v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
-      v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
+      v.umsatzWerbung     += debugSafe("werbung_stationaer", row["value_umsatz_stationaer_werbung_0"]?.raw, plz);
+      v.raWerbung         += debugSafe("werbung_ra", row["value_umsatz_ra_werbung_0"]?.raw, plz);
+      v.onlineshopWerbung += debugSafe("werbung_online", row["value_umsatz_online_werbung_0"]?.raw, plz);
+      v.pluscardWerbung   += debugSafe("werbung_pluscard", row["value_umsatz_grosskunden_werbung_0"]?.raw, plz);
 
-      v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
-      v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
-      v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
-      v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
+      v.umsatzZusatz     += debugSafe("zusatz_stationaer", row["value_umsatz_stationaer_zusatz_0"]?.raw, plz);
+      v.raZusatz         += debugSafe("zusatz_ra", row["value_umsatz_ra_zusatz_0"]?.raw, plz);
+      v.onlineshopZusatz += debugSafe("zusatz_online", row["value_umsatz_online_zusatz_0"]?.raw, plz);
+      v.pluscardZusatz   += debugSafe("zusatz_pluscard", row["value_umsatz_grosskunden_zusatz_0"]?.raw, plz);
     });
 
     // ============================================
-    // Durchschnittsbildung + Logging
+    // 2) Haushalte + pro HH + Werbeanteil
     // ============================================
     Object.entries(aggregated).forEach(([plz, v]) => {
       if (v._hhValues.length > 0) {
@@ -3699,6 +3717,9 @@ prepareUmsatzPLZWerte() {
     this._umsatzCache[cacheKey] = aggregated;
   }
 
+  // ============================================
+  // 3) Radiusfilter
+  // ============================================
   const full = this._umsatzCache[cacheKey];
   const result = {};
 
@@ -3717,6 +3738,7 @@ prepareUmsatzPLZWerte() {
     { plzCount: Object.keys(result).length }
   );
 }
+
 
 
 
