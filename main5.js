@@ -2997,25 +2997,29 @@ applyStyleToLayer(layer) {
   // -----------------------------
   layer.off("click");
 
-layer.on("click", () => {
-  const values = this.filteredPLZWerte?.[plz];
+  layer.on("click", () => {
+    const values = this.filteredPLZWerte?.[plz];
 
-  if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
-    this.activePopupType = "umsatz";
+    if (this.currentMapMode === "umsatz-multi") {
+      // WK-Popup schließen
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      popupWK?.classList.remove("show");
+      popupWK?.classList.add("hidden");
 
-    this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+      if (values) {
+        this.showUmsatzPopup(plz, values);
+      } else {
+        this.showEmptyUmsatzPopup(plz);
+      }
+    } else {
+      // Umsatz-Popup schließen
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+      popupU?.classList.remove("show");
+      popupU?.classList.add("hidden");
 
-    if (values) this.showUmsatzPopup(plz, values);
-    else this.showEmptyUmsatzPopup(plz);
-
-  } else {
-    this.activePopupType = "wk";
-
-    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-
-    this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
-  }
-});
+      this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+    }
+  });
 
 
   // -----------------------------
