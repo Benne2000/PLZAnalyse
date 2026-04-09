@@ -1683,7 +1683,6 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
 initializeMapBase() {
 
   // Helper
@@ -1698,6 +1697,7 @@ initializeMapBase() {
   // Basiszustände
   this.currentMapMode = "wk";              // wk | umsatz-multi | werbeanteil
   this.activePopupType = "wk";             // wk | umsatz
+  this.umsatzMode = "abs";                 // abs | hh (für alte Logik)
   this.umsatzDarstellung = "abs";          // abs | hh | werbeanteil
   this.umsatzMainMode = "gesamt";          // gesamt | werbung
   this.useWerbeUmsatz = true;
@@ -1706,6 +1706,7 @@ initializeMapBase() {
   this.activeCategories = new Set(["stationaer"]);
   this.showBestreuung = false;
   this.useRadiusFilter = true;
+  this.showCritical = true;                // Doppelbestreuung initial aktiv
 
   // LayerGroups
   this.filteredGroup = L.layerGroup().addTo(this.map);
@@ -1750,6 +1751,7 @@ initializeMapBase() {
 
   // Doppelbestreuung
   const chkDoppel = $("chk-doppelbestreuung");
+  if (chkDoppel) chkDoppel.checked = true; // Sync mit showCritical
 
   // Radiusfilter
   const chkRadius = $("chk-radiusfilter");
@@ -1759,9 +1761,12 @@ initializeMapBase() {
   tileBtn?.addEventListener("click", () => this.toggleMapTiles());
 
   // ---------------------------------------------------------
-  // INITIAL: Werbeanteil deaktivieren
+  // INITIAL: Switch-Zustände
   // ---------------------------------------------------------
+  if (typeSwitch) typeSwitch.classList.add("active-left"); // Umsatz aktiv
+  if (btnAbs) btnAbs.classList.add("active");
   if (btnWA) btnWA.classList.add("disabled");
+  if (werbeRow) werbeRow.style.display = "none";
 
   // ---------------------------------------------------------
   // WK-MODUS
@@ -1778,14 +1783,19 @@ initializeMapBase() {
     umsatzOptionsRow.style.display = "none";
     umsatzPanel.classList.add("hidden");
 
-    panel.classList.remove("expanded");
+    panel.classList.remove("panel-large", "panel-medium");
 
     // Darstellung zurücksetzen
     this.umsatzDarstellung = "abs";
+    this.umsatzMode = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
 
-    // Werbeanteil deaktivieren
+    // Umsatztyp zurück auf Umsatz
+    this.umsatzMainMode = "gesamt";
+    typeSwitch?.classList.add("active-left");
+    typeSwitch?.classList.remove("active-right");
+    werbeRow.style.display = "none";
     btnWA.classList.add("disabled");
 
     $("side-popup")?.classList.remove("show");
@@ -1814,15 +1824,21 @@ initializeMapBase() {
     umsatzPanel.classList.remove("hidden");
 
     panel.classList.remove("panel-medium");
-panel.classList.add("panel-large");
-
+    panel.classList.add("panel-large");
 
     // Darstellung auf ABS setzen
     this.umsatzDarstellung = "abs";
+    this.umsatzMode = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
 
-    // Werbeanteil deaktivieren (Umsatztyp = gesamt)
+    // Umsatztyp auf "Umsatz" setzen
+    this.umsatzMainMode = "gesamt";
+    typeSwitch?.classList.add("active-left");
+    typeSwitch?.classList.remove("active-right");
+    werbeRow.style.display = "none";
+
+    // Werbeanteil deaktivieren
     btnWA.classList.add("disabled");
 
     setTimeout(() => {
@@ -1865,8 +1881,11 @@ panel.classList.add("panel-large");
 
       // Darstellung zurück auf Absolut
       this.umsatzDarstellung = "abs";
+      this.umsatzMode = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active");
+
+      chkMit.disabled = false;
     }
 
     this.updateGeoLayer();
@@ -1902,6 +1921,7 @@ panel.classList.add("panel-large");
   // ---------------------------------------------------------
   btnAbs?.addEventListener("click", () => {
     this.umsatzDarstellung = "abs";
+    this.umsatzMode = "abs";
     this.currentMapMode = "umsatz-multi";
     this.activePopupType = "umsatz";
 
@@ -1913,6 +1933,7 @@ panel.classList.add("panel-large");
 
   btnHH?.addEventListener("click", () => {
     this.umsatzDarstellung = "hh";
+    this.umsatzMode = "hh";
     this.currentMapMode = "umsatz-multi";
     this.activePopupType = "umsatz";
 
@@ -1924,7 +1945,7 @@ panel.classList.add("panel-large");
 
   btnWA?.addEventListener("click", () => {
 
-    if (this.umsatzMainMode !== "werbung") return;
+    if (this.umsatzMainMode !== "werbung" || btnWA.classList.contains("disabled")) return;
 
     this.umsatzDarstellung = "werbeanteil";
     this.currentMapMode = "werbeanteil";
@@ -2889,19 +2910,37 @@ computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
   if (!v) return "#cfd4da";
 
-  // WK-Modus
+  // -----------------------------
+  // WK-MODUS
+  // -----------------------------
   if (this.currentMapMode === "wk") {
     const value = v.hz ? v.wk : v.wkPot;
     return this.getColor(value, v.hz);
   }
 
-  // Umsatzmodus
+  // -----------------------------
+  // UMSATZ-MODUS (ABS / HH)
+  // -----------------------------
   if (this.currentMapMode === "umsatz-multi") {
-    const sum = this.getUmsatzSumForPLZ(v);
+
+    let sum = 0;
+
+    // ABSOLUT
+    if (this.umsatzDarstellung === "abs") {
+      sum = this.getUmsatzSumForPLZ(v);
+    }
+
+    // PRO HAUSHALT
+    else if (this.umsatzDarstellung === "hh") {
+      sum = this.getUmsatzSumForPLZ_HH(v);
+    }
+
     return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
   }
 
-  // ⭐ Werbeanteil-Modus
+  // -----------------------------
+  // WERBEANTEIL-MODUS
+  // -----------------------------
   if (this.currentMapMode === "werbeanteil") {
     const ratio = v.werbeAnteil || 0;
     return this.getWerbeAnteilColor(ratio);
@@ -2910,13 +2949,16 @@ computeFillColor(plz) {
   return "#cfd4da";
 }
 
+
 computeMaxValue() {
   const plzWerte = this.filteredPLZWerte || {};
   const safe = x => Number.isFinite(x) ? x : 0;
 
   let maxValue = 0;
 
+  // -----------------------------
   // WK
+  // -----------------------------
   if (this.currentMapMode === "wk") {
     Object.values(plzWerte).forEach(v => {
       const val = safe(v.hz ? v.wk : v.wkPot);
@@ -2924,15 +2966,30 @@ computeMaxValue() {
     });
   }
 
-  // Umsatz
+  // -----------------------------
+  // UMSATZ ABS / HH
+  // -----------------------------
   if (this.currentMapMode === "umsatz-multi") {
+
     Object.values(plzWerte).forEach(v => {
-      const sum = this.getUmsatzSumForPLZ(v);
+
+      let sum = 0;
+
+      if (this.umsatzDarstellung === "abs") {
+        sum = this.getUmsatzSumForPLZ(v);
+      }
+
+      if (this.umsatzDarstellung === "hh") {
+        sum = this.getUmsatzSumForPLZ_HH(v);
+      }
+
       if (sum > maxValue) maxValue = sum;
     });
   }
 
-  // ⭐ Werbeanteil (immer 0–1)
+  // -----------------------------
+  // WERBEANTEIL (immer 0–1)
+  // -----------------------------
   if (this.currentMapMode === "werbeanteil") {
     this._maxValueCache = 1;
     return 1;
@@ -2941,6 +2998,24 @@ computeMaxValue() {
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
+
+getUmsatzSumForPLZ_HH(v) {
+  let sum = 0;
+
+  for (const cat of this.activeCategories) {
+    const key = {
+      stationaer: "umsatzProHaushalt",
+      ra: "raProHaushalt",
+      onlineshop: "onlineshopProHaushalt",
+      pluscard: "pluscardProHaushalt"
+    }[cat];
+
+    if (key) sum += v[key] || 0;
+  }
+
+  return sum;
+}
+
 
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
