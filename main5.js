@@ -1895,49 +1895,67 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
   // ---------------------------------------------------------
   // 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
   // ---------------------------------------------------------
-  btnAbs?.addEventListener("click", () => {
-    this.umsatzDarstellung = "abs";
-    this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
+// ---------------------------------------------------------
+// 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
+// ---------------------------------------------------------
+btnAbs?.addEventListener("click", () => {
+  this.umsatzDarstellung = "abs";
+  this.currentMapMode = "umsatz-multi";
+  this.activePopupType = "umsatz";
 
-    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-    btnAbs.classList.add("active");
+  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+  btnAbs.classList.add("active");
 
-    this.updateGeoLayer();
-  });
+  console.log("➡️ Switch: ABS | umsatzDarstellung =", this.umsatzDarstellung);
 
-  btnHH?.addEventListener("click", () => {
-    this.umsatzDarstellung = "hh";
-    this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
+  // 🔁 Werte neu berechnen
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.updateGeoLayer();
+});
 
-    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-    btnHH.classList.add("active");
+btnHH?.addEventListener("click", () => {
+  this.umsatzDarstellung = "hh";
+  this.currentMapMode = "umsatz-multi";
+  this.activePopupType = "umsatz";
 
-    this.updateGeoLayer();
-  });
+  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+  btnHH.classList.add("active");
 
-  btnWA?.addEventListener("click", () => {
+  console.log("➡️ Switch: HH | umsatzDarstellung =", this.umsatzDarstellung);
 
-    if (this.umsatzMainMode !== "werbung") return;
+  // 🔁 Werte neu berechnen (pro HH)
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.updateGeoLayer();
+});
 
-    this.umsatzDarstellung = "werbeanteil";
-    this.currentMapMode = "werbeanteil";
-    this.activePopupType = "umsatz";
+btnWA?.addEventListener("click", () => {
+  if (this.umsatzMainMode !== "werbung") return;
 
-    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-    btnWA.classList.add("active");
+  this.umsatzDarstellung = "werbeanteil";
+  this.currentMapMode = "werbeanteil";
+  this.activePopupType = "umsatz";
 
-    // Automatische Checkbox-Logik
-    chkWerbe.checked = true;
-    this.useWerbeUmsatz = true;
+  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+  btnWA.classList.add("active");
 
-    chkMit.checked = false;
-    chkMit.disabled = true;
-    this.useZusatzUmsatz = false;
+  // Automatische Checkbox-Logik
+  chkWerbe.checked = true;
+  this.useWerbeUmsatz = true;
 
-    this.updateGeoLayer();
-  });
+  chkMit.checked = false;
+  chkMit.disabled = true;
+  this.useZusatzUmsatz = false;
+
+  console.log("➡️ Switch: WERBEANTEIL | umsatzDarstellung =", this.umsatzDarstellung);
+
+  // 🔁 Werte neu berechnen (Werbeanteil basiert auf Umsatzaggregation)
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.updateGeoLayer();
+});
+
 
   // ---------------------------------------------------------
   // Kategorien
@@ -2820,7 +2838,8 @@ updateGeoLayer() {
   if (!this._geoLayer) return;
 
   console.group("🧪 updateGeoLayer()");
-  console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzMode);
+  console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzDarstellung);
+
 
   // 1️⃣ Max-Wert global berechnen (für Umsatz-Heatmap)
   this.computeMaxValue();
