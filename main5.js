@@ -209,12 +209,41 @@
   filter: grayscale(100%);
 }
 
-/* Popup Grundlayout */
+/* Umsatz-Popup wie WK-Popup */
 #side-popup-umsatz {
-  padding: 16px;
+  border-left: 2px solid #b41821;
+  border-top: 2px solid #b41821;
+  background: white;
+  color: #b41821;
+  padding-top: 32px; /* Platz für Header */
+  position: relative;
+}
+
+/* Header-Balken */
+#side-popup-umsatz .popup-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #b41821;
+  color: white;
+  padding: 8px 12px;
+  font-size: 1rem;
+  font-weight: 700;
   display: flex;
-  flex-direction: column;
-  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Close Button */
+#side-popup-umsatz .popup-header .close-btn {
+  background: white;
+  color: #b41821;
+  border: none;
+  padding: 2px 8px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 /* Header */
@@ -2406,6 +2435,7 @@ panel.classList.add("panel-medium");
     sidePopup.classList.add('hidden');
   };
 }
+
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -2422,65 +2452,29 @@ showUmsatzPopup(plz, values) {
   const isWerbungMode = this.umsatzMainMode === "werbung";
   const useWerbe = this.useWerbeUmsatz === true;
   const useZusatz = this.useZusatzUmsatz === true;
-  const modeHH = this.umsatzDarstellung === "hh";
 
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
   const pickPair = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
-    if (!isWerbungMode) {
-      return { abs: base, hh: baseHH };
-    }
+    if (!isWerbungMode) return { abs: base, hh: baseHH };
 
-    let abs = 0;
-    let hh = 0;
-
-    if (useWerbe) {
-      abs += werb;
-      hh += werbHH;
-    }
-    if (useZusatz) {
-      abs += zusatz;
-      hh += zusatzHH;
-    }
-
+    let abs = 0, hh = 0;
+    if (useWerbe) { abs += werb; hh += werbHH; }
+    if (useZusatz) { abs += zusatz; hh += zusatzHH; }
     return { abs, hh };
   };
 
-  const st = pickPair(
-    values.umsatz,
-    values.umsatzWerbung,
-    values.umsatzZusatz,
-    values.umsatzProHaushalt,
-    values.umsatzWerbungProHaushalt,
-    values.umsatzZusatzProHaushalt
-  );
+  const st = pickPair(values.umsatz, values.umsatzWerbung, values.umsatzZusatz,
+                      values.umsatzProHaushalt, values.umsatzWerbungProHaushalt, values.umsatzZusatzProHaushalt);
 
-  const pc = pickPair(
-    values.pluscard,
-    values.pluscardWerbung,
-    values.pluscardZusatz,
-    values.pluscardProHaushalt,
-    values.pluscardWerbungProHaushalt,
-    values.pluscardZusatzProHaushalt
-  );
+  const pc = pickPair(values.pluscard, values.pluscardWerbung, values.pluscardZusatz,
+                      values.pluscardProHaushalt, values.pluscardWerbungProHaushalt, values.pluscardZusatzProHaushalt);
 
-  const ra = pickPair(
-    values.ra,
-    values.raWerbung,
-    values.raZusatz,
-    values.raProHaushalt,
-    values.raWerbungProHaushalt,
-    values.raZusatzProHaushalt
-  );
+  const ra = pickPair(values.ra, values.raWerbung, values.raZusatz,
+                      values.raProHaushalt, values.raWerbungProHaushalt, values.raZusatzProHaushalt);
 
-  const os = pickPair(
-    values.onlineshop,
-    values.onlineshopWerbung,
-    values.onlineshopZusatz,
-    values.onlineshopProHaushalt,
-    values.onlineshopWerbungProHaushalt,
-    values.onlineshopZusatzProHaushalt
-  );
+  const os = pickPair(values.onlineshop, values.onlineshopWerbung, values.onlineshopZusatz,
+                      values.onlineshopProHaushalt, values.onlineshopWerbungProHaushalt, values.onlineshopZusatzProHaushalt);
 
   const active = {
     stationaer: this.activeCategories.has("stationaer"),
@@ -2508,9 +2502,11 @@ showUmsatzPopup(plz, values) {
   const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
 
   popup.innerHTML = `
-    <button class="close-btn">×</button>
+    <div class="popup-header">
+      <span>${note}</span>
+      <button class="close-btn">×</button>
+    </div>
 
-    <div class="umsatz-header">${note}</div>
     <div class="umsatz-subheader">
       Gesamtumsatz: ${fmtAbs(totalAbs)} €<br>
       pro Haushalt: ${fmtHH(totalHH)} €
@@ -2519,25 +2515,17 @@ showUmsatzPopup(plz, values) {
     <div class="section-title">Umsatz nach Kategorien</div>
 
     <div class="umsatz-grid">
-      <div class="label">Stationär</div>
-      <div class="value">${fmtAbs(st.abs)} €</div>
-      <div class="label">Stationär / HH</div>
-      <div class="value">${fmtHH(st.hh)} €</div>
+      <div class="label">Stationär</div>       <div class="value">${fmtAbs(st.abs)} €</div>
+      <div class="label">Stationär / HH</div>  <div class="value">${fmtHH(st.hh)} €</div>
 
-      <div class="label">Pluscard</div>
-      <div class="value">${fmtAbs(pc.abs)} €</div>
-      <div class="label">Pluscard / HH</div>
-      <div class="value">${fmtHH(pc.hh)} €</div>
+      <div class="label">Pluscard</div>        <div class="value">${fmtAbs(pc.abs)} €</div>
+      <div class="label">Pluscard / HH</div>   <div class="value">${fmtHH(pc.hh)} €</div>
 
-      <div class="label">R&A</div>
-      <div class="value">${fmtAbs(ra.abs)} €</div>
-      <div class="label">R&A / HH</div>
-      <div class="value">${fmtHH(ra.hh)} €</div>
+      <div class="label">R&A</div>             <div class="value">${fmtAbs(ra.abs)} €</div>
+      <div class="label">R&A / HH</div>        <div class="value">${fmtHH(ra.hh)} €</div>
 
-      <div class="label">KUBE OS</div>
-      <div class="value">${fmtAbs(os.abs)} €</div>
-      <div class="label">KUBE OS / HH</div>
-      <div class="value">${fmtHH(os.hh)} €</div>
+      <div class="label">KUBE OS</div>         <div class="value">${fmtAbs(os.abs)} €</div>
+      <div class="label">KUBE OS / HH</div>    <div class="value">${fmtHH(os.hh)} €</div>
     </div>
 
     <div class="section-title">Umsatzanteile</div>
@@ -2566,6 +2554,7 @@ showUmsatzPopup(plz, values) {
     popup.classList.add("hidden");
   };
 }
+
 
 getUmsatzSumForPLZ(v) {
   const safe = x => Number.isFinite(x) ? x : 0;
