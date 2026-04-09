@@ -2363,7 +2363,8 @@ showUmsatzPopup(plz, values) {
   const isWerbungMode = this.umsatzMainMode === "werbung";
   const useWerbe = this.useWerbeUmsatz !== false;
   const useZusatz = this.useZusatzUmsatz === true;
-  const modeHH = this.umsatzMode === "hh";
+const modeHH = this.umsatzDarstellung === "hh";
+
 
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
@@ -2594,7 +2595,8 @@ getUmsatzSumForPLZ(v) {
   const isWerbungMode = this.umsatzMainMode === "werbung";
   const useWerbe = this.useWerbeUmsatz !== false;
   const useZusatz = this.useZusatzUmsatz === true;
-  const useHH = this.umsatzMode === "hh";
+  const useHH = this.umsatzDarstellung === "hh";
+
 
   const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
     if (!isWerbungMode) {
