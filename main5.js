@@ -1109,108 +1109,92 @@ class GeoMapWidget extends HTMLElement {
     return struktur;
   }
 
-
-      async loadGeoJson() {
+async loadGeoJson() {
   if (this._geoLayer) return;
 
   try {
-    const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
+    const response = await fetch(
+      "https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson"
+    );
     this._geoData = await response.json();
+
+    // Notes extrahieren
     this.geoNotes = {};
-(this._geoData.features || []).forEach(feature => {
-  const plz = feature.properties?.plz?.trim();
-  const note = feature.properties?.note?.trim();
-  if (plz && note) {
-    this.geoNotes[plz] = note;
-  }
-});
-
-    const filteredData = this.getFilteredData(); // baut filteredKennwerte
-    const plzWerte = this.extractPLZWerte(filteredData);
-
-    this._geoLayer = L.geoJSON(this._geoData, {
-style: feature => {
-  const plz = feature.properties?.plz?.trim();
-  const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
-  const isHZ = this.hzFlags?.[plz] ?? false;
-
-  const value = isHZ ? values.wk : values.wkPot;
-
-  return {
-    fillColor: this.getColor(value, isHZ),
-    weight: 1,
-    opacity: 1,
-    color: "white",
-    fillOpacity: 0.5
-  };
-}
-,
-onEachFeature: (feature, layer) => {
-  layer.on("click", (e) => {
-
-    const plz = String(e.target.feature.properties.plz).padStart(5, "0");
-
-    this.highlightMapArea(plz);
-    this.highlightTableRowByPLZ(plz);
-
-    // Popups referenzieren (KORREKT!)
-    const wkPopup = this._shadowRoot.getElementById("side-popup");
-    const umsatzPopup = this._shadowRoot.getElementById("side-popup-umsatz");
-
-    // Immer beide schließen – aber SAFE!
-    if (wkPopup) {
-      wkPopup.classList.remove("show");
-      wkPopup.classList.add("hidden");
-    }
-
-    if (umsatzPopup) {
-      umsatzPopup.classList.remove("show");
-      umsatzPopup.classList.add("hidden");
-    }
-
-    // Umsatz-Modus
-    if (this.currentMapMode === "umsatz-multi") {
-      const values = this.filteredPLZWerte?.[plz];
-
-      if (!values) {
-        this.showEmptyUmsatzPopup(plz);
-        return;
-      }
-
-      this.showUmsatzPopup(plz, values);
-      return;
-    }
-
-    // WK-Modus
-    const kennwerte = this.filteredKennwerte?.[plz];
-    this.showPopup(e.target.feature, kennwerte);
-  });
-}
-
-
-
-
+    (this._geoData.features || []).forEach(feature => {
+      const plz = feature.properties?.plz?.trim();
+      const note = feature.properties?.note?.trim();
+      if (plz && note) this.geoNotes[plz] = note;
     });
 
-this._geoLayer.addTo(this.map);
+    // Erste Kennwerte berechnen
+    const filteredData = this.getFilteredData();
+    const plzWerte = this.extractPLZWerte(filteredData);
 
-// 🔥 Radius-Filter direkt nach dem Laden anwenden
-const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-this.applyRadiusFilter(radius);
+    // GeoJSON Layer
+    this._geoLayer = L.geoJSON(this._geoData, {
+      style: feature => {
+        const plz = feature.properties?.plz?.trim();
+        const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+        const isHZ = this.hzFlags?.[plz] ?? false;
 
-// 📍 Automatisch auf die volle Ausdehnung zoomen
-const bounds = this._geoLayer.getBounds();
-console.log("Geojson einrahmen");
-this.map.fitBounds(bounds, {
-  padding: [20, 20],
-  maxZoom: 14
-});
+        const value = isHZ ? values.wk : values.wkPot;
 
+        return {
+          fillColor: this.getColor(value, isHZ),
+          weight: 1,
+          opacity: 1,
+          color: "white",
+          fillOpacity: 0.5
+        };
+      },
 
-  } catch (error) {
-    console.error("❌ Fehler beim Laden der GeoJSON:", error);
+      onEachFeature: (feature, layer) => {
+        layer.on("click", e => {
+          const plz = String(e.target.feature.properties.plz).padStart(5, "0");
+
+          this.highlightMapArea(plz);
+          this.highlightTableRowByPLZ(plz);
+
+          const popupWK = this._shadowRoot.getElementById("side-popup");
+          const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+
+          popupWK?.classList.remove("show");
+          popupWK?.classList.add("hidden");
+
+          popupU?.classList.remove("show");
+          popupU?.classList.add("hidden");
+
+          // -----------------------------
+          // Umsatz-Modi (inkl. Werbeanteil)
+          // -----------------------------
+          if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
+            this.activePopupType = "umsatz";
+
+            const values = this.filteredPLZWerte?.[plz];
+            if (!values) {
+              this.showEmptyUmsatzPopup(plz);
+              return;
+            }
+
+            this.showUmsatzPopup(plz, values);
+            return;
+          }
+
+          // -----------------------------
+          // WK-Modus
+          // -----------------------------
+          this.activePopupType = "wk";
+          const kennwerte = this.filteredKennwerte?.[plz];
+          this.showPopup(e.target.feature, kennwerte);
+        });
+      }
+    }).addTo(this.map);
+
+  } catch (err) {
+    console.error("Fehler beim Laden des GeoJSON:", err);
   }
 }
+
 
 applyMapMode(mode) {
   this.currentMapMode = mode;
@@ -1695,7 +1679,6 @@ zoomToFilteredPLZ() {
   }
 }
 
-
 initializeMapBase() {
 
   // Helper
@@ -1708,9 +1691,10 @@ initializeMapBase() {
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
   // Basiszustände
-  this.currentMapMode = "wk";
-  this.umsatzDarstellung = "abs";       // abs | hh | werbeanteil
-  this.umsatzMainMode = "gesamt";       // gesamt | werbung
+  this.currentMapMode = "wk";              // wk | umsatz-multi | werbeanteil
+  this.activePopupType = "wk";             // wk | umsatz
+  this.umsatzDarstellung = "abs";          // abs | hh | werbeanteil
+  this.umsatzMainMode = "gesamt";          // gesamt | werbung
   this.useWerbeUmsatz = true;
   this.useZusatzUmsatz = false;
 
@@ -1767,7 +1751,7 @@ initializeMapBase() {
 
   // Kartenstil
   const tileBtn = $("map-tile-toggle-btn");
-  if (tileBtn) tileBtn.addEventListener("click", () => this.toggleMapTiles());
+  tileBtn?.addEventListener("click", () => this.toggleMapTiles());
 
   // ---------------------------------------------------------
   // INITIAL: Werbeanteil deaktivieren
@@ -1783,6 +1767,7 @@ initializeMapBase() {
     btnUmsatz.classList.remove("active");
 
     this.currentMapMode = "wk";
+    this.activePopupType = "wk";
 
     wkExtra.style.display = "block";
     umsatzOptionsRow.style.display = "none";
@@ -1815,6 +1800,7 @@ initializeMapBase() {
     btnWK.classList.remove("active");
 
     this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
     this.prepareUmsatzPLZWerte();
 
@@ -1823,6 +1809,11 @@ initializeMapBase() {
     umsatzPanel.classList.remove("hidden");
 
     panel.classList.add("expanded");
+
+    // Darstellung auf ABS setzen
+    this.umsatzDarstellung = "abs";
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnAbs.classList.add("active");
 
     // Werbeanteil deaktivieren (Umsatztyp = gesamt)
     btnWA.classList.add("disabled");
@@ -1848,7 +1839,6 @@ initializeMapBase() {
     typeSwitch.classList.toggle("active-right", isWerbung);
     typeSwitch.classList.toggle("active-left", !isWerbung);
 
-    // Werbeoptionen sichtbar?
     werbeRow.style.display = isWerbung ? "flex" : "none";
 
     if (isWerbung) {
@@ -1906,6 +1896,7 @@ initializeMapBase() {
   btnAbs?.addEventListener("click", () => {
     this.umsatzDarstellung = "abs";
     this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
@@ -1916,6 +1907,7 @@ initializeMapBase() {
   btnHH?.addEventListener("click", () => {
     this.umsatzDarstellung = "hh";
     this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnHH.classList.add("active");
@@ -1929,6 +1921,7 @@ initializeMapBase() {
 
     this.umsatzDarstellung = "werbeanteil";
     this.currentMapMode = "werbeanteil";
+    this.activePopupType = "umsatz";
 
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnWA.classList.add("active");
@@ -1961,6 +1954,8 @@ initializeMapBase() {
       }
 
       this.currentMapMode = "umsatz-multi";
+      this.activePopupType = "umsatz";
+
       this.updateGeoLayer();
     });
   });
@@ -1999,6 +1994,7 @@ initializeMapBase() {
     this.applyRadiusFilter(radius);
   });
 }
+
 
 
 
@@ -2929,7 +2925,6 @@ computeMaxValue() {
   return this._maxValueCache;
 }
 
-
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
@@ -2940,7 +2935,7 @@ applyStyleToLayer(layer) {
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
   let inRadius = true;
 
-  if (this.currentMapMode === "umsatz-multi") {
+  if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
     inRadius = !this.useRadiusFilter || !hasRadius || this.plzImRadius.has(plz);
   } else {
     inRadius = !hasRadius || this.plzImRadius.has(plz);
@@ -2990,27 +2985,37 @@ applyStyleToLayer(layer) {
   layer.on("click", () => {
     const values = this.filteredPLZWerte?.[plz];
 
-    if (this.currentMapMode === "umsatz-multi") {
-      // WK-Popup schließen
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      popupWK?.classList.remove("show");
-      popupWK?.classList.add("hidden");
+    // Immer beide Popups schließen
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+
+    popupWK?.classList.remove("show");
+    popupWK?.classList.add("hidden");
+
+    popupU?.classList.remove("show");
+    popupU?.classList.add("hidden");
+
+    // -----------------------------
+    // Umsatz-Modi (inkl. Werbeanteil)
+    // -----------------------------
+    if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
+      this.activePopupType = "umsatz";
 
       if (values) {
         this.showUmsatzPopup(plz, values);
       } else {
         this.showEmptyUmsatzPopup(plz);
       }
-    } else {
-      // Umsatz-Popup schließen
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-      popupU?.classList.remove("show");
-      popupU?.classList.add("hidden");
-
-      this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+      return;
     }
-  });
 
+    // -----------------------------
+    // WK-Modus
+    // -----------------------------
+    this.activePopupType = "wk";
+    const kennwerte = this.filteredKennwerte?.[plz] || {};
+    this.showPopup(layer.feature, kennwerte);
+  });
 
   // -----------------------------
   // 5) Critical-Marker (nur WK-Modus)
@@ -3056,6 +3061,7 @@ applyStyleToLayer(layer) {
     }).addTo(this.map);
   }
 }
+
 
 
 
@@ -3613,18 +3619,19 @@ prepareUmsatzPLZWerte() {
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
 // --- Werbeanteil korrekt nach aktiven Kategorien berechnen ---
+// --- Werbeanteil korrekt nach aktiven Kategorien berechnen ---
 const catMapNormal = {
-  stationaer: old.umsatz ?? 0,
-  ra: old.ra ?? 0,
-  onlineshop: old.onlineshop ?? 0,
-  pluscard: old.pluscard ?? 0
+  stationaer: entry.umsatz ?? 0,
+  ra: entry.ra ?? 0,
+  onlineshop: entry.onlineshop ?? 0,
+  pluscard: entry.pluscard ?? 0
 };
 
 const catMapWerbung = {
-  stationaer: old.umsatzWerbung ?? 0,
-  ra: old.raWerbung ?? 0,
-  onlineshop: old.onlineshopWerbung ?? 0,
-  pluscard: old.pluscardWerbung ?? 0
+  stationaer: entry.umsatzWerbung ?? 0,
+  ra: entry.raWerbung ?? 0,
+  onlineshop: entry.onlineshopWerbung ?? 0,
+  pluscard: entry.pluscardWerbung ?? 0
 };
 
 let totalNormal = 0;
@@ -3635,7 +3642,8 @@ for (const cat of this.activeCategories) {
   totalWerbe += catMapWerbung[cat] ?? 0;
 }
 
-old.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+entry.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+
 
 
 
