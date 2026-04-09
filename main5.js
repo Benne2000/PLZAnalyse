@@ -1037,8 +1037,6 @@ class GeoMapWidget extends HTMLElement {
     this._tilesVisible = false;
     this._sortState = { column: null, direction: "asc" };
 
-    // Umsatz-Modi
-    this.umsatzMode = "abs";          // "abs" oder "hh"
     this.currentMapMode = "wk";       // "wk" oder "umsatz-multi"
 
     // Kategorien (Stationär, Pluscard, R&A, Online)
