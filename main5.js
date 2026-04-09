@@ -3614,17 +3614,17 @@ prepareUmsatzPLZWerte() {
 
 // --- Werbeanteil korrekt nach aktiven Kategorien berechnen ---
 const catMapNormal = {
-  stationaer: entry.umsatz ?? 0,
-  ra: entry.ra ?? 0,
-  onlineshop: entry.onlineshop ?? 0,
-  pluscard: entry.pluscard ?? 0
+  stationaer: old.umsatz ?? 0,
+  ra: old.ra ?? 0,
+  onlineshop: old.onlineshop ?? 0,
+  pluscard: old.pluscard ?? 0
 };
 
 const catMapWerbung = {
-  stationaer: entry.umsatzWerbung ?? 0,
-  ra: entry.raWerbung ?? 0,
-  onlineshop: entry.onlineshopWerbung ?? 0,
-  pluscard: entry.pluscardWerbung ?? 0
+  stationaer: old.umsatzWerbung ?? 0,
+  ra: old.raWerbung ?? 0,
+  onlineshop: old.onlineshopWerbung ?? 0,
+  pluscard: old.pluscardWerbung ?? 0
 };
 
 let totalNormal = 0;
@@ -3635,7 +3635,7 @@ for (const cat of this.activeCategories) {
   totalWerbe += catMapWerbung[cat] ?? 0;
 }
 
-entry.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+old.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
 
 
 
