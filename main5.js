@@ -208,26 +208,27 @@
   opacity: 0.35;
   filter: grayscale(100%);
 }
-
-/* Umsatz-Popup wie WK-Popup */
+/* Umsatz-Popup bündig mit Panel */
 #side-popup-umsatz {
+  width: 25% !important;     /* exakt wie Panel */
+  right: 0;
+  padding: 0;                /* wichtig! sonst breiter als Panel */
+  box-sizing: border-box;
   border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
   background: white;
   color: #b41821;
-  padding-top: 32px; /* Platz für Header */
-  position: relative;
+  position: absolute;
+  top: 0;
+  height: 70%;
+  overflow-y: auto;
 }
 
 /* Header-Balken */
 #side-popup-umsatz .popup-header {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
   background: #b41821;
   color: white;
-  padding: 8px 12px;
+  padding: 10px 12px;
   font-size: 1rem;
   font-weight: 700;
   display: flex;
@@ -246,29 +247,25 @@
   cursor: pointer;
 }
 
-/* Header */
-.umsatz-header {
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-
+/* Abstand & Fett für Summen */
 .umsatz-subheader {
+  margin-top: 16px;
+  margin-bottom: 16px;
   font-size: 0.95rem;
-  color: #555;
-  margin-bottom: 8px;
+  line-height: 1.4;
 }
 
-/* Tabellen-Layout */
+.umsatz-subheader .strong {
+  font-weight: 700;
+  color: #000;
+}
+
+/* 2-Spalten-Grid erzwingen */
 .umsatz-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px 24px;
-}
-
-.umsatz-grid .label {
-  font-weight: 500;
-  color: #333;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  gap: 10px 20px !important;
+  padding: 0 12px;
 }
 
 .umsatz-grid .value {
@@ -2334,6 +2331,8 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
+
+
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
@@ -2435,6 +2434,7 @@ panel.classList.add("panel-medium");
     sidePopup.classList.add('hidden');
   };
 }
+
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -2507,6 +2507,15 @@ showUmsatzPopup(plz, values) {
     return "Mitgekauft";
   })();
 
+  const totalWerbeAbs =
+    (active.stationaer ? values.umsatzWerbung : 0) +
+    (active.pluscard   ? values.pluscardWerbung : 0) +
+    (active.ra         ? values.raWerbung : 0) +
+    (active.online     ? values.onlineshopWerbung : 0);
+
+  const anteilWerbeUmsatz =
+    totalAbs > 0 ? ((totalWerbeAbs / totalAbs) * 100).toFixed(1) : "–";
+
   popup.innerHTML = `
     <div class="popup-header">
       <span>${note}</span>
@@ -2514,8 +2523,9 @@ showUmsatzPopup(plz, values) {
     </div>
 
     <div class="umsatz-subheader">
-      ${headerLabel}: ${fmtAbs(totalAbs)} €<br>
-      pro Haushalt: ${fmtHH(totalHH)} €
+      <span class="strong">${headerLabel}: ${fmtAbs(totalAbs)} €</span><br>
+      <span class="strong">pro Haushalt: ${fmtHH(totalHH)} €</span><br>
+      <span>Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
     </div>
 
     <div class="section-title">Haushalte</div>
