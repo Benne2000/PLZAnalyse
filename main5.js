@@ -288,9 +288,14 @@
 }
 
 /* ⭐ Wenn Umsatz aktiv → Panel wächst */
-#map-control-panel.expanded {
+#map-control-panel.panel-large {
+  height: 50%;
+}
+
+#map-control-panel.panel-medium {
   height: 30%;
 }
+
 
 
 
@@ -1814,7 +1819,9 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     umsatzOptionsRow.style.display = "flex";
     umsatzPanel.classList.remove("hidden");
 
-    panel.classList.add("expanded");
+    panel.classList.remove("panel-medium");
+    panel.classList.add("panel-large");
+
 
     // Darstellung auf ABS setzen
     this.umsatzDarstellung = "abs";
@@ -2267,6 +2274,9 @@ showPopup(feature) {
     popupUmsatz.classList.remove("show");
     popupUmsatz.classList.add("hidden");
   }
+  const panel = this._shadowRoot.getElementById("map-control-panel");
+panel.classList.remove("panel-large");
+panel.classList.add("panel-medium");
 
   // WK-Daten
   const daten = this.filteredKennwerte?.[plz] || {};
@@ -2361,6 +2371,10 @@ showUmsatzPopup(plz, values) {
     popupWK.classList.remove("show");
     popupWK.classList.add("hidden");
   }
+  const panel = this._shadowRoot.getElementById("map-control-panel");
+  panel.classList.remove("panel-large");
+  panel.classList.add("panel-medium");
+
 
   const isWerbungMode = this.umsatzMainMode === "werbung";
   const useWerbe = this.useWerbeUmsatz === true;
