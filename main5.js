@@ -3618,18 +3618,31 @@ prepareUmsatzPLZWerte() {
       v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
-      // ⭐ Werbeanteil am Gesamtumsatz
- const totalNormal =
-  v.umsatz +
-  v.ra +
-  v.onlineshop +
-  v.pluscard;
+ const catMapNormal = {
+  stationaer: old.umsatz ?? 0,
+  ra: old.ra ?? 0,
+  onlineshop: old.onlineshop ?? 0,
+  pluscard: old.pluscard ?? 0
+};
 
-const totalWerbe =
-  v.umsatzWerbung +
-  v.raWerbung +
-  v.onlineshopWerbung +
-  v.pluscardWerbung;
+const catMapWerbung = {
+  stationaer: old.umsatzWerbung ?? 0,
+  ra: old.raWerbung ?? 0,
+  onlineshop: old.onlineshopWerbung ?? 0,
+  pluscard: old.pluscardWerbung ?? 0
+};
+
+// Nur aktive Kategorien berücksichtigen
+let totalNormal = 0;
+let totalWerbe = 0;
+
+for (const cat of this.activeCategories) {
+  totalNormal += catMapNormal[cat] ?? 0;
+  totalWerbe += catMapWerbung[cat] ?? 0;
+}
+
+const werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+
 
 v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
 
