@@ -203,11 +203,11 @@
 }
 
 
-/* Ausgrau-Logik */
 .side-popup tr.disabled td {
   opacity: 0.35;
   filter: grayscale(100%);
 }
+
 /* ------------------------------------------------------ */
 /* UMSATZ-POPUP (sauber, stabil, bündig, wie WK-Popup)    */
 /* ------------------------------------------------------ */
@@ -280,14 +280,20 @@
   font-size: 0.9rem;
   color: #333;
 }
-
-/* 2-Spalten-Grid */
 .umsatz-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 20px;
+  grid-template-columns: 1.2fr 0.8fr 0.8fr; /* Beschreibung | Absolut | HH */
+  gap: 6px 12px;
   padding: 0 12px;
+  align-items: center;
 }
+
+.umsatz-grid.header {
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 4px;
+}
+
 
 .umsatz-grid .label {
   font-weight: 500;
@@ -299,6 +305,7 @@
   font-weight: 600;
   color: #111;
 }
+
 
 /* Balken */
 .umsatz-bar {
@@ -2435,15 +2442,18 @@ panel.classList.add("panel-medium");
     sidePopup.classList.add('hidden');
   };
 }
+
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
 
+  // WK-Popup schließen
   if (popupWK) {
     popupWK.classList.remove("show");
     popupWK.classList.add("hidden");
   }
 
+  // Panel anpassen
   const panel = this._shadowRoot.getElementById("map-control-panel");
   panel.classList.remove("panel-large");
   panel.classList.add("panel-medium");
@@ -2454,14 +2464,17 @@ showUmsatzPopup(plz, values) {
 
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
+  // Hilfsfunktion: Werte abhängig vom Modus holen
   const pickPair = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
     if (!isWerbungMode) return { abs: base, hh: baseHH };
+
     let abs = 0, hh = 0;
     if (useWerbe) { abs += werb; hh += werbHH; }
     if (useZusatz) { abs += zusatz; hh += zusatzHH; }
     return { abs, hh };
   };
 
+  // Kategorien holen
   const st = pickPair(values.umsatz, values.umsatzWerbung, values.umsatzZusatz,
                       values.umsatzProHaushalt, values.umsatzWerbungProHaushalt, values.umsatzZusatzProHaushalt);
 
@@ -2474,6 +2487,7 @@ showUmsatzPopup(plz, values) {
   const os = pickPair(values.onlineshop, values.onlineshopWerbung, values.onlineshopZusatz,
                       values.onlineshopProHaushalt, values.onlineshopWerbungProHaushalt, values.onlineshopZusatzProHaushalt);
 
+  // Aktive Kategorien
   const active = {
     stationaer: this.activeCategories.has("stationaer"),
     pluscard:   this.activeCategories.has("pluscard"),
@@ -2481,6 +2495,7 @@ showUmsatzPopup(plz, values) {
     online:     this.activeCategories.has("online")
   };
 
+  // Summen (für Anzeige)
   const totalAbs =
     (active.stationaer ? st.abs : 0) +
     (active.pluscard   ? pc.abs : 0) +
@@ -2495,28 +2510,36 @@ showUmsatzPopup(plz, values) {
 
   const hh = values.haushalte || 0;
 
+  // Werbeanteil IMMER gegen Gesamtumsatz (nicht Werbemodus!)
+  const totalNormalAbs =
+    (active.stationaer ? values.umsatz : 0) +
+    (active.pluscard   ? values.pluscard : 0) +
+    (active.ra         ? values.ra : 0) +
+    (active.online     ? values.onlineshop : 0);
+
+  const totalWerbeAbs =
+    (active.stationaer ? values.umsatzWerbung : 0) +
+    (active.pluscard   ? values.pluscardWerbung : 0) +
+    (active.ra         ? values.raWerbung : 0) +
+    (active.online     ? values.onlineshopWerbung : 0);
+
+  const anteilWerbeUmsatz =
+    totalNormalAbs > 0 ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1) : "–";
+
+  // Formatierer
   const fmtAbs = x => Number(x || 0).toLocaleString("de-DE");
   const fmtHH  = x => Number(x || 0).toFixed(2);
   const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
 
-const totalNormalAbs =
-  (active.stationaer ? values.umsatz : 0) +
-  (active.pluscard   ? values.pluscard : 0) +
-  (active.ra         ? values.ra : 0) +
-  (active.online     ? values.onlineshop : 0);
+  // Header-Label
+  const headerLabel = (() => {
+    if (!isWerbungMode) return "Gesamtumsatz";
+    if (useWerbe && useZusatz) return "Werbeumsatz + Mitgekauft";
+    if (useWerbe) return "Werbeumsatz";
+    return "Mitgekauft";
+  })();
 
-const totalWerbeAbs =
-  (active.stationaer ? values.umsatzWerbung : 0) +
-  (active.pluscard   ? values.pluscardWerbung : 0) +
-  (active.ra         ? values.raWerbung : 0) +
-  (active.online     ? values.onlineshopWerbung : 0);
-
-const anteilWerbeUmsatz =
-  totalNormalAbs > 0
-    ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1)
-    : "–";
-
-
+  // HTML erzeugen
   popup.innerHTML = `
     <div class="popup-header">
       <span>${note}</span>
@@ -2524,7 +2547,7 @@ const anteilWerbeUmsatz =
     </div>
 
     <div class="umsatz-subheader">
-      <span class="strong">Gesamtumsatz: ${fmtAbs(totalAbs)} €</span><br>
+      <span class="strong">${headerLabel}: ${fmtAbs(totalAbs)} €</span><br>
       <span class="strong">pro Haushalt: ${fmtHH(totalHH)} €</span><br>
       <span>Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
     </div>
@@ -2533,22 +2556,27 @@ const anteilWerbeUmsatz =
     <div class="umsatz-grid">
       <div class="label">Haushalte</div>
       <div class="value">${hh.toLocaleString("de-DE")}</div>
+      <div class="value"></div>
     </div>
 
     <div class="section-title">Umsatz nach Kategorien</div>
 
     <div class="umsatz-grid">
-      <div class="label">Stationär</div>       <div class="value">${fmtAbs(st.abs)} €</div>
-      <div class="label">Stationär / HH</div>  <div class="value">${fmtHH(st.hh)} €</div>
+      <div class="label ${!active.stationaer ? "disabled" : ""}">Stationär</div>
+      <div class="value ${!active.stationaer ? "disabled" : ""}">${fmtAbs(st.abs)} €</div>
+      <div class="value ${!active.stationaer ? "disabled" : ""}">${fmtHH(st.hh)} €</div>
 
-      <div class="label">Pluscard</div>        <div class="value">${fmtAbs(pc.abs)} €</div>
-      <div class="label">Pluscard / HH</div>   <div class="value">${fmtHH(pc.hh)} €</div>
+      <div class="label ${!active.pluscard ? "disabled" : ""}">Pluscard</div>
+      <div class="value ${!active.pluscard ? "disabled" : ""}">${fmtAbs(pc.abs)} €</div>
+      <div class="value ${!active.pluscard ? "disabled" : ""}">${fmtHH(pc.hh)} €</div>
 
-      <div class="label">R&A</div>             <div class="value">${fmtAbs(ra.abs)} €</div>
-      <div class="label">R&A / HH</div>        <div class="value">${fmtHH(ra.hh)} €</div>
+      <div class="label ${!active.ra ? "disabled" : ""}">R&A</div>
+      <div class="value ${!active.ra ? "disabled" : ""}">${fmtAbs(ra.abs)} €</div>
+      <div class="value ${!active.ra ? "disabled" : ""}">${fmtHH(ra.hh)} €</div>
 
-      <div class="label">KUBE OS</div>         <div class="value">${fmtAbs(os.abs)} €</div>
-      <div class="label">KUBE OS / HH</div>    <div class="value">${fmtHH(os.hh)} €</div>
+      <div class="label ${!active.online ? "disabled" : ""}">KUBE OS</div>
+      <div class="value ${!active.online ? "disabled" : ""}">${fmtAbs(os.abs)} €</div>
+      <div class="value ${!active.online ? "disabled" : ""}">${fmtHH(os.hh)} €</div>
     </div>
 
     <div class="section-title">Umsatzanteile</div>
@@ -2568,15 +2596,18 @@ const anteilWerbeUmsatz =
     </div>
   `;
 
+  // Popup anzeigen
   popup.classList.remove("hidden");
   void popup.offsetWidth;
   popup.classList.add("show");
 
+  // Close-Button
   popup.querySelector(".close-btn").onclick = () => {
     popup.classList.remove("show");
     popup.classList.add("hidden");
   };
 }
+
 
 
 getUmsatzSumForPLZ(v) {
