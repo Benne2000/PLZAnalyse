@@ -2353,8 +2353,6 @@ showPopup(feature) {
   };
 }
 
-
-
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -2365,10 +2363,9 @@ showUmsatzPopup(plz, values) {
   }
 
   const isWerbungMode = this.umsatzMainMode === "werbung";
-  const useWerbe = this.useWerbeUmsatz !== false;
+  const useWerbe = this.useWerbeUmsatz === true;
   const useZusatz = this.useZusatzUmsatz === true;
-const modeHH = this.umsatzDarstellung === "hh";
-
+  const modeHH = this.umsatzDarstellung === "hh";
 
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
@@ -2396,40 +2393,41 @@ const modeHH = this.umsatzDarstellung === "hh";
   };
 
   const st = pickPair(
-    values.umsatz || 0,
-    values.umsatzWerbung || 0,
-    values.umsatzZusatz || 0,
-    values.umsatzProHaushalt || 0,
-    values.umsatzWerbungProHaushalt || 0,
-    values.umsatzZusatzProHaushalt || 0
+    values.umsatz,
+    values.umsatzWerbung,
+    values.umsatzZusatz,
+    values.umsatzProHaushalt,
+    values.umsatzWerbungProHaushalt,
+    values.umsatzZusatzProHaushalt
   );
 
   const pc = pickPair(
-    values.pluscard || 0,
-    values.pluscardWerbung || 0,
-    values.pluscardZusatz || 0,
-    values.pluscardProHaushalt || 0,
-    values.pluscardWerbungProHaushalt || 0,
-    values.pluscardZusatzProHaushalt || 0
+    values.pluscard,
+    values.pluscardWerbung,
+    values.pluscardZusatz,
+    values.pluscardProHaushalt,
+    values.pluscardWerbungProHaushalt,
+    values.pluscardZusatzProHaushalt
   );
 
   const ra = pickPair(
-    values.ra || 0,
-    values.raWerbung || 0,
-    values.raZusatz || 0,
-    values.raProHaushalt || 0,
-    values.raWerbungProHaushalt || 0,
-    values.raZusatzProHaushalt || 0
+    values.ra,
+    values.raWerbung,
+    values.raZusatz,
+    values.raProHaushalt,
+    values.raWerbungProHaushalt,
+    values.raZusatzProHaushalt
   );
 
   const os = pickPair(
-    values.onlineshop || 0,
-    values.onlineshopWerbung || 0,
-    values.onlineshopZusatz || 0,
-    values.onlineshopProHaushalt || 0,
-    values.onlineshopWerbungProHaushalt || 0,
-    values.onlineshopZusatzProHaushalt || 0
+    values.onlineshop,
+    values.onlineshopWerbung,
+    values.onlineshopZusatz,
+    values.onlineshopProHaushalt,
+    values.onlineshopWerbungProHaushalt,
+    values.onlineshopZusatzProHaushalt
   );
+
   const active = {
     stationaer: this.activeCategories.has("stationaer"),
     pluscard:   this.activeCategories.has("pluscard"),
@@ -2437,26 +2435,22 @@ const modeHH = this.umsatzDarstellung === "hh";
     online:     this.activeCategories.has("online")
   };
 
-  // Anteil Werbeumsatz am Gesamtumsatz
-const totalWerbeAbs =
-  (active.stationaer ? values.umsatzWerbung || 0 : 0) +
-  (active.pluscard   ? values.pluscardWerbung || 0 : 0) +
-  (active.ra         ? values.raWerbung || 0 : 0) +
-  (active.online     ? values.onlineshopWerbung || 0 : 0);
+  const totalWerbeAbs =
+    (active.stationaer ? values.umsatzWerbung : 0) +
+    (active.pluscard   ? values.pluscardWerbung : 0) +
+    (active.ra         ? values.raWerbung : 0) +
+    (active.online     ? values.onlineshopWerbung : 0);
 
-const totalNormalAbs =
-  (active.stationaer ? values.umsatz || 0 : 0) +
-  (active.pluscard   ? values.pluscard || 0 : 0) +
-  (active.ra         ? values.ra || 0 : 0) +
-  (active.online     ? values.onlineshop || 0 : 0);
+  const totalNormalAbs =
+    (active.stationaer ? values.umsatz : 0) +
+    (active.pluscard   ? values.pluscard : 0) +
+    (active.ra         ? values.ra : 0) +
+    (active.online     ? values.onlineshop : 0);
 
-const anteilWerbeUmsatz =
-  totalNormalAbs > 0
-    ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1)
-    : "–";
-
-
-
+  const anteilWerbeUmsatz =
+    totalNormalAbs > 0
+      ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1)
+      : "–";
 
   const hh = values.haushalte || 0;
 
@@ -2497,7 +2491,6 @@ const anteilWerbeUmsatz =
   popup.innerHTML = `
     <button class="close-btn">×</button>
 
-    <!-- TABELLE 1: GESAMT-KENNZAHLEN -->
     <table>
       <thead>
         <tr><th colspan="2" class="title-cell">${note}</th></tr>
@@ -2520,18 +2513,16 @@ const anteilWerbeUmsatz =
           <td class="value-cell">${fmtAbs(raAbs)}</td>
         </tr>
         <tr class="${active.online ? "" : "disabled"}">
-          <td class="label-cell">Onlineshop</td>
+          <td class="label-cell">KUBE OS</td>
           <td class="value-cell">${fmtAbs(online)}</td>
         </tr>
         <tr>
-  <td class="label-cell">Anteil Werbeumsatz</td>
-  <td class="value-cell">${anteilWerbeUmsatz} %</td>
- </tr>
-
+          <td class="label-cell">Anteil Werbeumsatz</td>
+          <td class="value-cell">${anteilWerbeUmsatz} %</td>
+        </tr>
       </tbody>
     </table>
 
-    <!-- Umsatz-Balken -->
     <div class="umsatz-share-bar">
       ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer, totalAbs)}%"></div>` : ""}
       ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard, totalAbs)}%"></div>`   : ""}
@@ -2543,10 +2534,9 @@ const anteilWerbeUmsatz =
       <span><span style="color:#b41821;">⬤</span> Stationär</span>
       <span><span style="color:#1f78b4;">⬤</span> Pluscard</span>
       <span><span style="color:#33a02c;">⬤</span> R&A</span>
-      <span><span style="color:#ffb000;">⬤</span> Onlineshop</span>
+      <span><span style="color:#ffb000;">⬤</span> KUBE OS</span>
     </div>
 
-    <!-- TABELLE 2: PRO-HAUSHALT-KENNZAHLEN -->
     <table class="hh-table">
       <thead>
         <tr>
@@ -2575,7 +2565,7 @@ const anteilWerbeUmsatz =
         </tr>
 
         <tr class="${active.online ? "" : "disabled"}">
-          <td class="label-cell">Onlineshop pro HH</td>
+          <td class="label-cell">KUBE OS pro HH</td>
           <td class="value-cell">${fmtHH(osHH)}</td>
         </tr>
       </tbody>
@@ -2592,29 +2582,29 @@ const anteilWerbeUmsatz =
   };
 }
 
-
 getUmsatzSumForPLZ(v) {
   const safe = x => Number.isFinite(x) ? x : 0;
 
   const isWerbungMode = this.umsatzMainMode === "werbung";
-  const useWerbe = this.useWerbeUmsatz !== false;
+  const useWerbe = this.useWerbeUmsatz === true;
   const useZusatz = this.useZusatzUmsatz === true;
   const useHH = this.umsatzDarstellung === "hh";
-
 
   const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
     if (!isWerbungMode) {
       return safe(useHH ? baseHH : base);
     }
 
-    let abs = 0;
+    let sum = 0;
+
     if (useWerbe) {
-      abs += safe(useHH ? werbHH : werb);
+      sum += safe(useHH ? werbHH : werb);
     }
     if (useZusatz) {
-      abs += safe(useHH ? zusatzHH : zusatz);
+      sum += safe(useHH ? zusatzHH : zusatz);
     }
-    return abs;
+
+    return sum;
   };
 
   let sum = 0;
@@ -2649,6 +2639,7 @@ getUmsatzSumForPLZ(v) {
 
   return sum;
 }
+
 
 
   updateNeighbours(filteredData) {
@@ -3499,7 +3490,6 @@ prepareErhebungsInfo() {
   });
 }
 
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3526,6 +3516,30 @@ prepareUmsatzPLZWerte() {
     }
 
     return Number.isFinite(n) ? n : 0;
+  };
+
+  // ============================================
+  // Haushalte-PARSER (immer ganze Zahl!)
+  // ============================================
+  const parseHH = x => {
+    if (x == null) return 0;
+
+    if (typeof x === "number") {
+      return Number.isFinite(x) ? x : 0;
+    }
+
+    if (typeof x === "string") {
+      // Tausendertrennzeichen entfernen (egal ob . oder ,)
+      const s = x.replace(/[.,\s]/g, "");
+      const n = Number(s);
+      if (!Number.isFinite(n)) {
+        console.warn("❗ HH-PARSE-ERROR", { original: x, parsed: n });
+        return 0;
+      }
+      return n;
+    }
+
+    return 0;
   };
 
   // Debug-Safe für Umsatzfelder
@@ -3562,14 +3576,12 @@ prepareUmsatzPLZWerte() {
     rows.forEach(row => {
       const nl = row["dimension_niederlassung_0"]?.id?.trim();
 
-      // NL-Filter direkt in der Aggregation
       if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
         return;
       }
 
       const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
 
-      // ❌ Ungültige PLZ überspringen
       if (!rawPLZ || rawPLZ === "@NullMember") return;
 
       const plz = String(rawPLZ).padStart(5, "0");
@@ -3599,10 +3611,10 @@ prepareUmsatzPLZWerte() {
       const v = aggregated[plz];
 
       // ============================================
-      // HH-LOGGING
+      // Haushalte korrekt parsen
       // ============================================
       const rawHH = row["value_haushalte_0"]?.raw;
-      const hh = debugSafe("haushalte", rawHH, plz);
+      const hh = parseHH(rawHH);
 
       console.log(
         `%cHH-DEBUG | PLZ ${plz}`,
@@ -3610,11 +3622,7 @@ prepareUmsatzPLZWerte() {
         {
           raw: rawHH,
           typeof_raw: typeof rawHH,
-          parsed: hh,
-          warning:
-            typeof rawHH === "string" && rawHH.includes(".") && hh < 100
-              ? "⚠️ Möglicher Tausenderpunkt-Fehler!"
-              : undefined
+          parsed: hh
         }
       );
 
