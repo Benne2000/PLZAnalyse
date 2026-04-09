@@ -3521,13 +3521,26 @@ prepareUmsatzPLZWerte() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
   if (!erhID || !jahr || !nummer) return;
 
-  // ✅ robustes Parsing inkl. Tausenderpunkt
+  // ============================================
+  // SAFE() – robustes Parsing inkl. Tausenderpunkt
+  // ============================================
   const safe = x => {
     if (x == null) return 0;
+
+    let original = x;
+
     if (typeof x === "string") {
+      // Tausenderpunkte entfernen, Komma → Punkt
       x = x.replace(/\./g, "").replace(",", ".");
     }
+
     const n = Number(x);
+
+    // 🔥 LOG: Parsing-Fehler sichtbar machen
+    if (!Number.isFinite(n)) {
+      console.warn("❗ SAFE-PARSE-ERROR", { original, parsed: n });
+    }
+
     return Number.isFinite(n) ? n : 0;
   };
 
@@ -3547,7 +3560,7 @@ prepareUmsatzPLZWerte() {
     rows.forEach(row => {
       const nl = row["dimension_niederlassung_0"]?.id?.trim();
 
-      // ✅ NL-Filter bereits hier anwenden
+      // NL-Filter
       if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
         return;
       }
@@ -3578,36 +3591,65 @@ prepareUmsatzPLZWerte() {
 
       const v = aggregated[plz];
 
-      // ✅ Haushalte korrekt parsen
-      const hh = safe(row["value_haushalte_0"]?.raw);
+      // ============================================
+      // HH-LOGGING
+      // ============================================
+      const rawHH = row["value_haushalte_0"]?.raw;
+      const hh = safe(rawHH);
+
+      console.log(
+        `%cHH-DEBUG | PLZ ${plz}`,
+        "color:#b41821; font-weight:bold;",
+        {
+          raw: rawHH,
+          typeof_raw: typeof rawHH,
+          parsed: hh,
+          warning:
+            typeof rawHH === "string" && rawHH.includes(".") && hh < 100
+              ? "⚠️ Möglicher Tausenderpunkt-Fehler!"
+              : undefined
+        }
+      );
+
       if (hh > 0) v._hhValues.push(hh);
 
-      // Gesamtumsatz
+      // Umsätze
       v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
       v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
       v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
       v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
 
-      // Werbeumsatz
       v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
       v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
       v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
       v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
 
-      // Zusatzumsatz
       v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
       v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
       v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
       v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
     });
 
-    // Haushalte + pro HH + Werbeanteil
-    Object.values(aggregated).forEach(v => {
+    // ============================================
+    // Durchschnittsbildung + Logging
+    // ============================================
+    Object.entries(aggregated).forEach(([plz, v]) => {
       if (v._hhValues.length > 0) {
-        v.haushalte = v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
+        v.haushalte =
+          v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
       } else {
         v.haushalte = 0;
       }
+
+      console.log(
+        `%cHH-AVG | PLZ ${plz}`,
+        "color:#1f78b4; font-weight:bold;",
+        {
+          values: v._hhValues,
+          avg: v.haushalte
+        }
+      );
+
       delete v._hhValues;
 
       const hh = v.haushalte;
@@ -3628,6 +3670,7 @@ prepareUmsatzPLZWerte() {
       v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
+      // Werbeanteil
       const catMapNormal = {
         stationaer: v.umsatz ?? 0,
         ra: v.ra ?? 0,
@@ -3660,7 +3703,6 @@ prepareUmsatzPLZWerte() {
   const result = {};
 
   Object.entries(full).forEach(([plz, v]) => {
-    // Radiusfilter
     if ((this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
@@ -3668,7 +3710,12 @@ prepareUmsatzPLZWerte() {
   });
 
   this.filteredPLZWerte = result;
-  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(result).length);
+
+  console.log(
+    "%c🧪 prepareUmsatzPLZWerte() → Fertig",
+    "color:#33a02c; font-weight:bold;",
+    { plzCount: Object.keys(result).length }
+  );
 }
 
 
