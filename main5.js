@@ -288,7 +288,12 @@
 }
 
 /* ⭐ Wenn Umsatz aktiv → Panel wächst */
-#map-control-panel.expanded {
+#map-control-panel.panel-large {
+  height: 50%;
+}
+
+/* Popup offen → 30% */
+#map-control-panel.panel-medium {
   height: 30%;
 }
 
@@ -1808,7 +1813,9 @@ initializeMapBase() {
     umsatzOptionsRow.style.display = "flex";
     umsatzPanel.classList.remove("hidden");
 
-    panel.classList.add("expanded");
+    panel.classList.remove("panel-medium");
+panel.classList.add("panel-large");
+
 
     // Darstellung auf ABS setzen
     this.umsatzDarstellung = "abs";
@@ -2226,6 +2233,11 @@ createMarkerIcon(nl, isPhantom = false) {
 }
 
 showPopup(feature) {
+
+  const panel = this._shadowRoot.getElementById("map-control-panel");
+
+  panel.classList.remove("panel-large");
+  panel.classList.add("panel-medium");
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
     .trim();
@@ -2366,6 +2378,11 @@ if (popupUmsatz) {
 
 
 showUmsatzPopup(plz, values) {
+  const panel = this._shadowRoot.getElementById("map-control-panel");
+
+  panel.classList.remove("panel-large");
+  panel.classList.add("panel-medium");
+
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
 
