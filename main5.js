@@ -1942,25 +1942,31 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
   // ---------------------------------------------------------
   // Kategorien
   // ---------------------------------------------------------
-  this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
-    toggle.addEventListener("click", () => {
-      const cat = toggle.dataset.cat;
-      if (!cat) return;
+// in initializeMapBase(), bei den Kategorie-Toggles:
+this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
+  toggle.addEventListener("click", () => {
+    const cat = toggle.dataset.cat;
+    if (!cat) return;
 
-      if (this.activeCategories.has(cat)) {
-        this.activeCategories.delete(cat);
-        toggle.classList.remove("active");
-      } else {
-        this.activeCategories.add(cat);
-        toggle.classList.add("active");
-      }
+    if (this.activeCategories.has(cat)) {
+      this.activeCategories.delete(cat);
+      toggle.classList.remove("active");
+    } else {
+      this.activeCategories.add(cat);
+      toggle.classList.add("active");
+    }
 
-      this.currentMapMode = "umsatz-multi";
-      this.activePopupType = "umsatz";
+    this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
-      this.updateGeoLayer();
-    });
+    // ✅ Werbeanteil neu berechnen
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+
+    this.updateGeoLayer();
   });
+});
+
 
   // ---------------------------------------------------------
   // Doppelbestreuung
@@ -3508,7 +3514,6 @@ prepareErhebungsInfo() {
   });
 }
 
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3516,23 +3521,21 @@ prepareUmsatzPLZWerte() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
   if (!erhID || !jahr || !nummer) return;
 
+  // ✅ robustes Parsing inkl. Tausenderpunkt
   const safe = x => {
+    if (x == null) return 0;
+    if (typeof x === "string") {
+      x = x.replace(/\./g, "").replace(",", ".");
+    }
     const n = Number(x);
     return Number.isFinite(n) ? n : 0;
   };
 
-  // Cache initialisieren
   if (!this._umsatzCache) this._umsatzCache = {};
-const nlKey = [...this._selectedNLs].sort().join("_") || "ALL";
-const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
+  const nlKey = [...(this._selectedNLs || new Set())].sort().join("_") || "ALL";
+  const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
 
-
-
-  // ---------------------------------------------------------
-  // 1) Vollständige Erhebung aggregieren (nur einmal)
-  // ---------------------------------------------------------
   if (!this._umsatzCache[cacheKey]) {
-
     const rows = raw.filter(row =>
       row["dimension_erhebung_0"]?.id == erhID &&
       row["dimension_jahr_0"]?.id == jahr &&
@@ -3540,60 +3543,66 @@ const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
     );
 
     const aggregated = {};
-rows.forEach(row => {
-  const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-  const plz = String(rawPLZ).padStart(5, "0");
 
-  if (!aggregated[plz]) {
-    aggregated[plz] = {
-      _hhValues: [],
-      umsatz: 0,
-      ra: 0,
-      onlineshop: 0,
-      pluscard: 0,
-      umsatzWerbung: 0,
-      raWerbung: 0,
-      onlineshopWerbung: 0,
-      pluscardWerbung: 0,
-      umsatzZusatz: 0,
-      raZusatz: 0,
-      onlineshopZusatz: 0,
-      pluscardZusatz: 0
-    };
-  }
+    rows.forEach(row => {
+      const nl = row["dimension_niederlassung_0"]?.id?.trim();
 
-  const v = aggregated[plz];
+      // ✅ NL-Filter bereits hier anwenden
+      if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
+        return;
+      }
 
-  // Haushalte sammeln (KORREKT)
-  const hh = safe(row["value_haushalte_0"]?.raw);
-  if (hh > 0) v._hhValues.push(hh);
+      const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+      const plz = String(rawPLZ).padStart(5, "0");
 
-  // Gesamtumsatz
-  v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
-  v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
-  v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-  v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+      if (!aggregated[plz]) {
+        aggregated[plz] = {
+          _hhValues: [],
 
-  // Werbeumsatz
-  v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
-  v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
-  v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
-  v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
+          umsatz: 0,
+          ra: 0,
+          onlineshop: 0,
+          pluscard: 0,
 
-  // Zusatzumsatz
-  v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
-  v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
-  v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
-  v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
-});
+          umsatzWerbung: 0,
+          raWerbung: 0,
+          onlineshopWerbung: 0,
+          pluscardWerbung: 0,
 
+          umsatzZusatz: 0,
+          raZusatz: 0,
+          onlineshopZusatz: 0,
+          pluscardZusatz: 0
+        };
+      }
 
-    // ---------------------------------------------------------
-    // 2) Haushalte final bestimmen + Pro-Haushalt berechnen
-    // ---------------------------------------------------------
+      const v = aggregated[plz];
+
+      // ✅ Haushalte korrekt parsen
+      const hh = safe(row["value_haushalte_0"]?.raw);
+      if (hh > 0) v._hhValues.push(hh);
+
+      // Gesamtumsatz
+      v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
+      v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
+      v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
+      v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+
+      // Werbeumsatz
+      v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
+      v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
+      v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
+      v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
+
+      // Zusatzumsatz
+      v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
+      v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
+      v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
+      v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
+    });
+
+    // Haushalte + pro HH + Werbeanteil
     Object.values(aggregated).forEach(v => {
-
-      // Haushalte
       if (v._hhValues.length > 0) {
         v.haushalte = v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
       } else {
@@ -3604,27 +3613,21 @@ rows.forEach(row => {
       const hh = v.haushalte;
       const perHH = val => (hh > 0 ? val / hh : 0);
 
-      // Gesamt
       v.umsatzProHaushalt     = perHH(v.umsatz);
       v.raProHaushalt         = perHH(v.ra);
       v.onlineshopProHaushalt = perHH(v.onlineshop);
       v.pluscardProHaushalt   = perHH(v.pluscard);
 
-      // Werbung
       v.umsatzWerbungProHaushalt     = perHH(v.umsatzWerbung);
       v.raWerbungProHaushalt         = perHH(v.raWerbung);
       v.onlineshopWerbungProHaushalt = perHH(v.onlineshopWerbung);
       v.pluscardWerbungProHaushalt   = perHH(v.pluscardWerbung);
 
-      // Zusatz
       v.umsatzZusatzProHaushalt     = perHH(v.umsatzZusatz);
       v.raZusatzProHaushalt         = perHH(v.raZusatz);
       v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
       v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
-      // ---------------------------------------------------------
-      // 3) Werbeanteil nach aktiven Kategorien berechnen
-      // ---------------------------------------------------------
       const catMapNormal = {
         stationaer: v.umsatz ?? 0,
         ra: v.ra ?? 0,
@@ -3644,7 +3647,7 @@ rows.forEach(row => {
 
       for (const cat of this.activeCategories) {
         totalNormal += catMapNormal[cat] ?? 0;
-        totalWerbe += catMapWerbung[cat] ?? 0;
+        totalWerbe  += catMapWerbung[cat] ?? 0;
       }
 
       v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
@@ -3654,40 +3657,20 @@ rows.forEach(row => {
   }
 
   const full = this._umsatzCache[cacheKey];
-
-  // ---------------------------------------------------------
-  // 4) Subset nach NL + Radius
-  // ---------------------------------------------------------
   const result = {};
 
   Object.entries(full).forEach(([plz, v]) => {
-
-    // NL-Filter
-    if (this._selectedNLs?.size > 0) {
-      const rowsForPLZ = this.filteredData.filter(r => {
-        const rawPLZ = r["dimension_plz_0"]?.id ?? r["dimension_plz_0"]?.raw;
-        return String(rawPLZ).padStart(5, "0") === plz;
-      });
-
-      const nlMatch = rowsForPLZ.some(r =>
-        this._selectedNLs.has(r["dimension_niederlassung_0"]?.id?.trim())
-      );
-
-      if (!nlMatch) return;
-    }
-
     // Radiusfilter
     if ((this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
-
     result[plz] = v;
   });
 
   this.filteredPLZWerte = result;
-
   console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(result).length);
 }
+
 
 
 
@@ -4033,58 +4016,51 @@ computeWKKennwerte() {
     newFilteredPLZWerte[plz].hz = isHZ;
 
     // Umsatzfelder aus bestehendem Eintrag erhalten
-    const old = this.filteredPLZWerte?.[plz] || {};
+// am Ende von computeWKKennwerte()
+const old = this.filteredPLZWerte?.[plz] || {};
 
-    // ⭐ KORREKTE Werbeanteil-Berechnung
-    const totalNormal =
-      (old.umsatz ?? 0) +
-      (old.ra ?? 0) +
-      (old.onlineshop ?? 0) +
-      (old.pluscard ?? 0);
+newFilteredPLZWerte[plz] = {
+  // WK
+  wk: wkPercent,
+  wkPot: potHzPercent,
+  hz: isHZ,
 
-    const totalWerbe =
-      (old.umsatzWerbung ?? 0) +
-      (old.raWerbung ?? 0) +
-      (old.onlineshopWerbung ?? 0) +
-      (old.pluscardWerbung ?? 0);
+  // Umsatzfelder aus prepareUmsatzPLZWerte
+  umsatz: old.umsatz ?? 0,
+  ra: old.ra ?? 0,
+  onlineshop: old.onlineshop ?? 0,
+  pluscard: old.pluscard ?? 0,
+  haushalte: old.haushalte ?? 0,
 
+  umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
+  raProHaushalt: old.raProHaushalt ?? 0,
+  onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
+  pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
 
-    newFilteredPLZWerte[plz] = {
-      ...newFilteredPLZWerte[plz],
+  umsatzWerbung: old.umsatzWerbung ?? 0,
+  raWerbung: old.raWerbung ?? 0,
+  onlineshopWerbung: old.onlineshopWerbung ?? 0,
+  pluscardWerbung: old.pluscardWerbung ?? 0,
 
-      umsatz: old.umsatz ?? 0,
-      ra: old.ra ?? 0,
-      onlineshop: old.onlineshop ?? 0,
-      pluscard: old.pluscard ?? 0,
-      haushalte: old.haushalte ?? 0,
+  umsatzZusatz: old.umsatzZusatz ?? 0,
+  raZusatz: old.raZusatz ?? 0,
+  onlineshopZusatz: old.onlineshopZusatz ?? 0,
+  pluscardZusatz: old.pluscardZusatz ?? 0,
 
-      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
-      raProHaushalt: old.raProHaushalt ?? 0,
-      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
-      pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
+  umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
+  raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
+  onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
+  pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
 
-      umsatzWerbung: old.umsatzWerbung ?? 0,
-      raWerbung: old.raWerbung ?? 0,
-      onlineshopWerbung: old.onlineshopWerbung ?? 0,
-      pluscardWerbung: old.pluscardWerbung ?? 0,
+  umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
+  raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
+  onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
+  pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
 
-      umsatzZusatz: old.umsatzZusatz ?? 0,
-      raZusatz: old.raZusatz ?? 0,
-      onlineshopZusatz: old.onlineshopZusatz ?? 0,
-      pluscardZusatz: old.pluscardZusatz ?? 0,
+  // ✅ Werbeanteil aus Umsatzaggregation übernehmen
+  werbeAnteil: old.werbeAnteil ?? 0
+};
 
-      umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
-      raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
-      onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
-      pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
-
-      umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
-      raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
-      onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
-      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
-
-
-    };
   });
 
   this.filteredKennwerte = newFilteredKennwerte;
