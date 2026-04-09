@@ -2971,6 +2971,22 @@ computeMaxValue() {
 }
 
 
+getUmsatzSumForPLZ(v) {
+  let sum = 0;
+
+  // Wenn keine Kategorie aktiv → alle nehmen
+  const cats = this.activeCategories?.size
+    ? this.activeCategories
+    : new Set(["stationaer", "ra", "online", "pluscard"]);
+
+  for (const cat of cats) {
+    const key = CAT_KEYS_NORMAL[cat];
+    if (key) sum += v[key] ?? 0;
+  }
+
+  return sum;
+}
+
 getUmsatzSumForPLZ_HH(v) {
   let sum = 0;
 
@@ -2985,6 +3001,7 @@ getUmsatzSumForPLZ_HH(v) {
 
   return sum;
 }
+
 
 getWerbeAnteilRatioForPLZ(v) {
   let totalNormal = 0;
