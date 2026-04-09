@@ -2442,7 +2442,6 @@ panel.classList.add("panel-medium");
     sidePopup.classList.add('hidden');
   };
 }
-
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -2549,11 +2548,15 @@ showUmsatzPopup(plz, values) {
     <div class="umsatz-subheader">
       <span class="strong">${headerLabel}: ${fmtAbs(totalAbs)} €</span><br>
       <span class="strong">pro Haushalt: ${fmtHH(totalHH)} €</span><br>
-      <span>Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
+      <span style="color:#000;">Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
     </div>
 
     <div class="section-title">Haushalte</div>
     <div class="umsatz-grid">
+      <div class="label"><strong>Kategorie</strong></div>
+      <div class="value"><strong>Absolut</strong></div>
+      <div class="value"><strong>pro HH</strong></div>
+
       <div class="label">Haushalte</div>
       <div class="value">${hh.toLocaleString("de-DE")}</div>
       <div class="value"></div>
