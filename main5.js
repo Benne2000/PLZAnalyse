@@ -1695,26 +1695,21 @@ zoomToFilteredPLZ() {
   }
 }
 
-
 initializeMapBase() {
 
-  // Helper für DOM
+  // Helper
   const $ = id => this._shadowRoot.getElementById(id);
 
   const mapContainer = $("map");
-  if (!mapContainer) {
-    console.warn("⚠️ initializeMapBase: #map nicht gefunden");
-    return;
-  }
+  if (!mapContainer) return;
 
   // Karte
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
   // Basiszustände
   this.currentMapMode = "wk";
-  this.umsatzMode = "abs"; // abs | hh
-  this.umsatzDarstellung = "abs"; // abs | hh | werbeanteil
-  this.umsatzMainMode = "gesamt"; // gesamt | werbung
+  this.umsatzDarstellung = "abs";       // abs | hh | werbeanteil
+  this.umsatzMainMode = "gesamt";       // gesamt | werbung
   this.useWerbeUmsatz = true;
   this.useZusatzUmsatz = false;
 
@@ -1746,9 +1741,14 @@ initializeMapBase() {
   const wkExtra = $("wk-extra");
   const umsatzOptionsRow = $("umsatz-options-row");
 
-  // Kompakte Switches
+  // Switches
   const typeSwitch = $("umsatz-type-switch");
   const darstellungSwitch = $("umsatz-analysis-switch");
+
+  // 3-Wege-Switch Buttons
+  const btnAbs = darstellungSwitch?.querySelector(".mode-abs");
+  const btnHH = darstellungSwitch?.querySelector(".mode-hh");
+  const btnWA = darstellungSwitch?.querySelector(".mode-werbeanteil");
 
   // Werbeoptionen
   const werbeRow = $("werbe-options-row");
@@ -1758,7 +1758,7 @@ initializeMapBase() {
   // Bestreuung
   const chkBestreuung = $("chk-bestreuung");
 
-  // Doppelbestreuung (nur WK)
+  // Doppelbestreuung
   const chkDoppel = $("chk-doppelbestreuung");
 
   // Radiusfilter
@@ -1769,182 +1769,179 @@ initializeMapBase() {
   if (tileBtn) tileBtn.addEventListener("click", () => this.toggleMapTiles());
 
   // ---------------------------------------------------------
+  // INITIAL: Werbeanteil deaktivieren
+  // ---------------------------------------------------------
+  if (btnWA) btnWA.classList.add("disabled");
+
+  // ---------------------------------------------------------
   // WK-MODUS
   // ---------------------------------------------------------
-  if (btnWK) {
-    btnWK.addEventListener("click", () => {
+  btnWK?.addEventListener("click", () => {
 
-      btnWK.classList.add("active");
-      btnUmsatz.classList.remove("active");
+    btnWK.classList.add("active");
+    btnUmsatz.classList.remove("active");
 
-      this.currentMapMode = "wk";
+    this.currentMapMode = "wk";
 
-      // UI
-      wkExtra.style.display = "block";
-      umsatzOptionsRow.style.display = "none";
-      umsatzPanel.classList.add("hidden");
+    wkExtra.style.display = "block";
+    umsatzOptionsRow.style.display = "none";
+    umsatzPanel.classList.add("hidden");
 
-      panel.classList.remove("expanded");
+    panel.classList.remove("expanded");
 
-      // Darstellung zurücksetzen
-      this.umsatzDarstellung = "abs";
-      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-      darstellungSwitch.querySelector(".mode-abs").classList.add("active");
+    // Darstellung zurücksetzen
+    this.umsatzDarstellung = "abs";
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnAbs.classList.add("active");
 
-      // Popups schließen
-      $("side-popup")?.classList.remove("show");
-      $("side-popup-umsatz")?.classList.remove("show");
+    // Werbeanteil deaktivieren
+    btnWA.classList.add("disabled");
 
-      const { erhID, jahr, nummer } = this._activeFilter || {};
-      if (erhID && jahr && nummer) this.applyFilter(erhID, jahr, nummer);
-      else this.updateGeoLayer();
-    });
-  }
+    $("side-popup")?.classList.remove("show");
+    $("side-popup-umsatz")?.classList.remove("show");
+
+    const { erhID, jahr, nummer } = this._activeFilter || {};
+    if (erhID && jahr && nummer) this.applyFilter(erhID, jahr, nummer);
+    else this.updateGeoLayer();
+  });
 
   // ---------------------------------------------------------
   // UMSATZ-MODUS
   // ---------------------------------------------------------
-  if (btnUmsatz) {
-    btnUmsatz.addEventListener("click", () => {
+  btnUmsatz?.addEventListener("click", () => {
 
-      btnUmsatz.classList.add("active");
-      btnWK.classList.remove("active");
+    btnUmsatz.classList.add("active");
+    btnWK.classList.remove("active");
 
-      this.currentMapMode = "umsatz-multi";
+    this.currentMapMode = "umsatz-multi";
 
-      this.prepareUmsatzPLZWerte();
+    this.prepareUmsatzPLZWerte();
 
-      // UI
-      wkExtra.style.display = "none";
-      umsatzOptionsRow.style.display = "flex";
-      umsatzPanel.classList.remove("hidden");
+    wkExtra.style.display = "none";
+    umsatzOptionsRow.style.display = "flex";
+    umsatzPanel.classList.remove("hidden");
 
-      panel.classList.add("expanded");
+    panel.classList.add("expanded");
 
-      setTimeout(() => {
-        umsatzPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 150);
+    // Werbeanteil deaktivieren (Umsatztyp = gesamt)
+    btnWA.classList.add("disabled");
 
-      $("side-popup-umsatz")?.classList.remove("show");
-      $("side-popup")?.classList.remove("show");
+    setTimeout(() => {
+      umsatzPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 150);
 
-      this.updateGeoLayer();
-    });
-  }
+    $("side-popup-umsatz")?.classList.remove("show");
+    $("side-popup")?.classList.remove("show");
+
+    this.updateGeoLayer();
+  });
 
   // ---------------------------------------------------------
   // UMSATZTYP (Umsatz / Werbeumsatz)
   // ---------------------------------------------------------
-  if (typeSwitch) {
-    typeSwitch.classList.add("active-left");
+  typeSwitch?.addEventListener("click", () => {
 
-    typeSwitch.addEventListener("click", () => {
+    const isWerbung = this.umsatzMainMode === "gesamt";
+    this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
 
-      const isWerbung = this.umsatzMainMode === "gesamt";
-      this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
+    typeSwitch.classList.toggle("active-right", isWerbung);
+    typeSwitch.classList.toggle("active-left", !isWerbung);
 
-      typeSwitch.classList.toggle("active-right", isWerbung);
-      typeSwitch.classList.toggle("active-left", !isWerbung);
+    // Werbeoptionen sichtbar?
+    werbeRow.style.display = isWerbung ? "flex" : "none";
 
-      // Werbeoptionen sichtbar?
-      werbeRow.style.display = isWerbung ? "flex" : "none";
+    if (isWerbung) {
+      // Werbeanteil aktivierbar
+      btnWA.classList.remove("disabled");
 
-      // Werbeanteil aktivierbar?
-      const werbeAnteilBtn = darstellungSwitch.querySelector(".mode-werbeanteil");
-      if (isWerbung) {
-        werbeAnteilBtn.classList.remove("disabled");
-      } else {
-        werbeAnteilBtn.classList.add("disabled");
+      // Standard: Werbeumsatz aktiv
+      this.useWerbeUmsatz = true;
+      this.useZusatzUmsatz = false;
+      chkWerbe.checked = true;
+      chkMit.checked = false;
+      chkMit.disabled = false;
 
-        // zurück auf Absolut
-        this.umsatzDarstellung = "abs";
-        darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-        darstellungSwitch.querySelector(".mode-abs").classList.add("active");
-      }
+    } else {
+      // Werbeanteil deaktivieren
+      btnWA.classList.add("disabled");
 
-      if (isWerbung) {
-        this.useWerbeUmsatz = true;
-        this.useZusatzUmsatz = false;
-        chkWerbe.checked = true;
-        chkMit.checked = false;
-      }
+      // Darstellung zurück auf Absolut
+      this.umsatzDarstellung = "abs";
+      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+      btnAbs.classList.add("active");
+    }
 
-      $("side-popup-umsatz")?.classList.remove("show");
-
-      this.updateGeoLayer();
-    });
-  }
+    this.updateGeoLayer();
+  });
 
   // ---------------------------------------------------------
   // Werbeumsatz / Mitgekauft
   // ---------------------------------------------------------
-  if (chkWerbe) {
-    chkWerbe.addEventListener("change", () => {
-      this.useWerbeUmsatz = chkWerbe.checked;
+  chkWerbe?.addEventListener("change", () => {
+    this.useWerbeUmsatz = chkWerbe.checked;
 
-      if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
-        this.useWerbeUmsatz = true;
-        chkWerbe.checked = true;
-      }
+    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
+      this.useWerbeUmsatz = true;
+      chkWerbe.checked = true;
+    }
 
-      this.updateGeoLayer();
-    });
-  }
+    this.updateGeoLayer();
+  });
 
-  if (chkMit) {
-    chkMit.addEventListener("change", () => {
-      this.useZusatzUmsatz = chkMit.checked;
+  chkMit?.addEventListener("change", () => {
+    this.useZusatzUmsatz = chkMit.checked;
 
-      if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
-        this.useWerbeUmsatz = true;
-        chkWerbe.checked = true;
-      }
+    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
+      this.useWerbeUmsatz = true;
+      chkWerbe.checked = true;
+    }
 
-      this.updateGeoLayer();
-    });
-  }
+    this.updateGeoLayer();
+  });
 
   // ---------------------------------------------------------
   // 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
   // ---------------------------------------------------------
-  if (darstellungSwitch) {
+  btnAbs?.addEventListener("click", () => {
+    this.umsatzDarstellung = "abs";
+    this.currentMapMode = "umsatz-multi";
 
-    const btnAbs = darstellungSwitch.querySelector(".mode-abs");
-    const btnHH = darstellungSwitch.querySelector(".mode-hh");
-    const btnWA = darstellungSwitch.querySelector(".mode-werbeanteil");
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnAbs.classList.add("active");
 
-    btnAbs.addEventListener("click", () => {
-      this.umsatzDarstellung = "abs";
-      this.currentMapMode = "umsatz-multi";
+    this.updateGeoLayer();
+  });
 
-      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-      btnAbs.classList.add("active");
+  btnHH?.addEventListener("click", () => {
+    this.umsatzDarstellung = "hh";
+    this.currentMapMode = "umsatz-multi";
 
-      this.updateGeoLayer();
-    });
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnHH.classList.add("active");
 
-    btnHH.addEventListener("click", () => {
-      this.umsatzDarstellung = "hh";
-      this.currentMapMode = "umsatz-multi";
+    this.updateGeoLayer();
+  });
 
-      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-      btnHH.classList.add("active");
+  btnWA?.addEventListener("click", () => {
 
-      this.updateGeoLayer();
-    });
+    if (this.umsatzMainMode !== "werbung") return;
 
-    btnWA.addEventListener("click", () => {
-      if (this.umsatzMainMode !== "werbung") return;
+    this.umsatzDarstellung = "werbeanteil";
+    this.currentMapMode = "werbeanteil";
 
-      this.umsatzDarstellung = "werbeanteil";
-      this.currentMapMode = "werbeanteil";
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnWA.classList.add("active");
 
-      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-      btnWA.classList.add("active");
+    // Automatische Checkbox-Logik
+    chkWerbe.checked = true;
+    this.useWerbeUmsatz = true;
 
-      this.updateGeoLayer();
-    });
-  }
+    chkMit.checked = false;
+    chkMit.disabled = true;
+    this.useZusatzUmsatz = false;
+
+    this.updateGeoLayer();
+  });
 
   // ---------------------------------------------------------
   // Kategorien
@@ -1963,53 +1960,43 @@ initializeMapBase() {
       }
 
       this.currentMapMode = "umsatz-multi";
-
-      $("side-popup-umsatz")?.classList.remove("show");
-      $("side-popup")?.classList.remove("show");
-
       this.updateGeoLayer();
     });
   });
 
   // ---------------------------------------------------------
-  // Doppelbestreuung (nur WK)
+  // Doppelbestreuung
   // ---------------------------------------------------------
-  if (chkDoppel) {
-    chkDoppel.addEventListener("change", () => {
-      this.showCritical = chkDoppel.checked;
-      this.updateGeoLayer();
-    });
-  }
+  chkDoppel?.addEventListener("change", () => {
+    this.showCritical = chkDoppel.checked;
+    this.updateGeoLayer();
+  });
 
   // ---------------------------------------------------------
   // Bestreuung
   // ---------------------------------------------------------
-  if (chkBestreuung) {
-    chkBestreuung.addEventListener("change", () => {
-      this.showBestreuung = chkBestreuung.checked;
-      this.updateBestreuungMarkers();
-    });
-  }
+  chkBestreuung?.addEventListener("change", () => {
+    this.showBestreuung = chkBestreuung.checked;
+    this.updateBestreuungMarkers();
+  });
 
   // ---------------------------------------------------------
   // Radiusfilter
   // ---------------------------------------------------------
-  if (chkRadius) {
-    chkRadius.addEventListener("change", () => {
-      this.useRadiusFilter = chkRadius.checked;
+  chkRadius?.addEventListener("change", () => {
+    this.useRadiusFilter = chkRadius.checked;
 
-      if (!this.useRadiusFilter) {
-        this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
-        this.updateGeoLayer();
-        this.renderDataTable(this.filteredKennwerte);
-        return;
-      }
+    if (!this.useRadiusFilter) {
+      this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
+      this.updateGeoLayer();
+      this.renderDataTable(this.filteredKennwerte);
+      return;
+    }
 
-      const slider = $("radius-slider");
-      const radius = slider ? Number(slider.value) : 0;
-      this.applyRadiusFilter(radius);
-    });
-  }
+    const slider = $("radius-slider");
+    const radius = slider ? Number(slider.value) : 0;
+    this.applyRadiusFilter(radius);
+  });
 }
 
 
