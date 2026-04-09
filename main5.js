@@ -1833,7 +1833,7 @@ initializeMapBase() {
   // ---------------------------------------------------------
   // WK-MODUS
   // ---------------------------------------------------------
-  btnWK?.addEventListener("click", () => {
+btnWK?.addEventListener("click", () => {
 
     btnWK.classList.add("active");
     btnUmsatz.classList.remove("active");
@@ -1845,30 +1845,31 @@ initializeMapBase() {
     umsatzOptionsRow.style.display = "none";
     umsatzPanel.classList.add("hidden");
 
-panel.classList.remove("panel-large", "panel-medium");
+    panel.classList.remove("panel-large", "panel-medium");
 
+    // ⭐ WICHTIG: Checkbox-Wert übernehmen
+    this.showCritical = chkDoppel.checked;
 
     // Darstellung zurücksetzen
     this.umsatzDarstellung = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
 
-    // Werbeanteil deaktivieren
     btnWA.classList.add("disabled");
 
     $("side-popup")?.classList.remove("show");
     $("side-popup-umsatz")?.classList.remove("show");
 
     const { erhID, jahr, nummer } = this._activeFilter || {};
-if (erhID && jahr && nummer) {
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-    this.updateGeoLayer();
-} else {
-    this.updateGeoLayer();
-}
+    if (erhID && jahr && nummer) {
+        this.prepareUmsatzPLZWerte();
+        this.computeWKKennwerte();
+        this.updateGeoLayer();
+    } else {
+        this.updateGeoLayer();
+    }
+});
 
-  });
 
   // ---------------------------------------------------------
   // UMSATZ-MODUS
