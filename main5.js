@@ -851,6 +851,36 @@
   transform: scale(1.3);
   accent-color: #b41821;
 }
+.triple-switch {
+  display: flex;
+  background: #f2f2f2;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 3px;
+  user-select: none;
+}
+
+.triple-switch span {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #555;
+}
+
+.triple-switch span.active {
+  background: #b41821;
+  color: white;
+}
+
+.triple-switch span.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
 
 
     </style>
@@ -1664,6 +1694,8 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
+
+
 initializeMapBase() {
 
   // Helper für DOM
@@ -1680,15 +1712,15 @@ initializeMapBase() {
 
   // Basiszustände
   this.currentMapMode = "wk";
-  this.umsatzMode = "abs";
+  this.umsatzMode = "abs"; // abs | hh
+  this.umsatzDarstellung = "abs"; // abs | hh | werbeanteil
+  this.umsatzMainMode = "gesamt"; // gesamt | werbung
+  this.useWerbeUmsatz = true;
+  this.useZusatzUmsatz = false;
+
   this.activeCategories = new Set(["stationaer"]);
   this.showBestreuung = false;
   this.useRadiusFilter = true;
-
-  // Umsatztyp
-  this.umsatzMainMode = "gesamt";
-  this.useWerbeUmsatz = true;
-  this.useZusatzUmsatz = false;
 
   // LayerGroups
   this.filteredGroup = L.layerGroup().addTo(this.map);
@@ -1716,17 +1748,12 @@ initializeMapBase() {
 
   // Kompakte Switches
   const typeSwitch = $("umsatz-type-switch");
-  const modeSwitch = $("umsatz-mode-switch");
+  const darstellungSwitch = $("umsatz-analysis-switch");
 
   // Werbeoptionen
   const werbeRow = $("werbe-options-row");
   const chkWerbe = $("chk-werbeumsatz");
   const chkMit = $("chk-mitgekauft");
-
-  // Umsatzanalyse (Absolut / Werbeanteil)
-  const umsatzAnalysisRow = this._shadowRoot.querySelector(".umsatz-analysis-row");
-  const btnUmsatzAbs = $("btn-umsatz-abs");
-  const btnWerbeAnteil = $("btn-werbeanteil");
 
   // Bestreuung
   const chkBestreuung = $("chk-bestreuung");
@@ -1752,18 +1779,17 @@ initializeMapBase() {
 
       this.currentMapMode = "wk";
 
-      // WK UI
+      // UI
       wkExtra.style.display = "block";
       umsatzOptionsRow.style.display = "none";
       umsatzPanel.classList.add("hidden");
 
-      // Panel zurückfahren
       panel.classList.remove("expanded");
 
-      // Werbeanalyse ausblenden
-      umsatzAnalysisRow.classList.remove("show");
-      btnUmsatzAbs.classList.add("active");
-      btnWerbeAnteil.classList.remove("active");
+      // Darstellung zurücksetzen
+      this.umsatzDarstellung = "abs";
+      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+      darstellungSwitch.querySelector(".mode-abs").classList.add("active");
 
       // Popups schließen
       $("side-popup")?.classList.remove("show");
@@ -1793,7 +1819,6 @@ initializeMapBase() {
       umsatzOptionsRow.style.display = "flex";
       umsatzPanel.classList.remove("hidden");
 
-      // Panel erweitern
       panel.classList.add("expanded");
 
       setTimeout(() => {
@@ -1808,27 +1833,7 @@ initializeMapBase() {
   }
 
   // ---------------------------------------------------------
-  // ABS / HH Switch
-  // ---------------------------------------------------------
-  if (modeSwitch) {
-    modeSwitch.classList.add("active-left");
-
-    modeSwitch.addEventListener("click", () => {
-      const isHH = this.umsatzMode === "abs";
-      this.umsatzMode = isHH ? "hh" : "abs";
-
-      modeSwitch.classList.toggle("active-right", isHH);
-      modeSwitch.classList.toggle("active-left", !isHH);
-
-      $("side-popup-umsatz")?.classList.remove("show");
-      $("side-popup")?.classList.remove("show");
-
-      this.updateGeoLayer();
-    });
-  }
-
-  // ---------------------------------------------------------
-  // UMSATZTYP (Umsatz / Werbung)
+  // UMSATZTYP (Umsatz / Werbeumsatz)
   // ---------------------------------------------------------
   if (typeSwitch) {
     typeSwitch.classList.add("active-left");
@@ -1844,14 +1849,17 @@ initializeMapBase() {
       // Werbeoptionen sichtbar?
       werbeRow.style.display = isWerbung ? "flex" : "none";
 
-      // Werbeanalyse sichtbar?
+      // Werbeanteil aktivierbar?
+      const werbeAnteilBtn = darstellungSwitch.querySelector(".mode-werbeanteil");
       if (isWerbung) {
-        umsatzAnalysisRow.classList.add("show");
+        werbeAnteilBtn.classList.remove("disabled");
       } else {
-        umsatzAnalysisRow.classList.remove("show");
-        btnUmsatzAbs.classList.add("active");
-        btnWerbeAnteil.classList.remove("active");
-        this.currentMapMode = "umsatz-multi";
+        werbeAnteilBtn.classList.add("disabled");
+
+        // zurück auf Absolut
+        this.umsatzDarstellung = "abs";
+        darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+        darstellungSwitch.querySelector(".mode-abs").classList.add("active");
       }
 
       if (isWerbung) {
@@ -1879,7 +1887,6 @@ initializeMapBase() {
         chkWerbe.checked = true;
       }
 
-      $("side-popup-umsatz")?.classList.remove("show");
       this.updateGeoLayer();
     });
   }
@@ -1893,31 +1900,48 @@ initializeMapBase() {
         chkWerbe.checked = true;
       }
 
-      $("side-popup-umsatz")?.classList.remove("show");
       this.updateGeoLayer();
     });
   }
 
   // ---------------------------------------------------------
-  // Umsatzanalyse: Absolut / Werbeanteil
+  // 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
   // ---------------------------------------------------------
-  if (btnUmsatzAbs && btnWerbeAnteil) {
+  if (darstellungSwitch) {
 
-    btnUmsatzAbs.addEventListener("click", () => {
-      btnUmsatzAbs.classList.add("active");
-      btnWerbeAnteil.classList.remove("active");
+    const btnAbs = darstellungSwitch.querySelector(".mode-abs");
+    const btnHH = darstellungSwitch.querySelector(".mode-hh");
+    const btnWA = darstellungSwitch.querySelector(".mode-werbeanteil");
 
+    btnAbs.addEventListener("click", () => {
+      this.umsatzDarstellung = "abs";
       this.currentMapMode = "umsatz-multi";
-      panel.classList.add("expanded");
+
+      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+      btnAbs.classList.add("active");
+
       this.updateGeoLayer();
     });
 
-    btnWerbeAnteil.addEventListener("click", () => {
-      btnWerbeAnteil.classList.add("active");
-      btnUmsatzAbs.classList.remove("active");
+    btnHH.addEventListener("click", () => {
+      this.umsatzDarstellung = "hh";
+      this.currentMapMode = "umsatz-multi";
 
+      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+      btnHH.classList.add("active");
+
+      this.updateGeoLayer();
+    });
+
+    btnWA.addEventListener("click", () => {
+      if (this.umsatzMainMode !== "werbung") return;
+
+      this.umsatzDarstellung = "werbeanteil";
       this.currentMapMode = "werbeanteil";
-      panel.classList.add("expanded");
+
+      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+      btnWA.classList.add("active");
+
       this.updateGeoLayer();
     });
   }
@@ -1953,10 +1977,6 @@ initializeMapBase() {
   if (chkDoppel) {
     chkDoppel.addEventListener("change", () => {
       this.showCritical = chkDoppel.checked;
-
-      $("side-popup-umsatz")?.classList.remove("show");
-      $("side-popup")?.classList.remove("show");
-
       this.updateGeoLayer();
     });
   }
@@ -1967,10 +1987,6 @@ initializeMapBase() {
   if (chkBestreuung) {
     chkBestreuung.addEventListener("change", () => {
       this.showBestreuung = chkBestreuung.checked;
-
-      $("side-popup-umsatz")?.classList.remove("show");
-      $("side-popup")?.classList.remove("show");
-
       this.updateBestreuungMarkers();
     });
   }
@@ -1981,9 +1997,6 @@ initializeMapBase() {
   if (chkRadius) {
     chkRadius.addEventListener("change", () => {
       this.useRadiusFilter = chkRadius.checked;
-
-      $("side-popup-umsatz")?.classList.remove("show");
-      $("side-popup")?.classList.remove("show");
 
       if (!this.useRadiusFilter) {
         this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
@@ -1998,6 +2011,7 @@ initializeMapBase() {
     });
   }
 }
+
 
 
 
@@ -3380,7 +3394,6 @@ const values = [
   Math.round(info.erfasst_total).toLocaleString("de-DE"),
   (info.pct_erfassung * 100).toFixed(1) + "%",
   Math.round(info.erfasst_valid).toLocaleString("de-DE"),
-  (info.pct_valid * 100).toFixed(1) + "%",
   (info.pct_hochrechnung * 100).toFixed(1) + "%"
 ];
 
