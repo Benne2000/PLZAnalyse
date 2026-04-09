@@ -3473,7 +3473,6 @@ prepareErhebungsInfo() {
     };
   });
 }
-
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3490,7 +3489,6 @@ prepareUmsatzPLZWerte() {
     let original = x;
 
     if (typeof x === "string") {
-      // Tausenderpunkte entfernen, Komma → Punkt
       x = x.replace(/\./g, "").replace(",", ".");
     }
 
@@ -3591,7 +3589,7 @@ prepareUmsatzPLZWerte() {
       if (hh > 0) v._hhValues.push(hh);
 
       // ============================================
-      // Umsatzfelder (mit Debug)
+      // Umsatzfelder (ALLE mit debugSafe)
       // ============================================
       v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
       v.ra         += debugSafe("umsatz_ra", row["value_umsatz_ra_0"]?.raw, plz);
