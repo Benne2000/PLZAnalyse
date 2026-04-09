@@ -1026,6 +1026,29 @@
 
     `;
 
+// Einheitliches Mapping zwischen data-cat und Datenfeldern
+const CAT_KEYS_NORMAL = {
+  stationaer: "umsatz",
+  ra: "ra",
+  online: "onlineshop",   // ⚠ data-cat="online", Feld heißt onlineshop
+  pluscard: "pluscard"
+};
+
+const CAT_KEYS_WERBUNG = {
+  stationaer: "umsatzWerbung",
+  ra: "raWerbung",
+  online: "onlineshopWerbung",
+  pluscard: "pluscardWerbung"
+};
+
+const CAT_KEYS_HH = {
+  stationaer: "umsatzProHaushalt",
+  ra: "raProHaushalt",
+  online: "onlineshopProHaushalt",
+  pluscard: "pluscardProHaushalt"
+};
+
+
 class GeoMapWidget extends HTMLElement {
   constructor() {
     super();
@@ -1968,25 +1991,30 @@ initializeMapBase() {
   // ---------------------------------------------------------
   // Kategorien
   // ---------------------------------------------------------
-  this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
-    toggle.addEventListener("click", () => {
-      const cat = toggle.dataset.cat;
-      if (!cat) return;
+this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
+  toggle.addEventListener("click", () => {
+    const cat = toggle.dataset.cat;
+    if (!cat) return;
 
-      if (this.activeCategories.has(cat)) {
-        this.activeCategories.delete(cat);
-        toggle.classList.remove("active");
-      } else {
-        this.activeCategories.add(cat);
-        toggle.classList.add("active");
-      }
+    if (this.activeCategories.has(cat)) {
+      this.activeCategories.delete(cat);
+      toggle.classList.remove("active");
+    } else {
+      this.activeCategories.add(cat);
+      toggle.classList.add("active");
+    }
 
+    // Modus NICHT zwangsweise auf umsatz-multi setzen,
+    // sondern nur, wenn wir nicht im Werbeanteil sind
+    if (this.currentMapMode !== "werbeanteil") {
       this.currentMapMode = "umsatz-multi";
-      this.activePopupType = "umsatz";
+    }
 
-      this.updateGeoLayer();
-    });
+    this.activePopupType = "umsatz";
+    this.updateGeoLayer();
   });
+});
+
 
   // ---------------------------------------------------------
   // Doppelbestreuung
@@ -2640,63 +2668,6 @@ const anteilWerbeUmsatz =
 }
 
 
-getUmsatzSumForPLZ(v) {
-  const safe = x => Number.isFinite(x) ? x : 0;
-
-  const isWerbungMode = this.umsatzMainMode === "werbung";
-  const useWerbe = this.useWerbeUmsatz !== false;
-  const useZusatz = this.useZusatzUmsatz === true;
-  const useHH = this.umsatzMode === "hh";
-
-  const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
-    if (!isWerbungMode) {
-      return safe(useHH ? baseHH : base);
-    }
-
-    let abs = 0;
-    if (useWerbe) {
-      abs += safe(useHH ? werbHH : werb);
-    }
-    if (useZusatz) {
-      abs += safe(useHH ? zusatzHH : zusatz);
-    }
-    return abs;
-  };
-
-  let sum = 0;
-
-  if (this.activeCategories.has("stationaer")) {
-    sum += pick(
-      v.umsatz, v.umsatzWerbung, v.umsatzZusatz,
-      v.umsatzProHaushalt, v.umsatzWerbungProHaushalt, v.umsatzZusatzProHaushalt
-    );
-  }
-
-  if (this.activeCategories.has("pluscard")) {
-    sum += pick(
-      v.pluscard, v.pluscardWerbung, v.pluscardZusatz,
-      v.pluscardProHaushalt, v.pluscardWerbungProHaushalt, v.pluscardZusatzProHaushalt
-    );
-  }
-
-  if (this.activeCategories.has("ra")) {
-    sum += pick(
-      v.ra, v.raWerbung, v.raZusatz,
-      v.raProHaushalt, v.raWerbungProHaushalt, v.raZusatzProHaushalt
-    );
-  }
-
-  if (this.activeCategories.has("online")) {
-    sum += pick(
-      v.onlineshop, v.onlineshopWerbung, v.onlineshopZusatz,
-      v.onlineshopProHaushalt, v.onlineshopWerbungProHaushalt, v.onlineshopZusatzProHaushalt
-    );
-  }
-
-  return sum;
-}
-
-
   updateNeighbours(filteredData) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
     this.neighbours = computeNeighbours(filteredMarkers);
@@ -2905,6 +2876,8 @@ updateGeoLayer() {
 
   console.groupEnd();
 }
+
+
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
   if (!v) return "#cfd4da";
@@ -2926,9 +2899,7 @@ computeFillColor(plz) {
 
     if (this.umsatzDarstellung === "abs") {
       sum = this.getUmsatzSumForPLZ(v);
-    }
-
-    if (this.umsatzDarstellung === "hh") {
+    } else if (this.umsatzDarstellung === "hh") {
       sum = this.getUmsatzSumForPLZ_HH(v);
     }
 
@@ -2936,35 +2907,10 @@ computeFillColor(plz) {
   }
 
   // -----------------------------
-  // ⭐ WERBEANTEIL (Kategorie-basiert!)
+  // WERBEANTEIL (Kategorie-basiert)
   // -----------------------------
   if (this.currentMapMode === "werbeanteil") {
-
-    let totalNormal = 0;
-    let totalWerbe = 0;
-
-    for (const cat of this.activeCategories) {
-
-      const normalKey = {
-        stationaer: "umsatz",
-        ra: "ra",
-        onlineshop: "onlineshop",
-        pluscard: "pluscard"
-      }[cat];
-
-      const werbeKey = {
-        stationaer: "umsatzWerbung",
-        ra: "raWerbung",
-        onlineshop: "onlineshopWerbung",
-        pluscard: "pluscardWerbung"
-      }[cat];
-
-      totalNormal += v[normalKey] ?? 0;
-      totalWerbe  += v[werbeKey] ?? 0;
-    }
-
-    const ratio = totalNormal > 0 ? totalWerbe / totalNormal : 0;
-
+    const ratio = this.getWerbeAnteilRatioForPLZ(v);
     return this.getWerbeAnteilColor(ratio);
   }
 
@@ -2991,16 +2937,12 @@ computeMaxValue() {
   // UMSATZ ABS / HH
   // -----------------------------
   if (this.currentMapMode === "umsatz-multi") {
-
     Object.values(plzWerte).forEach(v => {
-
       let sum = 0;
 
       if (this.umsatzDarstellung === "abs") {
         sum = this.getUmsatzSumForPLZ(v);
-      }
-
-      if (this.umsatzDarstellung === "hh") {
+      } else if (this.umsatzDarstellung === "hh") {
         sum = this.getUmsatzSumForPLZ_HH(v);
       }
 
@@ -3009,64 +2951,61 @@ computeMaxValue() {
   }
 
   // -----------------------------
-  // WERBEANTEIL (immer 0–1)
+  // WERBEANTEIL (0–1, aber realistisch skaliert)
   // -----------------------------
-if (this.currentMapMode === "werbeanteil") {
+  if (this.currentMapMode === "werbeanteil") {
+    let maxRatio = 0;
 
-  let maxRatio = 0;
+    Object.values(plzWerte).forEach(v => {
+      const ratio = this.getWerbeAnteilRatioForPLZ(v);
+      if (ratio > maxRatio) maxRatio = ratio;
+    });
 
-  Object.values(plzWerte).forEach(v => {
-
-    let totalNormal = 0;
-    let totalWerbe = 0;
-
-    for (const cat of this.activeCategories) {
-
-      const normalKey = {
-        stationaer: "umsatz",
-        ra: "ra",
-        onlineshop: "onlineshop",
-        pluscard: "pluscard"
-      }[cat];
-
-      const werbeKey = {
-        stationaer: "umsatzWerbung",
-        ra: "raWerbung",
-        onlineshop: "onlineshopWerbung",
-        pluscard: "pluscardWerbung"
-      }[cat];
-
-      totalNormal += v[normalKey] ?? 0;
-      totalWerbe  += v[werbeKey] ?? 0;
-    }
-
-    const ratio = totalNormal > 0 ? totalWerbe / totalNormal : 0;
-    if (ratio > maxRatio) maxRatio = ratio;
-  });
-
-  this._maxValueCache = maxRatio || 1;
-  return this._maxValueCache;
-}
+    // Falls alles 0 → trotzdem Skala 0–1
+    this._maxValueCache = maxRatio || 1;
+    return this._maxValueCache;
+  }
 
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
 
+
 getUmsatzSumForPLZ_HH(v) {
   let sum = 0;
 
-  for (const cat of this.activeCategories) {
-    const key = {
-      stationaer: "umsatzProHaushalt",
-      ra: "raProHaushalt",
-      onlineshop: "onlineshopProHaushalt",
-      pluscard: "pluscardProHaushalt"
-    }[cat];
+  const cats = this.activeCategories?.size
+    ? this.activeCategories
+    : new Set(["stationaer", "ra", "online", "pluscard"]);
 
-    if (key) sum += v[key] || 0;
+  for (const cat of cats) {
+    const key = CAT_KEYS_HH[cat];
+    if (key) sum += v[key] ?? 0;
   }
 
   return sum;
+}
+
+getWerbeAnteilRatioForPLZ(v) {
+  let totalNormal = 0;
+  let totalWerbe = 0;
+
+  const cats = this.activeCategories?.size
+    ? this.activeCategories
+    : new Set(["stationaer", "ra", "online", "pluscard"]);
+
+  for (const cat of cats) {
+    const normalKey = CAT_KEYS_NORMAL[cat];
+    const werbeKey  = CAT_KEYS_WERBUNG[cat];
+
+    if (!normalKey || !werbeKey) continue;
+
+    totalNormal += v[normalKey] ?? 0;
+    totalWerbe  += v[werbeKey] ?? 0;
+  }
+
+  if (totalNormal <= 0) return 0;
+  return totalWerbe / totalNormal;
 }
 
 
@@ -3234,15 +3173,21 @@ getDynamicHeatColor(value, max) {
 }
 
 getWerbeAnteilColor(ratio) {
-  if (!Number.isFinite(ratio) || ratio <= 0) return "#fff6d6";
+  // ratio: 0–1
 
-  if (ratio > 0.80) return "#7a0f17";
-  if (ratio > 0.60) return "#b41821";
-  if (ratio > 0.40) return "#e96a3a";
-  if (ratio > 0.20) return "#f6b65b";
-  if (ratio > 0.10) return "#ffe89c";
-  return "#fff6d6";
+  if (!Number.isFinite(ratio) || ratio <= 0) {
+    return "#f7fbff"; // sehr hell
+  }
+
+  if (ratio < 0.10) return "#deebf7"; // 0–10%
+  if (ratio < 0.20) return "#9ecae1"; // 10–20%
+  if (ratio < 0.30) return "#6baed6"; // 20–30%
+  if (ratio < 0.40) return "#4292c6"; // 30–40%
+  if (ratio < 0.50) return "#2171b5"; // 40–50%
+  if (ratio < 0.70) return "#08519c"; // 50–70%
+  return "#08306b";                   // >70%
 }
+
 
 
 updateMarkers() {
