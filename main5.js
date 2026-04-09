@@ -2455,7 +2455,7 @@ showUmsatzPopup(plz, values) {
   const hh = values.haushalte || 0;
 
   const fmtAbs = x => Number(x || 0).toLocaleString("de-DE");
-  const fmtHH  = x => Number(x || 0).toFixed(3);
+  const fmtHH  = x => Number(x || 0).toFixed(2);
 
   const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
 
@@ -2541,7 +2541,7 @@ showUmsatzPopup(plz, values) {
       <thead>
         <tr>
           <th colspan="2" class="subtitle-cell">
-            ${headerLabel} pro HH: ${fmtHH(totalHH)}
+            ${headerLabel} pro HH: ${fmtHH(totalHH)} €
           </th>
         </tr>
       </thead>
