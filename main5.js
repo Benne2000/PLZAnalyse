@@ -2232,7 +2232,6 @@ createMarkerIcon(nl, isPhantom = false) {
 
   return this.iconCache[key];
 }
-
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
@@ -2240,30 +2239,24 @@ showPopup(feature) {
 
   const note = feature.properties?.note || "Keine Notiz";
 
-  // 🔥 Umsatz-Popup schließen
-const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-if (popupUmsatz) {
-  popupUmsatz.classList.remove("show");
-  popupUmsatz.classList.add("hidden");
-}
-
-
-  // 🔥 Daten der aktiven Erhebung holen
-  const daten = this.filteredKennwerte?.[plz];
-
-  if (!daten) {
-    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
+  // Umsatz-Popup schließen
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+  if (popupUmsatz) {
+    popupUmsatz.classList.remove("show");
+    popupUmsatz.classList.add("hidden");
   }
 
-  // 🔥 Symbol bestimmen (kritisch > HZ > normal)
+  // WK-Daten
+  const daten = this.filteredKennwerte?.[plz] || {};
+  // Umsatzdaten (PRO HH, Haushalte, Bon)
+  const umsatz = this.filteredPLZWerte?.[plz] || {};
+
+  // Symbol
   let symbol = "🔴";
-  if (daten?.isCritical) {
-    symbol = "⚠️";
-  } else if (daten?.isHZ) {
-    symbol = "🟢";
-  }
+  if (daten?.isCritical) symbol = "⚠️";
+  else if (daten?.isHZ) symbol = "🟢";
 
-  // Beschriftungen für Haupttabelle
+  // Popup-Felder
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
     value_umsatz_p_hh_0: "Umsatz p. HH",
@@ -2279,14 +2272,19 @@ if (popupUmsatz) {
     value_auflage_0: "Auflage"
   };
 
-  const beschreibungenSide = {
-    value_wk_potentiell_0: "WK in %",
-    value_hz_potentiell_0: "HZ-Werbekosten"
+  // Umsatzdaten korrekt einfügen
+  daten.value_umsatz_p_hh_0 = { raw: umsatz.umsatzProHaushalt ?? 0 };
+  daten.value_haushalte_0 = { raw: umsatz.haushalte ?? 0 };
+
+  // Durchschnittsbon korrekt berechnen
+  const kd = daten.value_kd_erhebung_0?.raw ?? 0;
+  const umsatzErhebung = daten.value_ums_erhebung_0?.raw ?? 0;
+  daten.value_bon_erhebung_0 = {
+    raw: kd > 0 ? Number((umsatzErhebung / kd).toFixed(2)) : 0
   };
 
-  // 🔥 Haupttabelle aufbauen
+  // Tabelle aufbauen
   let rows = "";
-
   Object.entries(beschreibungen).forEach(([id, label], index) => {
     const rawValue = daten?.[id]?.raw;
     const wert = typeof rawValue === "number"
@@ -2305,10 +2303,8 @@ if (popupUmsatz) {
     `;
   });
 
-  // 🔥 WK-Popup holen
   const sidePopup = this._shadowRoot.getElementById('side-popup');
 
-  // 🔥 Inhalt setzen
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
@@ -2324,53 +2320,17 @@ if (popupUmsatz) {
     </table>
   `;
 
-  // 🔥 Zusatzwerte
-  const isHZ = daten?.isHZ === false;
-  const umsatz = daten?.value_hr_n_umsatz_0?.raw;
-
-  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
-    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
-
-    const wkPotentiell = typeof wkPotentiellRaw === "number"
-      ? wkPotentiellRaw.toLocaleString("de-DE")
-      : "–";
-
-    const hzPotentiell = typeof hzPotentiellRaw === "number"
-      ? hzPotentiellRaw.toLocaleString("de-DE")
-      : "–";
-
-    const extraTable = `
-      <table class="extra-table">
-        <thead>
-          <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-            <td class="value-cell">${wkPotentiell}</td>
-          </tr>
-          <tr>
-            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-            <td class="value-cell">${hzPotentiell}</td>
-          </tr>
-        </tbody>
-      </table>
-    `;
-    sidePopup.insertAdjacentHTML('beforeend', extraTable);
-  }
-
-  // 🔥 Animation
+  // Animation
   sidePopup.classList.remove("hidden");
   void sidePopup.offsetWidth;
   sidePopup.classList.add("show");
 
-  // Close-Button
   sidePopup.querySelector('.close-btn').onclick = () => {
     sidePopup.classList.remove('show');
     sidePopup.classList.add('hidden');
   };
 }
+
 
 
 showUmsatzPopup(plz, values) {
@@ -2875,7 +2835,6 @@ updateGeoLayer() {
 
   console.groupEnd();
 }
-
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
   if (!v) return "#cfd4da";
@@ -2892,14 +2851,15 @@ computeFillColor(plz) {
     return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
   }
 
-  // ⭐ Werbeanteil-Modus
+  // Werbeanteil-Modus
   if (this.currentMapMode === "werbeanteil") {
-    const ratio = v.werbeAnteil || 0;
+    const ratio = v.werbeAnteil ?? 0;
     return this.getWerbeAnteilColor(ratio);
   }
 
   return "#cfd4da";
 }
+
 
 computeMaxValue() {
   const plzWerte = this.filteredPLZWerte || {};
@@ -3988,23 +3948,21 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
-
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
   const aggregated = {};
   const unfilteredUmsatzByPLZ = {};
 
-  // 1️⃣ Ungefilterter Umsatz pro PLZ
+  // Ungefilterter Umsatz pro PLZ
   this.filteredData.forEach(row => {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
     const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
-
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
   });
 
-  // 2️⃣ Aggregation für WK
+  // Aggregation WK
   this.filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
@@ -4034,10 +3992,9 @@ computeWKKennwerte() {
     if (typeof potHz === "number") entry.potHzKosten.push(potHz);
   });
 
-  // 3️⃣ WK-Kennwerte final berechnen
   const base = this.filteredKennwerte || {};
   const newFilteredKennwerte = {};
-  const newFilteredPLZWerte = this.filteredPLZWerte ? { ...this.filteredPLZWerte } : {};
+  const newFilteredPLZWerte = {};
 
   Object.entries(aggregated).forEach(([plz, entry]) => {
     const umsatzNetto = entry.umsatzNetto;
@@ -4064,7 +4021,9 @@ computeWKKennwerte() {
     const isCritical = entry.hzCount > 1;
 
     const baseEntry = base[plz] || {};
+    const old = this.filteredPLZWerte?.[plz] || {};
 
+    // WK-Kennwerte
     newFilteredKennwerte[plz] = {
       ...baseEntry,
       isHZ,
@@ -4077,65 +4036,51 @@ computeWKKennwerte() {
       value_wk_potentiell_0: { raw: potHzPercent }
     };
 
-    if (!newFilteredPLZWerte[plz]) newFilteredPLZWerte[plz] = {};
+    // Umsatzdaten übernehmen
+    newFilteredPLZWerte[plz] = {
+      wk: wkPercent,
+      wkPot: potHzPercent,
+      hz: isHZ,
 
-    // WK
-    newFilteredPLZWerte[plz].wk = wkPercent;
-    newFilteredPLZWerte[plz].wkPot = potHzPercent;
-    newFilteredPLZWerte[plz].hz = isHZ;
+      umsatz: old.umsatz ?? 0,
+      ra: old.ra ?? 0,
+      onlineshop: old.onlineshop ?? 0,
+      pluscard: old.pluscard ?? 0,
+      haushalte: old.haushalte ?? 0,
 
-    // Umsatzfelder aus bestehendem Eintrag erhalten
-// am Ende von computeWKKennwerte()
-const old = this.filteredPLZWerte?.[plz] || {};
+      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
+      raProHaushalt: old.raProHaushalt ?? 0,
+      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
+      pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
 
-newFilteredPLZWerte[plz] = {
-  // WK
-  wk: wkPercent,
-  wkPot: potHzPercent,
-  hz: isHZ,
+      umsatzWerbung: old.umsatzWerbung ?? 0,
+      raWerbung: old.raWerbung ?? 0,
+      onlineshopWerbung: old.onlineshopWerbung ?? 0,
+      pluscardWerbung: old.pluscardWerbung ?? 0,
 
-  // Umsatzfelder aus prepareUmsatzPLZWerte
-  umsatz: old.umsatz ?? 0,
-  ra: old.ra ?? 0,
-  onlineshop: old.onlineshop ?? 0,
-  pluscard: old.pluscard ?? 0,
-  haushalte: old.haushalte ?? 0,
+      umsatzZusatz: old.umsatzZusatz ?? 0,
+      raZusatz: old.raZusatz ?? 0,
+      onlineshopZusatz: old.onlineshopZusatz ?? 0,
+      pluscardZusatz: old.pluscardZusatz ?? 0,
 
-  umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
-  raProHaushalt: old.raProHaushalt ?? 0,
-  onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
-  pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
+      umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
+      raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
+      onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
+      pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
 
-  umsatzWerbung: old.umsatzWerbung ?? 0,
-  raWerbung: old.raWerbung ?? 0,
-  onlineshopWerbung: old.onlineshopWerbung ?? 0,
-  pluscardWerbung: old.pluscardWerbung ?? 0,
+      umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
+      raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
+      onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
+      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
 
-  umsatzZusatz: old.umsatzZusatz ?? 0,
-  raZusatz: old.raZusatz ?? 0,
-  onlineshopZusatz: old.onlineshopZusatz ?? 0,
-  pluscardZusatz: old.pluscardZusatz ?? 0,
-
-  umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
-  raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
-  onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
-  pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
-
-  umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
-  raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
-  onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
-  pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
-
-  // ✅ Werbeanteil aus Umsatzaggregation übernehmen
-  werbeAnteil: old.werbeAnteil ?? 0
-};
-
+      // WICHTIG: Werbeanteil erhalten
+      werbeAnteil: old.werbeAnteil ?? 0
+    };
   });
 
   this.filteredKennwerte = newFilteredKennwerte;
   this.filteredPLZWerte = newFilteredPLZWerte;
 }
-
 
 
 
