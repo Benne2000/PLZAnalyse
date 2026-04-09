@@ -209,42 +209,85 @@
   filter: grayscale(100%);
 }
 
-/* ------------------------------------------------------ */
-/* Umsatz-Balken + Legende                                */
-/* ------------------------------------------------------ */
+/* Popup Grundlayout */
+#side-popup-umsatz {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-.umsatz-share-bar {
-  margin-top: 16px;
-  height: 18px;
+/* Header */
+.umsatz-header {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.umsatz-subheader {
+  font-size: 0.95rem;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+/* Tabellen-Layout */
+.umsatz-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 24px;
+}
+
+.umsatz-grid .label {
+  font-weight: 500;
+  color: #333;
+}
+
+.umsatz-grid .value {
+  text-align: right;
+  font-weight: 600;
+  color: #111;
+}
+
+/* Abschnittstitel */
+.section-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  color: #444;
+}
+
+/* Balken */
+.umsatz-bar {
+  height: 12px;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #b41821;
   display: flex;
 }
 
-.share-segment {
+.umsatz-bar div {
   height: 100%;
 }
 
-.share-stationaer { background: #b41821; } /* Rot */
-.share-pluscard   { background: #1f78b4; } /* Blau */
-.share-ra         { background: #33a02c; } /* Grün */
-.share-online     { background: #ffb000; } /* Amber */
-
+.share-stationaer { background: #b41821; }
+.share-pluscard   { background: #1f78b4; }
+.share-ra         { background: #33a02c; }
+.share-online     { background: #ffb000; }
 
 /* Legende */
 .umsatz-legend {
-  margin-top: 6px;
-  font-size: 0.75rem;
-  color: black;
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #444;
 }
 
 .umsatz-legend span {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 4px;
-  margin-right: 10px;
 }
+
 
 /* ------------------------------------------------------ */
 /* HH-Kennzahlen-Tabelle                                  */
@@ -2363,7 +2406,6 @@ panel.classList.add("panel-medium");
     sidePopup.classList.add('hidden');
   };
 }
-
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -2372,10 +2414,10 @@ showUmsatzPopup(plz, values) {
     popupWK.classList.remove("show");
     popupWK.classList.add("hidden");
   }
+
   const panel = this._shadowRoot.getElementById("map-control-panel");
   panel.classList.remove("panel-large");
   panel.classList.add("panel-medium");
-
 
   const isWerbungMode = this.umsatzMainMode === "werbung";
   const useWerbe = this.useWerbeUmsatz === true;
@@ -2386,10 +2428,7 @@ showUmsatzPopup(plz, values) {
 
   const pickPair = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
     if (!isWerbungMode) {
-      return {
-        abs: base,
-        hh: baseHH
-      };
+      return { abs: base, hh: baseHH };
     }
 
     let abs = 0;
@@ -2450,99 +2489,64 @@ showUmsatzPopup(plz, values) {
     online:     this.activeCategories.has("online")
   };
 
-  const totalWerbeAbs =
-    (active.stationaer ? values.umsatzWerbung : 0) +
-    (active.pluscard   ? values.pluscardWerbung : 0) +
-    (active.ra         ? values.raWerbung : 0) +
-    (active.online     ? values.onlineshopWerbung : 0);
+  const totalAbs =
+    (active.stationaer ? st.abs : 0) +
+    (active.pluscard   ? pc.abs : 0) +
+    (active.ra         ? ra.abs : 0) +
+    (active.online     ? os.abs : 0);
 
-  const totalNormalAbs =
-    (active.stationaer ? values.umsatz : 0) +
-    (active.pluscard   ? values.pluscard : 0) +
-    (active.ra         ? values.ra : 0) +
-    (active.online     ? values.onlineshop : 0);
-
-  const anteilWerbeUmsatz =
-    totalNormalAbs > 0
-      ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1)
-      : "–";
+  const totalHH =
+    (active.stationaer ? st.hh : 0) +
+    (active.pluscard   ? pc.hh : 0) +
+    (active.ra         ? ra.hh : 0) +
+    (active.online     ? os.hh : 0);
 
   const hh = values.haushalte || 0;
 
   const fmtAbs = x => Number(x || 0).toLocaleString("de-DE");
   const fmtHH  = x => Number(x || 0).toFixed(2);
-
   const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
-
-  const stationaer = st.abs;
-  const pluscard   = pc.abs;
-  const raAbs      = ra.abs;
-  const online     = os.abs;
-
-  const stHH = st.hh;
-  const pcHH = pc.hh;
-  const raHH = ra.hh;
-  const osHH = os.hh;
-
-  const totalAbs =
-    (active.stationaer ? stationaer : 0) +
-    (active.pluscard   ? pluscard   : 0) +
-    (active.ra         ? raAbs      : 0) +
-    (active.online     ? online     : 0);
-
-  const totalHH =
-    (active.stationaer ? stHH : 0) +
-    (active.pluscard   ? pcHH : 0) +
-    (active.ra         ? raHH : 0) +
-    (active.online     ? osHH : 0);
-
-  const headerLabel = (() => {
-    if (!isWerbungMode) return "Gesamtumsatz";
-    if (useWerbe && useZusatz) return "Werbeumsatz + Mitgekauft";
-    if (useWerbe) return "Werbeumsatz";
-    return "Mitgekauft";
-  })();
 
   popup.innerHTML = `
     <button class="close-btn">×</button>
 
-    <table>
-      <thead>
-        <tr><th colspan="2" class="title-cell">${note}</th></tr>
-        <tr><th colspan="2" class="subtitle-cell">
-          ${headerLabel}: ${totalAbs.toLocaleString("de-DE")} €
-        </th></tr>
-      </thead>
+    <div class="umsatz-header">${note}</div>
+    <div class="umsatz-subheader">
+      Gesamtumsatz: ${fmtAbs(totalAbs)} €<br>
+      pro Haushalt: ${fmtHH(totalHH)} €
+    </div>
 
-      <tbody>
-        <tr class="${active.stationaer ? "" : "disabled"}">
-          <td class="label-cell">Stationär</td>
-          <td class="value-cell">${fmtAbs(stationaer)}</td>
-        </tr>
-        <tr class="${active.pluscard ? "" : "disabled"}">
-          <td class="label-cell">Pluscard</td>
-          <td class="value-cell">${fmtAbs(pluscard)}</td>
-        </tr>
-        <tr class="${active.ra ? "" : "disabled"}">
-          <td class="label-cell">R&A</td>
-          <td class="value-cell">${fmtAbs(raAbs)}</td>
-        </tr>
-        <tr class="${active.online ? "" : "disabled"}">
-          <td class="label-cell">KUBE OS</td>
-          <td class="value-cell">${fmtAbs(online)}</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Anteil Werbeumsatz</td>
-          <td class="value-cell">${anteilWerbeUmsatz} %</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="section-title">Umsatz nach Kategorien</div>
 
-    <div class="umsatz-share-bar">
-      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer, totalAbs)}%"></div>` : ""}
-      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard, totalAbs)}%"></div>`   : ""}
-      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(raAbs, totalAbs)}%"></div>`       : ""}
-      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online, totalAbs)}%"></div>`      : ""}
+    <div class="umsatz-grid">
+      <div class="label">Stationär</div>
+      <div class="value">${fmtAbs(st.abs)} €</div>
+      <div class="label">Stationär / HH</div>
+      <div class="value">${fmtHH(st.hh)} €</div>
+
+      <div class="label">Pluscard</div>
+      <div class="value">${fmtAbs(pc.abs)} €</div>
+      <div class="label">Pluscard / HH</div>
+      <div class="value">${fmtHH(pc.hh)} €</div>
+
+      <div class="label">R&A</div>
+      <div class="value">${fmtAbs(ra.abs)} €</div>
+      <div class="label">R&A / HH</div>
+      <div class="value">${fmtHH(ra.hh)} €</div>
+
+      <div class="label">KUBE OS</div>
+      <div class="value">${fmtAbs(os.abs)} €</div>
+      <div class="label">KUBE OS / HH</div>
+      <div class="value">${fmtHH(os.hh)} €</div>
+    </div>
+
+    <div class="section-title">Umsatzanteile</div>
+
+    <div class="umsatz-bar">
+      ${active.stationaer ? `<div class="share-stationaer" style="width:${pct(st.abs, totalAbs)}%"></div>` : ""}
+      ${active.pluscard   ? `<div class="share-pluscard"   style="width:${pct(pc.abs, totalAbs)}%"></div>` : ""}
+      ${active.ra         ? `<div class="share-ra"         style="width:${pct(ra.abs, totalAbs)}%"></div>` : ""}
+      ${active.online     ? `<div class="share-online"     style="width:${pct(os.abs, totalAbs)}%"></div>` : ""}
     </div>
 
     <div class="umsatz-legend">
@@ -2551,40 +2555,6 @@ showUmsatzPopup(plz, values) {
       <span><span style="color:#33a02c;">⬤</span> R&A</span>
       <span><span style="color:#ffb000;">⬤</span> KUBE OS</span>
     </div>
-
-    <table class="hh-table">
-      <thead>
-        <tr>
-          <th colspan="2" class="subtitle-cell">
-            ${headerLabel} pro HH: ${fmtHH(totalHH)} €
-          </th>
-        </tr>
-      </thead>
-
-      <tbody>
-        <tr><td class="label-cell">Haushalte</td><td class="value-cell">${hh.toLocaleString("de-DE")}</td></tr>
-
-        <tr class="${active.stationaer ? "" : "disabled"}">
-          <td class="label-cell">Stationär pro HH</td>
-          <td class="value-cell">${fmtHH(stHH)}</td>
-        </tr>
-
-        <tr class="${active.pluscard ? "" : "disabled"}">
-          <td class="label-cell">Pluscard pro HH</td>
-          <td class="value-cell">${fmtHH(pcHH)}</td>
-        </tr>
-
-        <tr class="${active.ra ? "" : "disabled"}">
-          <td class="label-cell">R&A pro HH</td>
-          <td class="value-cell">${fmtHH(raHH)}</td>
-        </tr>
-
-        <tr class="${active.online ? "" : "disabled"}">
-          <td class="label-cell">KUBE OS pro HH</td>
-          <td class="value-cell">${fmtHH(osHH)}</td>
-        </tr>
-      </tbody>
-    </table>
   `;
 
   popup.classList.remove("hidden");
