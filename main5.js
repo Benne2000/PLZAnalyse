@@ -2568,9 +2568,6 @@ showUmsatzPopup(plz, values) {
 
     <div class="section-title">Haushalte</div>
     <div class="umsatz-grid">
-      <div class="label"><strong>Kategorie</strong></div>
-      <div class="value"><strong>Absolut</strong></div>
-      <div class="value"><strong>pro HH</strong></div>
 
       <div class="label">Haushalte</div>
       <div class="value">${hh.toLocaleString("de-DE")}</div>
@@ -2580,6 +2577,11 @@ showUmsatzPopup(plz, values) {
     <div class="section-title">Umsatz nach Kategorien</div>
 
     <div class="umsatz-grid">
+
+       <div class="label"><strong>Kategorie</strong></div>
+      <div class="value"><strong>Absolut</strong></div>
+      <div class="value"><strong>pro HH</strong></div>
+
       <div class="label ${!active.stationaer ? "disabled-cell" : ""}">Stationär</div>
       <div class="value ${!active.stationaer ? "disabled-cell" : ""}">${fmtAbs(st.abs)} €</div>
       <div class="value ${!active.stationaer ? "disabled-cell" : ""}">${fmtHH(st.hh)} €</div>
