@@ -943,55 +943,46 @@
     </div>
   </div>
 
-  <!-- CARD 2: UMSATZ-EINSTELLUNGEN -->
-  <div id="umsatz-panel" class="panel-card hidden">
+<!-- CARD 2: UMSATZ-EINSTELLUNGEN -->
+<div id="umsatz-panel" class="panel-card hidden">
 
-    <div class="panel-title">Umsatz-Einstellungen</div>
+  <div class="panel-title">Umsatz-Einstellungen</div>
 
-    <!-- Umsatztyp -->
-    <div class="switch-label">Umsatztyp</div>
-    <div id="umsatz-type-switch" class="compact-switch">
-      <span class="mode-left">Umsatz</span>
-      <span class="mode-right">Werbung</span>
-    </div>
-
-    <!-- Darstellung -->
-    <div class="switch-label">Darstellung</div>
-    <div id="umsatz-mode-switch" class="compact-switch">
-      <span class="mode-left">Absolut</span>
-      <span class="mode-right">pro HH</span>
-    </div>
-
-    <!-- Werbeoptionen (nur bei Werbung sichtbar) -->
-    <div id="werbe-options-row" class="option-row hidden">
-      <label class="big-check">
-        <input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz
-      </label>
-      <label class="big-check">
-        <input type="checkbox" id="chk-mitgekauft"> Mitgekauft
-      </label>
-    </div>
-
-    <!-- ⭐ Umsatzanalyse: Absolut / Werbeanteil (nur bei Werbung sinnvoll) -->
-    <div class="switch-row umsatz-analysis-row">
-      <button id="btn-umsatz-abs" class="switch-btn active">
-        <span class="icon">📊</span> Absolut
-      </button>
-
-      <button id="btn-werbeanteil" class="switch-btn">
-        <span class="icon">📈</span> Werbeanteil
-      </button>
-    </div>
-
-    <!-- Kategorien -->
-    <div class="category-grid">
-      <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
-      <div class="category-toggle" data-cat="pluscard">💳 Pluscard</div>
-      <div class="category-toggle" data-cat="ra">📦 R&A</div>
-      <div class="category-toggle" data-cat="online">🛒 Online</div>
-    </div>
-
+  <!-- Umsatztyp -->
+  <div class="switch-label">Umsatztyp</div>
+  <div id="umsatz-type-switch" class="compact-switch">
+    <span class="mode-left">Umsatz</span>
+    <span class="mode-right">Werbeumsatz</span>
   </div>
+
+  <!-- Werbeoptionen (nur bei Werbeumsatz sichtbar) -->
+  <div id="werbe-options-row" class="option-row hidden">
+    <label class="big-check">
+      <input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz
+    </label>
+    <label class="big-check">
+      <input type="checkbox" id="chk-mitgekauft"> Mitgekauft
+    </label>
+  </div>
+
+  <!-- Darstellung: 3-Wege-Switch -->
+  <div class="switch-label">Darstellung</div>
+  <div id="umsatz-analysis-switch" class="triple-switch">
+    <span class="mode-abs active">Absolut</span>
+    <span class="mode-hh">pro HH</span>
+    <span class="mode-werbeanteil">Werbeanteil</span>
+  </div>
+
+  <!-- Kategorien -->
+  <div class="category-grid">
+    <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
+    <div class="category-toggle" data-cat="pluscard">💳 Pluscard</div>
+    <div class="category-toggle" data-cat="ra">📦 R&A</div>
+    <div class="category-toggle" data-cat="online">🛒 KUBE OS</div>
+  </div>
+
+</div>
+
 
 </div>
 
@@ -3359,12 +3350,11 @@ renderErhebungsInfoTable() {
 
   const headers = [
     { label: 'NL', width: '15px', class: 'nl-col-nl' },
-    { label: 'Jahresumsatz', width: '60px', class: 'nl-col-jahr' },
-    { label: 'Erfasst (Zeitraum)', width: '45px', class: 'nl-col-erf' },
+    { label: 'Umsatz (Hochrechnung)', width: '70px', class: 'nl-col-jahr' },
+    { label: 'Erfasst (Zeitraum)', width: '55px', class: 'nl-col-erf' },
     { label: '%', width: '25px', class: 'nl-col-pct1' },
-    { label: 'Davon Valide', width: '50px', class: 'nl-col-val' },
-    { label: '%', width: '25px', class: 'nl-col-pct2' },
-    { label: 'Abdeckung', width: '50px', class: 'nl-col-abd' }
+    { label: 'Davon Valide', width: '55px', class: 'nl-col-val' },
+    { label: 'Abdeckung', width: '55px', class: 'nl-col-abd' }
   ];
 
   headers.forEach(h => {
