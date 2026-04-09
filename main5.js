@@ -208,8 +208,10 @@
   opacity: 0.35;
   filter: grayscale(100%);
 }
+/* ------------------------------------------------------ */
+/* UMSATZ-POPUP (sauber, stabil, bündig, wie WK-Popup)    */
+/* ------------------------------------------------------ */
 
-/* Umsatz-Popup bündig & identisch zum WK-Popup */
 #side-popup-umsatz {
   position: absolute;
   right: 0;
