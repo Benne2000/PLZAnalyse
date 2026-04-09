@@ -208,23 +208,32 @@
   opacity: 0.35;
   filter: grayscale(100%);
 }
-/* Umsatz-Popup bündig mit Panel */
+
+/* Umsatz-Popup bündig & identisch zum WK-Popup */
 #side-popup-umsatz {
-  width: 25% !important;     /* exakt wie Panel */
+  position: absolute;
   right: 0;
-  padding: 0;                /* wichtig! sonst breiter als Panel */
-  box-sizing: border-box;
+  top: 0;
+  width: 25%;
+  height: 70%;
+  background: white;
   border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
-  background: white;
-  color: #b41821;
-  position: absolute;
-  top: 0;
-  height: 70%;
+  box-sizing: border-box;
   overflow-y: auto;
+  z-index: 99999;
+
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-/* Header-Balken */
+#side-popup-umsatz.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Header */
 #side-popup-umsatz .popup-header {
   background: #b41821;
   color: white;
@@ -236,7 +245,6 @@
   align-items: center;
 }
 
-/* Close Button */
 #side-popup-umsatz .popup-header .close-btn {
   background: white;
   color: #b41821;
@@ -247,12 +255,11 @@
   cursor: pointer;
 }
 
-/* Abstand & Fett für Summen */
+/* Summenblock */
 .umsatz-subheader {
-  margin-top: 16px;
-  margin-bottom: 16px;
+  padding: 14px 12px 4px 12px;
   font-size: 0.95rem;
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 .umsatz-subheader .strong {
@@ -260,12 +267,29 @@
   color: #000;
 }
 
-/* 2-Spalten-Grid erzwingen */
+/* Abschnittstitel */
+.section-title {
+  margin: 12px 0 6px 0;
+  padding: 6px 12px;
+  background: #f3f3f3;
+  border-top: 1px solid #b41821;
+  border-bottom: 1px solid #b41821;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+/* 2-Spalten-Grid */
 .umsatz-grid {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 10px 20px !important;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 20px;
   padding: 0 12px;
+}
+
+.umsatz-grid .label {
+  font-weight: 500;
+  color: #333;
 }
 
 .umsatz-grid .value {
@@ -274,25 +298,13 @@
   color: #111;
 }
 
-/* Abschnittstitel */
-.section-title {
-  font-size: 0.95rem;
-  font-weight: 600;
-  margin-top: 12px;
-  margin-bottom: 4px;
-  color: #444;
-}
-
 /* Balken */
 .umsatz-bar {
   height: 12px;
   border-radius: 6px;
   overflow: hidden;
   display: flex;
-}
-
-.umsatz-bar div {
-  height: 100%;
+  margin: 8px 12px;
 }
 
 .share-stationaer { background: #b41821; }
@@ -304,15 +316,11 @@
 .umsatz-legend {
   display: flex;
   gap: 12px;
+  padding: 0 12px 12px 12px;
   font-size: 0.85rem;
   color: #444;
 }
 
-.umsatz-legend span {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
 
 
 /* ------------------------------------------------------ */
@@ -2435,7 +2443,6 @@ panel.classList.add("panel-medium");
     sidePopup.classList.add('hidden');
   };
 }
-
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -2457,7 +2464,6 @@ showUmsatzPopup(plz, values) {
 
   const pickPair = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
     if (!isWerbungMode) return { abs: base, hh: baseHH };
-
     let abs = 0, hh = 0;
     if (useWerbe) { abs += werb; hh += werbHH; }
     if (useZusatz) { abs += zusatz; hh += zusatzHH; }
@@ -2501,13 +2507,6 @@ showUmsatzPopup(plz, values) {
   const fmtHH  = x => Number(x || 0).toFixed(2);
   const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
 
-  const headerLabel = (() => {
-    if (!isWerbungMode) return "Gesamtumsatz";
-    if (useWerbe && useZusatz) return "Werbeumsatz + Mitgekauft";
-    if (useWerbe) return "Werbeumsatz";
-    return "Mitgekauft";
-  })();
-
   const totalWerbeAbs =
     (active.stationaer ? values.umsatzWerbung : 0) +
     (active.pluscard   ? values.pluscardWerbung : 0) +
@@ -2524,7 +2523,7 @@ showUmsatzPopup(plz, values) {
     </div>
 
     <div class="umsatz-subheader">
-      <span class="strong">${headerLabel}: ${fmtAbs(totalAbs)} €</span><br>
+      <span class="strong">Gesamtumsatz: ${fmtAbs(totalAbs)} €</span><br>
       <span class="strong">pro Haushalt: ${fmtHH(totalHH)} €</span><br>
       <span>Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
     </div>
