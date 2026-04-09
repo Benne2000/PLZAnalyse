@@ -1748,6 +1748,7 @@ zoomToFilteredPLZ() {
 }
 
 initializeMapBase() {
+ 
 
   // Helper
   const $ = id => this._shadowRoot.getElementById(id);
@@ -1813,6 +1814,7 @@ initializeMapBase() {
 
   // Doppelbestreuung
   const chkDoppel = $("chk-doppelbestreuung");
+  this.showCritical = chkDoppel.checked;
 
   // Radiusfilter
   const chkRadius = $("chk-radiusfilter");
@@ -2495,14 +2497,23 @@ showUmsatzPopup(plz, values) {
   const fmtHH  = x => Number(x || 0).toFixed(2);
   const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
 
-  const totalWerbeAbs =
-    (active.stationaer ? values.umsatzWerbung : 0) +
-    (active.pluscard   ? values.pluscardWerbung : 0) +
-    (active.ra         ? values.raWerbung : 0) +
-    (active.online     ? values.onlineshopWerbung : 0);
+const totalNormalAbs =
+  (active.stationaer ? values.umsatz : 0) +
+  (active.pluscard   ? values.pluscard : 0) +
+  (active.ra         ? values.ra : 0) +
+  (active.online     ? values.onlineshop : 0);
 
-  const anteilWerbeUmsatz =
-    totalAbs > 0 ? ((totalWerbeAbs / totalAbs) * 100).toFixed(1) : "–";
+const totalWerbeAbs =
+  (active.stationaer ? values.umsatzWerbung : 0) +
+  (active.pluscard   ? values.pluscardWerbung : 0) +
+  (active.ra         ? values.raWerbung : 0) +
+  (active.online     ? values.onlineshopWerbung : 0);
+
+const anteilWerbeUmsatz =
+  totalNormalAbs > 0
+    ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1)
+    : "–";
+
 
   popup.innerHTML = `
     <div class="popup-header">
