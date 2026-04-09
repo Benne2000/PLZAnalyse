@@ -2905,7 +2905,6 @@ updateGeoLayer() {
 
   console.groupEnd();
 }
-
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
   if (!v) return "#cfd4da";
@@ -2919,19 +2918,17 @@ computeFillColor(plz) {
   }
 
   // -----------------------------
-  // UMSATZ-MODUS (ABS / HH)
+  // UMSATZ ABS / HH
   // -----------------------------
   if (this.currentMapMode === "umsatz-multi") {
 
     let sum = 0;
 
-    // ABSOLUT
     if (this.umsatzDarstellung === "abs") {
       sum = this.getUmsatzSumForPLZ(v);
     }
 
-    // PRO HAUSHALT
-    else if (this.umsatzDarstellung === "hh") {
+    if (this.umsatzDarstellung === "hh") {
       sum = this.getUmsatzSumForPLZ_HH(v);
     }
 
@@ -2939,16 +2936,40 @@ computeFillColor(plz) {
   }
 
   // -----------------------------
-  // WERBEANTEIL-MODUS
+  // ⭐ WERBEANTEIL (Kategorie-basiert!)
   // -----------------------------
   if (this.currentMapMode === "werbeanteil") {
-    const ratio = v.werbeAnteil || 0;
+
+    let totalNormal = 0;
+    let totalWerbe = 0;
+
+    for (const cat of this.activeCategories) {
+
+      const normalKey = {
+        stationaer: "umsatz",
+        ra: "ra",
+        onlineshop: "onlineshop",
+        pluscard: "pluscard"
+      }[cat];
+
+      const werbeKey = {
+        stationaer: "umsatzWerbung",
+        ra: "raWerbung",
+        onlineshop: "onlineshopWerbung",
+        pluscard: "pluscardWerbung"
+      }[cat];
+
+      totalNormal += v[normalKey] ?? 0;
+      totalWerbe  += v[werbeKey] ?? 0;
+    }
+
+    const ratio = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+
     return this.getWerbeAnteilColor(ratio);
   }
 
   return "#cfd4da";
 }
-
 
 computeMaxValue() {
   const plzWerte = this.filteredPLZWerte || {};
@@ -2990,10 +3011,42 @@ computeMaxValue() {
   // -----------------------------
   // WERBEANTEIL (immer 0–1)
   // -----------------------------
-  if (this.currentMapMode === "werbeanteil") {
-    this._maxValueCache = 1;
-    return 1;
-  }
+if (this.currentMapMode === "werbeanteil") {
+
+  let maxRatio = 0;
+
+  Object.values(plzWerte).forEach(v => {
+
+    let totalNormal = 0;
+    let totalWerbe = 0;
+
+    for (const cat of this.activeCategories) {
+
+      const normalKey = {
+        stationaer: "umsatz",
+        ra: "ra",
+        onlineshop: "onlineshop",
+        pluscard: "pluscard"
+      }[cat];
+
+      const werbeKey = {
+        stationaer: "umsatzWerbung",
+        ra: "raWerbung",
+        onlineshop: "onlineshopWerbung",
+        pluscard: "pluscardWerbung"
+      }[cat];
+
+      totalNormal += v[normalKey] ?? 0;
+      totalWerbe  += v[werbeKey] ?? 0;
+    }
+
+    const ratio = totalNormal > 0 ? totalWerbe / totalNormal : 0;
+    if (ratio > maxRatio) maxRatio = ratio;
+  });
+
+  this._maxValueCache = maxRatio || 1;
+  return this._maxValueCache;
+}
 
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
