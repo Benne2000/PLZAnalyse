@@ -3473,6 +3473,7 @@ prepareErhebungsInfo() {
     };
   });
 }
+
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3698,8 +3699,6 @@ prepareUmsatzPLZWerte() {
     { plzCount: Object.keys(result).length }
   );
 }
-
-
 
 
 
