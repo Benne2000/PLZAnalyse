@@ -357,8 +357,8 @@
   right: 0;
   bottom: 0;
   width: 25%;
-  height: 20%;              /* ⭐ Standardhöhe */
-  max-height: 30%;          /* ⭐ Obergrenze */
+  height: 25%;              /* ⭐ Standardhöhe */
+  max-height: 50%;          /* ⭐ Obergrenze */
   overflow-y: auto;
   background: #fafafa;
   border-left: 2px solid #b41821;
