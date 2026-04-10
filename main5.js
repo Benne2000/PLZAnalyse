@@ -3115,9 +3115,10 @@ getDynamicHeatColor(value, max) {
   if (ratio > 0.55) return "#e96a3a";  // orange
   if (ratio > 0.45) return "#f08a3c";  // hellorange
   if (ratio > 0.35) return "#f6b65b";  // gelb-orange
-  if (ratio > 0.20) return "#ffe89c";  // hellgelb
-  return "#fff6d6";                    // sehr helles gelb
+  if (ratio > 0.20) return "#f7d77a";  // ⭐ kräftiges Gelb (statt #ffe89c)
+  return "#fce9b2";                    // ⭐ helles Gelb (statt #fff6d6)
 }
+
 
 getWerbeAnteilColor(ratio) {
   if (!Number.isFinite(ratio) || ratio <= 0) return "#cfd4da";
@@ -3126,9 +3127,10 @@ getWerbeAnteilColor(ratio) {
   if (ratio > 0.60) return "#b41821";
   if (ratio > 0.40) return "#e96a3a";
   if (ratio > 0.20) return "#f6b65b";
-  if (ratio > 0.10) return "#ffe89c";
-  return "#fff6d6";
+  if (ratio > 0.10) return "#f7d77a";  // ⭐ kräftiges Gelb
+  return "#fce9b2";                    // ⭐ helles Gelb
 }
+
 
 
 updateMarkers() {
