@@ -737,38 +737,53 @@
   transform: scale(1.12); /* etwas größerer Hover */
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
+
 #legend-toggle-btn {
   position: absolute;
   bottom: 20px;
-  left: 20px;          /* ⭐ unten links */
-  width: 42px;
-  height: 42px;
+  left: 20px; /* ⭐ unten links */
+  width: 54px;
+  height: 54px;
   background: white;
   border-radius: 50%;
-  border: 2px solid #b41821;
-  color: #b41821;
-  font-size: 20px;
-  cursor: pointer;
-  z-index: 9999;       /* ⭐ über der Karte */
-  display: flex;
-  align-items: center;
-  justify-content: center;
   box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 9999;
+
+  /* ⭐ EXAKT wie map-tile-toggle-btn */
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"> <circle cx="12" cy="12" r="10" stroke="%23b41821" stroke-width="2" fill="none"/><line x1="12" y1="8" x2="12" y2="12" stroke="%23b41821" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="%23b41821"/></svg>');
+  background-size: 65%;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+#legend-toggle-btn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
 
 #heatmap-legend {
   position: absolute;
-  bottom: 70px;        /* ⭐ direkt über dem Button */
-  left: 20px;          /* ⭐ unten links */
+  bottom: 90px; /* ⭐ direkt über dem Button */
+  left: 20px;
+
   background: white;
   border: 2px solid #b41821;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px 14px;
+
+  width: 220px;        /* ⭐ feste Breite, nicht zu breit */
+  max-height: 260px;   /* ⭐ genug Platz */
+  overflow-y: auto;    /* ⭐ scrollbar falls nötig */
+
   font-size: 12px;
   font-family: sans-serif;
-  z-index: 9998;       /* ⭐ knapp unter dem Button */
+
+  z-index: 9998;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  pointer-events: none;
+
   opacity: 1;
   transition: opacity 0.25s ease;
 }
@@ -1034,11 +1049,12 @@
 }
 
 .heatmap-legend-color {
-  width: 18px;
+  width: 20px;
   height: 12px;
   border-radius: 3px;
   border: 1px solid #999;
 }
+
 
 
 </style>
