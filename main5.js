@@ -740,7 +740,7 @@
 #legend-toggle-btn {
   position: absolute;
   bottom: 20px;
-  right: 20px;
+  left: 20px;          /* ⭐ unten links */
   width: 42px;
   height: 42px;
   background: white;
@@ -749,7 +749,7 @@
   color: #b41821;
   font-size: 20px;
   cursor: pointer;
-  z-index: 9999;
+  z-index: 9999;       /* ⭐ über der Karte */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -758,14 +758,15 @@
 
 #heatmap-legend {
   position: absolute;
-  bottom: 70px; /* über dem Button */
-  right: 20px;
+  bottom: 70px;        /* ⭐ direkt über dem Button */
+  left: 20px;          /* ⭐ unten links */
   background: white;
   border: 2px solid #b41821;
   border-radius: 8px;
   padding: 12px 14px;
   font-size: 12px;
-  z-index: 9998;
+  font-family: sans-serif;
+  z-index: 9998;       /* ⭐ knapp unter dem Button */
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   pointer-events: none;
   opacity: 1;
@@ -776,6 +777,7 @@
   opacity: 0;
   visibility: hidden;
 }
+
 
 .analysis-switch {
   display: flex;
