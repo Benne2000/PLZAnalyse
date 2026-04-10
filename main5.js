@@ -2354,21 +2354,22 @@ showPopup(feature) {
     popupUmsatz.classList.remove("show");
     popupUmsatz.classList.add("hidden");
   }
+
+  // Panel anpassen
   const panel = this._shadowRoot.getElementById("map-control-panel");
-panel.classList.remove("panel-large");
-panel.classList.add("panel-medium");
+  panel.classList.remove("panel-large");
+  panel.classList.add("panel-medium");
 
   // WK-Daten
   const daten = this.filteredKennwerte?.[plz] || {};
-  // Umsatzdaten (PRO HH, Haushalte, Bon)
   const umsatz = this.filteredPLZWerte?.[plz] || {};
 
-  // Symbol
+  // Symbol bestimmen
   let symbol = "🔴";
   if (daten?.isCritical) symbol = "⚠️";
   else if (daten?.isHZ) symbol = "🟢";
 
-  // Popup-Felder
+  // Beschriftungen Haupttabelle
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
     value_umsatz_p_hh_0: "Umsatz p. HH",
@@ -2384,18 +2385,24 @@ panel.classList.add("panel-medium");
     value_auflage_0: "Auflage"
   };
 
+  // Zusatz-Beschriftungen
+  const beschreibungenSide = {
+    value_wk_potentiell_0: "WK in %",
+    value_hz_potentiell_0: "HZ-Werbekosten"
+  };
+
   // Umsatzdaten korrekt einfügen
   daten.value_umsatz_p_hh_0 = { raw: umsatz.umsatzProHaushalt ?? 0 };
   daten.value_haushalte_0 = { raw: umsatz.haushalte ?? 0 };
 
-  // Durchschnittsbon korrekt berechnen
+  // Durchschnittsbon berechnen
   const kd = daten.value_kd_erhebung_0?.raw ?? 0;
   const umsatzErhebung = daten.value_ums_erhebung_0?.raw ?? 0;
   daten.value_bon_erhebung_0 = {
     raw: kd > 0 ? Number((umsatzErhebung / kd).toFixed(2)) : 0
   };
 
-  // Tabelle aufbauen
+  // Haupttabelle aufbauen
   let rows = "";
   Object.entries(beschreibungen).forEach(([id, label], index) => {
     const rawValue = daten?.[id]?.raw;
@@ -2415,8 +2422,10 @@ panel.classList.add("panel-medium");
     `;
   });
 
-  const sidePopup = this._shadowRoot.getElementById('side-popup');
+  // WK-Popup holen
+  const sidePopup = this._shadowRoot.getElementById("side-popup");
 
+  // Hauptinhalt setzen
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
@@ -2432,16 +2441,55 @@ panel.classList.add("panel-medium");
     </table>
   `;
 
+  // EXTRA-TABELLE WIEDER EINBAUEN
+  const isHZ = daten?.isHZ === false;     // nur wenn NICHT HZ
+  const umsatzJahr = daten?.value_hr_n_umsatz_0?.raw;
+
+  if (isHZ && typeof umsatzJahr === "number" && umsatzJahr > 0) {
+    const wkPotRaw = daten.value_wk_potentiell_0?.raw;
+    const hzPotRaw = daten.value_hz_potentiell_0?.raw;
+
+    const wkPot = typeof wkPotRaw === "number"
+      ? wkPotRaw.toLocaleString("de-DE")
+      : "–";
+
+    const hzPot = typeof hzPotRaw === "number"
+      ? hzPotRaw.toLocaleString("de-DE")
+      : "–";
+
+    const extraTable = `
+      <table class="extra-table">
+        <thead>
+          <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
+            <td class="value-cell">${wkPot}</td>
+          </tr>
+          <tr>
+            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
+            <td class="value-cell">${hzPot}</td>
+          </tr>
+        </tbody>
+      </table>
+    `;
+
+    sidePopup.insertAdjacentHTML("beforeend", extraTable);
+  }
+
   // Animation
   sidePopup.classList.remove("hidden");
   void sidePopup.offsetWidth;
   sidePopup.classList.add("show");
 
-  sidePopup.querySelector('.close-btn').onclick = () => {
-    sidePopup.classList.remove('show');
-    sidePopup.classList.add('hidden');
+  // Close-Button
+  sidePopup.querySelector(".close-btn").onclick = () => {
+    sidePopup.classList.remove("show");
+    sidePopup.classList.add("hidden");
   };
 }
+
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
