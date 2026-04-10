@@ -56,28 +56,6 @@
   }
 
 
-      .legend {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        z-index: 1000;
-        background: white;
-        padding: 10px;
-        border: 1px solid #999;
-        font-family: sans-serif;
-        font-size: 12px;
-        line-height: 18px;
-        color: #333;
-      }
-
-      .legend i {
-        width: 18px;
-        height: 18px;
-        float: left;
-        margin-right: 8px;
-        opacity: 0.8;
-      }
-
       .note-label {
         background: rgba(255, 255, 255, 0.8);
         border: 1px solid #999;
@@ -962,12 +940,13 @@
 }
 
 /* 🔘 Button links auf der Karte */
+/* 🔘 Legenden-Button unten rechts */
 .legend-btn {
   position: absolute;
-  left: 20px;
-  top: 80px; /* unter dem Kartenbutton */
-  width: 38px;
-  height: 38px;
+  bottom: 20px;
+  right: 20px;
+  width: 42px;
+  height: 42px;
   border-radius: 6px;
   background: white;
   border: 2px solid #b41821;
@@ -980,11 +959,11 @@
   justify-content: center;
 }
 
-/* 📦 Legenden-Overlay */
+/* 📦 Legenden-Overlay unten rechts */
 .heatmap-legend {
   position: absolute;
-  bottom: 20px;
-  left: 20px;
+  bottom: 70px; /* über dem Button */
+  right: 20px;
   background: white;
   border: 2px solid #b41821;
   border-radius: 8px;
@@ -993,7 +972,7 @@
   font-family: sans-serif;
   z-index: 99998;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  pointer-events: none; /* blockiert keine Klicks */
+  pointer-events: none;
   transition: opacity 0.25s ease;
 }
 
@@ -1001,6 +980,7 @@
   opacity: 0;
   visibility: hidden;
 }
+
 
 .heatmap-legend-row {
   display: flex;
@@ -1064,13 +1044,13 @@
     <!-- 🔥 Kartenstil-Button -->
     <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
 
-    <!-- 🔘 Legenden-Button -->
-    <button id="legend-toggle-btn" class="map-btn legend-btn">ℹ️</button>
-
     <!-- Leaflet Map -->
     <div id="map"></div>
 
-    <!-- 📦 Legenden-Overlay -->
+    <!-- 🔘 Legenden-Button (unten rechts) -->
+    <button id="legend-toggle-btn" class="legend-btn">ℹ️</button>
+
+    <!-- 📦 Legenden-Overlay (unten rechts) -->
     <div id="heatmap-legend" class="heatmap-legend hidden"></div>
 
     <!-- 📦 Umsatz-Overview oben rechts -->
