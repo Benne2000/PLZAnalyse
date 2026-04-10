@@ -953,16 +953,15 @@
   color: #b41821;
   font-size: 20px;
   cursor: pointer;
-  z-index: 99999;
+  z-index: 99999; /* WICHTIG */
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* 📦 Legenden-Overlay unten rechts */
 .heatmap-legend {
   position: absolute;
-  bottom: 70px; /* über dem Button */
+  bottom: 70px; /* direkt über dem Button */
   right: 20px;
   background: white;
   border: 2px solid #b41821;
@@ -970,7 +969,7 @@
   padding: 12px 14px;
   font-size: 12px;
   font-family: sans-serif;
-  z-index: 99998;
+  z-index: 99998; /* knapp unter dem Button */
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
   pointer-events: none;
   transition: opacity 0.25s ease;
@@ -980,6 +979,7 @@
   opacity: 0;
   visibility: hidden;
 }
+
 
 
 .heatmap-legend-row {
@@ -1880,6 +1880,7 @@ const legendBox = this._shadowRoot.getElementById("heatmap-legend");
 legendBtn.addEventListener("click", () => {
   legendBox.classList.toggle("hidden");
 });
+
 
   // ---------------------------------------------------------
   // INITIAL: Werbeanteil deaktivieren
