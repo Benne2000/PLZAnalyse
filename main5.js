@@ -1909,10 +1909,6 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     // Werbeanteil deaktivieren (Umsatztyp = gesamt)
     btnWA.classList.add("disabled");
 
-    setTimeout(() => {
-      umsatzPanel.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 150);
-
     $("side-popup-umsatz")?.classList.remove("show");
     $("side-popup")?.classList.remove("show");
 
