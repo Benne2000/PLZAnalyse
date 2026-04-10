@@ -358,7 +358,7 @@
   bottom: 0;
   width: 25%;
   height: 25%;              /* ⭐ Standardhöhe */
-  max-height: 50%;          /* ⭐ Obergrenze */
+  max-height: 55%;          /* ⭐ Obergrenze */
   overflow-y: auto;
   background: #fafafa;
   border-left: 2px solid #b41821;
@@ -375,7 +375,7 @@
 
 /* ⭐ Wenn Umsatz aktiv → Panel wächst */
 #map-control-panel.panel-large {
-  height: 50%;
+  height: 55%;
 }
 
 #map-control-panel.panel-medium {
