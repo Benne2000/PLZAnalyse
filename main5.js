@@ -968,38 +968,40 @@
   cursor: not-allowed;
 }
 
-
 /* 📦 Heatmap-Legende (unten links über dem Button) */
 #heatmap-legend {
   position: absolute;
   bottom: 90px;          /* direkt über dem Button */
-  left: 5%;            /* unten links */
+  left: 20px;            /* unten links */
+
   background: white;
   border: 2px solid #b41821;
   border-radius: 10px;
   padding: 12px 14px;
+
+  width: 220px;          /* feste Breite */
+  max-height: 260px;     /* scrollbar falls nötig */
+  overflow-y: auto;
+
   font-size: 12px;
   font-family: sans-serif;
 
-  width: 220px;          /* feste, saubere Breite */
-  max-height: 260px;     /* falls viele Zeilen */
-  overflow-y: auto;      /* scrollbar falls nötig */
-
-  z-index: 9998;         /* knapp unter dem Button */
+  z-index: 9998;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 
-  pointer-events: none;  /* blockiert KEINE Karte */
+  pointer-events: none;  /* blockiert NICHT die Karte */
   opacity: 1;
   transition: opacity 0.25s ease;
 }
 
+/* ⭐ Legende verstecken */
 #heatmap-legend.hidden {
   opacity: 0;
   visibility: hidden;
 }
 
-/* Zeilen in der Legende */
-.heatmap-legend-row {
+/* Zeilen */
+#heatmap-legend .heatmap-legend-row {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -1007,7 +1009,7 @@
 }
 
 /* Farbfelder */
-.heatmap-legend-color {
+#heatmap-legend .heatmap-legend-color {
   width: 20px;
   height: 12px;
   border-radius: 3px;
