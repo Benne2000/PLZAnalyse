@@ -21,9 +21,11 @@
 
 .map-container {
   width: 70%;
-  position: relative;
-  z-index: 1;
+  height: 100%;
+  position: relative;   /* WICHTIG */
+  z-index: 10;
 }
+
 
 
       #map {
@@ -55,28 +57,6 @@
     display: none;
   }
 
-
-      .legend {
-        position: absolute;
-        bottom: 20px;
-        left: 20px;
-        z-index: 1000;
-        background: white;
-        padding: 10px;
-        border: 1px solid #999;
-        font-family: sans-serif;
-        font-size: 12px;
-        line-height: 18px;
-        color: #333;
-      }
-
-      .legend i {
-        width: 18px;
-        height: 18px;
-        float: left;
-        margin-right: 8px;
-        opacity: 0.8;
-      }
 
       .note-label {
         background: rgba(255, 255, 255, 0.8);
@@ -203,48 +183,134 @@
 }
 
 
-/* Ausgrau-Logik */
-.side-popup tr.disabled td {
+
+/* ------------------------------------------------------ */
+/* UMSATZ-POPUP (sauber, stabil, bündig, wie WK-Popup)    */
+/* ------------------------------------------------------ */
+
+#side-popup-umsatz {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 25%;
+  height: 70%;
+  background: white;
+  border-left: 2px solid #b41821;
+  border-top: 2px solid #b41821;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 99999;
+
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+#side-popup-umsatz.show {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Header */
+#side-popup-umsatz .popup-header {
+  background: #b41821;
+  color: white;
+  padding: 10px 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#side-popup-umsatz .popup-header .close-btn {
+  background: white;
+  color: #b41821;
+  border: none;
+  padding: 2px 8px;
+  font-size: 14px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Summenblock */
+.umsatz-subheader {
+  padding: 14px 12px 4px 12px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.umsatz-subheader .strong {
+  font-weight: 700;
+  color: #000;
+}
+
+/* Abschnittstitel */
+.section-title {
+  margin: 12px 0 6px 0;
+  padding: 6px 12px;
+  background: #f3f3f3;
+  border-top: 1px solid #b41821;
+  border-bottom: 1px solid #b41821;
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #333;
+}
+.umsatz-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.8fr; /* Beschreibung | Absolut | HH */
+  gap: 6px 12px;
+  padding: 0 12px;
+  align-items: center;
+}
+
+.umsatz-grid.header {
+  font-weight: 700;
+  color: #000;
+  margin-bottom: 4px;
+}
+
+
+.umsatz-grid .label {
+  font-weight: 500;
+  color: #333;
+}
+
+.umsatz-grid .value {
+  text-align: right;
+  font-weight: 600;
+  color: #111;
+}
+
+
+/* Balken */
+.umsatz-bar {
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  display: flex;
+  margin: 8px 12px;
+}
+
+.share-stationaer { background: #b41821; }
+.share-pluscard   { background: #1f78b4; }
+.share-ra         { background: #33a02c; }
+.share-online     { background: #ffb000; }
+
+/* Legende */
+.umsatz-legend {
+  display: flex;
+  gap: 12px;
+  padding: 0 12px 12px 12px;
+  font-size: 0.85rem;
+  color: #444;
+}
+
+.disabled-cell {
   opacity: 0.35;
   filter: grayscale(100%);
 }
 
-/* ------------------------------------------------------ */
-/* Umsatz-Balken + Legende                                */
-/* ------------------------------------------------------ */
-
-.umsatz-share-bar {
-  margin-top: 16px;
-  height: 18px;
-  border-radius: 6px;
-  overflow: hidden;
-  border: 1px solid #b41821;
-  display: flex;
-}
-
-.share-segment {
-  height: 100%;
-}
-
-.share-stationaer { background: #b41821; } /* Rot */
-.share-pluscard   { background: #1f78b4; } /* Blau */
-.share-ra         { background: #33a02c; } /* Grün */
-.share-online     { background: #ffb000; } /* Amber */
-
-
-/* Legende */
-.umsatz-legend {
-  margin-top: 6px;
-  font-size: 0.75rem;
-  color: black;
-}
-
-.umsatz-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-right: 10px;
-}
 
 /* ------------------------------------------------------ */
 /* HH-Kennzahlen-Tabelle                                  */
@@ -262,76 +328,157 @@
   font-size: 0.85rem;
 }
 
-/* ------------------------------------------------------ */
-/* Umsatz-Panel Zusatzbereich                             */
-/* ------------------------------------------------------ */
-
-.umsatz-extra {
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid #ccc;
-  font-size: 0.85rem;
-}
-
+/* ============================================
+   PANEL-HÖHE & ANIMATION
+   ============================================ */
 
 #map-control-panel {
   position: absolute;
   right: 0;
   bottom: 0;
   width: 25%;
-  height: 15%; /* WK-Modus */
-  background: #f7f7f7;
+  height: 25%;              /* ⭐ Standardhöhe */
+  max-height: 55%;          /* ⭐ Obergrenze */
+  overflow-y: auto;
+  background: #fafafa;
   border-left: 2px solid #b41821;
   border-top: 2px solid #b41821;
-  padding: 10px;
+  padding: 14px;
   box-sizing: border-box;
   font-family: sans-serif;
-  z-index: 99998;
-
-  /* ⭐ Scrollbar aktiv */
-  overflow-y: auto;
-  overflow-x: hidden;
-  max-height: 90vh;
-
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
   transition: height 0.35s ease;
 }
 
-#map-control-panel.expanded {
-  height: 30%; /* kompakterer Umsatz-Modus */
+/* ⭐ Wenn Umsatz aktiv → Panel wächst */
+#map-control-panel.panel-large {
+  height: 55%;
+}
+
+#map-control-panel.panel-medium {
+  height: 30%;
 }
 
 
-#map-control-panel::-webkit-scrollbar {
-  width: 6px;
-}
 
-#map-control-panel::-webkit-scrollbar-thumb {
-  background: #b41821;
-  border-radius: 4px;
-}
 
-/* Titel */
-#map-control-panel h4 {
-  margin: 0 0 6px 0;
-  color: #b41821;
-  font-size: 0.9rem;
-}
-
-/* Buttons */
-#map-control-panel button {
-  padding: 6px;
-  border: 1px solid #b41821;
+/* Karten-Panel Cards */
+.panel-card {
   background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: #b41821;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-#map-control-panel button:hover {
+.panel-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #b41821;
+  margin-bottom: 4px;
+}
+
+/* Switch Buttons (WK / Umsatz) */
+.switch-row {
+  display: flex;
+  gap: 8px;
+}
+
+.switch-btn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 6px;
+  border: 2px solid #b41821;
+  background: white;
+  color: #b41821;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.switch-btn.active {
+  background: #b41821;
+  color: white;
+}
+
+.switch-btn:hover:not(.active) {
   background: #fff3f3;
 }
 
+/* Option Rows */
+.option-row {
+  display: flex;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: #333;
+}
+/* ============================================
+   Moderner Segmented Switch (Apple-Style)
+   ============================================ */
+
+.mode-selector {
+  display: flex;
+  background: #f2f2f2;
+  border-radius: 8px;
+  padding: 4px;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mode-selector span {
+  flex: 1;
+  text-align: center;
+  padding: 8px 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: 0.2s;
+  color: #666;
+}
+
+/* Aktive Seite links */
+.mode-selector.active-left .mode-left {
+  background: #b41821;
+  color: white;
+}
+
+/* Aktive Seite rechts */
+.mode-selector.active-right .mode-right {
+  background: #b41821;
+  color: white;
+}
+
+/* Kategorien */
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.category-toggle {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #b41821;
+  background: white;
+  color: #b41821;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.category-toggle.active {
+  background: #fff3f3;
+  box-shadow: 0 0 6px rgba(180,24,33,0.4);
+}
 
 
 /* --------------------------------------------- */
@@ -590,6 +737,33 @@
   transform: scale(1.12); /* etwas größerer Hover */
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
+
+#legend-toggle-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 5%; /* ⭐ unten links */
+  width: 54px;
+  height: 54px;
+  background: white;
+  border-radius: 50%;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  cursor: pointer;
+  z-index: 9999;
+
+  /* ⭐ EXAKT wie map-tile-toggle-btn */
+   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24">      <rect x="4" y="5" width="16" height="2" rx="1"/>      <rect x="4" y="11" width="12" height="2" rx="1"/>      <rect x="4" y="17" width="8" height="2" rx="1"/>    </svg>'); background-size: 65%;
+  background-repeat: no-repeat;
+  background-position: center;
+
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+#legend-toggle-btn:hover {
+  transform: scale(1.12);
+  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+}
+
+
 .analysis-switch {
   display: flex;
   gap: 0;
@@ -626,32 +800,47 @@
 .analysis-btn:not(.active):hover {
   background: #ffecec;
 }
+/* ============================================
+   Untergeordneter ABS/HH Switch
+   ============================================ */
 
 #umsatz-mode-switch {
-  width: 100%;
+  background: #ececec;
+  border-radius: 6px;
+  padding: 3px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-
-  transform: scale(0.85);
-  transform-origin: left center;
-
-  margin-bottom: 6px;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+  width: 100%;
+  margin-top: -4px;
+  margin-bottom: 4px;
 }
 
-
-/* ⭐ Kompakter 2×2 Grid */
-.umsatz-grid {
-  display: grid !important;
-  grid-template-columns: 1fr 1fr !important;
-  gap: 6px !important;
-}
-
-.umsatz-grid .map-toggle {
-  padding: 4px 6px !important;
-  font-size: 0.82rem !important;
+#umsatz-mode-switch span {
+  flex: 1;
   text-align: center;
+  padding: 5px 0;
+  font-size: 0.75rem;       /* ⭐ kleiner */
+  font-weight: 600;
+  border-radius: 4px;
+  transition: 0.2s;
+  color: #666;
 }
+
+#umsatz-mode-switch.active-left .mode-left {
+  background: #b41821;
+  color: white;
+}
+
+#umsatz-mode-switch.active-right .mode-right {
+  background: #b41821;
+  color: white;
+}
+
+
+
+
 
 .map-toggle {
   padding: 10px;
@@ -673,120 +862,163 @@
 .hidden {
   display: none;
 }
-/* Gesamter Umschalter */
-.mode-selector {
-  position: relative;
+.umsatz-analysis-row {
+  display: none;
+}
+.umsatz-analysis-row .switch-btn {
+  padding: 6px 8px;
+  font-size: 0.75rem;
+  border-width: 1px;
+}
+
+.umsatz-analysis-row.show {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+.compact-switch {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 110px; /* Texte weiter außen */
-  padding: 14px 20px;
-  margin-top: 16px;
-  user-select: none;
+  background: #f2f2f2;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 3px;
   cursor: pointer;
-  width: 100%;
-  background: white;
-  border: 2px solid #b41821;
-  border-radius: 12px;
+  user-select: none;
 }
 
-/* Labels */
-.mode-left,
-.mode-right {
-  font-size: 1rem;
-  font-weight: 700;
-  min-width: 100px;
+.compact-switch span {
+  flex: 1;
   text-align: center;
-  z-index: 2; /* Punkt überlappt sie nicht */
-  pointer-events: none;
+  padding: 5px 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 4px;
+  transition: 0.2s;
+  color: #555;
 }
 
-/* Die Schiene, in der der Punkt fährt */
-.mode-track {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 90px;              /* Breite der Schiene */
-  height: 26px;             /* Höhe der Schiene */
-  transform: translate(-50%, -50%);
-  border: 2px solid #b41821;
-  border-radius: 20px;
-  background: white;
-  z-index: 1;
-}
-
-/* Der Punkt */
-.mode-dot {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
+.compact-switch.active-left .mode-left {
   background: #b41821;
-  transform: translate(-50%, -50%) translateX(-28px); /* Start links */
-  transition: transform 0.25s ease;
+  color: white;
 }
 
-/* Punkt wandert nach rechts */
-.mode-selector.hh .mode-dot {
-  transform: translate(-50%, -50%) translateX(28px);
+.compact-switch.active-right .mode-right {
+  background: #b41821;
+  color: white;
 }
 
-/* Farben der Labels */
-.mode-selector:not(.hh) .mode-left {
-  color: #b41821;
-}
-.mode-selector:not(.hh) .mode-right {
-  color: #999;
-}
-
-.mode-selector.hh .mode-left {
-  color: #999;
-}
-.mode-selector.hh .mode-right {
-  color: #b41821;
+.switch-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: #444;
 }
 
-#umsatz-options-row {
-  gap: 12px !important;
-  margin-top: 6px !important;
-}
-
-#umsatz-options-row label {
-  font-size: 0.82rem !important;
-}
-
-#umsatz-options-row input[type="checkbox"] {
-  transform: scale(0.9);
-}
-
-.umsatz-share-bar.empty {
-  height: 12px;
-  background: #eee;
-  border-radius: 4px;
-}
-
-.share-segment.empty {
-  width: 100%;
-  height: 100%;
-  background: #ddd;
-  border-radius: 4px;
-}
-#wk-extra label {
+.big-check {
   display: flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 8px;
+  border: 2px solid #b41821;
+  border-radius: 6px;
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 0.82rem;
+  transition: 0.2s;
 }
 
-#chk-doppelbestreuung {
-  transform: scale(0.9);
+.big-check:hover {
+  background: #fff3f3;
 }
 
-    </style>
+.big-check input {
+  transform: scale(1.3);
+  accent-color: #b41821;
+}
+.triple-switch {
+  display: flex;
+  background: #f2f2f2;
+  border-radius: 6px;
+  padding: 3px;
+  gap: 3px;
+  user-select: none;
+}
 
+.triple-switch span {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: 0.2s;
+  color: #555;
+}
+
+.triple-switch span.active {
+  background: #b41821;
+  color: white;
+}
+
+.triple-switch span.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* 📦 Heatmap-Legende (unten links über dem Button) */
+#heatmap-legend {
+  position: absolute;
+  bottom: 90px;
+  left: 5%;
+
+  background: white;
+  border: 2px solid #b41821;
+  border-radius: 10px;
+  padding: 12px 14px;
+
+  width: 220px;
+  max-height: 300px;
+  overflow-y: auto;
+
+  font-size: 12px;
+  font-family: sans-serif;
+
+  z-index: 9998;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+
+  pointer-events: none; /* blockiert NICHT die Karte */
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+/* ⭐ Legende verstecken */
+#heatmap-legend.hidden {
+  opacity: 0;
+  visibility: hidden;
+}
+
+/* Zeilen */
+#heatmap-legend .heatmap-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+/* Farbfelder */
+#heatmap-legend .heatmap-legend-color {
+  width: 20px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid #999;
+}
+
+
+
+</style>
 
 <div class="layout">
 
@@ -805,19 +1037,17 @@
     <button id="filter-button">Anzeigen</button>
 
     <!-- 📊 Tabellenbereich -->
-<div class="table-container">
+    <div class="table-container">
 
-  <!-- PLZ-Tabelle -->
-  <div class="table-wrapper" id="table-container">
-      <!-- PLZ-Tabelle + Sticky Footer gehören zusammen -->
-      <div id="streuverlust-box"></div>
-  </div>
+      <!-- PLZ-Tabelle -->
+      <div class="table-wrapper" id="table-container">
+        <div id="streuverlust-box"></div>
+      </div>
 
-  <!-- NL-Tabelle -->
-  <div id="nl-info-container"></div>
+      <!-- NL-Tabelle -->
+      <div id="nl-info-container"></div>
 
-</div>
-
+    </div>
 
   </div> <!-- END filter-container -->
 
@@ -832,16 +1062,22 @@
       <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
     </div>
 
-    <!-- 🔥 Kartenstil-Button unten rechts -->
+    <!-- 🔥 Kartenstil-Button -->
     <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
 
     <!-- Leaflet Map -->
     <div id="map"></div>
 
-    <!-- Legende -->
-    <div class="legend" id="legend">...</div>
+    <!-- 🔘 Legenden-Button (unten rechts) -->
+    <div id="legend-toggle-btn" title="Legende einblenden"></div>
 
-  </div> <!-- END map-container -->
+    <!-- 📦 Legenden-Overlay (unten rechts) -->
+    <div id="heatmap-legend" class="heatmap-legend hidden"></div>
+
+    <!-- 📦 Umsatz-Overview oben rechts -->
+    <div id="umsatz-overview" class="hidden"></div>
+
+  </div>
 
   <!-- 📌 Popup für WK -->
   <div id="side-popup" class="side-popup hidden"></div>
@@ -851,92 +1087,116 @@
 
 </div>
 
-<!-- 🎛️ Steuerzentrale für Kartenansichten -->
+<!-- ⭐ MAP CONTROL PANEL -->
 <div id="map-control-panel">
 
-  <h4>Kartenansicht</h4>
+  <!-- CARD 1: ANALYSE-MODUS -->
+  <div class="panel-card">
+    <div class="panel-title">Analyse-Modus</div>
 
-  <!-- Hauptumschalter -->
-  <div class="analysis-switch">
-    <button id="btn-wk" class="analysis-btn active">Werbekosten</button>
-    <button id="btn-umsatz" class="analysis-btn">Umsatz</button>
+    <div class="switch-row">
+      <button id="btn-wk" class="switch-btn active">
+        <span class="icon">📊</span> WK
+      </button>
+
+      <button id="btn-umsatz" class="switch-btn">
+        <span class="icon">💶</span> Umsatz
+      </button>
+    </div>
+
+    <!-- Doppelbestreuung nur im WK-Modus -->
+    <div id="wk-extra" class="option-row">
+      <label><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung anzeigen</label>
+    </div>
+
+    <!-- Umsatz-Optionen (nur im Umsatzmodus) -->
+    <div id="umsatz-options-row" class="option-row hidden">
+      <label><input type="checkbox" id="chk-bestreuung"> 📍 Bestreuung</label>
+    </div>
   </div>
 
-  <!-- ⭐ WK-Checkbox -->
-  <div id="wk-extra" style="margin-top:10px;">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-doppelbestreuung" checked />
-      Doppelbestreuung anzeigen
-    </label>
-  </div>
+  <!-- CARD 2: UMSATZ-EINSTELLUNGEN -->
+  <div id="umsatz-panel" class="panel-card hidden">
 
-<!-- ⭐ Umsatz-Optionen nebeneinander -->
-<div id="umsatz-options-row" style="margin-top:10px; display:none; gap:20px; align-items:center;">
+    <div class="panel-title">Umsatz-Einstellungen</div>
 
-  <div id="umsatz-extra">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-bestreuung" />
-      Bestreuung anzeigen
-    </label>
-  </div>
+    <!-- Umsatztyp -->
+    <div class="switch-label">Umsatztyp</div>
+    <div id="umsatz-type-switch" class="compact-switch">
+      <span class="mode-left">Umsatz</span>
+      <span class="mode-right">Werbeumsatz</span>
+    </div>
 
-  <div id="umsatz-radius-extra">
-    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-      <input type="checkbox" id="chk-radiusfilter" checked />
-      Radiusfilter aktiv
-    </label>
+    <!-- Werbeoptionen (nur bei Werbeumsatz sichtbar) -->
+    <div id="werbe-options-row" class="option-row hidden">
+      <label class="big-check">
+        <input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz
+      </label>
+      <label class="big-check">
+        <input type="checkbox" id="chk-mitgekauft"> Mitgekauft
+      </label>
+    </div>
+
+    <!-- Darstellung: 3-Wege-Switch -->
+    <div class="switch-label">Darstellung</div>
+    <div id="umsatz-analysis-switch" class="triple-switch">
+      <span class="mode-abs active">Absolut</span>
+      <span class="mode-hh">pro HH</span>
+      <span class="mode-werbeanteil">Werbeanteil</span>
+    </div>
+
+    <!-- Kategorien -->
+    <div class="category-grid">
+      <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
+      <div class="category-toggle" data-cat="pluscard">💳 Pluscard</div>
+      <div class="category-toggle" data-cat="ra">📦 R&A</div>
+      <div class="category-toggle" data-cat="online">🛒 KUBE OS</div>
+    </div>
+
   </div>
 
 </div>
 
 
-  <!-- Umsatzanalyse-Bereich -->
-  <div id="umsatz-panel" class="hidden">
-
-    <!-- Globaler Switch -->
-    <div id="umsatz-mode-switch" class="mode-selector">
-      <span class="mode-left">Absolut</span>
-      <div class="mode-track">
-        <div class="mode-dot"></div>
-      </div>
-      <span class="mode-right">pro Haushalt</span>
-    </div>
-
-    <!-- 2×2 Grid -->
-    <div class="umsatz-grid">
-      <div class="map-toggle active" data-cat="stationaer">Stationär</div>
-      <div class="map-toggle" data-cat="pluscard">Pluscard</div>
-      <div class="map-toggle" data-cat="ra">R&A</div>
-      <div class="map-toggle" data-cat="online">Onlineshop</div>
-    </div>
-
-  </div>
-
-</div>
 
 
 
     `;
 
-    class GeoMapWidget extends HTMLElement {
-      constructor() {
-        super();
-        this.neighbours = true;
-        this._shadowRoot = this.attachShadow({ mode: 'open' });
-        this._shadowRoot.appendChild(template.content.cloneNode(true));
-        this.map = null;
-        this._tileLayer = null;
-        this._geoLayer = null;
-        this._geoData = null;
-        this._myDataSource = null;
-        this._resizeObserver = null;
-        this._geoLayerVisible = false;
-        this._tilesVisible = false;
-        this._sortState = { column: null, direction: "asc" };
-        this.umsatzMode = "abs";        // "abs" oder "hh"
-        this.activeCategories = new Set(); // stationaer, pluscard, ra, online
+class GeoMapWidget extends HTMLElement {
+  constructor() {
+    super();
+    this.neighbours = true;
+    this._shadowRoot = this.attachShadow({ mode: 'open' });
+    this._shadowRoot.appendChild(template.content.cloneNode(true));
+    this.map = null;
+    this._tileLayer = null;
+    this._geoLayer = null;
+    this._geoData = null;
+    this._myDataSource = null;
+    this._resizeObserver = null;
+    this._geoLayerVisible = false;
+    this._tilesVisible = false;
+    this._sortState = { column: null, direction: "asc" };
 
-      }
+    this.currentMapMode = "wk";       // "wk" oder "umsatz-multi"
+
+    // Kategorien (Stationär, Pluscard, R&A, Online)
+    this.activeCategories = new Set(["stationaer"]);
+
+    // ⭐ NEU: Umsatztyp
+    // "gesamt" = bisheriger Umsatz
+    // "werbung" = Werbeumsatz / Mitgekauft-Kombination
+    this.umsatzMainMode = "gesamt";
+    this.useWerbeUmsatz = true;       // innerhalb Werbeumsatz: Werbeumsatz aktiv
+    this.useZusatzUmsatz = false;     // innerhalb Werbeumsatz: Mitgekauft aktiv
+
+    // Radiusfilter
+    this.useRadiusFilter = true;
+
+    // NL-Auswahl
+    this._selectedNLs = new Set();
+  }
 
       connectedCallback() {
         this.showSpinner();
@@ -988,109 +1248,33 @@
 
     return struktur;
   }
-
-
-      async loadGeoJson() {
+async loadGeoJson() {
   if (this._geoLayer) return;
 
   try {
-    const response = await fetch('https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson');
+    const response = await fetch(
+      "https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson"
+    );
     this._geoData = await response.json();
+
     this.geoNotes = {};
-(this._geoData.features || []).forEach(feature => {
-  const plz = feature.properties?.plz?.trim();
-  const note = feature.properties?.note?.trim();
-  if (plz && note) {
-    this.geoNotes[plz] = note;
-  }
-});
-
-    const filteredData = this.getFilteredData(); // baut filteredKennwerte
-    const plzWerte = this.extractPLZWerte(filteredData);
-
-    this._geoLayer = L.geoJSON(this._geoData, {
-style: feature => {
-  const plz = feature.properties?.plz?.trim();
-  const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
-  const isHZ = this.hzFlags?.[plz] ?? false;
-
-  const value = isHZ ? values.wk : values.wkPot;
-
-  return {
-    fillColor: this.getColor(value, isHZ),
-    weight: 1,
-    opacity: 1,
-    color: "white",
-    fillOpacity: 0.5
-  };
-}
-,
-onEachFeature: (feature, layer) => {
-  layer.on("click", (e) => {
-
-    const plz = String(e.target.feature.properties.plz).padStart(5, "0");
-
-    this.highlightMapArea(plz);
-    this.highlightTableRowByPLZ(plz);
-
-    // Popups referenzieren (KORREKT!)
-    const wkPopup = this._shadowRoot.getElementById("side-popup");
-    const umsatzPopup = this._shadowRoot.getElementById("side-popup-umsatz");
-
-    // Immer beide schließen – aber SAFE!
-    if (wkPopup) {
-      wkPopup.classList.remove("show");
-      wkPopup.classList.add("hidden");
-    }
-
-    if (umsatzPopup) {
-      umsatzPopup.classList.remove("show");
-      umsatzPopup.classList.add("hidden");
-    }
-
-    // Umsatz-Modus
-    if (this.currentMapMode === "umsatz-multi") {
-      const values = this.filteredPLZWerte?.[plz];
-
-      if (!values) {
-        this.showEmptyUmsatzPopup(plz);
-        return;
-      }
-
-      this.showUmsatzPopup(plz, values);
-      return;
-    }
-
-    // WK-Modus
-    const kennwerte = this.filteredKennwerte?.[plz];
-    this.showPopup(e.target.feature, kennwerte);
-  });
-}
-
-
-
-
+    (this._geoData.features || []).forEach(feature => {
+      const plz = feature.properties?.plz?.trim();
+      const note = feature.properties?.note?.trim();
+      if (plz && note) this.geoNotes[plz] = note;
     });
 
-this._geoLayer.addTo(this.map);
+    this._geoLayer = L.geoJSON(this._geoData, {
+      onEachFeature: (feature, layer) => {
+        // ❗ KEIN CLICK-HANDLER HIER
+      }
+    }).addTo(this.map);
 
-// 🔥 Radius-Filter direkt nach dem Laden anwenden
-const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-this.applyRadiusFilter(radius);
-
-// 📍 Automatisch auf die volle Ausdehnung zoomen
-const bounds = this._geoLayer.getBounds();
-console.log("Geojson einrahmen");
-this.map.fitBounds(bounds, {
-  padding: [20, 20],
-  maxZoom: 14
-});
-
-
-  } catch (error) {
-    console.error("❌ Fehler beim Laden der GeoJSON:", error);
+  } catch (err) {
+    console.error("Fehler beim Laden des GeoJSON:", err);
   }
 }
+
 
 applyMapMode(mode) {
   this.currentMapMode = mode;
@@ -1576,12 +1760,25 @@ zoomToFilteredPLZ() {
 }
 
 initializeMapBase() {
-  const mapContainer = this._shadowRoot.getElementById("map");
+ 
+
+  // Helper
+  const $ = id => this._shadowRoot.getElementById(id);
+
+  const mapContainer = $("map");
+  if (!mapContainer) return;
+
+  // Karte
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
   // Basiszustände
-  this.currentMapMode = "wk";
-  this.umsatzMode = "abs";
+  this.currentMapMode = "wk";              // wk | umsatz-multi | werbeanteil
+  this.activePopupType = "wk";             // wk | umsatz
+  this.umsatzDarstellung = "abs";          // abs | hh | werbeanteil
+  this.umsatzMainMode = "gesamt";          // gesamt | werbung
+  this.useWerbeUmsatz = true;
+  this.useZusatzUmsatz = false;
+
   this.activeCategories = new Set(["stationaer"]);
   this.showBestreuung = false;
   this.useRadiusFilter = true;
@@ -1596,159 +1793,320 @@ initializeMapBase() {
   this.render();
   this.initRadiusSlider();
 
-  // Kartenstil-Button
-  const tileBtn = this._shadowRoot.getElementById("map-tile-toggle-btn");
-  if (tileBtn) tileBtn.addEventListener("click", () => this.toggleMapTiles());
+  // Panel
+  const panel = $("map-control-panel");
 
-  const panel = this._shadowRoot.getElementById("map-control-panel");
+  // Buttons
+  const btnWK = $("btn-wk");
+  const btnUmsatz = $("btn-umsatz");
 
-  // Umschalter WK ↔ Umsatz
-  const btnWK = this._shadowRoot.getElementById("btn-wk");
-  const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
-  const umsatzPanel = this._shadowRoot.getElementById("umsatz-panel");
+  // Umsatzpanel
+  const umsatzPanel = $("umsatz-panel");
 
-btnWK.addEventListener("click", () => {
-  btnWK.classList.add("active");
-  btnUmsatz.classList.remove("active");
-  umsatzPanel.classList.add("hidden");
+  // Extra-Bereiche
+  const wkExtra = $("wk-extra");
+  const umsatzOptionsRow = $("umsatz-options-row");
 
-  panel.classList.remove("expanded");
+  // Switches
+  const typeSwitch = $("umsatz-type-switch");
+  const darstellungSwitch = $("umsatz-analysis-switch");
 
-  this.currentMapMode = "wk";
+  // 3-Wege-Switch Buttons
+  const btnAbs = darstellungSwitch?.querySelector(".mode-abs");
+  const btnHH = darstellungSwitch?.querySelector(".mode-hh");
+  const btnWA = darstellungSwitch?.querySelector(".mode-werbeanteil");
 
-  this._shadowRoot.getElementById("wk-extra").style.display = "block";
-  this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
+  // Werbeoptionen
+  const werbeRow = $("werbe-options-row");
+  const chkWerbe = $("chk-werbeumsatz");
+  const chkMit = $("chk-mitgekauft");
 
-  // Popups schließen
-  this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-  this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+  // Bestreuung
+  const chkBestreuung = $("chk-bestreuung");
 
-  // ⭐ WK-Datenbasis korrekt aufbauen
-  const erhID = this._activeFilter?.erhID;
-  const jahr = this._activeFilter?.jahr;
-  const nummer = this._activeFilter?.nummer;
+  // Doppelbestreuung
+  const chkDoppel = $("chk-doppelbestreuung");
+  this.showCritical = chkDoppel.checked;
 
-  if (erhID && jahr && nummer) {
-    // 👉 applyFilter baut ALLES korrekt auf
-    this.applyFilter(erhID, jahr, nummer);
-  } else {
-    // 👉 Falls noch keine Erhebung gewählt wurde
-    this.updateGeoLayer();
-  }
+  // Radiusfilter
+  const chkRadius = $("chk-radiusfilter");
+
+  // Kartenstil
+  const tileBtn = $("map-tile-toggle-btn");
+  tileBtn?.addEventListener("click", () => this.toggleMapTiles());
+
+const legendBtn = this._shadowRoot.getElementById("legend-toggle-btn");
+const legendBox = this._shadowRoot.getElementById("heatmap-legend");
+
+legendBtn.addEventListener("click", () => {
+  legendBox.classList.toggle("hidden");
 });
 
 
 
+  // ---------------------------------------------------------
+  // INITIAL: Werbeanteil deaktivieren
+  // ---------------------------------------------------------
+  if (btnWA) btnWA.classList.add("disabled");
+
+  // ---------------------------------------------------------
+  // WK-MODUS
+  // ---------------------------------------------------------
+btnWK?.addEventListener("click", () => {
+
+    btnWK.classList.add("active");
+    btnUmsatz.classList.remove("active");
+
+    this.currentMapMode = "wk";
+    this.activePopupType = "wk";
+
+    wkExtra.style.display = "block";
+    umsatzOptionsRow.style.display = "none";
+    umsatzPanel.classList.add("hidden");
+
+    panel.classList.remove("panel-large", "panel-medium");
+
+    // ⭐ WICHTIG: Checkbox-Wert übernehmen
+    this.showCritical = chkDoppel.checked;
+
+    // Darstellung zurücksetzen
+    this.umsatzDarstellung = "abs";
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnAbs.classList.add("active");
+
+    btnWA.classList.add("disabled");
+
+   // $("side-popup")?.classList.remove("show");
+   // $("side-popup-umsatz")?.classList.remove("show");
+
+    const { erhID, jahr, nummer } = this._activeFilter || {};
+    if (erhID && jahr && nummer) {
+        this.prepareUmsatzPLZWerte();
+        this.computeWKKennwerte();
+        this.updateGeoLayer();
+    } else {
+        this.updateGeoLayer();
+    }
+    this.updateHeatmapLegend();
+});
 
 
-  btnUmsatz.addEventListener("click", () => {
+  // ---------------------------------------------------------
+  // UMSATZ-MODUS
+  // ---------------------------------------------------------
+  btnUmsatz?.addEventListener("click", () => {
+        this.closeAllPopups();
+     const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
+typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
+
     btnUmsatz.classList.add("active");
     btnWK.classList.remove("active");
-    umsatzPanel.classList.remove("hidden");
-
-    panel.classList.add("expanded");
 
     this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
     this.prepareUmsatzPLZWerte();
 
-    this._shadowRoot.getElementById("wk-extra").style.display = "none";
-    this._shadowRoot.getElementById("umsatz-options-row").style.display = "flex";
+    wkExtra.style.display = "none";
+    umsatzOptionsRow.style.display = "flex";
+    umsatzPanel.classList.remove("hidden");
+
+    panel.classList.remove("panel-medium");
+    panel.classList.add("panel-large");
 
 
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) popupUmsatz.classList.remove("show");
+    // Darstellung auf ABS setzen
+    this.umsatzDarstellung = "abs";
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnAbs.classList.add("active");
 
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) popupWK.classList.remove("show");
+    // Werbeanteil deaktivieren (Umsatztyp = gesamt)
+    btnWA.classList.add("disabled");
+
+    //$("side-popup-umsatz")?.classList.remove("show");
+   // $("side-popup")?.classList.remove("show");
+
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
+
+  // ---------------------------------------------------------
+  // UMSATZTYP (Umsatz / Werbeumsatz)
+  // ---------------------------------------------------------
+  typeSwitch?.addEventListener("click", () => {
+
+    const isWerbung = this.umsatzMainMode === "gesamt";
+    this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
+
+    typeSwitch.classList.toggle("active-right", isWerbung);
+    typeSwitch.classList.toggle("active-left", !isWerbung);
+
+    werbeRow.style.display = isWerbung ? "flex" : "none";
+
+    if (isWerbung) {
+      // Werbeanteil aktivierbar
+      btnWA.classList.remove("disabled");
+
+      // Standard: Werbeumsatz aktiv
+      this.useWerbeUmsatz = true;
+      this.useZusatzUmsatz = false;
+      chkWerbe.checked = true;
+      chkMit.checked = false;
+      chkMit.disabled = false;
+
+    } else {
+      // Werbeanteil deaktivieren
+      btnWA.classList.add("disabled");
+
+      // Darstellung zurück auf Absolut
+      this.umsatzDarstellung = "abs";
+      darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+      btnAbs.classList.add("active");
+    }
 
     this.updateGeoLayer();
   });
 
-  // HH/ABS Switch
-  const modeSwitch = this._shadowRoot.getElementById("umsatz-mode-switch");
-  this.umsatzMode = "abs";
+  // ---------------------------------------------------------
+  // Werbeumsatz / Mitgekauft
+  // ---------------------------------------------------------
+  chkWerbe?.addEventListener("change", () => {
+    this.useWerbeUmsatz = chkWerbe.checked;
 
-  modeSwitch.addEventListener("click", () => {
-    const isHH = modeSwitch.classList.toggle("hh");
-    this.umsatzMode = isHH ? "hh" : "abs";
-
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) popupWK.classList.remove("show");
+    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
+      this.useWerbeUmsatz = true;
+      chkWerbe.checked = true;
+    }
 
     this.updateGeoLayer();
   });
 
+  chkMit?.addEventListener("change", () => {
+    this.useZusatzUmsatz = chkMit.checked;
+
+    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
+      this.useWerbeUmsatz = true;
+      chkWerbe.checked = true;
+    }
+
+    this.updateGeoLayer();
+  });
+
+  // ---------------------------------------------------------
+  // 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
+  // ---------------------------------------------------------
+// ---------------------------------------------------------
+// 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
+// ---------------------------------------------------------
+btnAbs?.addEventListener("click", () => {
+  this.umsatzDarstellung = "abs";
+  this.currentMapMode = "umsatz-multi";
+  this.activePopupType = "umsatz";
+
+  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+  btnAbs.classList.add("active");
+
+  console.log("➡️ Switch: ABS | umsatzDarstellung =", this.umsatzDarstellung);
+
+  // 🔁 Werte neu berechnen
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.updateGeoLayer();
+});
+
+btnHH?.addEventListener("click", () => {
+  this.umsatzDarstellung = "hh";
+  this.currentMapMode = "umsatz-multi";
+  this.activePopupType = "umsatz";
+
+  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+  btnHH.classList.add("active");
+
+  console.log("➡️ Switch: HH | umsatzDarstellung =", this.umsatzDarstellung);
+
+  // 🔁 Werte neu berechnen (pro HH)
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.updateGeoLayer();
+});
+
+btnWA?.addEventListener("click", () => {
+  if (this.umsatzMainMode !== "werbung") return;
+
+  this.umsatzDarstellung = "werbeanteil";
+  this.currentMapMode = "werbeanteil";
+  this.activePopupType = "umsatz";
+
+  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+  btnWA.classList.add("active");
+
+  // Automatische Checkbox-Logik
+  chkWerbe.checked = true;
+  this.useWerbeUmsatz = true;
+
+  chkMit.checked = false;
+  chkMit.disabled = true;
+  this.useZusatzUmsatz = false;
+
+  console.log("➡️ Switch: WERBEANTEIL | umsatzDarstellung =", this.umsatzDarstellung);
+
+  // 🔁 Werte neu berechnen (Werbeanteil basiert auf Umsatzaggregation)
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.updateGeoLayer();
+});
+
+
+  // ---------------------------------------------------------
   // Kategorien
-  this._shadowRoot.querySelectorAll(".map-toggle").forEach(toggle => {
-    toggle.addEventListener("click", () => {
-      const cat = toggle.dataset.cat;
+  // ---------------------------------------------------------
+// in initializeMapBase(), bei den Kategorie-Toggles:
+this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
+  toggle.addEventListener("click", () => {
+    const cat = toggle.dataset.cat;
+    if (!cat) return;
 
-      if (this.activeCategories.has(cat)) {
-        this.activeCategories.delete(cat);
-        toggle.classList.remove("active");
-      } else {
-        this.activeCategories.add(cat);
-        toggle.classList.add("active");
-      }
+    if (this.activeCategories.has(cat)) {
+      this.activeCategories.delete(cat);
+      toggle.classList.remove("active");
+    } else {
+      this.activeCategories.add(cat);
+      toggle.classList.add("active");
+    }
 
-      this.currentMapMode = "umsatz-multi";
+    this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
-      const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-      if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      if (popupWK) popupWK.classList.remove("show");
-
-      this.updateGeoLayer();
-    });
-  });
-
-  // Doppelbestreuung
-  const chkDoppel = this._shadowRoot.getElementById("chk-doppelbestreuung");
-  this.showCritical = true;
-
-  chkDoppel.addEventListener("change", () => {
-    this.showCritical = chkDoppel.checked;
-
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) popupWK.classList.remove("show");
+    // ✅ Werbeanteil neu berechnen
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
 
     this.updateGeoLayer();
   });
+});
 
+
+  // ---------------------------------------------------------
+  // Doppelbestreuung
+  // ---------------------------------------------------------
+  chkDoppel?.addEventListener("change", () => {
+    this.showCritical = chkDoppel.checked;
+    this.updateGeoLayer();
+  });
+
+  // ---------------------------------------------------------
   // Bestreuung
-  const chkBestreuung = this._shadowRoot.getElementById("chk-bestreuung");
-  chkBestreuung.addEventListener("change", () => {
+  // ---------------------------------------------------------
+  chkBestreuung?.addEventListener("change", () => {
     this.showBestreuung = chkBestreuung.checked;
-
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) popupWK.classList.remove("show");
-
     this.updateBestreuungMarkers();
   });
 
-  // ⭐ Radiusfilter
-  const chkRadius = this._shadowRoot.getElementById("chk-radiusfilter");
-  this.useRadiusFilter = true;
-
-  chkRadius.addEventListener("change", () => {
+  // ---------------------------------------------------------
+  // Radiusfilter
+  // ---------------------------------------------------------
+  chkRadius?.addEventListener("change", () => {
     this.useRadiusFilter = chkRadius.checked;
-
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) popupUmsatz.classList.remove("show");
-
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) popupWK.classList.remove("show");
 
     if (!this.useRadiusFilter) {
       this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
@@ -1757,10 +2115,14 @@ btnWK.addEventListener("click", () => {
       return;
     }
 
-    const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+    const slider = $("radius-slider");
+    const radius = slider ? Number(slider.value) : 0;
     this.applyRadiusFilter(radius);
   });
 }
+
+
+
 
 
 
@@ -1989,6 +2351,7 @@ createMarkerIcon(nl, isPhantom = false) {
   return this.iconCache[key];
 }
 
+
 showPopup(feature) {
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
@@ -1996,30 +2359,28 @@ showPopup(feature) {
 
   const note = feature.properties?.note || "Keine Notiz";
 
-  // 🔥 Umsatz-Popup schließen
-const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-if (popupUmsatz) {
-  popupUmsatz.classList.remove("show");
-  popupUmsatz.classList.add("hidden");
-}
-
-
-  // 🔥 Daten der aktiven Erhebung holen
-  const daten = this.filteredKennwerte?.[plz];
-
-  if (!daten) {
-    console.warn(`❌ Keine Erhebungsdaten für PLZ ${plz}`);
+  // Umsatz-Popup schließen
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+  if (popupUmsatz) {
+    popupUmsatz.classList.remove("show");
+    popupUmsatz.classList.add("hidden");
   }
 
-  // 🔥 Symbol bestimmen (kritisch > HZ > normal)
+  // Panel anpassen
+  const panel = this._shadowRoot.getElementById("map-control-panel");
+  panel.classList.remove("panel-large");
+  panel.classList.add("panel-medium");
+
+  // WK-Daten
+  const daten = this.filteredKennwerte?.[plz] || {};
+  const umsatz = this.filteredPLZWerte?.[plz] || {};
+
+  // Symbol bestimmen
   let symbol = "🔴";
-  if (daten?.isCritical) {
-    symbol = "⚠️";
-  } else if (daten?.isHZ) {
-    symbol = "🟢";
-  }
+  if (daten?.isCritical) symbol = "⚠️";
+  else if (daten?.isHZ) symbol = "🟢";
 
-  // Beschriftungen für Haupttabelle
+  // Beschriftungen Haupttabelle
   const beschreibungen = {
     value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
     value_umsatz_p_hh_0: "Umsatz p. HH",
@@ -2035,14 +2396,25 @@ if (popupUmsatz) {
     value_auflage_0: "Auflage"
   };
 
+  // Zusatz-Beschriftungen
   const beschreibungenSide = {
     value_wk_potentiell_0: "WK in %",
     value_hz_potentiell_0: "HZ-Werbekosten"
   };
 
-  // 🔥 Haupttabelle aufbauen
-  let rows = "";
+  // Umsatzdaten korrekt einfügen
+  daten.value_umsatz_p_hh_0 = { raw: umsatz.umsatzProHaushalt ?? 0 };
+  daten.value_haushalte_0 = { raw: umsatz.haushalte ?? 0 };
 
+  // Durchschnittsbon berechnen
+  const kd = daten.value_kd_erhebung_0?.raw ?? 0;
+  const umsatzErhebung = daten.value_ums_erhebung_0?.raw ?? 0;
+  daten.value_bon_erhebung_0 = {
+    raw: kd > 0 ? Number((umsatzErhebung / kd).toFixed(2)) : 0
+  };
+
+  // Haupttabelle aufbauen
+  let rows = "";
   Object.entries(beschreibungen).forEach(([id, label], index) => {
     const rawValue = daten?.[id]?.raw;
     const wert = typeof rawValue === "number"
@@ -2061,10 +2433,10 @@ if (popupUmsatz) {
     `;
   });
 
-  // 🔥 WK-Popup holen
-  const sidePopup = this._shadowRoot.getElementById('side-popup');
+  // WK-Popup holen
+  const sidePopup = this._shadowRoot.getElementById("side-popup");
 
-  // 🔥 Inhalt setzen
+  // Hauptinhalt setzen
   sidePopup.innerHTML = `
     <button class="close-btn">×</button>
     <table>
@@ -2080,20 +2452,20 @@ if (popupUmsatz) {
     </table>
   `;
 
-  // 🔥 Zusatzwerte
-  const isHZ = daten?.isHZ === false;
-  const umsatz = daten?.value_hr_n_umsatz_0?.raw;
+  // EXTRA-TABELLE WIEDER EINBAUEN
+  const isHZ = daten?.isHZ === false;     // nur wenn NICHT HZ
+  const umsatzJahr = daten?.value_hr_n_umsatz_0?.raw;
 
-  if (isHZ && typeof umsatz === "number" && umsatz > 0) {
-    const wkPotentiellRaw = daten.value_wk_potentiell_0?.raw;
-    const hzPotentiellRaw = daten.value_hz_potentiell_0?.raw;
+  if (isHZ && typeof umsatzJahr === "number" && umsatzJahr > 0) {
+    const wkPotRaw = daten.value_wk_potentiell_0?.raw;
+    const hzPotRaw = daten.value_hz_potentiell_0?.raw;
 
-    const wkPotentiell = typeof wkPotentiellRaw === "number"
-      ? wkPotentiellRaw.toLocaleString("de-DE")
+    const wkPot = typeof wkPotRaw === "number"
+      ? wkPotRaw.toLocaleString("de-DE")
       : "–";
 
-    const hzPotentiell = typeof hzPotentiellRaw === "number"
-      ? hzPotentiellRaw.toLocaleString("de-DE")
+    const hzPot = typeof hzPotRaw === "number"
+      ? hzPotRaw.toLocaleString("de-DE")
       : "–";
 
     const extraTable = `
@@ -2104,171 +2476,204 @@ if (popupUmsatz) {
         <tbody>
           <tr>
             <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-            <td class="value-cell">${wkPotentiell}</td>
+            <td class="value-cell">${wkPot}</td>
           </tr>
           <tr>
             <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-            <td class="value-cell">${hzPotentiell}</td>
+            <td class="value-cell">${hzPot}</td>
           </tr>
         </tbody>
       </table>
     `;
-    sidePopup.insertAdjacentHTML('beforeend', extraTable);
+
+    sidePopup.insertAdjacentHTML("beforeend", extraTable);
   }
 
-  // 🔥 Animation
+  // Animation
   sidePopup.classList.remove("hidden");
   void sidePopup.offsetWidth;
   sidePopup.classList.add("show");
 
   // Close-Button
-  sidePopup.querySelector('.close-btn').onclick = () => {
-    sidePopup.classList.remove('show');
-    sidePopup.classList.add('hidden');
+  sidePopup.querySelector(".close-btn").onclick = () => {
+    sidePopup.classList.remove("show");
+    sidePopup.classList.add("hidden");
   };
 }
-
-
 
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
 
-  // WK-Popup schließen
-  popupWK.classList.remove("show");
-  popupWK.classList.add("hidden");
+  if (popupWK) {
+    popupWK.classList.remove("show");
+    popupWK.classList.add("hidden");
+  }
 
-  const modeHH = this.umsatzMode === "hh";
+  const panel = this._shadowRoot.getElementById("map-control-panel");
+  panel.classList.remove("panel-large");
+  panel.classList.add("panel-medium");
 
-// IMMER absolute Werte oben
-const stationaer = values.umsatz;
-const pluscard   = values.pluscard;
-const ra         = values.ra;
-const online     = values.onlineshop;
+  const isWerbungMode = this.umsatzMainMode === "werbung";
+  const useWerbe = this.useWerbeUmsatz === true;
+  const useZusatz = this.useZusatzUmsatz === true;
 
-// IMMER pro Haushalt unten
-const stHH = values.umsatzProHaushalt;
-const pcHH = values.pluscardProHaushalt;
-const raHH = values.raProHaushalt;
-const osHH = values.onlineshopProHaushalt;
+  const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-const hh = values.haushalte;
-const note = this.geoNotes?.[plz] || "Keine Notiz";
+  // Hilfsfunktion
+  const pickPair = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
+    if (!isWerbungMode) return { abs: base, hh: baseHH };
+    let abs = 0, hh = 0;
+    if (useWerbe) { abs += werb; hh += werbHH; }
+    if (useZusatz) { abs += zusatz; hh += zusatzHH; }
+    return { abs, hh };
+  };
 
-const active = {
-  stationaer: this.activeCategories.has("stationaer"),
-  pluscard:   this.activeCategories.has("pluscard"),
-  ra:         this.activeCategories.has("ra"),
-  online:     this.activeCategories.has("online")
-};
+  // Kategorien
+  const st = pickPair(values.umsatz, values.umsatzWerbung, values.umsatzZusatz,
+                      values.umsatzProHaushalt, values.umsatzWerbungProHaushalt, values.umsatzZusatzProHaushalt);
 
-// Gesamt absolut (für Balken + Kopfzeile oben)
-const totalAbs =
-  (active.stationaer ? stationaer : 0) +
-  (active.pluscard   ? pluscard   : 0) +
-  (active.ra         ? ra         : 0) +
-  (active.online     ? online     : 0);
+  const pc = pickPair(values.pluscard, values.pluscardWerbung, values.pluscardZusatz,
+                      values.pluscardProHaushalt, values.pluscardWerbungProHaushalt, values.pluscardZusatzProHaushalt);
 
-// ⭐ NEU: Gesamt pro Haushalt (für Kopfzeile unten)
-const totalHH =
-  (active.stationaer ? stHH : 0) +
-  (active.pluscard   ? pcHH : 0) +
-  (active.ra         ? raHH : 0) +
-  (active.online     ? osHH : 0);
+  const ra = pickPair(values.ra, values.raWerbung, values.raZusatz,
+                      values.raProHaushalt, values.raWerbungProHaushalt, values.raZusatzProHaushalt);
 
-const fmtAbs = x => x.toLocaleString("de-DE");
-const fmtHH  = x => Number(x).toFixed(3);
-const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
+  const os = pickPair(values.onlineshop, values.onlineshopWerbung, values.onlineshopZusatz,
+                      values.onlineshopProHaushalt, values.onlineshopWerbungProHaushalt, values.onlineshopZusatzProHaushalt);
 
+  const active = {
+    stationaer: this.activeCategories.has("stationaer"),
+    pluscard:   this.activeCategories.has("pluscard"),
+    ra:         this.activeCategories.has("ra"),
+    online:     this.activeCategories.has("online")
+  };
 
+  // Summen für Anzeige
+  const totalAbs =
+    (active.stationaer ? st.abs : 0) +
+    (active.pluscard   ? pc.abs : 0) +
+    (active.ra         ? ra.abs : 0) +
+    (active.online     ? os.abs : 0);
+
+  const totalHH =
+    (active.stationaer ? st.hh : 0) +
+    (active.pluscard   ? pc.hh : 0) +
+    (active.ra         ? ra.hh : 0) +
+    (active.online     ? os.hh : 0);
+
+  const hh = values.haushalte || 0;
+
+  // Werbeanteil IMMER gegen Gesamtumsatz
+  const totalNormalAbs =
+    values.umsatz +
+    values.pluscard +
+    values.ra +
+    values.onlineshop;
+
+  const totalWerbeAbs =
+    values.umsatzWerbung +
+    values.pluscardWerbung +
+    values.raWerbung +
+    values.onlineshopWerbung;
+
+  const totalZusatzAbs =
+    values.umsatzZusatz +
+    values.pluscardZusatz +
+    values.raZusatz +
+    values.onlineshopZusatz;
+
+  const anteilWerbeUmsatz =
+    totalNormalAbs > 0 ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1) : "–";
+
+  // Formatierer
+  const fmtAbs = x => Number(x || 0).toLocaleString("de-DE");
+  const fmtHH  = x => Number(x || 0).toFixed(2);
+  const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
+
+  // Header-Label
+  const headerLabel = (() => {
+    if (!isWerbungMode) return "Gesamtumsatz";
+    if (useWerbe && useZusatz) return "Werbeumsatz + Mitgekauft";
+    if (useWerbe) return "Werbeumsatz";
+    return "Mitgekauft";
+  })();
+
+  // HTML
   popup.innerHTML = `
-    <button class="close-btn">×</button>
+    <div class="popup-header">
+      <span>${note}</span>
+      <button class="close-btn">×</button>
+    </div>
 
-    <!-- =============================== -->
-    <!--   TABELLE 1: GESAMT-KENNZAHLEN  -->
-    <!-- =============================== -->
-    <table>
-      <thead>
-        <tr><th colspan="2" class="title-cell">${note}</th></tr>
-        <tr><th colspan="2" class="subtitle-cell">
-          Gesamtumsatz: ${totalAbs.toLocaleString("de-DE")} €
+    <div class="umsatz-subheader">
+      <span class="strong">${headerLabel}: ${fmtAbs(totalAbs)} €</span><br>
+      <span class="strong">pro Haushalt: ${fmtHH(totalHH)} €</span><br>
+      <span style="color:#000;">Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
+    </div>
 
-        </th></tr>
-      </thead>
+    <!-- NEUER WERBEANTEIL-BALKEN -->
+    <div class="umsatz-bar" style="margin-top:4px;">
+      <div style="background:#b41821;width:${pct(totalNormalAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
+      <div style="background:#1f78b4;width:${pct(totalWerbeAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
+      <div style="background:#ffb000;width:${pct(totalZusatzAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
+    </div>
 
-      <tbody>
-        <tr class="${active.stationaer ? "" : "disabled"}">
-          <td class="label-cell">Stationär</td>
-          <td class="value-cell">${fmtAbs(stationaer)}</td>
-        </tr>
-        <tr class="${active.pluscard ? "" : "disabled"}">
-          <td class="label-cell">Pluscard</td>
-          <td class="value-cell">${fmtAbs(pluscard)}</td>
-        </tr>
-        <tr class="${active.ra ? "" : "disabled"}">
-          <td class="label-cell">R&A</td>
-          <td class="value-cell">${fmtAbs(ra)}</td>
-        </tr>
-        <tr class="${active.online ? "" : "disabled"}">
-          <td class="label-cell">Onlineshop</td>
-          <td class="value-cell">${fmtAbs(online)}</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="umsatz-legend">
+      <span><span style="color:#b41821;">⬤</span> Normal</span>
+      <span><span style="color:#1f78b4;">⬤</span> Werbung</span>
+      <span><span style="color:#ffb000;">⬤</span> Mitgekauft</span>
+    </div>
 
-    <!-- Umsatz-Balken -->
-    <div class="umsatz-share-bar">
-      ${active.stationaer ? `<div class="share-segment share-stationaer" style="width:${pct(stationaer)}%"></div>` : ""}
-      ${active.pluscard   ? `<div class="share-segment share-pluscard"   style="width:${pct(pluscard)}%"></div>`   : ""}
-      ${active.ra         ? `<div class="share-segment share-ra"         style="width:${pct(ra)}%"></div>`         : ""}
-      ${active.online     ? `<div class="share-segment share-online"     style="width:${pct(online)}%"></div>`     : ""}
+    <div class="section-title">Haushalte</div>
+    <div class="umsatz-grid">
+
+      <div class="label">Haushalte</div>
+      <div class="value">${hh.toLocaleString("de-DE")}</div>
+      <div class="value"></div>
+    </div>
+
+    <div class="section-title">Umsatz nach Kategorien</div>
+
+    <div class="umsatz-grid">
+
+       <div class="label"><strong>Kategorie</strong></div>
+      <div class="value"><strong>Absolut</strong></div>
+      <div class="value"><strong>pro HH</strong></div>
+
+      <div class="label ${!active.stationaer ? "disabled-cell" : ""}">Stationär</div>
+      <div class="value ${!active.stationaer ? "disabled-cell" : ""}">${fmtAbs(st.abs)} €</div>
+      <div class="value ${!active.stationaer ? "disabled-cell" : ""}">${fmtHH(st.hh)} €</div>
+
+      <div class="label ${!active.pluscard ? "disabled-cell" : ""}">Pluscard</div>
+      <div class="value ${!active.pluscard ? "disabled-cell" : ""}">${fmtAbs(pc.abs)} €</div>
+      <div class="value ${!active.pluscard ? "disabled-cell" : ""}">${fmtHH(pc.hh)} €</div>
+
+      <div class="label ${!active.ra ? "disabled-cell" : ""}">R&A</div>
+      <div class="value ${!active.ra ? "disabled-cell" : ""}">${fmtAbs(ra.abs)} €</div>
+      <div class="value ${!active.ra ? "disabled-cell" : ""}">${fmtHH(ra.hh)} €</div>
+
+      <div class="label ${!active.online ? "disabled-cell" : ""}">KUBE OS</div>
+      <div class="value ${!active.online ? "disabled-cell" : ""}">${fmtAbs(os.abs)} €</div>
+      <div class="value ${!active.online ? "disabled-cell" : ""}">${fmtHH(os.hh)} €</div>
+    </div>
+
+    <div class="section-title">Umsatzanteile</div>
+
+    <!-- NEU: Kategorien-Balken wird NICHT gefiltert -->
+    <div class="umsatz-bar">
+      <div class="share-stationaer" style="width:${pct(values.umsatz,totalNormalAbs)}%"></div>
+      <div class="share-pluscard"   style="width:${pct(values.pluscard,totalNormalAbs)}%"></div>
+      <div class="share-ra"         style="width:${pct(values.ra,totalNormalAbs)}%"></div>
+      <div class="share-online"     style="width:${pct(values.onlineshop,totalNormalAbs)}%"></div>
     </div>
 
     <div class="umsatz-legend">
       <span><span style="color:#b41821;">⬤</span> Stationär</span>
       <span><span style="color:#1f78b4;">⬤</span> Pluscard</span>
       <span><span style="color:#33a02c;">⬤</span> R&A</span>
-      <span><span style="color:#ffb000;">⬤</span> Onlineshop</span>
-
+      <span><span style="color:#ffb000;">⬤</span> KUBE OS</span>
     </div>
-
-    <!-- ===================================== -->
-    <!--   TABELLE 2: PRO-HAUSHALT-KENNZAHLEN  -->
-    <!-- ===================================== -->
-    <table class="hh-table">
-     <thead>
-        <tr>
-           <th colspan="2" class="subtitle-cell">
-             Gesamtumsatz pro HH: ${fmtHH(totalHH)})
-           </th>
-        </tr>
-      </thead>
-
-
-      <tbody>
-        <tr><td class="label-cell">Haushalte</td><td class="value-cell">${hh.toLocaleString("de-DE")}</td></tr>
-
-        <tr class="${active.stationaer ? "" : "disabled"}">
-          <td class="label-cell">Stationär pro HH</td>
-          <td class="value-cell">${fmtHH(stHH)}</td>
-        </tr>
-
-        <tr class="${active.pluscard ? "" : "disabled"}">
-          <td class="label-cell">Pluscard pro HH</td>
-          <td class="value-cell">${fmtHH(pcHH)}</td>
-        </tr>
-
-        <tr class="${active.ra ? "" : "disabled"}">
-          <td class="label-cell">R&A pro HH</td>
-          <td class="value-cell">${fmtHH(raHH)}</td>
-        </tr>
-
-        <tr class="${active.online ? "" : "disabled"}">
-          <td class="label-cell">Onlineshop pro HH</td>
-          <td class="value-cell">${fmtHH(osHH)}</td>
-        </tr>
-      </tbody>
-    </table>
   `;
 
   popup.classList.remove("hidden");
@@ -2279,6 +2684,66 @@ const pct = x => totalAbs > 0 ? (x / totalAbs) * 100 : 0;
     popup.classList.remove("show");
     popup.classList.add("hidden");
   };
+}
+
+
+
+getUmsatzSumForPLZ(v) {
+  const safe = x => Number.isFinite(x) ? x : 0;
+
+  const isWerbungMode = this.umsatzMainMode === "werbung";
+  const useWerbe = this.useWerbeUmsatz === true;
+  const useZusatz = this.useZusatzUmsatz === true;
+  const useHH = this.umsatzDarstellung === "hh";
+
+  const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
+    if (!isWerbungMode) {
+      return safe(useHH ? baseHH : base);
+    }
+
+    let sum = 0;
+
+    if (useWerbe) {
+      sum += safe(useHH ? werbHH : werb);
+    }
+    if (useZusatz) {
+      sum += safe(useHH ? zusatzHH : zusatz);
+    }
+
+    return sum;
+  };
+
+  let sum = 0;
+
+  if (this.activeCategories.has("stationaer")) {
+    sum += pick(
+      v.umsatz, v.umsatzWerbung, v.umsatzZusatz,
+      v.umsatzProHaushalt, v.umsatzWerbungProHaushalt, v.umsatzZusatzProHaushalt
+    );
+  }
+
+  if (this.activeCategories.has("pluscard")) {
+    sum += pick(
+      v.pluscard, v.pluscardWerbung, v.pluscardZusatz,
+      v.pluscardProHaushalt, v.pluscardWerbungProHaushalt, v.pluscardZusatzProHaushalt
+    );
+  }
+
+  if (this.activeCategories.has("ra")) {
+    sum += pick(
+      v.ra, v.raWerbung, v.raZusatz,
+      v.raProHaushalt, v.raWerbungProHaushalt, v.raZusatzProHaushalt
+    );
+  }
+
+  if (this.activeCategories.has("online")) {
+    sum += pick(
+      v.onlineshop, v.onlineshopWerbung, v.onlineshopZusatz,
+      v.onlineshopProHaushalt, v.onlineshopWerbungProHaushalt, v.onlineshopZusatzProHaushalt
+    );
+  }
+
+  return sum;
 }
 
 
@@ -2429,7 +2894,7 @@ getFilteredData() {
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
-
+    
     const match = id === erhID && y === jahr && num === nummer;
 
     if (match && plz && plz !== "@NullMember") {
@@ -2476,7 +2941,7 @@ updateGeoLayer() {
   if (!this._geoLayer) return;
 
   console.group("🧪 updateGeoLayer()");
-  console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzMode);
+  console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzDarstellung);
 
   // 1️⃣ Max-Wert global berechnen (für Umsatz-Heatmap)
   this.computeMaxValue();
@@ -2490,8 +2955,10 @@ updateGeoLayer() {
   this.updateBestreuungMarkers();
 
   console.groupEnd();
-}
 
+  // ⭐ 4️⃣ Legende aktualisieren (WICHTIG!)
+  this.updateHeatmapLegend();
+}
 
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
@@ -2505,22 +2972,14 @@ computeFillColor(plz) {
 
   // Umsatzmodus
   if (this.currentMapMode === "umsatz-multi") {
-    const safe = x => Number.isFinite(x) ? x : 0;
-
-    let sum = 0;
-    if (this.activeCategories.has("stationaer"))
-      sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
-
-    if (this.activeCategories.has("pluscard"))
-      sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
-
-    if (this.activeCategories.has("ra"))
-      sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
-
-    if (this.activeCategories.has("online"))
-      sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
-
+    const sum = this.getUmsatzSumForPLZ(v);
     return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
+  }
+
+  // Werbeanteil-Modus
+  if (this.currentMapMode === "werbeanteil") {
+    const ratio = v.werbeAnteil ?? 0;
+    return this.getWerbeAnteilColor(ratio);
   }
 
   return "#cfd4da";
@@ -2533,6 +2992,7 @@ computeMaxValue() {
 
   let maxValue = 0;
 
+  // WK
   if (this.currentMapMode === "wk") {
     Object.values(plzWerte).forEach(v => {
       const val = safe(v.hz ? v.wk : v.wkPot);
@@ -2540,49 +3000,52 @@ computeMaxValue() {
     });
   }
 
+  // Umsatz
   if (this.currentMapMode === "umsatz-multi") {
     Object.values(plzWerte).forEach(v => {
-      let sum = 0;
-
-      if (this.activeCategories.has("stationaer"))
-        sum += safe(this.umsatzMode === "hh" ? v.umsatzProHaushalt : v.umsatz);
-
-      if (this.activeCategories.has("pluscard"))
-        sum += safe(this.umsatzMode === "hh" ? v.pluscardProHaushalt : v.pluscard);
-
-      if (this.activeCategories.has("ra"))
-        sum += safe(this.umsatzMode === "hh" ? v.raProHaushalt : v.ra);
-
-      if (this.activeCategories.has("online"))
-        sum += safe(this.umsatzMode === "hh" ? v.onlineshopProHaushalt : v.onlineshop);
-
+      const sum = this.getUmsatzSumForPLZ(v);
       if (sum > maxValue) maxValue = sum;
     });
+  }
+
+  // ⭐ Werbeanteil (immer 0–1)
+  if (this.currentMapMode === "werbeanteil") {
+    this._maxValueCache = 1;
+    return 1;
   }
 
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
-
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
 
-  // -----------------------------
+  // -------------------------------------------------
+  // 0) Layer IMMER klickbar machen (Leaflet-Schutz)
+  // -------------------------------------------------
+  layer.options.interactive = true;
+
+  if (layer._path) {
+    layer._path.setAttribute("pointer-events", "auto");
+  }
+
+  // -------------------------------------------------
   // 1) Radiuslogik
-  // -----------------------------
+  // -------------------------------------------------
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
   let inRadius = true;
 
-  if (this.currentMapMode === "umsatz-multi") {
+  if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
     inRadius = !this.useRadiusFilter || !hasRadius || this.plzImRadius.has(plz);
   } else {
     inRadius = !hasRadius || this.plzImRadius.has(plz);
   }
 
-  // -----------------------------
+  // -------------------------------------------------
   // 2) PLZ ohne Werte oder außerhalb Radius → grau
-  // -----------------------------
+  //    (ABER klickbar, Popup soll leer öffnen)
+  // -------------------------------------------------
   if (!v || !inRadius) {
     layer.setStyle({
       fillColor: "#cfd4da",
@@ -2591,9 +3054,35 @@ applyStyleToLayer(layer) {
       weight: 1
     });
 
-    layer.options.interactive = false;
+    // Layer bleibt klickbar!
+    layer.options.interactive = true;
+    if (layer._path) {
+      layer._path.setAttribute("pointer-events", "auto");
+    }
 
-    // Critical-Marker entfernen
+    // Click-Handler trotzdem setzen
+    layer.off("click");
+    layer.on("click", () => {
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+
+      popupWK?.classList.remove("show");
+      popupWK?.classList.add("hidden");
+
+      popupU?.classList.remove("show");
+      popupU?.classList.add("hidden");
+
+      if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
+        this.activePopupType = "umsatz";
+        this.showEmptyUmsatzPopup(plz);
+        return;
+      }
+
+      this.activePopupType = "wk";
+      this.showPopup(layer.feature, {}); // leeres WK-Popup
+    });
+
+    // Critical Marker entfernen
     if (this.criticalMarkers?.[plz]) {
       this.map.removeLayer(this.criticalMarkers[plz]);
       delete this.criticalMarkers[plz];
@@ -2602,9 +3091,9 @@ applyStyleToLayer(layer) {
     return;
   }
 
-  // -----------------------------
+  // -------------------------------------------------
   // 3) Farbe berechnen
-  // -----------------------------
+  // -------------------------------------------------
   const fillColor = this.computeFillColor(plz);
 
   layer.setStyle({
@@ -2614,40 +3103,48 @@ applyStyleToLayer(layer) {
     weight: 1
   });
 
+  // Sicherheit: Layer klickbar halten
   layer.options.interactive = true;
+  if (layer._path) {
+    layer._path.setAttribute("pointer-events", "auto");
+  }
 
-  // -----------------------------
+  // -------------------------------------------------
   // 4) Click-Handler neu setzen
-  // -----------------------------
+  // -------------------------------------------------
   layer.off("click");
 
   layer.on("click", () => {
     const values = this.filteredPLZWerte?.[plz];
 
-    if (this.currentMapMode === "umsatz-multi") {
-      // WK-Popup schließen
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      popupWK?.classList.remove("show");
-      popupWK?.classList.add("hidden");
+    const popupWK = this._shadowRoot.getElementById("side-popup");
+    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+
+    popupWK?.classList.remove("show");
+    popupWK?.classList.add("hidden");
+
+    popupU?.classList.remove("show");
+    popupU?.classList.add("hidden");
+
+    if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
+      this.activePopupType = "umsatz";
 
       if (values) {
         this.showUmsatzPopup(plz, values);
       } else {
         this.showEmptyUmsatzPopup(plz);
       }
-    } else {
-      // Umsatz-Popup schließen
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-      popupU?.classList.remove("show");
-      popupU?.classList.add("hidden");
-
-      this.showPopup(layer.feature, this.filteredKennwerte?.[plz] || {});
+      return;
     }
+
+    this.activePopupType = "wk";
+    const kennwerte = this.filteredKennwerte?.[plz] || {};
+    this.showPopup(layer.feature, kennwerte);
   });
 
-  // -----------------------------
+  // -------------------------------------------------
   // 5) Critical-Marker (nur WK-Modus)
-  // -----------------------------
+  // -------------------------------------------------
   const showCritical = this.currentMapMode === "wk" && this.showCritical;
   const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
@@ -2659,7 +3156,6 @@ applyStyleToLayer(layer) {
     return;
   }
 
-  // Critical-Marker erzeugen (falls nicht vorhanden)
   if (!this.criticalMarkers) this.criticalMarkers = {};
 
   if (!this.criticalMarkers[plz]) {
@@ -2711,8 +3207,20 @@ getDynamicHeatColor(value, max) {
   if (ratio > 0.55) return "#e96a3a";  // orange
   if (ratio > 0.45) return "#f08a3c";  // hellorange
   if (ratio > 0.35) return "#f6b65b";  // gelb-orange
-  if (ratio > 0.20) return "#ffe89c";  // hellgelb
-  return "#fff6d6";                    // sehr helles gelb
+  if (ratio > 0.20) return "#f7d77a";  // ⭐ kräftiges Gelb (statt #ffe89c)
+  return "#fce9b2";                    // ⭐ helles Gelb (statt #fff6d6)
+}
+
+
+getWerbeAnteilColor(ratio) {
+  if (!Number.isFinite(ratio) || ratio <= 0) return "#cfd4da";
+
+  if (ratio > 0.80) return "#7a0f17";
+  if (ratio > 0.60) return "#b41821";
+  if (ratio > 0.40) return "#e96a3a";
+  if (ratio > 0.20) return "#f6b65b";
+  if (ratio > 0.10) return "#f7d77a";  // ⭐ kräftiges Gelb
+  return "#fce9b2";                    // ⭐ helles Gelb
 }
 
 
@@ -2976,12 +3484,11 @@ renderErhebungsInfoTable() {
 
   const headers = [
     { label: 'NL', width: '15px', class: 'nl-col-nl' },
-    { label: 'Jahresumsatz', width: '60px', class: 'nl-col-jahr' },
-    { label: 'Erfasst (Zeitraum)', width: '45px', class: 'nl-col-erf' },
+    { label: 'Umsatz (Hochrechnung)', width: '70px', class: 'nl-col-jahr' },
+    { label: 'Erfasst (Zeitraum)', width: '55px', class: 'nl-col-erf' },
     { label: '%', width: '25px', class: 'nl-col-pct1' },
-    { label: 'Davon Valide', width: '50px', class: 'nl-col-val' },
-    { label: '%', width: '25px', class: 'nl-col-pct2' },
-    { label: 'Abdeckung', width: '50px', class: 'nl-col-abd' }
+    { label: 'Davon Valide', width: '55px', class: 'nl-col-val' },
+    { label: 'Abdeckung', width: '55px', class: 'nl-col-abd' }
   ];
 
   headers.forEach(h => {
@@ -3007,7 +3514,6 @@ const values = [
   Math.round(info.erfasst_total).toLocaleString("de-DE"),
   (info.pct_erfassung * 100).toFixed(1) + "%",
   Math.round(info.erfasst_valid).toLocaleString("de-DE"),
-  (info.pct_valid * 100).toFixed(1) + "%",
   (info.pct_hochrechnung * 100).toFixed(1) + "%"
 ];
 
@@ -3124,6 +3630,7 @@ prepareErhebungsInfo() {
     };
   });
 }
+
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3131,99 +3638,225 @@ prepareUmsatzPLZWerte() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
   if (!erhID || !jahr || !nummer) return;
 
+  // ============================================
+  // SAFE() – robustes Parsing inkl. Tausenderpunkt
+  // ============================================
   const safe = x => {
+    if (x == null) return 0;
+
+    let original = x;
+
+    if (typeof x === "string") {
+      x = x.replace(/\./g, "").replace(",", ".");
+    }
+
     const n = Number(x);
+
+    if (!Number.isFinite(n)) {
+      console.warn("❗ SAFE-PARSE-ERROR", { original, parsed: n });
+    }
+
     return Number.isFinite(n) ? n : 0;
   };
 
-  // ⭐ 1) Cache für vollständige Erhebungsdaten (nur einmal berechnen)
+  // ============================================
+  // Haushalte-PARSER (immer ganze Zahl!)
+  // ============================================
+  const parseHH = x => {
+    if (x == null) return 0;
+
+    if (typeof x === "number") {
+      return Number.isFinite(x) ? x : 0;
+    }
+
+    if (typeof x === "string") {
+      // Tausendertrennzeichen entfernen (egal ob . oder ,)
+      const s = x.replace(/[.,\s]/g, "");
+      const n = Number(s);
+      if (!Number.isFinite(n)) {
+        console.warn("❗ HH-PARSE-ERROR", { original: x, parsed: n });
+        return 0;
+      }
+      return n;
+    }
+
+    return 0;
+  };
+
+  // Debug-Safe für Umsatzfelder
+  const debugSafe = (label, value, plz) => {
+    const parsed = safe(value);
+    if (!Number.isFinite(parsed)) {
+      console.warn(`❗ SAFE-PARSE-ERROR @ ${label} | PLZ ${plz}`, {
+        original: value,
+        parsed
+      });
+    }
+    return parsed;
+  };
+
+  // ============================================
+  // (Optional) Cache-Struktur initialisieren – aber NICHT mehr als Short-Cut nutzen
+  // ============================================
   if (!this._umsatzCache) this._umsatzCache = {};
+  const nlKey = [...(this._selectedNLs || new Set())].sort().join("_") || "ALL";
+  const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
 
-  const cacheKey = `${erhID}_${jahr}_${nummer}`;
+  // ============================================
+  // 1) Aggregation – IMMER NEU BERECHNEN
+  // ============================================
+  const rows = raw.filter(row =>
+    row["dimension_erhebung_0"]?.id == erhID &&
+    row["dimension_jahr_0"]?.id == jahr &&
+    row["dimension_erhebungsnummer_0"]?.id == nummer
+  );
 
-  if (!this._umsatzCache[cacheKey]) {
-    const rows = raw.filter(row =>
-      row["dimension_erhebung_0"]?.id == erhID &&
-      row["dimension_jahr_0"]?.id == jahr &&
-      row["dimension_erhebungsnummer_0"]?.id == nummer
-    );
+  const aggregated = {};
 
-    const aggregated = {};
+  rows.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
 
-    rows.forEach(row => {
-      const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-      const plz = String(rawPLZ).padStart(5, "0");
+    if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
+      return;
+    }
 
-      if (!aggregated[plz]) {
-        aggregated[plz] = {
-          haushalte: 0,
-          umsatz: 0,
-          ra: 0,
-          onlineshop: 0,
-          pluscard: 0
-        };
-      }
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
 
-      const v = aggregated[plz];
+    if (!rawPLZ || rawPLZ === "@NullMember") return;
 
-      v.haushalte += safe(row["value_haushalte_0"]?.raw);
-      v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
-      v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
-      v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-      v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
-    });
+    const plz = String(rawPLZ).padStart(5, "0");
+    if (plz === "00000") return;
 
-    // Pro-Haushalt berechnen
-    Object.values(aggregated).forEach(v => {
-      if (v.haushalte > 0) {
-        v.umsatzProHaushalt     = v.umsatz     / v.haushalte;
-        v.raProHaushalt         = v.ra         / v.haushalte;
-        v.onlineshopProHaushalt = v.onlineshop / v.haushalte;
-        v.pluscardProHaushalt   = v.pluscard   / v.haushalte;
-      } else {
-        v.umsatzProHaushalt = 0;
-        v.raProHaushalt = 0;
-        v.onlineshopProHaushalt = 0;
-        v.pluscardProHaushalt = 0;
-      }
-    });
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
+        _hhValues: [],
 
-    this._umsatzCache[cacheKey] = aggregated;
-  }
+        umsatz: 0,
+        ra: 0,
+        onlineshop: 0,
+        pluscard: 0,
 
-  const full = this._umsatzCache[cacheKey];
+        umsatzWerbung: 0,
+        raWerbung: 0,
+        onlineshopWerbung: 0,
+        pluscardWerbung: 0,
 
-  // ⭐ 2) Jetzt nur noch Subset bilden (NL + Radius)
+        umsatzZusatz: 0,
+        raZusatz: 0,
+        onlineshopZusatz: 0,
+        pluscardZusatz: 0
+      };
+    }
+
+    const v = aggregated[plz];
+
+    // Haushalte
+    const rawHH = row["value_haushalte_0"]?.raw;
+    const hh = parseHH(rawHH);
+
+
+    if (hh > 0) v._hhValues.push(hh);
+
+    // Umsatzfelder
+    v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
+    v.ra         += debugSafe("umsatz_ra", row["value_umsatz_ra_0"]?.raw, plz);
+    v.onlineshop += debugSafe("umsatz_online", row["value_umsatz_online_0"]?.raw, plz);
+    v.pluscard   += debugSafe("umsatz_pluscard", row["value_umsatz_grosskunden_0"]?.raw, plz);
+
+    v.umsatzWerbung     += debugSafe("werbung_stationaer", row["value_umsatz_stationaer_werbung_0"]?.raw, plz);
+    v.raWerbung         += debugSafe("werbung_ra", row["value_umsatz_ra_werbung_0"]?.raw, plz);
+    v.onlineshopWerbung += debugSafe("werbung_online", row["value_umsatz_online_werbung_0"]?.raw, plz);
+    v.pluscardWerbung   += debugSafe("werbung_pluscard", row["value_umsatz_grosskunden_werbung_0"]?.raw, plz);
+
+    v.umsatzZusatz     += debugSafe("zusatz_stationaer", row["value_umsatz_stationaer_zusatz_0"]?.raw, plz);
+    v.raZusatz         += debugSafe("zusatz_ra", row["value_umsatz_ra_zusatz_0"]?.raw, plz);
+    v.onlineshopZusatz += debugSafe("zusatz_online", row["value_umsatz_online_zusatz_0"]?.raw, plz);
+    v.pluscardZusatz   += debugSafe("zusatz_pluscard", row["value_umsatz_grosskunden_zusatz_0"]?.raw, plz);
+  });
+
+  // ============================================
+  // 2) Haushalte + pro HH + Werbeanteil
+  // ============================================
+  Object.entries(aggregated).forEach(([plz, v]) => {
+    if (v._hhValues.length > 0) {
+      v.haushalte =
+        v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
+    } else {
+      v.haushalte = 0;
+    }
+
+
+
+    delete v._hhValues;
+
+    const hh = v.haushalte;
+    const perHH = val => (hh > 0 ? val / hh : 0);
+
+    v.umsatzProHaushalt     = perHH(v.umsatz);
+    v.raProHaushalt         = perHH(v.ra);
+    v.onlineshopProHaushalt = perHH(v.onlineshop);
+    v.pluscardProHaushalt   = perHH(v.pluscard);
+
+    v.umsatzWerbungProHaushalt     = perHH(v.umsatzWerbung);
+    v.raWerbungProHaushalt         = perHH(v.raWerbung);
+    v.onlineshopWerbungProHaushalt = perHH(v.onlineshopWerbung);
+    v.pluscardWerbungProHaushalt   = perHH(v.pluscardWerbung);
+
+    v.umsatzZusatzProHaushalt     = perHH(v.umsatzZusatz);
+    v.raZusatzProHaushalt         = perHH(v.raZusatz);
+    v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
+    v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
+
+    const catMapNormal = {
+      stationaer: v.umsatz ?? 0,
+      ra: v.ra ?? 0,
+      onlineshop: v.onlineshop ?? 0,
+      pluscard: v.pluscard ?? 0
+    };
+
+    const catMapWerbung = {
+      stationaer: v.umsatzWerbung ?? 0,
+      ra: v.raWerbung ?? 0,
+      onlineshop: v.onlineshopWerbung ?? 0,
+      pluscard: v.pluscardWerbung ?? 0
+    };
+
+    let totalNormal = 0;
+    let totalWerbe = 0;
+
+    for (const cat of this.activeCategories) {
+      totalNormal += catMapNormal[cat] ?? 0;
+      totalWerbe  += catMapWerbung[cat] ?? 0;
+    }
+
+    v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
+  });
+
+  // optional: aktualisierten Aggregat-Cache speichern
+  this._umsatzCache[cacheKey] = aggregated;
+
+  // ============================================
+  // 3) Radiusfilter
+  // ============================================
+  const full = aggregated;
   const result = {};
 
   Object.entries(full).forEach(([plz, v]) => {
-    // NL-Filter
-    if (this._selectedNLs.size > 0) {
-      const rowsForPLZ = this.filteredData.filter(r => {
-        const rawPLZ = r["dimension_plz_0"]?.id ?? r["dimension_plz_0"]?.raw;
-        const p = String(rawPLZ).padStart(5, "0");
-        return p === plz;
-      });
-
-      const nlMatch = rowsForPLZ.some(r =>
-        this._selectedNLs.has(r["dimension_niederlassung_0"]?.id?.trim())
-      );
-
-      if (!nlMatch) return;
-    }
-
-    // Radiusfilter (nur wenn aktiviert)
-    if (this.currentMapMode === "umsatz-multi" && this.useRadiusFilter) {
+    if ((this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
-
     result[plz] = v;
   });
 
   this.filteredPLZWerte = result;
 
-  console.log("🧪 prepareUmsatzPLZWerte() → PLZs:", Object.keys(result).length);
+  console.log(
+    "%c🧪 prepareUmsatzPLZWerte() → Fertig",
+    "color:#33a02c; font-weight:bold;",
+    { plzCount: Object.keys(result).length }
+  );
 }
+
 
 
 
@@ -3472,32 +4105,27 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
-
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
   const aggregated = {};
   const unfilteredUmsatzByPLZ = {};
 
-  // 1️⃣ Ungefilterter Umsatz pro PLZ (für WK inkl. Nachbarn)
+  // Ungefilterter Umsatz pro PLZ
   this.filteredData.forEach(row => {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
     const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
-
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
   });
 
-  // 2️⃣ Aggregation nur für PLZ im Radius + NL-Filter
+  // Aggregation WK
   this.filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
 
-    // NL-Filter
     if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
-
-    // Radiusfilter (falls gesetzt)
     if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
 
     if (!aggregated[plz]) {
@@ -3521,10 +4149,9 @@ computeWKKennwerte() {
     if (typeof potHz === "number") entry.potHzKosten.push(potHz);
   });
 
-  // 3️⃣ WK-Kennwerte final berechnen und gefilterte PLZ-Menge neu aufbauen
   const base = this.filteredKennwerte || {};
   const newFilteredKennwerte = {};
-  const newFilteredPLZWerte = this.filteredPLZWerte ? { ...this.filteredPLZWerte } : {};
+  const newFilteredPLZWerte = {};
 
   Object.entries(aggregated).forEach(([plz, entry]) => {
     const umsatzNetto = entry.umsatzNetto;
@@ -3550,11 +4177,12 @@ computeWKKennwerte() {
     const isHZ = entry.hzCount > 0;
     const isCritical = entry.hzCount > 1;
 
-    // ⭐ Basisdaten (Haushalte, Kaufkraft, Auflage, KD, Bon, etc.) übernehmen
     const baseEntry = base[plz] || {};
+    const old = this.filteredPLZWerte?.[plz] || {};
 
+    // WK-Kennwerte
     newFilteredKennwerte[plz] = {
-      ...baseEntry, // ← ALLE anderen Kennwerte bleiben erhalten
+      ...baseEntry,
       isHZ,
       isCritical,
       value_hr_n_umsatz_0: { raw: umsatzNetto },
@@ -3565,17 +4193,52 @@ computeWKKennwerte() {
       value_wk_potentiell_0: { raw: potHzPercent }
     };
 
-    // WK-Werte auch in filteredPLZWerte schreiben (für Heatmap)
-    if (!newFilteredPLZWerte[plz]) newFilteredPLZWerte[plz] = {};
-    newFilteredPLZWerte[plz].wk = wkPercent;
-    newFilteredPLZWerte[plz].wkPot = potHzPercent;
-    newFilteredPLZWerte[plz].hz = isHZ;
+    // Umsatzdaten übernehmen
+    newFilteredPLZWerte[plz] = {
+      wk: wkPercent,
+      wkPot: potHzPercent,
+      hz: isHZ,
+
+      umsatz: old.umsatz ?? 0,
+      ra: old.ra ?? 0,
+      onlineshop: old.onlineshop ?? 0,
+      pluscard: old.pluscard ?? 0,
+      haushalte: old.haushalte ?? 0,
+
+      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
+      raProHaushalt: old.raProHaushalt ?? 0,
+      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
+      pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
+
+      umsatzWerbung: old.umsatzWerbung ?? 0,
+      raWerbung: old.raWerbung ?? 0,
+      onlineshopWerbung: old.onlineshopWerbung ?? 0,
+      pluscardWerbung: old.pluscardWerbung ?? 0,
+
+      umsatzZusatz: old.umsatzZusatz ?? 0,
+      raZusatz: old.raZusatz ?? 0,
+      onlineshopZusatz: old.onlineshopZusatz ?? 0,
+      pluscardZusatz: old.pluscardZusatz ?? 0,
+
+      umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
+      raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
+      onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
+      pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
+
+      umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
+      raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
+      onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
+      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
+
+      // WICHTIG: Werbeanteil erhalten
+      werbeAnteil: old.werbeAnteil ?? 0
+    };
   });
 
-  // ⭐ Nur PLZ behalten, die im Aggregat liegen
   this.filteredKennwerte = newFilteredKennwerte;
   this.filteredPLZWerte = newFilteredPLZWerte;
 }
+
 
 
 toggleNLSelection(nl) {
@@ -3875,6 +4538,15 @@ getFilteredDataWithRadius() {
 }
 
 
+closeAllPopups() {
+  ["side-popup", "side-popup-umsatz"].forEach(id => {
+    const el = this._shadowRoot.getElementById(id);
+    if (!el) return;
+    el.classList.remove("show");
+    el.classList.add("hidden");
+    el.style.display = "none";
+  });
+}
 
 closeNLTable() {
   const nlContainer = this._shadowRoot.getElementById("nl-info-container");
@@ -4103,10 +4775,104 @@ this.computeStreuverlust();
 
     this.hideSpinner();
   }
+updateHeatmapLegend() {
+
+  const legend = this._shadowRoot.getElementById("heatmap-legend");
+  if (!legend) return;
+  if (!this.currentMapMode) {
+    legend.classList.add("hidden");
+    return;
+  }
+
+  // WK-Modus → Werbekosten (isHZ === false Skala)
+// WK-Modus → Werbekosten (isHZ === false Skala)
+if (this.currentMapMode === "wk") {
+  legend.innerHTML = `
+    <div><strong>Werbekosten</strong></div>
+
+    <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
+
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
+    </div>
+
+    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am333 Umsatz)</div>
+
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %
+    </div>
+  `;
+  legend.classList.remove("hidden");
+  return;
+}
 
 
 
+  // Umsatz-Heatmap
+  if (this.currentMapMode === "umsatz-multi") {
+    legend.innerHTML = `
+      <div><strong>Umsatz-Heatmap</strong></div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;95%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#9d131b"></div> 85–95%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 75–85%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#d9483b"></div> 65–75%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 55–65%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f08a3c"></div> 45–55%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 35–45%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 20–35%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;20%</div>
+    `;
+    legend.classList.remove("hidden");
+    return;
+  }
 
+  // Werbeanteil-Heatmap
+  if (this.currentMapMode === "werbeanteil") {
+    legend.innerHTML = `
+      <div><strong>Werbeanteil</strong></div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;80%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 60–80%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 40–60%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 20–40%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 10–20%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;10%</div>
+    `;
+    legend.classList.remove("hidden");
+    return;
+  }
+
+  legend.classList.add("hidden");
+}
 
 
 
