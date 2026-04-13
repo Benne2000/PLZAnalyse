@@ -346,7 +346,7 @@
   padding: 14px;
   box-sizing: border-box;
   font-family: sans-serif;
-  z-index: 99998;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -4806,6 +4806,7 @@ this.computeStreuverlust();
     this.hideSpinner();
   }
 updateHeatmapLegend() {
+
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   if (!legend) return;
   if (!this.currentMapMode) {
@@ -4814,6 +4815,7 @@ updateHeatmapLegend() {
   }
 
   // WK-Modus → Werbekosten (isHZ === false Skala)
+// WK-Modus → Werbekosten (isHZ === false Skala)
 if (this.currentMapMode === "wk") {
   legend.innerHTML = `
     <div><strong>Werbekosten</strong></div>
@@ -4821,48 +4823,49 @@ if (this.currentMapMode === "wk") {
     <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut</div>
 
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25
+      <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25
+      <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15
+      <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10
+      <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5
+      <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#006837"></div> 0–2
+      <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
     </div>
 
     <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut</div>
 
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50
+      <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50
+      <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#969696"></div> 15–25
+      <div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15
+      <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10
+      <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %
     </div>
     <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5
+      <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %
     </div>
   `;
   legend.classList.remove("hidden");
   return;
 }
+
 
 
   // Umsatz-Heatmap
