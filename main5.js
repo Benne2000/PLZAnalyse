@@ -971,16 +971,16 @@
 /* 📦 Heatmap-Legende (unten links über dem Button) */
 #heatmap-legend {
   position: absolute;
-  bottom: 90px;          /* direkt über dem Button */
-  left: 20px;            /* unten links */
+  bottom: 90px;
+  left: 5%;
 
   background: white;
   border: 2px solid #b41821;
   border-radius: 10px;
   padding: 12px 14px;
 
-  width: 220px;          /* feste Breite */
-  max-height: 260px;     /* scrollbar falls nötig */
+  width: 220px;
+  max-height: 260px;
   overflow-y: auto;
 
   font-size: 12px;
@@ -989,7 +989,7 @@
   z-index: 9998;
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
 
-  pointer-events: none;  /* blockiert NICHT die Karte */
+  pointer-events: none; /* blockiert NICHT die Karte */
   opacity: 1;
   transition: opacity 0.25s ease;
 }
