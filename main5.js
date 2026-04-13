@@ -1936,8 +1936,8 @@ btnWK?.addEventListener("click", () => {
 
     btnWA.classList.add("disabled");
 
-    $("side-popup")?.classList.remove("show");
-    $("side-popup-umsatz")?.classList.remove("show");
+   // $("side-popup")?.classList.remove("show");
+   // $("side-popup-umsatz")?.classList.remove("show");
 
     const { erhID, jahr, nummer } = this._activeFilter || {};
     if (erhID && jahr && nummer) {
@@ -1983,8 +1983,8 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     // Werbeanteil deaktivieren (Umsatztyp = gesamt)
     btnWA.classList.add("disabled");
 
-    $("side-popup-umsatz")?.classList.remove("show");
-    $("side-popup")?.classList.remove("show");
+    //$("side-popup-umsatz")?.classList.remove("show");
+   // $("side-popup")?.classList.remove("show");
 
     this.updateGeoLayer();
     this.updateHeatmapLegend();
@@ -4871,7 +4871,7 @@ if (this.currentMapMode === "wk") {
       <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
     </div>
 
-    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Potentielle WK am Umsatz)</div>
+    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
 
     <div class="heatmap-legend-row">
       <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
