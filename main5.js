@@ -23,7 +23,7 @@
   width: 70%;
   height: 100%;
   position: relative;   /* WICHTIG */
-  z-index: 10;
+  z-index: 1;
 }
 
 
@@ -71,6 +71,31 @@
 /* Gemeinsames Popup-Layout für WK & Umsatz               */
 /* ------------------------------------------------------ */
 
+.side-popup {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 25%;
+  height: 70%;
+  background: white;
+  border-left: 2px solid #b41821;
+  padding: 10px;
+  font-family: sans-serif;
+  color: #b41821;
+  box-sizing: border-box;
+  overflow-y: auto;
+  z-index: 99999;
+
+  /* Animation */
+  opacity: 0;
+  transform: translateX(20px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.side-popup.show {
+  opacity: 1;
+  transform: translateX(0);
+}
 
 .side-popup.hidden {
   opacity: 0;
@@ -162,11 +187,11 @@
 /* ------------------------------------------------------ */
 /* UMSATZ-POPUP (sauber, stabil, bündig, wie WK-Popup)    */
 /* ------------------------------------------------------ */
-#side-popup,
+
 #side-popup-umsatz {
-  position: fixed;
-  top: 0;
+  position: absolute;
   right: 0;
+  top: 0;
   width: 25%;
   height: 70%;
   background: white;
@@ -174,19 +199,17 @@
   border-top: 2px solid #b41821;
   box-sizing: border-box;
   overflow-y: auto;
-  z-index: 999999;
+  z-index: 99999;
 
   opacity: 0;
   transform: translateX(20px);
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-#side-popup.show,
 #side-popup-umsatz.show {
   opacity: 1;
   transform: translateX(0);
 }
-
 
 /* Header */
 #side-popup-umsatz .popup-header {
@@ -323,7 +346,7 @@
   padding: 14px;
   box-sizing: border-box;
   font-family: sans-serif;
-  z-index: 20;
+  z-index: 99998;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -718,7 +741,7 @@
 #legend-toggle-btn {
   position: absolute;
   bottom: 20px;
-  left: 5%; /* ⭐ unten links */
+  left: 20px; /* ⭐ unten links */
   width: 54px;
   height: 54px;
   background: white;
@@ -728,7 +751,8 @@
   z-index: 9999;
 
   /* ⭐ EXAKT wie map-tile-toggle-btn */
-   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24">      <rect x="4" y="5" width="16" height="2" rx="1"/>      <rect x="4" y="11" width="12" height="2" rx="1"/>      <rect x="4" y="17" width="8" height="2" rx="1"/>    </svg>'); background-size: 65%;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"> <circle cx="12" cy="12" r="10" stroke="%23b41821" stroke-width="2" fill="none"/><line x1="12" y1="8" x2="12" y2="12" stroke="%23b41821" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="%23b41821"/></svg>');
+  background-size: 65%;
   background-repeat: no-repeat;
   background-position: center;
 
@@ -738,6 +762,35 @@
 #legend-toggle-btn:hover {
   transform: scale(1.12);
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+}
+
+#heatmap-legend {
+  position: absolute;
+  bottom: 90px; /* ⭐ direkt über dem Button */
+  left: 20px;
+
+  background: white;
+  border: 2px solid #b41821;
+  border-radius: 10px;
+  padding: 12px 14px;
+
+  width: 220px;        /* ⭐ feste Breite, nicht zu breit */
+  max-height: 260px;   /* ⭐ genug Platz */
+  overflow-y: auto;    /* ⭐ scrollbar falls nötig */
+
+  font-size: 12px;
+  font-family: sans-serif;
+
+  z-index: 9998;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+#heatmap-legend.hidden {
+  opacity: 0;
+  visibility: hidden;
 }
 
 
@@ -836,7 +889,9 @@
   background: #fff3f3;
   box-shadow: 0 0 6px rgba(180,24,33,0.4);
 }
-
+.hidden {
+  display: none;
+}
 .umsatz-analysis-row {
   display: none;
 }
@@ -943,48 +998,39 @@
   cursor: not-allowed;
 }
 
-/* 📦 Heatmap-Legende (unten links über dem Button) */
-#heatmap-legend {
-  position: absolute;
-  bottom: 90px;
-  left: 5%;
 
+
+.heatmap-legend {
+  position: absolute;
+  bottom: 70px; /* direkt über dem Button */
+  right: 20px;
   background: white;
   border: 2px solid #b41821;
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 12px 14px;
-
-  width: 220px;
-  max-height: 300px;
-  overflow-y: auto;
-
   font-size: 12px;
   font-family: sans-serif;
-
-  z-index: 9998;
+  z-index: 99998; /* knapp unter dem Button */
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-
-  pointer-events: none; /* blockiert NICHT die Karte */
-  opacity: 1;
+  pointer-events: none;
   transition: opacity 0.25s ease;
 }
 
-/* ⭐ Legende verstecken */
-#heatmap-legend.hidden {
+.heatmap-legend.hidden {
   opacity: 0;
   visibility: hidden;
 }
 
-/* Zeilen */
-#heatmap-legend .heatmap-legend-row {
+
+
+.heatmap-legend-row {
   display: flex;
   align-items: center;
   gap: 8px;
   margin-bottom: 4px;
 }
 
-/* Farbfelder */
-#heatmap-legend .heatmap-legend-color {
+.heatmap-legend-color {
   width: 20px;
   height: 12px;
   border-radius: 3px;
@@ -1223,6 +1269,7 @@ class GeoMapWidget extends HTMLElement {
 
     return struktur;
   }
+
 async loadGeoJson() {
   if (this._geoLayer) return;
 
@@ -1232,6 +1279,7 @@ async loadGeoJson() {
     );
     this._geoData = await response.json();
 
+    // Notes extrahieren
     this.geoNotes = {};
     (this._geoData.features || []).forEach(feature => {
       const plz = feature.properties?.plz?.trim();
@@ -1239,9 +1287,67 @@ async loadGeoJson() {
       if (plz && note) this.geoNotes[plz] = note;
     });
 
+    // Erste Kennwerte berechnen
+    const filteredData = this.getFilteredData();
+    const plzWerte = this.extractPLZWerte(filteredData);
+
+    // GeoJSON Layer
     this._geoLayer = L.geoJSON(this._geoData, {
+      style: feature => {
+        const plz = feature.properties?.plz?.trim();
+        const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+        const isHZ = this.hzFlags?.[plz] ?? false;
+
+        const value = isHZ ? values.wk : values.wkPot;
+
+        return {
+          fillColor: this.getColor(value, isHZ),
+          weight: 1,
+          opacity: 1,
+          color: "white",
+          fillOpacity: 0.5
+        };
+      },
+
       onEachFeature: (feature, layer) => {
-        // ❗ KEIN CLICK-HANDLER HIER
+        layer.on("click", e => {
+          const plz = String(e.target.feature.properties.plz).padStart(5, "0");
+
+          this.highlightMapArea(plz);
+          this.highlightTableRowByPLZ(plz);
+
+          const popupWK = this._shadowRoot.getElementById("side-popup");
+          const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+
+          popupWK?.classList.remove("show");
+          popupWK?.classList.add("hidden");
+
+          popupU?.classList.remove("show");
+          popupU?.classList.add("hidden");
+
+          // -----------------------------
+          // Umsatz-Modi (inkl. Werbeanteil)
+          // -----------------------------
+          if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
+            this.activePopupType = "umsatz";
+
+            const values = this.filteredPLZWerte?.[plz];
+            if (!values) {
+              this.showEmptyUmsatzPopup(plz);
+              return;
+            }
+
+            this.showUmsatzPopup(plz, values);
+            return;
+          }
+
+          // -----------------------------
+          // WK-Modus
+          // -----------------------------
+          this.activePopupType = "wk";
+          const kennwerte = this.filteredKennwerte?.[plz];
+          this.showPopup(e.target.feature, kennwerte);
+        });
       }
     }).addTo(this.map);
 
@@ -1851,8 +1957,8 @@ btnWK?.addEventListener("click", () => {
 
     btnWA.classList.add("disabled");
 
-   // $("side-popup")?.classList.remove("show");
-   // $("side-popup-umsatz")?.classList.remove("show");
+    $("side-popup")?.classList.remove("show");
+    $("side-popup-umsatz")?.classList.remove("show");
 
     const { erhID, jahr, nummer } = this._activeFilter || {};
     if (erhID && jahr && nummer) {
@@ -1862,7 +1968,6 @@ btnWK?.addEventListener("click", () => {
     } else {
         this.updateGeoLayer();
     }
-    this.updateHeatmapLegend();
 });
 
 
@@ -1898,11 +2003,10 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     // Werbeanteil deaktivieren (Umsatztyp = gesamt)
     btnWA.classList.add("disabled");
 
-    //$("side-popup-umsatz")?.classList.remove("show");
-   // $("side-popup")?.classList.remove("show");
+    $("side-popup-umsatz")?.classList.remove("show");
+    $("side-popup")?.classList.remove("show");
 
     this.updateGeoLayer();
-    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
@@ -2328,8 +2432,6 @@ createMarkerIcon(nl, isPhantom = false) {
 
 
 showPopup(feature) {
-
-
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
     .trim();
@@ -2429,8 +2531,8 @@ showPopup(feature) {
     </table>
   `;
 
-  // EXTRA-TABELLE
-  const isHZ = daten?.isHZ === false;
+  // EXTRA-TABELLE WIEDER EINBAUEN
+  const isHZ = daten?.isHZ === false;     // nur wenn NICHT HZ
   const umsatzJahr = daten?.value_hr_n_umsatz_0?.raw;
 
   if (isHZ && typeof umsatzJahr === "number" && umsatzJahr > 0) {
@@ -2466,8 +2568,9 @@ showPopup(feature) {
     sidePopup.insertAdjacentHTML("beforeend", extraTable);
   }
 
-  // Popup öffnen — WICHTIG: hidden zuerst entfernen
+  // Animation
   sidePopup.classList.remove("hidden");
+  void sidePopup.offsetWidth;
   sidePopup.classList.add("show");
 
   // Close-Button
@@ -2479,17 +2582,13 @@ showPopup(feature) {
 
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
-  console.log("➡️ showUmsatzPopup CALLED for", plz, "classes BEFORE:", popup.className);
-
   const popupWK = this._shadowRoot.getElementById("side-popup");
 
-  // WK-Popup schließen
   if (popupWK) {
     popupWK.classList.remove("show");
     popupWK.classList.add("hidden");
   }
 
-  // Panel anpassen
   const panel = this._shadowRoot.getElementById("map-control-panel");
   panel.classList.remove("panel-large");
   panel.classList.add("panel-medium");
@@ -2529,7 +2628,7 @@ showUmsatzPopup(plz, values) {
     online:     this.activeCategories.has("online")
   };
 
-  // Summen
+  // Summen für Anzeige
   const totalAbs =
     (active.stationaer ? st.abs : 0) +
     (active.pluscard   ? pc.abs : 0) +
@@ -2544,7 +2643,7 @@ showUmsatzPopup(plz, values) {
 
   const hh = values.haushalte || 0;
 
-  // Werbeanteil
+  // Werbeanteil IMMER gegen Gesamtumsatz
   const totalNormalAbs =
     values.umsatz +
     values.pluscard +
@@ -2579,7 +2678,7 @@ showUmsatzPopup(plz, values) {
     return "Mitgekauft";
   })();
 
-  // HTML setzen
+  // HTML
   popup.innerHTML = `
     <div class="popup-header">
       <span>${note}</span>
@@ -2592,6 +2691,7 @@ showUmsatzPopup(plz, values) {
       <span style="color:#000;">Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
     </div>
 
+    <!-- NEUER WERBEANTEIL-BALKEN -->
     <div class="umsatz-bar" style="margin-top:4px;">
       <div style="background:#b41821;width:${pct(totalNormalAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
       <div style="background:#1f78b4;width:${pct(totalWerbeAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
@@ -2606,6 +2706,7 @@ showUmsatzPopup(plz, values) {
 
     <div class="section-title">Haushalte</div>
     <div class="umsatz-grid">
+
       <div class="label">Haushalte</div>
       <div class="value">${hh.toLocaleString("de-DE")}</div>
       <div class="value"></div>
@@ -2614,7 +2715,8 @@ showUmsatzPopup(plz, values) {
     <div class="section-title">Umsatz nach Kategorien</div>
 
     <div class="umsatz-grid">
-      <div class="label"><strong>Kategorie</strong></div>
+
+       <div class="label"><strong>Kategorie</strong></div>
       <div class="value"><strong>Absolut</strong></div>
       <div class="value"><strong>pro HH</strong></div>
 
@@ -2637,6 +2739,7 @@ showUmsatzPopup(plz, values) {
 
     <div class="section-title">Umsatzanteile</div>
 
+    <!-- NEU: Kategorien-Balken wird NICHT gefiltert -->
     <div class="umsatz-bar">
       <div class="share-stationaer" style="width:${pct(values.umsatz,totalNormalAbs)}%"></div>
       <div class="share-pluscard"   style="width:${pct(values.pluscard,totalNormalAbs)}%"></div>
@@ -2652,13 +2755,10 @@ showUmsatzPopup(plz, values) {
     </div>
   `;
 
-  console.log("➡️ BEFORE OPEN:", popup.className);
   popup.classList.remove("hidden");
+  void popup.offsetWidth;
   popup.classList.add("show");
-  console.log("➡️ AFTER OPEN:", popup.className);
 
-
-  // Close-Button
   popup.querySelector(".close-btn").onclick = () => {
     popup.classList.remove("show");
     popup.classList.add("hidden");
@@ -2922,6 +3022,7 @@ updateGeoLayer() {
   console.group("🧪 updateGeoLayer()");
   console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzDarstellung);
 
+
   // 1️⃣ Max-Wert global berechnen (für Umsatz-Heatmap)
   this.computeMaxValue();
 
@@ -2934,11 +3035,7 @@ updateGeoLayer() {
   this.updateBestreuungMarkers();
 
   console.groupEnd();
-
-  // ⭐ 4️⃣ Legende aktualisieren (WICHTIG!)
-  this.updateHeatmapLegend();
 }
-
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
   if (!v) return "#cfd4da";
@@ -2996,22 +3093,14 @@ computeMaxValue() {
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
+
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
 
-  // -------------------------------------------------
-  // 0) Layer IMMER klickbar machen (Leaflet-Schutz)
-  // -------------------------------------------------
-  layer.options.interactive = true;
-
-  if (layer._path) {
-    layer._path.setAttribute("pointer-events", "auto");
-  }
-
-  // -------------------------------------------------
+  // -----------------------------
   // 1) Radiuslogik
-  // -------------------------------------------------
+  // -----------------------------
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
   let inRadius = true;
 
@@ -3021,10 +3110,9 @@ applyStyleToLayer(layer) {
     inRadius = !hasRadius || this.plzImRadius.has(plz);
   }
 
-  // -------------------------------------------------
+  // -----------------------------
   // 2) PLZ ohne Werte oder außerhalb Radius → grau
-  //    (ABER klickbar, Popup soll leer öffnen)
-  // -------------------------------------------------
+  // -----------------------------
   if (!v || !inRadius) {
     layer.setStyle({
       fillColor: "#cfd4da",
@@ -3033,35 +3121,9 @@ applyStyleToLayer(layer) {
       weight: 1
     });
 
-    // Layer bleibt klickbar!
-    layer.options.interactive = true;
-    if (layer._path) {
-      layer._path.setAttribute("pointer-events", "auto");
-    }
+    layer.options.interactive = false;
 
-    // Click-Handler trotzdem setzen
-    layer.off("click");
-    layer.on("click", () => {
-      const popupWK = this._shadowRoot.getElementById("side-popup");
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-
-      popupWK?.classList.remove("show");
-      popupWK?.classList.add("hidden");
-
-      popupU?.classList.remove("show");
-      popupU?.classList.add("hidden");
-
-      if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
-        this.activePopupType = "umsatz";
-        this.showEmptyUmsatzPopup(plz);
-        return;
-      }
-
-      this.activePopupType = "wk";
-      this.showPopup(layer.feature, {}); // leeres WK-Popup
-    });
-
-    // Critical Marker entfernen
+    // Critical-Marker entfernen
     if (this.criticalMarkers?.[plz]) {
       this.map.removeLayer(this.criticalMarkers[plz]);
       delete this.criticalMarkers[plz];
@@ -3070,9 +3132,9 @@ applyStyleToLayer(layer) {
     return;
   }
 
-  // -------------------------------------------------
+  // -----------------------------
   // 3) Farbe berechnen
-  // -------------------------------------------------
+  // -----------------------------
   const fillColor = this.computeFillColor(plz);
 
   layer.setStyle({
@@ -3082,20 +3144,17 @@ applyStyleToLayer(layer) {
     weight: 1
   });
 
-  // Sicherheit: Layer klickbar halten
   layer.options.interactive = true;
-  if (layer._path) {
-    layer._path.setAttribute("pointer-events", "auto");
-  }
 
-  // -------------------------------------------------
+  // -----------------------------
   // 4) Click-Handler neu setzen
-  // -------------------------------------------------
+  // -----------------------------
   layer.off("click");
 
   layer.on("click", () => {
     const values = this.filteredPLZWerte?.[plz];
 
+    // Immer beide Popups schließen
     const popupWK = this._shadowRoot.getElementById("side-popup");
     const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
 
@@ -3105,6 +3164,9 @@ applyStyleToLayer(layer) {
     popupU?.classList.remove("show");
     popupU?.classList.add("hidden");
 
+    // -----------------------------
+    // Umsatz-Modi (inkl. Werbeanteil)
+    // -----------------------------
     if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
       this.activePopupType = "umsatz";
 
@@ -3116,14 +3178,17 @@ applyStyleToLayer(layer) {
       return;
     }
 
+    // -----------------------------
+    // WK-Modus
+    // -----------------------------
     this.activePopupType = "wk";
     const kennwerte = this.filteredKennwerte?.[plz] || {};
     this.showPopup(layer.feature, kennwerte);
   });
 
-  // -------------------------------------------------
+  // -----------------------------
   // 5) Critical-Marker (nur WK-Modus)
-  // -------------------------------------------------
+  // -----------------------------
   const showCritical = this.currentMapMode === "wk" && this.showCritical;
   const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
@@ -3135,6 +3200,7 @@ applyStyleToLayer(layer) {
     return;
   }
 
+  // Critical-Marker erzeugen (falls nicht vorhanden)
   if (!this.criticalMarkers) this.criticalMarkers = {};
 
   if (!this.criticalMarkers[plz]) {
@@ -3164,6 +3230,7 @@ applyStyleToLayer(layer) {
     }).addTo(this.map);
   }
 }
+
 
 
 
@@ -3733,6 +3800,15 @@ prepareUmsatzPLZWerte() {
     const rawHH = row["value_haushalte_0"]?.raw;
     const hh = parseHH(rawHH);
 
+    console.log(
+      `%cHH-DEBUG | PLZ ${plz}`,
+      "color:#b41821; font-weight:bold;",
+      {
+        raw: rawHH,
+        typeof_raw: typeof rawHH,
+        parsed: hh
+      }
+    );
 
     if (hh > 0) v._hhValues.push(hh);
 
@@ -3764,7 +3840,14 @@ prepareUmsatzPLZWerte() {
       v.haushalte = 0;
     }
 
-
+    console.log(
+      `%cHH-AVG | PLZ ${plz}`,
+      "color:#1f78b4; font-weight:bold;",
+      {
+        values: v._hhValues,
+        avg: v.haushalte
+      }
+    );
 
     delete v._hhValues;
 
@@ -4754,74 +4837,24 @@ this.computeStreuverlust();
 
     this.hideSpinner();
   }
-updateHeatmapLegend() {
 
+
+
+updateHeatmapLegend() {
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   if (!legend) return;
-  if (!this.currentMapMode) {
+
+  // Wenn kein Umsatzmodus → Legende ausblenden
+  if (this.currentMapMode !== "umsatz-multi" && this.currentMapMode !== "werbeanteil") {
     legend.classList.add("hidden");
     return;
   }
-
-  // WK-Modus → Werbekosten (isHZ === false Skala)
-// WK-Modus → Werbekosten (isHZ === false Skala)
-if (this.currentMapMode === "wk") {
-  legend.innerHTML = `
-    <div><strong>Werbekosten</strong></div>
-
-    <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
-
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
-    </div>
-
-    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot.TEST WK am Umsatz)</div>
-
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %
-    </div>
-  `;
-  legend.classList.remove("hidden");
-  return;
-}
-
-
 
   // Umsatz-Heatmap
   if (this.currentMapMode === "umsatz-multi") {
     legend.innerHTML = `
       <div><strong>Umsatz-Heatmap</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;95%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> >95%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#9d131b"></div> 85–95%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 75–85%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#d9483b"></div> 65–75%</div>
@@ -4829,29 +4862,24 @@ if (this.currentMapMode === "wk") {
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f08a3c"></div> 45–55%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 35–45%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 20–35%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;20%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> <20%</div>
     `;
-    legend.classList.remove("hidden");
-    return;
   }
 
   // Werbeanteil-Heatmap
   if (this.currentMapMode === "werbeanteil") {
     legend.innerHTML = `
       <div><strong>Werbeanteil</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;80%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> >80%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 60–80%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 40–60%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 20–40%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 10–20%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;10%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> <10%</div>
     `;
-    legend.classList.remove("hidden");
-    return;
   }
-
-  legend.classList.add("hidden");
 }
+
 
 
 
