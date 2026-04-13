@@ -1248,7 +1248,6 @@ class GeoMapWidget extends HTMLElement {
 
     return struktur;
   }
-
 async loadGeoJson() {
   if (this._geoLayer) return;
 
@@ -1258,7 +1257,6 @@ async loadGeoJson() {
     );
     this._geoData = await response.json();
 
-    // Notes extrahieren
     this.geoNotes = {};
     (this._geoData.features || []).forEach(feature => {
       const plz = feature.properties?.plz?.trim();
@@ -1266,67 +1264,9 @@ async loadGeoJson() {
       if (plz && note) this.geoNotes[plz] = note;
     });
 
-    // Erste Kennwerte berechnen
-    const filteredData = this.getFilteredData();
-    const plzWerte = this.extractPLZWerte(filteredData);
-
-    // GeoJSON Layer
     this._geoLayer = L.geoJSON(this._geoData, {
-      style: feature => {
-        const plz = feature.properties?.plz?.trim();
-        const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
-        const isHZ = this.hzFlags?.[plz] ?? false;
-
-        const value = isHZ ? values.wk : values.wkPot;
-
-        return {
-          fillColor: this.getColor(value, isHZ),
-          weight: 1,
-          opacity: 1,
-          color: "white",
-          fillOpacity: 0.5
-        };
-      },
-
       onEachFeature: (feature, layer) => {
-        layer.on("click", e => {
-          const plz = String(e.target.feature.properties.plz).padStart(5, "0");
-
-          this.highlightMapArea(plz);
-          this.highlightTableRowByPLZ(plz);
-
-          const popupWK = this._shadowRoot.getElementById("side-popup");
-          const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-
-          popupWK?.classList.remove("show");
-          popupWK?.classList.add("hidden");
-
-          popupU?.classList.remove("show");
-          popupU?.classList.add("hidden");
-
-          // -----------------------------
-          // Umsatz-Modi (inkl. Werbeanteil)
-          // -----------------------------
-          if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
-            this.activePopupType = "umsatz";
-
-            const values = this.filteredPLZWerte?.[plz];
-            if (!values) {
-              this.showEmptyUmsatzPopup(plz);
-              return;
-            }
-
-            this.showUmsatzPopup(plz, values);
-            return;
-          }
-
-          // -----------------------------
-          // WK-Modus
-          // -----------------------------
-          this.activePopupType = "wk";
-          const kennwerte = this.filteredKennwerte?.[plz];
-          this.showPopup(e.target.feature, kennwerte);
-        });
+        // ❗ KEIN CLICK-HANDLER HIER
       }
     }).addTo(this.map);
 
@@ -2512,8 +2452,8 @@ showPopup(feature) {
     </table>
   `;
 
-  // EXTRA-TABELLE WIEDER EINBAUEN
-  const isHZ = daten?.isHZ === false;     // nur wenn NICHT HZ
+  // EXTRA-TABELLE
+  const isHZ = daten?.isHZ === false;
   const umsatzJahr = daten?.value_hr_n_umsatz_0?.raw;
 
   if (isHZ && typeof umsatzJahr === "number" && umsatzJahr > 0) {
@@ -2549,9 +2489,8 @@ showPopup(feature) {
     sidePopup.insertAdjacentHTML("beforeend", extraTable);
   }
 
-  // Animation
+  // Popup öffnen — WICHTIG: hidden zuerst entfernen
   sidePopup.classList.remove("hidden");
-  void sidePopup.offsetWidth;
   sidePopup.classList.add("show");
 
   // Close-Button
@@ -2565,11 +2504,13 @@ showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
 
+  // WK-Popup schließen
   if (popupWK) {
     popupWK.classList.remove("show");
     popupWK.classList.add("hidden");
   }
 
+  // Panel anpassen
   const panel = this._shadowRoot.getElementById("map-control-panel");
   panel.classList.remove("panel-large");
   panel.classList.add("panel-medium");
@@ -2609,7 +2550,7 @@ showUmsatzPopup(plz, values) {
     online:     this.activeCategories.has("online")
   };
 
-  // Summen für Anzeige
+  // Summen
   const totalAbs =
     (active.stationaer ? st.abs : 0) +
     (active.pluscard   ? pc.abs : 0) +
@@ -2624,7 +2565,7 @@ showUmsatzPopup(plz, values) {
 
   const hh = values.haushalte || 0;
 
-  // Werbeanteil IMMER gegen Gesamtumsatz
+  // Werbeanteil
   const totalNormalAbs =
     values.umsatz +
     values.pluscard +
@@ -2659,7 +2600,7 @@ showUmsatzPopup(plz, values) {
     return "Mitgekauft";
   })();
 
-  // HTML
+  // HTML setzen
   popup.innerHTML = `
     <div class="popup-header">
       <span>${note}</span>
@@ -2672,7 +2613,6 @@ showUmsatzPopup(plz, values) {
       <span style="color:#000;">Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
     </div>
 
-    <!-- NEUER WERBEANTEIL-BALKEN -->
     <div class="umsatz-bar" style="margin-top:4px;">
       <div style="background:#b41821;width:${pct(totalNormalAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
       <div style="background:#1f78b4;width:${pct(totalWerbeAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
@@ -2687,7 +2627,6 @@ showUmsatzPopup(plz, values) {
 
     <div class="section-title">Haushalte</div>
     <div class="umsatz-grid">
-
       <div class="label">Haushalte</div>
       <div class="value">${hh.toLocaleString("de-DE")}</div>
       <div class="value"></div>
@@ -2696,8 +2635,7 @@ showUmsatzPopup(plz, values) {
     <div class="section-title">Umsatz nach Kategorien</div>
 
     <div class="umsatz-grid">
-
-       <div class="label"><strong>Kategorie</strong></div>
+      <div class="label"><strong>Kategorie</strong></div>
       <div class="value"><strong>Absolut</strong></div>
       <div class="value"><strong>pro HH</strong></div>
 
@@ -2720,7 +2658,6 @@ showUmsatzPopup(plz, values) {
 
     <div class="section-title">Umsatzanteile</div>
 
-    <!-- NEU: Kategorien-Balken wird NICHT gefiltert -->
     <div class="umsatz-bar">
       <div class="share-stationaer" style="width:${pct(values.umsatz,totalNormalAbs)}%"></div>
       <div class="share-pluscard"   style="width:${pct(values.pluscard,totalNormalAbs)}%"></div>
@@ -2736,10 +2673,11 @@ showUmsatzPopup(plz, values) {
     </div>
   `;
 
+  // Popup öffnen — WICHTIG: hidden zuerst entfernen
   popup.classList.remove("hidden");
-  void popup.offsetWidth;
   popup.classList.add("show");
 
+  // Close-Button
   popup.querySelector(".close-btn").onclick = () => {
     popup.classList.remove("show");
     popup.classList.add("hidden");
@@ -4871,7 +4809,7 @@ if (this.currentMapMode === "wk") {
       <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
     </div>
 
-    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
+    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am333 Umsatz)</div>
 
     <div class="heatmap-legend-row">
       <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
