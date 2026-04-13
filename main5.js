@@ -2354,10 +2354,6 @@ createMarkerIcon(nl, isPhantom = false) {
 
 showPopup(feature) {
 
-  console.log("POPUP-UMSATZ:", {
-  classes: popup.className,
-  rect: popup.getBoundingClientRect()
-});
 
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
@@ -2508,11 +2504,9 @@ showPopup(feature) {
 
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
+  console.log("➡️ showUmsatzPopup CALLED for", plz, "classes BEFORE:", popup.className);
+
   const popupWK = this._shadowRoot.getElementById("side-popup");
-console.log("POPUP-UMSATZ:", {
-  classes: popup.className,
-  rect: popup.getBoundingClientRect()
-});
 
   // WK-Popup schließen
   if (popupWK) {
@@ -2683,9 +2677,11 @@ console.log("POPUP-UMSATZ:", {
     </div>
   `;
 
-  // Popup öffnen — WICHTIG: hidden zuerst entfernen
+  console.log("➡️ BEFORE OPEN:", popup.className);
   popup.classList.remove("hidden");
   popup.classList.add("show");
+  console.log("➡️ AFTER OPEN:", popup.className);
+
 
   // Close-Button
   popup.querySelector(".close-btn").onclick = () => {
