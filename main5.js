@@ -998,25 +998,7 @@
   cursor: not-allowed;
 }
 
-/* 🔘 Button links auf der Karte */
-/* 🔘 Legenden-Button unten rechts */
-.legend-btn {
-  position: absolute;
-  bottom: 20px;
-  right: 20px;
-  width: 42px;
-  height: 42px;
-  border-radius: 6px;
-  background: white;
-  border: 2px solid #b41821;
-  color: #b41821;
-  font-size: 20px;
-  cursor: pointer;
-  z-index: 99999; /* WICHTIG */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+
 
 .heatmap-legend {
   position: absolute;
@@ -1108,7 +1090,7 @@
     <div id="map"></div>
 
     <!-- 🔘 Legenden-Button (unten rechts) -->
-    <button id="legend-toggle-btn" class="legend-btn">ℹ️</button>
+    <div id="legend-toggle-btn" title="Legende einblenden"></div>
 
     <!-- 📦 Legenden-Overlay (unten rechts) -->
     <div id="heatmap-legend" class="heatmap-legend hidden"></div>
