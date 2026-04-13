@@ -980,7 +980,7 @@
   padding: 12px 14px;
 
   width: 220px;
-  max-height: 260px;
+  max-height: 300px;
   overflow-y: auto;
 
   font-size: 12px;
@@ -4850,7 +4850,7 @@ if (this.currentMapMode === "wk") {
   legend.innerHTML = `
     <div><strong>Werbekosten</strong></div>
 
-    <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut</div>
+    <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
 
     <div class="heatmap-legend-row">
       <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25 %
@@ -4871,7 +4871,7 @@ if (this.currentMapMode === "wk") {
       <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
     </div>
 
-    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut</div>
+    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Potentielle WK am Umsatz)</div>
 
     <div class="heatmap-legend-row">
       <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
