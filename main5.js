@@ -859,9 +859,7 @@
   background: #fff3f3;
   box-shadow: 0 0 6px rgba(180,24,33,0.4);
 }
-.hidden {
-  display: none;
-}
+
 .umsatz-analysis-row {
   display: none;
 }
