@@ -346,7 +346,7 @@
   padding: 14px;
   box-sizing: border-box;
   font-family: sans-serif;
-  z-index: 5;
+  z-index: 20;
   display: flex;
   flex-direction: column;
   gap: 14px;
