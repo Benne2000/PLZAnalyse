@@ -741,7 +741,7 @@
 #legend-toggle-btn {
   position: absolute;
   bottom: 20px;
-  left: 20px; /* ⭐ unten links */
+  left: 15%; /* ⭐ unten links */
   width: 54px;
   height: 54px;
   background: white;
@@ -751,8 +751,7 @@
   z-index: 9999;
 
   /* ⭐ EXAKT wie map-tile-toggle-btn */
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"> <circle cx="12" cy="12" r="10" stroke="%23b41821" stroke-width="2" fill="none"/><line x1="12" y1="8" x2="12" y2="12" stroke="%23b41821" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="%23b41821"/></svg>');
-  background-size: 65%;
+   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24">      <rect x="4" y="5" width="16" height="2" rx="1"/>      <rect x="4" y="11" width="12" height="2" rx="1"/>      <rect x="4" y="17" width="8" height="2" rx="1"/>    </svg>'); background-size: 65%;
   background-repeat: no-repeat;
   background-position: center;
 
@@ -999,30 +998,36 @@
 }
 
 
-
-.heatmap-legend {
+/* 📦 Heatmap-Legende (unten links über dem Button) */
+#heatmap-legend {
   position: absolute;
-  bottom: 70px; /* direkt über dem Button */
-  right: 20px;
+  bottom: 90px;          /* direkt über dem Button */
+  left: 15%;            /* unten links */
   background: white;
   border: 2px solid #b41821;
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px 14px;
   font-size: 12px;
   font-family: sans-serif;
-  z-index: 99998; /* knapp unter dem Button */
+
+  width: 220px;          /* feste, saubere Breite */
+  max-height: 260px;     /* falls viele Zeilen */
+  overflow-y: auto;      /* scrollbar falls nötig */
+
+  z-index: 9998;         /* knapp unter dem Button */
   box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  pointer-events: none;
+
+  pointer-events: none;  /* blockiert KEINE Karte */
+  opacity: 1;
   transition: opacity 0.25s ease;
 }
 
-.heatmap-legend.hidden {
+#heatmap-legend.hidden {
   opacity: 0;
   visibility: hidden;
 }
 
-
-
+/* Zeilen in der Legende */
 .heatmap-legend-row {
   display: flex;
   align-items: center;
@@ -1030,6 +1035,7 @@
   margin-bottom: 4px;
 }
 
+/* Farbfelder */
 .heatmap-legend-color {
   width: 20px;
   height: 12px;
@@ -3805,15 +3811,6 @@ prepareUmsatzPLZWerte() {
     const rawHH = row["value_haushalte_0"]?.raw;
     const hh = parseHH(rawHH);
 
-    console.log(
-      `%cHH-DEBUG | PLZ ${plz}`,
-      "color:#b41821; font-weight:bold;",
-      {
-        raw: rawHH,
-        typeof_raw: typeof rawHH,
-        parsed: hh
-      }
-    );
 
     if (hh > 0) v._hhValues.push(hh);
 
@@ -3845,14 +3842,7 @@ prepareUmsatzPLZWerte() {
       v.haushalte = 0;
     }
 
-    console.log(
-      `%cHH-AVG | PLZ ${plz}`,
-      "color:#1f78b4; font-weight:bold;",
-      {
-        values: v._hhValues,
-        avg: v.haushalte
-      }
-    );
+
 
     delete v._hhValues;
 
@@ -4842,20 +4832,36 @@ this.computeStreuverlust();
 
     this.hideSpinner();
   }
-
 updateHeatmapLegend() {
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   if (!legend) return;
+  if (!this.currentMapMode) {
+    legend.classList.add("hidden");
+    return;
+  }
 
-  // WK-Modus → Werbekosten-Legende
+  // WK-Modus → Werbekosten (isHZ === false Skala)
   if (this.currentMapMode === "wk") {
     legend.innerHTML = `
       <div><strong>Werbekosten</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> sehr hoch</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> hoch</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> mittel</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> niedrig</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> sehr niedrig</div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#cfd4da"></div> &gt; 50
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#969696"></div> 15–25
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5
+      </div>
     `;
     legend.classList.remove("hidden");
     return;
@@ -4865,7 +4871,7 @@ updateHeatmapLegend() {
   if (this.currentMapMode === "umsatz-multi") {
     legend.innerHTML = `
       <div><strong>Umsatz-Heatmap</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> >95%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;95%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#9d131b"></div> 85–95%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 75–85%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#d9483b"></div> 65–75%</div>
@@ -4873,7 +4879,7 @@ updateHeatmapLegend() {
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f08a3c"></div> 45–55%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 35–45%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 20–35%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> <20%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;20%</div>
     `;
     legend.classList.remove("hidden");
     return;
@@ -4883,18 +4889,17 @@ updateHeatmapLegend() {
   if (this.currentMapMode === "werbeanteil") {
     legend.innerHTML = `
       <div><strong>Werbeanteil</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> >80%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;80%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 60–80%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 40–60%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 20–40%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 10–20%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> <10%</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;10%</div>
     `;
     legend.classList.remove("hidden");
     return;
   }
 
-  // Fallback → ausblenden
   legend.classList.add("hidden");
 }
 
