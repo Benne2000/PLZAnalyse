@@ -4813,7 +4813,7 @@ if (this.currentMapMode === "wk") {
       <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
     </div>
 
-    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am333 Umsatz)</div>
+    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
 
     <div class="heatmap-legend-row">
       <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
