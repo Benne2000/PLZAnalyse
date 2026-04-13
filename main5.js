@@ -1968,6 +1968,7 @@ btnWK?.addEventListener("click", () => {
     } else {
         this.updateGeoLayer();
     }
+    this.updateHeatmapLegend();
 });
 
 
@@ -2007,6 +2008,7 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     $("side-popup")?.classList.remove("show");
 
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
@@ -3022,7 +3024,6 @@ updateGeoLayer() {
   console.group("🧪 updateGeoLayer()");
   console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzDarstellung);
 
-
   // 1️⃣ Max-Wert global berechnen (für Umsatz-Heatmap)
   this.computeMaxValue();
 
@@ -3035,7 +3036,11 @@ updateGeoLayer() {
   this.updateBestreuungMarkers();
 
   console.groupEnd();
+
+  // ⭐ 4️⃣ Legende aktualisieren (WICHTIG!)
+  this.updateHeatmapLegend();
 }
+
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
   if (!v) return "#cfd4da";
@@ -4838,15 +4843,21 @@ this.computeStreuverlust();
     this.hideSpinner();
   }
 
-
-
 updateHeatmapLegend() {
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   if (!legend) return;
 
-  // Wenn kein Umsatzmodus → Legende ausblenden
-  if (this.currentMapMode !== "umsatz-multi" && this.currentMapMode !== "werbeanteil") {
-    legend.classList.add("hidden");
+  // WK-Modus → Werbekosten-Legende
+  if (this.currentMapMode === "wk") {
+    legend.innerHTML = `
+      <div><strong>Werbekosten</strong></div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> sehr hoch</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> hoch</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> mittel</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> niedrig</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> sehr niedrig</div>
+    `;
+    legend.classList.remove("hidden");
     return;
   }
 
@@ -4864,6 +4875,8 @@ updateHeatmapLegend() {
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 20–35%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> <20%</div>
     `;
+    legend.classList.remove("hidden");
+    return;
   }
 
   // Werbeanteil-Heatmap
@@ -4877,9 +4890,13 @@ updateHeatmapLegend() {
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 10–20%</div>
       <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> <10%</div>
     `;
+    legend.classList.remove("hidden");
+    return;
   }
-}
 
+  // Fallback → ausblenden
+  legend.classList.add("hidden");
+}
 
 
 
