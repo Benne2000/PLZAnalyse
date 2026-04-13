@@ -2353,6 +2353,12 @@ createMarkerIcon(nl, isPhantom = false) {
 
 
 showPopup(feature) {
+
+  console.log("POPUP-UMSATZ:", {
+  classes: popup.className,
+  rect: popup.getBoundingClientRect()
+});
+
   const plz = String(feature.properties?.plz ?? "")
     .padStart(5, "0")
     .trim();
@@ -2503,6 +2509,10 @@ showPopup(feature) {
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
+console.log("POPUP-UMSATZ:", {
+  classes: popup.className,
+  rect: popup.getBoundingClientRect()
+});
 
   // WK-Popup schließen
   if (popupWK) {
