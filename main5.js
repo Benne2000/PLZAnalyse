@@ -1882,7 +1882,6 @@ btnWK?.addEventListener("click", () => {
   // UMSATZ-MODUS
   // ---------------------------------------------------------
   btnUmsatz?.addEventListener("click", () => {
-        this.closeAllPopups();
      const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
 typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
 
@@ -4507,15 +4506,6 @@ getFilteredDataWithRadius() {
 }
 
 
-closeAllPopups() {
-  ["side-popup", "side-popup-umsatz"].forEach(id => {
-    const el = this._shadowRoot.getElementById(id);
-    if (!el) return;
-    el.classList.remove("show");
-    el.classList.add("hidden");
-    el.style.display = "none";
-  });
-}
 
 closeNLTable() {
   const nlContainer = this._shadowRoot.getElementById("nl-info-container");
