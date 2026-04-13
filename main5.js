@@ -3077,14 +3077,22 @@ computeMaxValue() {
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
-
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
 
-  // -----------------------------
+  // -------------------------------------------------
+  // 0) Layer IMMER klickbar machen (Leaflet-Schutz)
+  // -------------------------------------------------
+  layer.options.interactive = true;
+
+  if (layer._path) {
+    layer._path.setAttribute("pointer-events", "auto");
+  }
+
+  // -------------------------------------------------
   // 1) Radiuslogik
-  // -----------------------------
+  // -------------------------------------------------
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
   let inRadius = true;
 
@@ -3094,9 +3102,10 @@ applyStyleToLayer(layer) {
     inRadius = !hasRadius || this.plzImRadius.has(plz);
   }
 
-  // -----------------------------
+  // -------------------------------------------------
   // 2) PLZ ohne Werte oder außerhalb Radius → grau
-  // -----------------------------
+  //    (ABER klickbar, Popup soll leer öffnen)
+  // -------------------------------------------------
   if (!v || !inRadius) {
     layer.setStyle({
       fillColor: "#cfd4da",
@@ -3105,9 +3114,35 @@ applyStyleToLayer(layer) {
       weight: 1
     });
 
-    layer.options.interactive = false;
+    // Layer bleibt klickbar!
+    layer.options.interactive = true;
+    if (layer._path) {
+      layer._path.setAttribute("pointer-events", "auto");
+    }
 
-    // Critical-Marker entfernen
+    // Click-Handler trotzdem setzen
+    layer.off("click");
+    layer.on("click", () => {
+      const popupWK = this._shadowRoot.getElementById("side-popup");
+      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+
+      popupWK?.classList.remove("show");
+      popupWK?.classList.add("hidden");
+
+      popupU?.classList.remove("show");
+      popupU?.classList.add("hidden");
+
+      if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
+        this.activePopupType = "umsatz";
+        this.showEmptyUmsatzPopup(plz);
+        return;
+      }
+
+      this.activePopupType = "wk";
+      this.showPopup(layer.feature, {}); // leeres WK-Popup
+    });
+
+    // Critical Marker entfernen
     if (this.criticalMarkers?.[plz]) {
       this.map.removeLayer(this.criticalMarkers[plz]);
       delete this.criticalMarkers[plz];
@@ -3116,9 +3151,9 @@ applyStyleToLayer(layer) {
     return;
   }
 
-  // -----------------------------
+  // -------------------------------------------------
   // 3) Farbe berechnen
-  // -----------------------------
+  // -------------------------------------------------
   const fillColor = this.computeFillColor(plz);
 
   layer.setStyle({
@@ -3128,17 +3163,20 @@ applyStyleToLayer(layer) {
     weight: 1
   });
 
+  // Sicherheit: Layer klickbar halten
   layer.options.interactive = true;
+  if (layer._path) {
+    layer._path.setAttribute("pointer-events", "auto");
+  }
 
-  // -----------------------------
+  // -------------------------------------------------
   // 4) Click-Handler neu setzen
-  // -----------------------------
+  // -------------------------------------------------
   layer.off("click");
 
   layer.on("click", () => {
     const values = this.filteredPLZWerte?.[plz];
 
-    // Immer beide Popups schließen
     const popupWK = this._shadowRoot.getElementById("side-popup");
     const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
 
@@ -3148,9 +3186,6 @@ applyStyleToLayer(layer) {
     popupU?.classList.remove("show");
     popupU?.classList.add("hidden");
 
-    // -----------------------------
-    // Umsatz-Modi (inkl. Werbeanteil)
-    // -----------------------------
     if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
       this.activePopupType = "umsatz";
 
@@ -3162,17 +3197,14 @@ applyStyleToLayer(layer) {
       return;
     }
 
-    // -----------------------------
-    // WK-Modus
-    // -----------------------------
     this.activePopupType = "wk";
     const kennwerte = this.filteredKennwerte?.[plz] || {};
     this.showPopup(layer.feature, kennwerte);
   });
 
-  // -----------------------------
+  // -------------------------------------------------
   // 5) Critical-Marker (nur WK-Modus)
-  // -----------------------------
+  // -------------------------------------------------
   const showCritical = this.currentMapMode === "wk" && this.showCritical;
   const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
@@ -3184,7 +3216,6 @@ applyStyleToLayer(layer) {
     return;
   }
 
-  // Critical-Marker erzeugen (falls nicht vorhanden)
   if (!this.criticalMarkers) this.criticalMarkers = {};
 
   if (!this.criticalMarkers[plz]) {
@@ -3214,7 +3245,6 @@ applyStyleToLayer(layer) {
     }).addTo(this.map);
   }
 }
-
 
 
 
