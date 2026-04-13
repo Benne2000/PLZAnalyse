@@ -21,11 +21,9 @@
 
 .map-container {
   width: 70%;
-  height: 100%;
-  position: relative;   /* WICHTIG */
+  position: relative;
   z-index: 1;
 }
-
 
 
       #map {
@@ -57,6 +55,28 @@
     display: none;
   }
 
+
+      .legend {
+        position: absolute;
+        bottom: 20px;
+        left: 20px;
+        z-index: 1000;
+        background: white;
+        padding: 10px;
+        border: 1px solid #999;
+        font-family: sans-serif;
+        font-size: 12px;
+        line-height: 18px;
+        color: #333;
+      }
+
+      .legend i {
+        width: 18px;
+        height: 18px;
+        float: left;
+        margin-right: 8px;
+        opacity: 0.8;
+      }
 
       .note-label {
         background: rgba(255, 255, 255, 0.8);
@@ -737,63 +757,6 @@
   transform: scale(1.12); /* etwas größerer Hover */
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
 }
-
-#legend-toggle-btn {
-  position: absolute;
-  bottom: 20px;
-  left: 20px; /* ⭐ unten links */
-  width: 54px;
-  height: 54px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  cursor: pointer;
-  z-index: 9999;
-
-  /* ⭐ EXAKT wie map-tile-toggle-btn */
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"> <circle cx="12" cy="12" r="10" stroke="%23b41821" stroke-width="2" fill="none"/><line x1="12" y1="8" x2="12" y2="12" stroke="%23b41821" stroke-width="2" stroke-linecap="round"/><circle cx="12" cy="16" r="1" fill="%23b41821"/></svg>');
-  background-size: 65%;
-  background-repeat: no-repeat;
-  background-position: center;
-
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-#legend-toggle-btn:hover {
-  transform: scale(1.12);
-  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-}
-
-#heatmap-legend {
-  position: absolute;
-  bottom: 90px; /* ⭐ direkt über dem Button */
-  left: 20px;
-
-  background: white;
-  border: 2px solid #b41821;
-  border-radius: 10px;
-  padding: 12px 14px;
-
-  width: 220px;        /* ⭐ feste Breite, nicht zu breit */
-  max-height: 260px;   /* ⭐ genug Platz */
-  overflow-y: auto;    /* ⭐ scrollbar falls nötig */
-
-  font-size: 12px;
-  font-family: sans-serif;
-
-  z-index: 9998;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-
-  opacity: 1;
-  transition: opacity 0.25s ease;
-}
-
-#heatmap-legend.hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-
-
 .analysis-switch {
   display: flex;
   gap: 0;
@@ -999,48 +962,7 @@
 }
 
 
-
-.heatmap-legend {
-  position: absolute;
-  bottom: 70px; /* direkt über dem Button */
-  right: 20px;
-  background: white;
-  border: 2px solid #b41821;
-  border-radius: 8px;
-  padding: 12px 14px;
-  font-size: 12px;
-  font-family: sans-serif;
-  z-index: 99998; /* knapp unter dem Button */
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-
-.heatmap-legend.hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-
-
-
-.heatmap-legend-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.heatmap-legend-color {
-  width: 20px;
-  height: 12px;
-  border-radius: 3px;
-  border: 1px solid #999;
-}
-
-
-
-</style>
-
+    </style>
 <div class="layout">
 
   <!-- 🔍 Filterbereich -->
@@ -1089,14 +1011,8 @@
     <!-- Leaflet Map -->
     <div id="map"></div>
 
-    <!-- 🔘 Legenden-Button (unten rechts) -->
-    <div id="legend-toggle-btn" title="Legende einblenden"></div>
-
-    <!-- 📦 Legenden-Overlay (unten rechts) -->
-    <div id="heatmap-legend" class="heatmap-legend hidden"></div>
-
-    <!-- 📦 Umsatz-Overview oben rechts -->
-    <div id="umsatz-overview" class="hidden"></div>
+    <!-- Legende -->
+    <div class="legend" id="legend">...</div>
 
   </div>
 
@@ -1136,48 +1052,48 @@
     </div>
   </div>
 
-  <!-- CARD 2: UMSATZ-EINSTELLUNGEN -->
-  <div id="umsatz-panel" class="panel-card hidden">
+<!-- CARD 2: UMSATZ-EINSTELLUNGEN -->
+<div id="umsatz-panel" class="panel-card hidden">
 
-    <div class="panel-title">Umsatz-Einstellungen</div>
+  <div class="panel-title">Umsatz-Einstellungen</div>
 
-    <!-- Umsatztyp -->
-    <div class="switch-label">Umsatztyp</div>
-    <div id="umsatz-type-switch" class="compact-switch">
-      <span class="mode-left">Umsatz</span>
-      <span class="mode-right">Werbeumsatz</span>
-    </div>
+  <!-- Umsatztyp -->
+  <div class="switch-label">Umsatztyp</div>
+  <div id="umsatz-type-switch" class="compact-switch">
+    <span class="mode-left">Umsatz</span>
+    <span class="mode-right">Werbeumsatz</span>
+  </div>
 
-    <!-- Werbeoptionen (nur bei Werbeumsatz sichtbar) -->
-    <div id="werbe-options-row" class="option-row hidden">
-      <label class="big-check">
-        <input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz
-      </label>
-      <label class="big-check">
-        <input type="checkbox" id="chk-mitgekauft"> Mitgekauft
-      </label>
-    </div>
+  <!-- Werbeoptionen (nur bei Werbeumsatz sichtbar) -->
+  <div id="werbe-options-row" class="option-row hidden">
+    <label class="big-check">
+      <input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz
+    </label>
+    <label class="big-check">
+      <input type="checkbox" id="chk-mitgekauft"> Mitgekauft
+    </label>
+  </div>
 
-    <!-- Darstellung: 3-Wege-Switch -->
-    <div class="switch-label">Darstellung</div>
-    <div id="umsatz-analysis-switch" class="triple-switch">
-      <span class="mode-abs active">Absolut</span>
-      <span class="mode-hh">pro HH</span>
-      <span class="mode-werbeanteil">Werbeanteil</span>
-    </div>
+  <!-- Darstellung: 3-Wege-Switch -->
+  <div class="switch-label">Darstellung</div>
+  <div id="umsatz-analysis-switch" class="triple-switch">
+    <span class="mode-abs active">Absolut</span>
+    <span class="mode-hh">pro HH</span>
+    <span class="mode-werbeanteil">Werbeanteil</span>
+  </div>
 
-    <!-- Kategorien -->
-    <div class="category-grid">
-      <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
-      <div class="category-toggle" data-cat="pluscard">💳 Pluscard</div>
-      <div class="category-toggle" data-cat="ra">📦 R&A</div>
-      <div class="category-toggle" data-cat="online">🛒 KUBE OS</div>
-    </div>
-
+  <!-- Kategorien -->
+  <div class="category-grid">
+    <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
+    <div class="category-toggle" data-cat="pluscard">💳 Pluscard</div>
+    <div class="category-toggle" data-cat="ra">📦 R&A</div>
+    <div class="category-toggle" data-cat="online">🛒 KUBE OS</div>
   </div>
 
 </div>
 
+
+</div>
 
 
 
@@ -1915,15 +1831,6 @@ initializeMapBase() {
   // Kartenstil
   const tileBtn = $("map-tile-toggle-btn");
   tileBtn?.addEventListener("click", () => this.toggleMapTiles());
-
-const legendBtn = this._shadowRoot.getElementById("legend-toggle-btn");
-const legendBox = this._shadowRoot.getElementById("heatmap-legend");
-
-legendBtn.addEventListener("click", () => {
-  legendBox.classList.toggle("hidden");
-});
-
-
 
   // ---------------------------------------------------------
   // INITIAL: Werbeanteil deaktivieren
@@ -4840,45 +4747,6 @@ this.computeStreuverlust();
 
 
 
-updateHeatmapLegend() {
-  const legend = this._shadowRoot.getElementById("heatmap-legend");
-  if (!legend) return;
-
-  // Wenn kein Umsatzmodus → Legende ausblenden
-  if (this.currentMapMode !== "umsatz-multi" && this.currentMapMode !== "werbeanteil") {
-    legend.classList.add("hidden");
-    return;
-  }
-
-  // Umsatz-Heatmap
-  if (this.currentMapMode === "umsatz-multi") {
-    legend.innerHTML = `
-      <div><strong>Umsatz-Heatmap</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> >95%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#9d131b"></div> 85–95%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 75–85%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#d9483b"></div> 65–75%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 55–65%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f08a3c"></div> 45–55%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 35–45%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 20–35%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> <20%</div>
-    `;
-  }
-
-  // Werbeanteil-Heatmap
-  if (this.currentMapMode === "werbeanteil") {
-    legend.innerHTML = `
-      <div><strong>Werbeanteil</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> >80%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 60–80%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 40–60%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 20–40%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 10–20%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> <10%</div>
-    `;
-  }
-}
 
 
 
