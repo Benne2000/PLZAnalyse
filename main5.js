@@ -1248,6 +1248,7 @@ class GeoMapWidget extends HTMLElement {
 
     return struktur;
   }
+
 async loadGeoJson() {
   if (this._geoLayer) return;
 
@@ -1265,21 +1266,74 @@ async loadGeoJson() {
       if (plz && note) this.geoNotes[plz] = note;
     });
 
-    // GeoJSON Layer erzeugen (OHNE Click-Handler, OHNE Style!)
+    // Erste Kennwerte berechnen
+    const filteredData = this.getFilteredData();
+    const plzWerte = this.extractPLZWerte(filteredData);
+
+    // GeoJSON Layer
     this._geoLayer = L.geoJSON(this._geoData, {
+      style: feature => {
+        const plz = feature.properties?.plz?.trim();
+        const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
+        const isHZ = this.hzFlags?.[plz] ?? false;
+
+        const value = isHZ ? values.wk : values.wkPot;
+
+        return {
+          fillColor: this.getColor(value, isHZ),
+          weight: 1,
+          opacity: 1,
+          color: "white",
+          fillOpacity: 0.5
+        };
+      },
+
       onEachFeature: (feature, layer) => {
-        // applyStyleToLayer() setzt später ALLE Events & Styles
+        layer.on("click", e => {
+          const plz = String(e.target.feature.properties.plz).padStart(5, "0");
+
+          this.highlightMapArea(plz);
+          this.highlightTableRowByPLZ(plz);
+
+          const popupWK = this._shadowRoot.getElementById("side-popup");
+          const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
+
+          popupWK?.classList.remove("show");
+          popupWK?.classList.add("hidden");
+
+          popupU?.classList.remove("show");
+          popupU?.classList.add("hidden");
+
+          // -----------------------------
+          // Umsatz-Modi (inkl. Werbeanteil)
+          // -----------------------------
+          if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
+            this.activePopupType = "umsatz";
+
+            const values = this.filteredPLZWerte?.[plz];
+            if (!values) {
+              this.showEmptyUmsatzPopup(plz);
+              return;
+            }
+
+            this.showUmsatzPopup(plz, values);
+            return;
+          }
+
+          // -----------------------------
+          // WK-Modus
+          // -----------------------------
+          this.activePopupType = "wk";
+          const kennwerte = this.filteredKennwerte?.[plz];
+          this.showPopup(e.target.feature, kennwerte);
+        });
       }
     }).addTo(this.map);
 
-    // Nach dem Laden: Geo-Layer stylen & interaktiv machen
-    this.updateGeoLayer();
-
   } catch (err) {
-    console.error("❌ Fehler beim Laden des GeoJSON:", err);
+    console.error("Fehler beim Laden des GeoJSON:", err);
   }
 }
-
 
 
 applyMapMode(mode) {
