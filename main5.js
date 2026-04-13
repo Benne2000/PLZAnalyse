@@ -741,7 +741,7 @@
 #legend-toggle-btn {
   position: absolute;
   bottom: 20px;
-  left: 15%; /* ⭐ unten links */
+  left: 5%; /* ⭐ unten links */
   width: 54px;
   height: 54px;
   background: white;
@@ -761,35 +761,6 @@
 #legend-toggle-btn:hover {
   transform: scale(1.12);
   box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-}
-
-#heatmap-legend {
-  position: absolute;
-  bottom: 90px; /* ⭐ direkt über dem Button */
-  left: 20px;
-
-  background: white;
-  border: 2px solid #b41821;
-  border-radius: 10px;
-  padding: 12px 14px;
-
-  width: 220px;        /* ⭐ feste Breite, nicht zu breit */
-  max-height: 260px;   /* ⭐ genug Platz */
-  overflow-y: auto;    /* ⭐ scrollbar falls nötig */
-
-  font-size: 12px;
-  font-family: sans-serif;
-
-  z-index: 9998;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-
-  opacity: 1;
-  transition: opacity 0.25s ease;
-}
-
-#heatmap-legend.hidden {
-  opacity: 0;
-  visibility: hidden;
 }
 
 
@@ -1002,7 +973,7 @@
 #heatmap-legend {
   position: absolute;
   bottom: 90px;          /* direkt über dem Button */
-  left: 15%;            /* unten links */
+  left: 5%;            /* unten links */
   background: white;
   border: 2px solid #b41821;
   border-radius: 10px;
@@ -4841,31 +4812,56 @@ updateHeatmapLegend() {
   }
 
   // WK-Modus → Werbekosten (isHZ === false Skala)
-  if (this.currentMapMode === "wk") {
-    legend.innerHTML = `
-      <div><strong>Werbekosten</strong></div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#cfd4da"></div> &gt; 50
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#969696"></div> 15–25
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5
-      </div>
-    `;
-    legend.classList.remove("hidden");
-    return;
-  }
+if (this.currentMapMode === "wk") {
+  legend.innerHTML = `
+    <div><strong>Werbekosten</strong></div>
+
+    <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut</div>
+
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#006837"></div> 0–2
+    </div>
+
+    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut</div>
+
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#969696"></div> 15–25
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10
+    </div>
+    <div class="heatmap-legend-row">
+      <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5
+    </div>
+  `;
+  legend.classList.remove("hidden");
+  return;
+}
+
 
   // Umsatz-Heatmap
   if (this.currentMapMode === "umsatz-multi") {
