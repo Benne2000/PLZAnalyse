@@ -71,31 +71,6 @@
 /* Gemeinsames Popup-Layout für WK & Umsatz               */
 /* ------------------------------------------------------ */
 
-.side-popup {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 25%;
-  height: 70%;
-  background: white;
-  border-left: 2px solid #b41821;
-  padding: 10px;
-  font-family: sans-serif;
-  color: #b41821;
-  box-sizing: border-box;
-  overflow-y: auto;
-  z-index: 99999;
-
-  /* Animation */
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.side-popup.show {
-  opacity: 1;
-  transform: translateX(0);
-}
 
 .side-popup.hidden {
   opacity: 0;
@@ -187,11 +162,11 @@
 /* ------------------------------------------------------ */
 /* UMSATZ-POPUP (sauber, stabil, bündig, wie WK-Popup)    */
 /* ------------------------------------------------------ */
-
+#side-popup,
 #side-popup-umsatz {
-  position: absolute;
-  right: 0;
+  position: fixed;
   top: 0;
+  right: 0;
   width: 25%;
   height: 70%;
   background: white;
@@ -199,17 +174,19 @@
   border-top: 2px solid #b41821;
   box-sizing: border-box;
   overflow-y: auto;
-  z-index: 99999;
+  z-index: 999999;
 
   opacity: 0;
   transform: translateX(20px);
   transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
+#side-popup.show,
 #side-popup-umsatz.show {
   opacity: 1;
   transform: translateX(0);
 }
+
 
 /* Header */
 #side-popup-umsatz .popup-header {
@@ -4813,7 +4790,7 @@ if (this.currentMapMode === "wk") {
       <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
     </div>
 
-    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
+    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot.TEST WK am Umsatz)</div>
 
     <div class="heatmap-legend-row">
       <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
