@@ -5054,7 +5054,7 @@ async animateRevealSequence() {
       // 7) 3s Reveal + 1s Pause
       setTimeout(() => resolve(), 4000);
 
-    }, 5000); // Zoom settle time
+    }, 150); // Zoom settle time
   });
 }
 
