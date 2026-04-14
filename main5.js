@@ -2270,6 +2270,8 @@ updateBestreuungMarkers() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
+
+
 createAllMarkers() {
   if (!this.filteredGroup) return;
 
@@ -2283,6 +2285,14 @@ createAllMarkers() {
   if (!this.Niederlassung || !this.nlKoordinaten) return;
 
   const seen = new Set();
+
+  const makeInvisible = (marker) => {
+    const el = marker.getElement();
+    if (el) {
+      el.style.opacity = "0";        // ⭐ nur unsichtbar
+      el.style.transform = "none";   // ⭐ NICHT verschieben
+    }
+  };
 
   // Haupt-Niederlassungen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
@@ -2301,12 +2311,7 @@ createAllMarkers() {
     this.allMarkers.push(marker);
     this.filteredGroup.addLayer(marker);
 
-    // ⭐ Marker initial unsichtbar
-    const el = marker.getElement();
-    if (el) {
-      el.style.opacity = "0";
-      el.style.transform = "translateY(20px)";
-    }
+    makeInvisible(marker);
 
     this.nlMarkers.push({ lat: coords.lat, lng: coords.lon, marker });
     seen.add(nlKey);
@@ -2327,12 +2332,7 @@ createAllMarkers() {
       this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
 
-      // ⭐ Marker initial unsichtbar
-      const el = marker.getElement();
-      if (el) {
-        el.style.opacity = "0";
-        el.style.transform = "translateY(20px)";
-      }
+      makeInvisible(marker);
 
       this.nlMarkers.push({ lat, lng: lon, marker });
     });
@@ -3101,7 +3101,6 @@ computeMaxValue() {
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
-
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
@@ -3122,17 +3121,18 @@ applyStyleToLayer(layer) {
     inRadius = !hasRadius || this.plzImRadius.has(plz);
   }
 
-  // PLZ ohne Werte oder außerhalb Radius → grau (aber klickbar)
+  // PLZ ohne Werte oder außerhalb Radius → grau
   if (!v || !inRadius) {
     layer._targetFillColor = "#cfd4da"; // echte Farbe speichern
 
     layer.setStyle({
-      fillColor: "transparent", // ⭐ NICHT sofort grau anzeigen
+      fillColor: "#cfd4da",   // ⭐ immer grau sichtbar
       fillOpacity: 0.45,
       color: "#ffffff",
       weight: 1
     });
 
+    // Click-Handler
     layer.off("click");
     layer.on("click", () => {
       const popupWK = this._shadowRoot.getElementById("side-popup");
@@ -3151,22 +3151,18 @@ applyStyleToLayer(layer) {
       this.showPopup(layer.feature, {});
     });
 
-    if (this.criticalMarkers?.[plz]) {
-      this.map.removeLayer(this.criticalMarkers[plz]);
-      delete this.criticalMarkers[plz];
-    }
-
     return;
   }
 
   // Echte Farbe berechnen
   const fillColor = this.computeFillColor(plz);
 
-  // ⭐ Echte Farbe speichern, aber NICHT sofort anzeigen
+  // ⭐ Echte Farbe speichern, aber NOCH NICHT anzeigen
   layer._targetFillColor = fillColor;
 
+  // ⭐ Grundkarte bleibt grau sichtbar
   layer.setStyle({
-    fillColor: "transparent", // ⭐ wichtig für Animation
+    fillColor: "#cfd4da",
     fillOpacity: 0.7,
     color: "#ffffff",
     weight: 1
@@ -3193,47 +3189,6 @@ applyStyleToLayer(layer) {
     const kennwerte = this.filteredKennwerte?.[plz] || {};
     this.showPopup(layer.feature, kennwerte);
   });
-
-  // Critical Marker
-  const showCritical = this.currentMapMode === "wk" && this.showCritical;
-  const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
-
-  if (!showCritical || !isCritical) {
-    if (this.criticalMarkers?.[plz]) {
-      this.map.removeLayer(this.criticalMarkers[plz]);
-      delete this.criticalMarkers[plz];
-    }
-    return;
-  }
-
-  if (!this.criticalMarkers) this.criticalMarkers = {};
-
-  if (!this.criticalMarkers[plz]) {
-    const center = layer.getBounds().getCenter();
-
-    const icon = L.divIcon({
-      html: `<div style="
-        background:#ffffff;
-        border:2px solid #b41821;
-        border-radius:50%;
-        width:22px;
-        height:22px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:14px;
-        font-weight:bold;
-      ">⚠️</div>`,
-      className: "",
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
-    });
-
-    this.criticalMarkers[plz] = L.marker(center, {
-      icon,
-      interactive: false
-    }).addTo(this.map);
-  }
 }
 
 
@@ -4992,6 +4947,7 @@ fadeOutMapElements() {
   this.filteredGroup?.eachLayer(m => m.setOpacity?.(0));
   this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
 }
+
 async animateRevealSequence() {
   return new Promise(resolve => {
 
@@ -5039,10 +4995,9 @@ async animateRevealSequence() {
       // 7) 3s Reveal + 1s Pause
       setTimeout(resolve, 4000);
 
-    }, 150); // Zoom settle time
+    }, 150);
   });
 }
-
 
 
 dropMarkersAnimation() {
