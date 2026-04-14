@@ -3450,7 +3450,8 @@ setupFilterDropdowns() {
       const selectedNummer = nummerSelect.value;
 
       if (selectedID && selectedJahr && selectedNummer) {
-        this.applyFilter(selectedID, selectedJahr, selectedNummer);
+        this.loadErhebung(selectedID, selectedJahr, selectedNummer);
+
       } else {
         console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
       }
@@ -4029,6 +4030,8 @@ renderErhebungsInfo() {
 
         this.render();
       }
+
+
 prepareMapData(filteredData) {
   const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
@@ -4598,15 +4601,6 @@ getFilteredDataWithRadius() {
 }
 
 
-closeAllPopups() {
-  ["side-popup", "side-popup-umsatz"].forEach(id => {
-    const el = this._shadowRoot.getElementById(id);
-    if (!el) return;
-    el.classList.remove("show");
-    el.classList.add("hidden");
-    el.style.display = "none";
-  });
-}
 
 closeNLTable() {
   const nlContainer = this._shadowRoot.getElementById("nl-info-container");
@@ -4782,7 +4776,8 @@ showEmptyUmsatzPopup(plz) {
         const selectedJahr = jahrSelect.value;
         const selectedNummer = nummerSelect.value;
 
-        this.applyFilter(selectedID, selectedJahr, selectedNummer);
+       this.loadErhebung(selectedID, selectedJahr, selectedNummer);
+
       });
     }
   }
@@ -4933,8 +4928,119 @@ if (this.currentMapMode === "wk") {
 
   legend.classList.add("hidden");
 }
+async loadErhebung(erhID, jahr, nummer) {
+  console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
+
+  // UI blockieren
+  this.showLoadingOverlay();
+  this.fadeOutMapElements();
+  this.closeNLTable?.();
+
+  // BW-Query (einzige Query!)
+  const rawData = await this.queryErhebungFromBW(erhID, jahr, nummer);
+  this._activeFilter = { erhID, jahr, nummer };
+  this.filteredData = rawData;
+
+  // Pre-Aggregation
+  this.prepareMapData(rawData);
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
+
+  // Marker + Radius + GeoLayer
+  this.createAllMarkers();
+  const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
+  this.applyRadiusFilter(radius);
+  this.updateGeoLayer();
+
+  // Tabelle
+  this.renderDataTable(this.filteredKennwerte);
+
+  // Animation
+  await this.animateRevealSequence();
+
+  console.log("✅ loadErhebung abgeschlossen");
+}
 
 
+showLoadingOverlay() {
+  const overlay = this._shadowRoot.getElementById("loading-spinner");
+  if (!overlay) return;
+
+  overlay.classList.remove("hidden");
+  overlay.style.opacity = "1";
+}
+
+hideLoadingOverlay() {
+  const overlay = this._shadowRoot.getElementById("loading-spinner");
+  if (!overlay) return;
+
+  overlay.style.transition = "opacity 0.25s ease";
+  overlay.style.opacity = "0";
+
+  setTimeout(() => {
+    overlay.classList.add("hidden");
+  }, 250);
+}
+
+
+fadeOutMapElements() {
+  const mapPane = this._shadowRoot.querySelector("#map");
+  if (!mapPane) return;
+
+  mapPane.style.transition = "opacity 0.25s ease";
+  mapPane.style.opacity = "0";
+
+  this.filteredGroup?.eachLayer(m => m.setOpacity?.(0));
+  this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
+}
+
+
+async animateRevealSequence() {
+  return new Promise(resolve => {
+    const mapPane = this._shadowRoot.querySelector("#map");
+    if (mapPane) {
+      mapPane.style.opacity = "1";
+    }
+
+    setTimeout(() => {
+      this.dropMarkersAnimation();
+
+      this.hideLoadingOverlay();
+
+      setTimeout(resolve, 250);
+    }, 300);
+  });
+}
+
+dropMarkersAnimation() {
+  if (!this.allMarkers) return;
+
+  this.allMarkers.forEach((m, i) => {
+    const el = m.getElement();
+    if (!el) return;
+
+    el.style.transition = "transform 0.25s ease, opacity 0.25s ease";
+    el.style.transform = "translateY(-20px)";
+    el.style.opacity = "0";
+
+    setTimeout(() => {
+      el.style.transform = "translateY(0)";
+      el.style.opacity = "1";
+    }, 50 + i * 20);
+  });
+}
+
+async queryErhebungFromBW(erhID, jahr, nummer) {
+  // Aktuell: lokale Datenquelle
+  const raw = this._myDataSource?.data || [];
+
+  return raw.filter(row =>
+    row["dimension_erhebung_0"]?.id == erhID &&
+    row["dimension_jahr_0"]?.id == jahr &&
+    row["dimension_erhebungsnummer_0"]?.id == nummer
+  );
+}
 
 
 
