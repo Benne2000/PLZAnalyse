@@ -1918,7 +1918,6 @@ legendBtn.addEventListener("click", () => {
   // WK-MODUS
   // ---------------------------------------------------------
 btnWK?.addEventListener("click", () => {
-    this.closeAllPopups();
 
     btnWK.classList.add("active");
     btnUmsatz.classList.remove("active");
@@ -1967,7 +1966,6 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
 
     btnUmsatz.classList.add("active");
     btnWK.classList.remove("active");
-    this.closeAllPopups();
 
     this.currentMapMode = "umsatz-multi";
     this.activePopupType = "umsatz";
@@ -2270,9 +2268,7 @@ updateBestreuungMarkers() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-
-
-createAllMarkers() {
+   createAllMarkers() {
   if (!this.filteredGroup) return;
 
   this.filteredGroup.clearLayers();
@@ -2285,14 +2281,6 @@ createAllMarkers() {
   if (!this.Niederlassung || !this.nlKoordinaten) return;
 
   const seen = new Set();
-
-  const makeInvisible = (marker) => {
-    const el = marker.getElement();
-    if (el) {
-      el.style.opacity = "0";        // ⭐ nur unsichtbar
-      el.style.transform = "none";   // ⭐ NICHT verschieben
-    }
-  };
 
   // Haupt-Niederlassungen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
@@ -2310,8 +2298,6 @@ createAllMarkers() {
 
     this.allMarkers.push(marker);
     this.filteredGroup.addLayer(marker);
-
-    makeInvisible(marker);
 
     this.nlMarkers.push({ lat: coords.lat, lng: coords.lon, marker });
     seen.add(nlKey);
@@ -2332,12 +2318,11 @@ createAllMarkers() {
       this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
 
-      makeInvisible(marker);
-
       this.nlMarkers.push({ lat, lng: lon, marker });
     });
   }
 
+  // NL-Auswahl initialisieren
   this.allNLs = [
     ...Object.keys(this.Niederlassung),
     ...(this.extraNLs?.map(e => e.nl) ?? [])
@@ -3029,10 +3014,14 @@ updateGeoLayer() {
   this.computeMaxValue();
 
   // 2️⃣ Alle Layer aktualisieren
-  this._geoLayer.eachLayer(layer => {
-    // ❗ KEIN heatmap-reveal hier
-    this.applyStyleToLayer(layer);
-  });
+this._geoLayer.eachLayer(layer => {
+  const path = layer._path;
+  if (path) {
+    path.classList.add("heatmap-reveal");
+  }
+  this.applyStyleToLayer(layer);
+});
+
 
   // 3️⃣ Bestreuungsmarker aktualisieren
   this.updateBestreuungMarkers();
@@ -3042,7 +3031,6 @@ updateGeoLayer() {
   // ⭐ 4️⃣ Legende aktualisieren (WICHTIG!)
   this.updateHeatmapLegend();
 }
-
 
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
@@ -3105,13 +3093,18 @@ applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
 
-  // Layer immer klickbar
+  // -------------------------------------------------
+  // 0) Layer IMMER klickbar machen (Leaflet-Schutz)
+  // -------------------------------------------------
   layer.options.interactive = true;
+
   if (layer._path) {
     layer._path.setAttribute("pointer-events", "auto");
   }
 
-  // Radiuslogik
+  // -------------------------------------------------
+  // 1) Radiuslogik
+  // -------------------------------------------------
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
   let inRadius = true;
 
@@ -3121,24 +3114,34 @@ applyStyleToLayer(layer) {
     inRadius = !hasRadius || this.plzImRadius.has(plz);
   }
 
-  // PLZ ohne Werte oder außerhalb Radius → grau
+  // -------------------------------------------------
+  // 2) PLZ ohne Werte oder außerhalb Radius → grau
+  //    (ABER klickbar, Popup soll leer öffnen)
+  // -------------------------------------------------
   if (!v || !inRadius) {
-    layer._targetFillColor = "#cfd4da"; // echte Farbe speichern
-
     layer.setStyle({
-      fillColor: "#cfd4da",   // ⭐ immer grau sichtbar
+      fillColor: "#cfd4da",
       fillOpacity: 0.45,
       color: "#ffffff",
       weight: 1
     });
 
-    // Click-Handler
+    // Layer bleibt klickbar!
+    layer.options.interactive = true;
+    if (layer._path) {
+      layer._path.setAttribute("pointer-events", "auto");
+    }
+
+    // Click-Handler trotzdem setzen
     layer.off("click");
     layer.on("click", () => {
       const popupWK = this._shadowRoot.getElementById("side-popup");
       const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
 
+      popupWK?.classList.remove("show");
       popupWK?.classList.add("hidden");
+
+      popupU?.classList.remove("show");
       popupU?.classList.add("hidden");
 
       if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
@@ -3148,40 +3151,61 @@ applyStyleToLayer(layer) {
       }
 
       this.activePopupType = "wk";
-      this.showPopup(layer.feature, {});
+      this.showPopup(layer.feature, {}); // leeres WK-Popup
     });
+
+    // Critical Marker entfernen
+    if (this.criticalMarkers?.[plz]) {
+      this.map.removeLayer(this.criticalMarkers[plz]);
+      delete this.criticalMarkers[plz];
+    }
 
     return;
   }
 
-  // Echte Farbe berechnen
+  // -------------------------------------------------
+  // 3) Farbe berechnen
+  // -------------------------------------------------
   const fillColor = this.computeFillColor(plz);
 
-  // ⭐ Echte Farbe speichern, aber NOCH NICHT anzeigen
-  layer._targetFillColor = fillColor;
-
-  // ⭐ Grundkarte bleibt grau sichtbar
   layer.setStyle({
-    fillColor: "#cfd4da",
+    fillColor,
     fillOpacity: 0.7,
     color: "#ffffff",
     weight: 1
   });
 
-  // Click-Handler
+  // Sicherheit: Layer klickbar halten
+  layer.options.interactive = true;
+  if (layer._path) {
+    layer._path.setAttribute("pointer-events", "auto");
+  }
+
+  // -------------------------------------------------
+  // 4) Click-Handler neu setzen
+  // -------------------------------------------------
   layer.off("click");
+
   layer.on("click", () => {
     const values = this.filteredPLZWerte?.[plz];
 
     const popupWK = this._shadowRoot.getElementById("side-popup");
     const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
 
+    popupWK?.classList.remove("show");
     popupWK?.classList.add("hidden");
+
+    popupU?.classList.remove("show");
     popupU?.classList.add("hidden");
 
     if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
       this.activePopupType = "umsatz";
-      values ? this.showUmsatzPopup(plz, values) : this.showEmptyUmsatzPopup(plz);
+
+      if (values) {
+        this.showUmsatzPopup(plz, values);
+      } else {
+        this.showEmptyUmsatzPopup(plz);
+      }
       return;
     }
 
@@ -3189,6 +3213,49 @@ applyStyleToLayer(layer) {
     const kennwerte = this.filteredKennwerte?.[plz] || {};
     this.showPopup(layer.feature, kennwerte);
   });
+
+  // -------------------------------------------------
+  // 5) Critical-Marker (nur WK-Modus)
+  // -------------------------------------------------
+  const showCritical = this.currentMapMode === "wk" && this.showCritical;
+  const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
+
+  if (!showCritical || !isCritical) {
+    if (this.criticalMarkers?.[plz]) {
+      this.map.removeLayer(this.criticalMarkers[plz]);
+      delete this.criticalMarkers[plz];
+    }
+    return;
+  }
+
+  if (!this.criticalMarkers) this.criticalMarkers = {};
+
+  if (!this.criticalMarkers[plz]) {
+    const center = layer.getBounds().getCenter();
+
+    const icon = L.divIcon({
+      html: `<div style="
+        background:#ffffff;
+        border:2px solid #b41821;
+        border-radius:50%;
+        width:22px;
+        height:22px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:14px;
+        font-weight:bold;
+      ">⚠️</div>`,
+      className: "",
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+
+    this.criticalMarkers[plz] = L.marker(center, {
+      icon,
+      interactive: false
+    }).addTo(this.map);
+  }
 }
 
 
@@ -4876,9 +4943,6 @@ if (this.currentMapMode === "wk") {
 
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
-// Legende einklappen
-const legend = this._shadowRoot.getElementById("heatmap-legend");
-legend?.classList.add("hidden");
 
   // 1) UI blockieren + Animation starten
   this.showLoadingOverlay();
@@ -4907,12 +4971,14 @@ legend?.classList.add("hidden");
   // 5) Erhebungsinfo vorbereiten (für NL-Übersicht)
   this.prepareErhebungsInfo();
 
+  // 6) Zoom auf relevante PLZ
+  this.zoomToFilteredPLZ();
 
   // 7) Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
 
   // 8) Heatmap + Marker Reveal Animation
-  await this.animateRevealSequence();
+  // await this.animateRevealSequence();
 
   console.log("✅ loadErhebung abgeschlossen");
 }
@@ -4941,9 +5007,12 @@ hideLoadingOverlay() {
 
 
 fadeOutMapElements() {
-  // Karte & Polygone NICHT anfassen – die sollen sichtbar bleiben
+  const mapPane = this._shadowRoot.querySelector("#map");
+  if (!mapPane) return;
 
-  // Nur Marker ausblenden
+  mapPane.style.transition = "opacity 0.25s ease";
+  mapPane.style.opacity = "0";
+
   this.filteredGroup?.eachLayer(m => m.setOpacity?.(0));
   this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
 }
@@ -4951,51 +5020,42 @@ fadeOutMapElements() {
 async animateRevealSequence() {
   return new Promise(resolve => {
 
-    // Karte sichtbar lassen
+    // 0) Karte bleibt sichtbar (grau), nur Heatmap wird animiert
     const mapPane = this._shadowRoot.querySelector("#map");
     if (mapPane) {
-      mapPane.style.opacity = "1";
+      mapPane.style.opacity = "1"; // Karte bleibt sichtbar
     }
 
-    // 1) Sofort reinzoomen
-    this.zoomToFilteredPLZ();
+    // 1) Marker-Drop sofort starten
+    this.dropMarkersAnimation();
 
-    // 2) Warten, bis Leaflet die SVG-Paths gerendert hat
-    setTimeout(() => {
+    // 2) Heatmap-Reveal vorbereiten (Mask 0%)
+    const paths = this._shadowRoot.querySelectorAll(".heatmap-reveal");
+    paths.forEach(p => {
+      p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
+      p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+      p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+    });
 
-      // 3) Marker-Drop starten
-      this.dropMarkersAnimation();
-
-      // 4) Heatmap-Farben aktivieren + Reveal vorbereiten
-      const paths = this._shadowRoot.querySelectorAll("path.leaflet-interactive");
+    // 3) Heatmap-Reveal starten (Mask 100%)
+    requestAnimationFrame(() => {
       paths.forEach(p => {
-        p.classList.add("heatmap-reveal");
-
-        // ⭐ Echte Farbe setzen
-        if (p._targetFillColor) {
-          p.style.fill = p._targetFillColor;
-        }
-
-        p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
-        p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
-        p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+        p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
+        p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
       });
+    });
 
-      // 5) Reveal starten
-      requestAnimationFrame(() => {
-        paths.forEach(p => {
-          p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
-          p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
-        });
-      });
+    // 4) Overlay ausblenden (parallel)
+    this.hideLoadingOverlay();
 
-      // 6) Overlay ausblenden
-      this.hideLoadingOverlay();
+    // 5) Nach 3 Sekunden Heatmap-Reveal + 1 Sekunde Pause → Zoom
+    setTimeout(() => {
+      this.zoomToFilteredPLZ();
 
-      // 7) 3s Reveal + 1s Pause
-      setTimeout(resolve, 4000);
+      // 6) Animation abgeschlossen
+      resolve();
 
-    }, 150);
+    }, 4000); // 3s Reveal + 1s Pause
   });
 }
 
@@ -5030,12 +5090,6 @@ async queryErhebungFromBW(erhID, jahr, nummer) {
   );
 }
 
-closeAllPopups() {
-  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-  const popupWK = this._shadowRoot.getElementById("side-popup");
-  popupUmsatz?.classList.add("hidden");
-  popupWK?.classList.add("hidden");
-}
 
 
       showNotesOnMap() {
