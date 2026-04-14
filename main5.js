@@ -1016,51 +1016,10 @@
   border: 1px solid #999;
 }
 
-#loading-overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.92);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.2rem;
-  z-index: 9999;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-
-#loading-overlay.show {
-  opacity: 1;
-}
-
-.loading-bar {
-  width: 180px;
-  height: 4px;
-  background: #ddd;
-  margin-top: 12px;
-  overflow: hidden;
-  position: relative;
-}
-
-.loading-bar::after {
-  content: "";
-  position: absolute;
-  left: -40%;
-  width: 40%;
-  height: 100%;
-  background: #b41821;
-  animation: loadingSlide 1.2s infinite;
-}
-
-@keyframes loadingSlide {
-  0% { left: -40%; }
-  50% { left: 100%; }
-  100% { left: 100%; }
-}
 
 
 </style>
+
 <div class="layout">
 
   <!-- 🔍 Filterbereich -->
@@ -1094,12 +1053,6 @@
 
   <!-- 🗺️ Kartenbereich -->
   <div class="map-container">
-
-    <!-- ⭐ LOADING OVERLAY (NEU) -->
-    <div id="loading-overlay" class="hidden">
-      <div class="loading-text"></div>
-      <div class="loading-bar"></div>
-    </div>
 
     <div id="loading-spinner" class="spinner"></div>
 
@@ -2859,58 +2812,97 @@ getUmsatzSumForPLZ(v) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
     this.neighbours = computeNeighbours(filteredMarkers);
   }
-async applyFilter(erhID, jahr, nummer) {
+
+
+applyFilter(erhID, jahr, nummer) {
 
   if (!erhID || !jahr || !nummer) {
     console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
     return;
   }
 
-  // Overlay starten
-  this.showLoadingOverlay("Erhebung wird geladen…");
-
-  // NL-Tabelle schließen
+  // 🧹 NL-Tabelle schließen
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
   if (filterContainer?.classList.contains("nl-info-active")) {
     this.closeNLTable();
   }
 
   this._activeFilter = { erhID, jahr, nummer };
-  this._selectedNLs = new Set();
 
-  // Daten filtern
+  // 🔄 NL-Auswahl zurücksetzen
+  if (!this._selectedNLs) {
+    this._selectedNLs = new Set();
+  } else {
+    this._selectedNLs.clear();
+  }
+
+  // 1️⃣ Daten filtern
   const filteredData = this.getFilteredData();
   this.filteredData = filteredData;
 
-  this.showLoadingOverlay("Daten werden vorbereitet…");
-
-  // Umsatz + WK vorbereiten
+  // 2️⃣ Umsatzwerte vorbereiten
   this.prepareUmsatzPLZWerte();
   this.computeWKKennwerte();
   this.computeStreuverlust();
 
-  this.showLoadingOverlay("Karte wird initialisiert…");
 
-  // Karte aktualisieren
+  // 3️⃣ MapMode korrekt setzen
+  const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
+
+  if (btnUmsatz?.classList.contains("active")) {
+    this.currentMapMode = "umsatz-multi";
+
+    if (!this.activeCategories || this.activeCategories.size === 0) {
+      this.activeCategories = new Set(["stationaer", "pluscard", "ra", "online"]);
+    }
+
+    this._shadowRoot.getElementById("wk-extra").style.display = "none";
+    this._shadowRoot.getElementById("umsatz-options-row").style.display = "flex";
+
+
+  } else {
+    this.currentMapMode = "wk";
+
+    this._shadowRoot.getElementById("wk-extra").style.display = "block";
+    this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
+
+  }
+
+  // 4️⃣ HZ-Flags neu berechnen
+  this.hzFlags = {};
+  filteredData.forEach(row => {
+    const plz = row["dimension_plz_0"]?.id?.trim();
+    const hz = row["dimension_hzflag_0"]?.id?.trim();
+    if (plz) this.hzFlags[plz] = hz === "X";
+  });
+
+  // 5️⃣ PLZ-Liste extrahieren
+  this.filteredPLZs = filteredData
+    .map(row => row["dimension_plz_0"]?.id?.trim())
+    .filter(plz => plz && plz !== "@NullMember");
+
+  // 6️⃣ Karte initial einfärben
   this.updateGeoLayer();
-  this.createAllMarkers();
 
-  // Animationen
-  this.animateHeatmapReveal();
-  this.animateMarkerDrop();
+  // 7️⃣ NL-Marker aktualisieren
+  this.updateMarkers();
 
-  // Tabelle
+  // 8️⃣ Radius anwenden
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.currentRadius = radius;
+  this.applyRadiusFilter(radius);
+
+  // 9️⃣ Tabelle rendern
   this.renderDataTable(this.filteredKennwerte);
 
-  // Zoom
+  // 🔟 Zoom
   this.zoomToFilteredPLZ();
 
-  // Erhebungsinfo
+  // 1️⃣1️⃣ Erhebungsinfo aktualisieren
   this.prepareErhebungsInfo();
-
-  // Overlay ausblenden
-  this.hideLoadingOverlay();
 }
+
+
 
 
 
@@ -3085,8 +3077,6 @@ computeMaxValue() {
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
-
-
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
@@ -3700,6 +3690,7 @@ prepareErhebungsInfo() {
     };
   });
 }
+
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
@@ -3708,30 +3699,71 @@ prepareUmsatzPLZWerte() {
   if (!erhID || !jahr || !nummer) return;
 
   // ============================================
-  // Robust Parsing
+  // SAFE() – robustes Parsing inkl. Tausenderpunkt
   // ============================================
   const safe = x => {
     if (x == null) return 0;
-    if (typeof x === "number") return Number.isFinite(x) ? x : 0;
-    if (typeof x === "string") {
-      const n = Number(x.replace(/\./g, "").replace(",", "."));
-      return Number.isFinite(n) ? n : 0;
-    }
-    return 0;
-  };
 
-  const parseHH = x => {
-    if (x == null) return 0;
-    if (typeof x === "number") return Number.isFinite(x) ? x : 0;
+    let original = x;
+
     if (typeof x === "string") {
-      const n = Number(x.replace(/[.,\s]/g, ""));
-      return Number.isFinite(n) ? n : 0;
+      x = x.replace(/\./g, "").replace(",", ".");
     }
-    return 0;
+
+    const n = Number(x);
+
+    if (!Number.isFinite(n)) {
+      console.warn("❗ SAFE-PARSE-ERROR", { original, parsed: n });
+    }
+
+    return Number.isFinite(n) ? n : 0;
   };
 
   // ============================================
-  // 1) Rohdaten für die Erhebung filtern
+  // Haushalte-PARSER (immer ganze Zahl!)
+  // ============================================
+  const parseHH = x => {
+    if (x == null) return 0;
+
+    if (typeof x === "number") {
+      return Number.isFinite(x) ? x : 0;
+    }
+
+    if (typeof x === "string") {
+      // Tausendertrennzeichen entfernen (egal ob . oder ,)
+      const s = x.replace(/[.,\s]/g, "");
+      const n = Number(s);
+      if (!Number.isFinite(n)) {
+        console.warn("❗ HH-PARSE-ERROR", { original: x, parsed: n });
+        return 0;
+      }
+      return n;
+    }
+
+    return 0;
+  };
+
+  // Debug-Safe für Umsatzfelder
+  const debugSafe = (label, value, plz) => {
+    const parsed = safe(value);
+    if (!Number.isFinite(parsed)) {
+      console.warn(`❗ SAFE-PARSE-ERROR @ ${label} | PLZ ${plz}`, {
+        original: value,
+        parsed
+      });
+    }
+    return parsed;
+  };
+
+  // ============================================
+  // (Optional) Cache-Struktur initialisieren – aber NICHT mehr als Short-Cut nutzen
+  // ============================================
+  if (!this._umsatzCache) this._umsatzCache = {};
+  const nlKey = [...(this._selectedNLs || new Set())].sort().join("_") || "ALL";
+  const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
+
+  // ============================================
+  // 1) Aggregation – IMMER NEU BERECHNEN
   // ============================================
   const rows = raw.filter(row =>
     row["dimension_erhebung_0"]?.id == erhID &&
@@ -3739,35 +3771,36 @@ prepareUmsatzPLZWerte() {
     row["dimension_erhebungsnummer_0"]?.id == nummer
   );
 
-  // ============================================
-  // 2) Aggregation pro PLZ
-  // ============================================
   const aggregated = {};
 
-  for (const row of rows) {
+  rows.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
 
-    // NL-Filter
-    if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) continue;
+    if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
+      return;
+    }
 
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    if (!rawPLZ || rawPLZ === "@NullMember") continue;
+
+    if (!rawPLZ || rawPLZ === "@NullMember") return;
 
     const plz = String(rawPLZ).padStart(5, "0");
-    if (plz === "00000") continue;
+    if (plz === "00000") return;
 
-    let v = aggregated[plz];
-    if (!v) {
-      v = aggregated[plz] = {
-        hhValues: [],
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
+        _hhValues: [],
+
         umsatz: 0,
         ra: 0,
         onlineshop: 0,
         pluscard: 0,
+
         umsatzWerbung: 0,
         raWerbung: 0,
         onlineshopWerbung: 0,
         pluscardWerbung: 0,
+
         umsatzZusatz: 0,
         raZusatz: 0,
         onlineshopZusatz: 0,
@@ -3775,43 +3808,49 @@ prepareUmsatzPLZWerte() {
       };
     }
 
+    const v = aggregated[plz];
+
     // Haushalte
-    const hh = parseHH(row["value_haushalte_0"]?.raw);
-    if (hh > 0) v.hhValues.push(hh);
+    const rawHH = row["value_haushalte_0"]?.raw;
+    const hh = parseHH(rawHH);
+
+
+    if (hh > 0) v._hhValues.push(hh);
 
     // Umsatzfelder
-    v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
-    v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
-    v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
-    v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+    v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
+    v.ra         += debugSafe("umsatz_ra", row["value_umsatz_ra_0"]?.raw, plz);
+    v.onlineshop += debugSafe("umsatz_online", row["value_umsatz_online_0"]?.raw, plz);
+    v.pluscard   += debugSafe("umsatz_pluscard", row["value_umsatz_grosskunden_0"]?.raw, plz);
 
-    // Werbung
-    v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
-    v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
-    v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
-    v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
+    v.umsatzWerbung     += debugSafe("werbung_stationaer", row["value_umsatz_stationaer_werbung_0"]?.raw, plz);
+    v.raWerbung         += debugSafe("werbung_ra", row["value_umsatz_ra_werbung_0"]?.raw, plz);
+    v.onlineshopWerbung += debugSafe("werbung_online", row["value_umsatz_online_werbung_0"]?.raw, plz);
+    v.pluscardWerbung   += debugSafe("werbung_pluscard", row["value_umsatz_grosskunden_werbung_0"]?.raw, plz);
 
-    // Zusatz
-    v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
-    v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
-    v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
-    v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
-  }
+    v.umsatzZusatz     += debugSafe("zusatz_stationaer", row["value_umsatz_stationaer_zusatz_0"]?.raw, plz);
+    v.raZusatz         += debugSafe("zusatz_ra", row["value_umsatz_ra_zusatz_0"]?.raw, plz);
+    v.onlineshopZusatz += debugSafe("zusatz_online", row["value_umsatz_online_zusatz_0"]?.raw, plz);
+    v.pluscardZusatz   += debugSafe("zusatz_pluscard", row["value_umsatz_grosskunden_zusatz_0"]?.raw, plz);
+  });
 
   // ============================================
-  // 3) Haushalte + pro HH + Werbeanteil
+  // 2) Haushalte + pro HH + Werbeanteil
   // ============================================
-  for (const [plz, v] of Object.entries(aggregated)) {
+  Object.entries(aggregated).forEach(([plz, v]) => {
+    if (v._hhValues.length > 0) {
+      v.haushalte =
+        v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
+    } else {
+      v.haushalte = 0;
+    }
 
-    // Haushalte
-    const hh = v.hhValues.length
-      ? v.hhValues.reduce((a,b)=>a+b,0) / v.hhValues.length
-      : 0;
 
-    v.haushalte = hh;
-    delete v.hhValues;
 
-    const perHH = x => (hh > 0 ? x / hh : 0);
+    delete v._hhValues;
+
+    const hh = v.haushalte;
+    const perHH = val => (hh > 0 ? val / hh : 0);
 
     v.umsatzProHaushalt     = perHH(v.umsatz);
     v.raProHaushalt         = perHH(v.ra);
@@ -3828,46 +3867,46 @@ prepareUmsatzPLZWerte() {
     v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
     v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
 
-    // Kategorien
-    const catNormal = {
-      stationaer: v.umsatz,
-      ra: v.ra,
-      onlineshop: v.onlineshop,
-      pluscard: v.pluscard
+    const catMapNormal = {
+      stationaer: v.umsatz ?? 0,
+      ra: v.ra ?? 0,
+      onlineshop: v.onlineshop ?? 0,
+      pluscard: v.pluscard ?? 0
     };
 
-    const catWerbung = {
-      stationaer: v.umsatzWerbung,
-      ra: v.raWerbung,
-      onlineshop: v.onlineshopWerbung,
-      pluscard: v.pluscardWerbung
+    const catMapWerbung = {
+      stationaer: v.umsatzWerbung ?? 0,
+      ra: v.raWerbung ?? 0,
+      onlineshop: v.onlineshopWerbung ?? 0,
+      pluscard: v.pluscardWerbung ?? 0
     };
 
     let totalNormal = 0;
     let totalWerbe = 0;
 
     for (const cat of this.activeCategories) {
-      totalNormal += catNormal[cat] ?? 0;
-      totalWerbe  += catWerbung[cat] ?? 0;
+      totalNormal += catMapNormal[cat] ?? 0;
+      totalWerbe  += catMapWerbung[cat] ?? 0;
     }
 
-    v.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
-  }
+    v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
+  });
+
+  // optional: aktualisierten Aggregat-Cache speichern
+  this._umsatzCache[cacheKey] = aggregated;
 
   // ============================================
-  // 4) Radiusfilter anwenden
+  // 3) Radiusfilter
   // ============================================
+  const full = aggregated;
   const result = {};
-  const radiusActive =
-    (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil")
-    && this.useRadiusFilter;
 
-  for (const [plz, v] of Object.entries(aggregated)) {
-    if (radiusActive) {
-      if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) continue;
+  Object.entries(full).forEach(([plz, v]) => {
+    if ((this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") && this.useRadiusFilter) {
+      if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
     result[plz] = v;
-  }
+  });
 
   this.filteredPLZWerte = result;
 
@@ -3877,7 +3916,6 @@ prepareUmsatzPLZWerte() {
     { plzCount: Object.keys(result).length }
   );
 }
-
 
 
 
@@ -4127,7 +4165,6 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
-
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
@@ -4135,31 +4172,32 @@ computeWKKennwerte() {
   const unfilteredUmsatzByPLZ = {};
 
   // Ungefilterter Umsatz pro PLZ
-  for (const row of this.filteredData) {
+  this.filteredData.forEach(row => {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
     const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
-  }
+  });
 
   // Aggregation WK
-  for (const row of this.filteredData) {
+  this.filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
 
-    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) continue;
-    if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) continue;
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
+    if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
 
-    let entry = aggregated[plz];
-    if (!entry) {
-      entry = aggregated[plz] = {
+    if (!aggregated[plz]) {
+      aggregated[plz] = {
         hzCount: 0,
         umsatzNetto: 0,
         hzKosten: 0,
         potHzKosten: []
       };
     }
+
+    const entry = aggregated[plz];
 
     const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
     if (hz) entry.hzCount++;
@@ -4169,11 +4207,13 @@ computeWKKennwerte() {
 
     const potHz = row["value_hz_potentiell_0"]?.raw;
     if (typeof potHz === "number") entry.potHzKosten.push(potHz);
-  }
+  });
 
+  const base = this.filteredKennwerte || {};
+  const newFilteredKennwerte = {};
   const newFilteredPLZWerte = {};
 
-  for (const [plz, entry] of Object.entries(aggregated)) {
+  Object.entries(aggregated).forEach(([plz, entry]) => {
     const umsatzNetto = entry.umsatzNetto;
     const hzKosten = entry.hzKosten;
 
@@ -4194,17 +4234,68 @@ computeWKKennwerte() {
     const potHzPercent =
       umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0;
 
+    const isHZ = entry.hzCount > 0;
+    const isCritical = entry.hzCount > 1;
+
+    const baseEntry = base[plz] || {};
     const old = this.filteredPLZWerte?.[plz] || {};
 
+    // WK-Kennwerte
+    newFilteredKennwerte[plz] = {
+      ...baseEntry,
+      isHZ,
+      isCritical,
+      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      value_wk_in_percent_0: { raw: wkPercent },
+      value_wk_nachbar_0: { raw: wkNachbarn },
+      value_hz_kosten_0: { raw: hzKosten },
+      value_hz_potentiell_0: { raw: avgPotHz },
+      value_wk_potentiell_0: { raw: potHzPercent }
+    };
+
+    // Umsatzdaten übernehmen
     newFilteredPLZWerte[plz] = {
-      ...old,
       wk: wkPercent,
       wkPot: potHzPercent,
-      hz: entry.hzCount > 0,
-      isCritical: entry.hzCount > 1
-    };
-  }
+      hz: isHZ,
 
+      umsatz: old.umsatz ?? 0,
+      ra: old.ra ?? 0,
+      onlineshop: old.onlineshop ?? 0,
+      pluscard: old.pluscard ?? 0,
+      haushalte: old.haushalte ?? 0,
+
+      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
+      raProHaushalt: old.raProHaushalt ?? 0,
+      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
+      pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
+
+      umsatzWerbung: old.umsatzWerbung ?? 0,
+      raWerbung: old.raWerbung ?? 0,
+      onlineshopWerbung: old.onlineshopWerbung ?? 0,
+      pluscardWerbung: old.pluscardWerbung ?? 0,
+
+      umsatzZusatz: old.umsatzZusatz ?? 0,
+      raZusatz: old.raZusatz ?? 0,
+      onlineshopZusatz: old.onlineshopZusatz ?? 0,
+      pluscardZusatz: old.pluscardZusatz ?? 0,
+
+      umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
+      raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
+      onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
+      pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
+
+      umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
+      raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
+      onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
+      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
+
+      // WICHTIG: Werbeanteil erhalten
+      werbeAnteil: old.werbeAnteil ?? 0
+    };
+  });
+
+  this.filteredKennwerte = newFilteredKennwerte;
   this.filteredPLZWerte = newFilteredPLZWerte;
 }
 
@@ -4695,53 +4786,55 @@ showEmptyUmsatzPopup(plz) {
       });
     }
   }
-async render() {
-  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-    return;
-  }
 
-  this.showSpinner();
+  async render() {
+    if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+      console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+      return;
+    }
 
-  const rawData = this._myDataSource.data;
+    this.showSpinner();
 
-  // 🔧 Filterstruktur & Dropdowns vorbereiten
-  this._erhData = this.buildErhebungsStruktur(rawData);
-  this.setupFilterDropdowns();
+    const rawData = this._myDataSource.data;
 
-  // 🔍 Filter anwenden oder Rohdaten verwenden
-  const isFiltered = !!this._activeFilter;
-  const filteredData = isFiltered ? this.getFilteredData() : rawData;
+    // 🔧 Filterstruktur & Dropdowns vorbereiten
+    this._erhData = this.buildErhebungsStruktur(rawData);
+    this.setupFilterDropdowns();
 
-  // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+    // 🔍 Filter anwenden oder Rohdaten verwenden
+    const isFiltered = !!this._activeFilter;
+    const filteredData = isFiltered ? this.getFilteredData() : rawData;
+
+    // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
   this.prepareMapData(filteredData);
 
-  // WK neu berechnen (auf Basis filteredData)
-  this.computeWKKennwerte();
-  this.computeStreuverlust();
+// WK neu berechnen
+this.computeWKKennwerte();
+this.computeStreuverlust();
 
-  // 🌍 GeoJSON laden & Layer aktualisieren
-  await this.loadGeoJson();
 
-  this.updateGeoLayer();
-  this.createAllMarkers();
 
-  // 📌 PLZs extrahieren für Marker-Filterung
-  const filteredPLZs = isFiltered
-    ? filteredData
-        .map(d => d["dimension_plz_0"]?.id?.trim())
-        .filter(plz => plz && plz !== "@NullMember")
-    : Object.keys(this.allMarkers || {});
 
-  // 📍 Marker anzeigen (gefiltert oder vollständig)
-  this.updateMarkers(filteredPLZs);
+    // 🌍 GeoJSON laden & Layer aktualisieren
+    await this.loadGeoJson();
 
-  // 📊 Tabelle aktualisieren
-  this.renderDataTable(this.filteredKennwerte);
+    this.updateGeoLayer();
+      this.createAllMarkers();
+    // 📌 PLZs extrahieren für Marker-Filterung
+    const filteredPLZs = isFiltered
+      ? filteredData
+          .map(d => d["dimension_plz_0"]?.id?.trim())
+          .filter(plz => plz && plz !== "@NullMember")
+      : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
 
-  this.hideSpinner();
-}
+    // 📍 Marker anzeigen (gefiltert oder vollständig)
+    this.updateMarkers(filteredPLZs);
 
+    // 📊 Tabelle aktualisieren
+    this.renderDataTable(this.filteredKennwerte);
+
+    this.hideSpinner();
+  }
 updateHeatmapLegend() {
 
   const legend = this._shadowRoot.getElementById("heatmap-legend");
@@ -4842,186 +4935,6 @@ if (this.currentMapMode === "wk") {
 }
 
 
-async loadErhebung(erhID, jahr, nummer) {
-  // 1) Overlay starten
-  this.showLoadingOverlay("Erhebung wird geladen…");
-
-  // 2) BW-Daten laden
-  const rawData = await this.loadErhebungFromBW(erhID, jahr, nummer);
-
-  this.showLoadingOverlay("Daten werden vorbereitet…");
-
-  // 3) Pre-Aggregation (Umsatz + WK + HH + NL + PLZ)
-  this.preAggregateErhebung(rawData);
-
-  this.showLoadingOverlay("Karte wird initialisiert…");
-
-  // 4) GeoJSON laden
-  await this.loadGeoJson();
-
-  // 5) Karte vorbereiten
-  this.updateGeoLayer();
-  this.createAllMarkers();
-
-  // 6) Animation starten
-  this.animateHeatmapReveal();
-  this.animateMarkerDrop();
-
-  // 7) Overlay ausblenden
-  this.hideLoadingOverlay();
-}
-
-showLoadingOverlay(text = "Lade…") {
-  const overlay = this._shadowRoot.getElementById("loading-overlay");
-  if (!overlay) return;
-  const label = overlay.querySelector(".loading-text");
-  if (label) label.textContent = text;
-  overlay.classList.remove("hidden");
-  overlay.classList.add("show");
-}
-
-hideLoadingOverlay() {
-  const overlay = this._shadowRoot.getElementById("loading-overlay");
-  if (!overlay) return;
-  overlay.classList.remove("show");
-  // kleines Delay, damit das Fade-Out wirken kann
-  setTimeout(() => {
-    overlay.classList.add("hidden");
-  }, 300);
-}
-
-preAggregateErhebung(rawData) {
-  this._raw = rawData;
-  this._plzData = {};
-  this._nlIndex = {};
-
-  rawData.forEach(row => {
-    const plz = String(row["dimension_plz_0"]?.id ?? "").padStart(5, "0");
-    const nl  = row["dimension_niederlassung_0"]?.id?.trim();
-    if (!plz || plz === "00000") return;
-
-    if (!this._plzData[plz]) {
-      this._plzData[plz] = {
-        rows: [],
-        haushalte: [],
-        umsatz: 0,
-        ra: 0,
-        online: 0,
-        pluscard: 0,
-        umsatzWerbung: 0,
-        umsatzZusatz: 0,
-        hzCount: 0,
-        hzKosten: 0,
-        potHz: []
-      };
-    }
-
-    const p = this._plzData[plz];
-    p.rows.push(row);
-
-    // Haushalte
-    const hh = row["value_haushalte_0"]?.raw;
-    if (typeof hh === "number") p.haushalte.push(hh);
-
-    // Umsatz
-    p.umsatz     += row["value_umsatz_stationaer_0"]?.raw ?? 0;
-    p.ra         += row["value_umsatz_ra_0"]?.raw ?? 0;
-    p.online     += row["value_umsatz_online_0"]?.raw ?? 0;
-    p.pluscard   += row["value_umsatz_grosskunden_0"]?.raw ?? 0;
-
-    // Werbung
-    p.umsatzWerbung += row["value_umsatz_stationaer_werbung_0"]?.raw ?? 0;
-    p.umsatzZusatz  += row["value_umsatz_stationaer_zusatz_0"]?.raw ?? 0;
-
-    // WK
-    p.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
-    const pot = row["value_hz_potentiell_0"]?.raw;
-    if (typeof pot === "number") p.potHz.push(pot);
-
-    // HZ
-    if (row["dimension_hzflag_0"]?.id?.trim() === "X") p.hzCount++;
-
-    // NL-Index
-    if (nl) {
-      if (!this._nlIndex[nl]) this._nlIndex[nl] = [];
-      this._nlIndex[nl].push(plz);
-    }
-  });
-
-  // Finalisieren
-  Object.entries(this._plzData).forEach(([plz, p]) => {
-    const hh = p.haushalte.length
-      ? p.haushalte.reduce((a,b)=>a+b,0) / p.haushalte.length
-      : 0;
-
-    p.haushalte = hh;
-
-    p.umsatzProHH = hh > 0 ? p.umsatz / hh : 0;
-
-    const totalNormal = p.umsatz + p.ra + p.online + p.pluscard;
-    const totalWerbe  = p.umsatzWerbung;
-
-    p.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
-
-    const avgPot = p.potHz.length
-      ? p.potHz.reduce((a,b)=>a+b,0) / p.potHz.length
-      : 0;
-
-    p.wk = totalNormal > 0 ? (p.hzKosten / totalNormal) * 100 : 0;
-    p.wkPot = totalNormal > 0 ? (avgPot / totalNormal) * 100 : 0;
-
-    p.isHZ = p.hzCount > 0;
-    p.isCritical = p.hzCount > 1;
-  });
-
-  this.filteredPLZWerte = this._plzData;
-}
-
-
-animateHeatmapReveal() {
-  if (!this._geoLayer) return;
-
-  // 1) CSS-Transition aktivieren
-  this._geoLayer.eachLayer(layer => {
-    if (layer.setStyle) {
-      layer.setStyle({
-        fillOpacity: 0,
-        transition: "fill-opacity 0.6s ease"
-      });
-    }
-  });
-
-  // 2) Ein Frame warten, dann Ziel-Opacity setzen
-  requestAnimationFrame(() => {
-    this._geoLayer.eachLayer(layer => {
-      if (layer.setStyle) {
-        const target = layer.options.originalFillOpacity ?? 0.7;
-        layer.setStyle({ fillOpacity: target });
-      }
-    });
-  });
-}
-
-
-
-animateMarkerDrop() {
-  if (!this.allMarkers) return;
-
-  this.allMarkers.forEach((marker, i) => {
-    const el = marker.getElement();
-    if (!el) return;
-
-    el.style.transition = "none";
-    el.style.transform = "translateY(-20px)";
-    el.style.opacity = "0";
-
-    setTimeout(() => {
-      el.style.transition = "all 0.25s ease";
-      el.style.transform = "translateY(0)";
-      el.style.opacity = "1";
-    }, 80 + i * 40);
-  });
-}
 
 
 
