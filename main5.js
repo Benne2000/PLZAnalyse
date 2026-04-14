@@ -4977,8 +4977,9 @@ legend?.classList.add("hidden");
   // 7) Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
 
+      this.zoomToFilteredPLZ();
   // 8) Heatmap + Marker Reveal Animation
-  await this.animateRevealSequence();
+  //await this.animateRevealSequence();
 
   console.log("✅ loadErhebung abgeschlossen");
 }
