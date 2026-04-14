@@ -1918,6 +1918,7 @@ legendBtn.addEventListener("click", () => {
   // WK-MODUS
   // ---------------------------------------------------------
 btnWK?.addEventListener("click", () => {
+    this.closeAllPopups();
 
     btnWK.classList.add("active");
     btnUmsatz.classList.remove("active");
@@ -1966,6 +1967,7 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
 
     btnUmsatz.classList.add("active");
     btnWK.classList.remove("active");
+    this.closeAllPopups();
 
     this.currentMapMode = "umsatz-multi";
     this.activePopupType = "umsatz";
@@ -3014,14 +3016,10 @@ updateGeoLayer() {
   this.computeMaxValue();
 
   // 2️⃣ Alle Layer aktualisieren
-this._geoLayer.eachLayer(layer => {
-  const path = layer._path;
-  if (path) {
-    path.classList.add("heatmap-reveal");
-  }
-  this.applyStyleToLayer(layer);
-});
-
+  this._geoLayer.eachLayer(layer => {
+    // ❗ KEIN heatmap-reveal hier
+    this.applyStyleToLayer(layer);
+  });
 
   // 3️⃣ Bestreuungsmarker aktualisieren
   this.updateBestreuungMarkers();
@@ -3031,6 +3029,7 @@ this._geoLayer.eachLayer(layer => {
   // ⭐ 4️⃣ Legende aktualisieren (WICHTIG!)
   this.updateHeatmapLegend();
 }
+
 
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
@@ -4943,6 +4942,9 @@ if (this.currentMapMode === "wk") {
 
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
+// Legende einklappen
+const legend = this._shadowRoot.getElementById("heatmap-legend");
+legend?.classList.add("hidden");
 
   // 1) UI blockieren + Animation starten
   this.showLoadingOverlay();
@@ -4971,14 +4973,12 @@ async loadErhebung(erhID, jahr, nummer) {
   // 5) Erhebungsinfo vorbereiten (für NL-Übersicht)
   this.prepareErhebungsInfo();
 
-  // 6) Zoom auf relevante PLZ
-  this.zoomToFilteredPLZ();
 
   // 7) Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
 
   // 8) Heatmap + Marker Reveal Animation
-  // await this.animateRevealSequence();
+  await this.animateRevealSequence();
 
   console.log("✅ loadErhebung abgeschlossen");
 }
@@ -5007,57 +5007,57 @@ hideLoadingOverlay() {
 
 
 fadeOutMapElements() {
-  const mapPane = this._shadowRoot.querySelector("#map");
-  if (!mapPane) return;
+  // Karte & Polygone NICHT anfassen – die sollen sichtbar bleiben
 
-  mapPane.style.transition = "opacity 0.25s ease";
-  mapPane.style.opacity = "0";
-
+  // Nur Marker ausblenden
   this.filteredGroup?.eachLayer(m => m.setOpacity?.(0));
   this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
 }
-
 async animateRevealSequence() {
   return new Promise(resolve => {
 
-    // 0) Karte bleibt sichtbar (grau), nur Heatmap wird animiert
+    // 0) Karte bleibt sichtbar
     const mapPane = this._shadowRoot.querySelector("#map");
     if (mapPane) {
-      mapPane.style.opacity = "1"; // Karte bleibt sichtbar
+      mapPane.style.opacity = "1";
     }
 
-    // 1) Marker-Drop sofort starten
-    this.dropMarkersAnimation();
+    // ⭐ 1) Sofort reinzoomen (damit die SVG-Paths vollständig gerendert sind)
+    this.zoomToFilteredPLZ();
 
-    // 2) Heatmap-Reveal vorbereiten (Mask 0%)
-    const paths = this._shadowRoot.querySelectorAll(".heatmap-reveal");
-    paths.forEach(p => {
-      p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
-      p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
-      p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
-    });
-
-    // 3) Heatmap-Reveal starten (Mask 100%)
-    requestAnimationFrame(() => {
-      paths.forEach(p => {
-        p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
-        p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
-      });
-    });
-
-    // 4) Overlay ausblenden (parallel)
-    this.hideLoadingOverlay();
-
-    // 5) Nach 3 Sekunden Heatmap-Reveal + 1 Sekunde Pause → Zoom
+    // ⭐ 2) 150ms warten, damit Leaflet die Paths wirklich zeichnet
     setTimeout(() => {
-      this.zoomToFilteredPLZ();
 
-      // 6) Animation abgeschlossen
-      resolve();
+      // 3) Marker-Drop starten
+      this.dropMarkersAnimation();
 
-    }, 4000); // 3s Reveal + 1s Pause
+      // 4) Heatmap-Reveal vorbereiten
+      const paths = this._shadowRoot.querySelectorAll("path.leaflet-interactive");
+      paths.forEach(p => {
+        p.classList.add("heatmap-reveal");
+        p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
+        p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+        p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+      });
+
+      // 5) Heatmap-Reveal starten
+      requestAnimationFrame(() => {
+        paths.forEach(p => {
+          p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
+          p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
+        });
+      });
+
+      // 6) Overlay ausblenden
+      this.hideLoadingOverlay();
+
+      // 7) 3s Reveal + 1s Pause
+      setTimeout(() => resolve(), 4000);
+
+    }, 5000); // Zoom settle time
   });
 }
+
 
 
 dropMarkersAnimation() {
@@ -5090,6 +5090,12 @@ async queryErhebungFromBW(erhID, jahr, nummer) {
   );
 }
 
+closeAllPopups() {
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+  const popupWK = this._shadowRoot.getElementById("side-popup");
+  popupUmsatz?.classList.add("hidden");
+  popupWK?.classList.add("hidden");
+}
 
 
       showNotesOnMap() {
