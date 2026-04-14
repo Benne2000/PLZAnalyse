@@ -4968,8 +4968,6 @@ async loadErhebung(erhID, jahr, nummer) {
   // 5) Erhebungsinfo vorbereiten (für NL-Übersicht)
   this.prepareErhebungsInfo();
 
-  // 6) Zoom auf relevante PLZ
-  this.zoomToFilteredPLZ();
 
   // 7) Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
@@ -5010,7 +5008,6 @@ fadeOutMapElements() {
   this.filteredGroup?.eachLayer(m => m.setOpacity?.(0));
   this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
 }
-
 async animateRevealSequence() {
   return new Promise(resolve => {
 
@@ -5020,34 +5017,39 @@ async animateRevealSequence() {
       mapPane.style.opacity = "1";
     }
 
-    // 1) Marker-Drop sofort starten
-    this.dropMarkersAnimation();
+    // ⭐ 1) Sofort reinzoomen (damit die SVG-Paths vollständig gerendert sind)
+    this.zoomToFilteredPLZ();
 
-    // 2) Heatmap-Reveal vorbereiten (Klasse + Start-Mask)
-    const paths = this._shadowRoot.querySelectorAll("path.leaflet-interactive");
-    paths.forEach(p => {
-      p.classList.add("heatmap-reveal"); // ⭐ HIER wird die Klasse gesetzt
-      p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
-      p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
-      p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
-    });
-
-    // 3) Reveal starten
-    requestAnimationFrame(() => {
-      paths.forEach(p => {
-        p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
-        p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
-      });
-    });
-
-    // 4) Overlay ausblenden
-    this.hideLoadingOverlay();
-
-    // 5) Nach 3s Reveal + 1s Pause → Zoom
+    // ⭐ 2) 150ms warten, damit Leaflet die Paths wirklich zeichnet
     setTimeout(() => {
-      this.zoomToFilteredPLZ();
-      resolve();
-    }, 4000);
+
+      // 3) Marker-Drop starten
+      this.dropMarkersAnimation();
+
+      // 4) Heatmap-Reveal vorbereiten
+      const paths = this._shadowRoot.querySelectorAll("path.leaflet-interactive");
+      paths.forEach(p => {
+        p.classList.add("heatmap-reveal");
+        p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
+        p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+        p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+      });
+
+      // 5) Heatmap-Reveal starten
+      requestAnimationFrame(() => {
+        paths.forEach(p => {
+          p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
+          p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
+        });
+      });
+
+      // 6) Overlay ausblenden
+      this.hideLoadingOverlay();
+
+      // 7) 3s Reveal + 1s Pause
+      setTimeout(() => resolve(), 4000);
+
+    }, 150); // Zoom settle time
   });
 }
 
