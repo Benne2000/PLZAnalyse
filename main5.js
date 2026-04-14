@@ -5011,9 +5011,9 @@ fadeOutMapElements() {
   this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
 }
 
-
 async animateRevealSequence() {
   return new Promise(resolve => {
+
     // 0) Karte bleibt sichtbar
     const mapPane = this._shadowRoot.querySelector("#map");
     if (mapPane) {
@@ -5026,7 +5026,7 @@ async animateRevealSequence() {
     // 2) Heatmap-Reveal vorbereiten (Klasse + Start-Mask)
     const paths = this._shadowRoot.querySelectorAll("path.leaflet-interactive");
     paths.forEach(p => {
-      p.classList.add("heatmap-reveal");
+      p.classList.add("heatmap-reveal"); // ⭐ HIER wird die Klasse gesetzt
       p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
       p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
       p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
@@ -5050,6 +5050,7 @@ async animateRevealSequence() {
     }, 4000);
   });
 }
+
 
 
 dropMarkersAnimation() {
