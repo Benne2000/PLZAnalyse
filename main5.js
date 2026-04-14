@@ -2859,7 +2859,6 @@ getUmsatzSumForPLZ(v) {
     const filteredMarkers = filteredData.map(entry => createMarker(entry));
     this.neighbours = computeNeighbours(filteredMarkers);
   }
-
 async applyFilter(erhID, jahr, nummer) {
 
   if (!erhID || !jahr || !nummer) {
@@ -2867,97 +2866,52 @@ async applyFilter(erhID, jahr, nummer) {
     return;
   }
 
-  // 🧹 NL-Tabelle schließen
+  // Overlay starten
+  this.showLoadingOverlay("Erhebung wird geladen…");
+
+  // NL-Tabelle schließen
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
   if (filterContainer?.classList.contains("nl-info-active")) {
     this.closeNLTable();
   }
 
-  // 🔥 Overlay starten
-  this.showLoadingOverlay("Erhebung wird geladen…");
-
   this._activeFilter = { erhID, jahr, nummer };
+  this._selectedNLs = new Set();
 
-  // 🔄 NL-Auswahl zurücksetzen
-  if (!this._selectedNLs) {
-    this._selectedNLs = new Set();
-  } else {
-    this._selectedNLs.clear();
-  }
-
-  // 1️⃣ Daten filtern
+  // Daten filtern
   const filteredData = this.getFilteredData();
   this.filteredData = filteredData;
 
   this.showLoadingOverlay("Daten werden vorbereitet…");
 
-  // 2️⃣ Umsatzwerte + WK vorbereiten
+  // Umsatz + WK vorbereiten
   this.prepareUmsatzPLZWerte();
   this.computeWKKennwerte();
   this.computeStreuverlust();
 
-  // 3️⃣ MapMode korrekt setzen
-  const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
-
-  if (btnUmsatz?.classList.contains("active")) {
-    this.currentMapMode = "umsatz-multi";
-
-    if (!this.activeCategories || this.activeCategories.size === 0) {
-      this.activeCategories = new Set(["stationaer", "pluscard", "ra", "online"]);
-    }
-
-    this._shadowRoot.getElementById("wk-extra").style.display = "none";
-    this._shadowRoot.getElementById("umsatz-options-row").style.display = "flex";
-
-  } else {
-    this.currentMapMode = "wk";
-
-    this._shadowRoot.getElementById("wk-extra").style.display = "block";
-    this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
-  }
-
-  // 4️⃣ HZ-Flags neu berechnen
-  this.hzFlags = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const hz = row["dimension_hzflag_0"]?.id?.trim();
-    if (plz) this.hzFlags[plz] = hz === "X";
-  });
-
-  // 5️⃣ PLZ-Liste extrahieren
-  this.filteredPLZs = filteredData
-    .map(row => row["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember");
-
   this.showLoadingOverlay("Karte wird initialisiert…");
 
-  // 6️⃣ Karte initial einfärben
+  // Karte aktualisieren
   this.updateGeoLayer();
+  this.createAllMarkers();
 
-  // 7️⃣ NL-Marker aktualisieren
-  this.updateMarkers();
-
-  // 8️⃣ Radius anwenden
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.currentRadius = radius;
-  this.applyRadiusFilter(radius);
-
-  // 9️⃣ Tabelle rendern
-  this.renderDataTable(this.filteredKennwerte);
-
-  // 🔟 Zoom
-  this.zoomToFilteredPLZ();
-
-  // 1️⃣1️⃣ Erhebungsinfo aktualisieren
-  this.prepareErhebungsInfo();
-
-  // 1️⃣2️⃣ Animationen
+  // Animationen
   this.animateHeatmapReveal();
   this.animateMarkerDrop();
 
-  // 1️⃣3️⃣ Overlay ausblenden
+  // Tabelle
+  this.renderDataTable(this.filteredKennwerte);
+
+  // Zoom
+  this.zoomToFilteredPLZ();
+
+  // Erhebungsinfo
+  this.prepareErhebungsInfo();
+
+  // Overlay ausblenden
   this.hideLoadingOverlay();
 }
+
 
 
 
@@ -3131,6 +3085,8 @@ computeMaxValue() {
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
+
+
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
@@ -4172,7 +4128,6 @@ this.renderDataTable(this.filteredKennwerte);
 
 }
 
-
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
@@ -4180,32 +4135,31 @@ computeWKKennwerte() {
   const unfilteredUmsatzByPLZ = {};
 
   // Ungefilterter Umsatz pro PLZ
-  this.filteredData.forEach(row => {
+  for (const row of this.filteredData) {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
     const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
-  });
+  }
 
   // Aggregation WK
-  this.filteredData.forEach(row => {
+  for (const row of this.filteredData) {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
 
-    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
-    if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) continue;
+    if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) continue;
 
-    if (!aggregated[plz]) {
-      aggregated[plz] = {
+    let entry = aggregated[plz];
+    if (!entry) {
+      entry = aggregated[plz] = {
         hzCount: 0,
         umsatzNetto: 0,
         hzKosten: 0,
         potHzKosten: []
       };
     }
-
-    const entry = aggregated[plz];
 
     const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
     if (hz) entry.hzCount++;
@@ -4215,13 +4169,11 @@ computeWKKennwerte() {
 
     const potHz = row["value_hz_potentiell_0"]?.raw;
     if (typeof potHz === "number") entry.potHzKosten.push(potHz);
-  });
+  }
 
-  const base = this.filteredKennwerte || {};
-  const newFilteredKennwerte = {};
   const newFilteredPLZWerte = {};
 
-  Object.entries(aggregated).forEach(([plz, entry]) => {
+  for (const [plz, entry] of Object.entries(aggregated)) {
     const umsatzNetto = entry.umsatzNetto;
     const hzKosten = entry.hzKosten;
 
@@ -4242,68 +4194,17 @@ computeWKKennwerte() {
     const potHzPercent =
       umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0;
 
-    const isHZ = entry.hzCount > 0;
-    const isCritical = entry.hzCount > 1;
-
-    const baseEntry = base[plz] || {};
     const old = this.filteredPLZWerte?.[plz] || {};
 
-    // WK-Kennwerte
-    newFilteredKennwerte[plz] = {
-      ...baseEntry,
-      isHZ,
-      isCritical,
-      value_hr_n_umsatz_0: { raw: umsatzNetto },
-      value_wk_in_percent_0: { raw: wkPercent },
-      value_wk_nachbar_0: { raw: wkNachbarn },
-      value_hz_kosten_0: { raw: hzKosten },
-      value_hz_potentiell_0: { raw: avgPotHz },
-      value_wk_potentiell_0: { raw: potHzPercent }
-    };
-
-    // Umsatzdaten übernehmen
     newFilteredPLZWerte[plz] = {
+      ...old,
       wk: wkPercent,
       wkPot: potHzPercent,
-      hz: isHZ,
-
-      umsatz: old.umsatz ?? 0,
-      ra: old.ra ?? 0,
-      onlineshop: old.onlineshop ?? 0,
-      pluscard: old.pluscard ?? 0,
-      haushalte: old.haushalte ?? 0,
-
-      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
-      raProHaushalt: old.raProHaushalt ?? 0,
-      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
-      pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
-
-      umsatzWerbung: old.umsatzWerbung ?? 0,
-      raWerbung: old.raWerbung ?? 0,
-      onlineshopWerbung: old.onlineshopWerbung ?? 0,
-      pluscardWerbung: old.pluscardWerbung ?? 0,
-
-      umsatzZusatz: old.umsatzZusatz ?? 0,
-      raZusatz: old.raZusatz ?? 0,
-      onlineshopZusatz: old.onlineshopZusatz ?? 0,
-      pluscardZusatz: old.pluscardZusatz ?? 0,
-
-      umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
-      raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
-      onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
-      pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
-
-      umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
-      raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
-      onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
-      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
-
-      // WICHTIG: Werbeanteil erhalten
-      werbeAnteil: old.werbeAnteil ?? 0
+      hz: entry.hzCount > 0,
+      isCritical: entry.hzCount > 1
     };
-  });
+  }
 
-  this.filteredKennwerte = newFilteredKennwerte;
   this.filteredPLZWerte = newFilteredPLZWerte;
 }
 
@@ -5080,23 +4981,27 @@ preAggregateErhebung(rawData) {
 animateHeatmapReveal() {
   if (!this._geoLayer) return;
 
-  let i = 0;
+  // 1) CSS-Transition aktivieren
   this._geoLayer.eachLayer(layer => {
-    // nur Polygon-Layer
-    if (!layer.setStyle) return;
+    if (layer.setStyle) {
+      layer.setStyle({
+        fillOpacity: 0,
+        transition: "fill-opacity 0.6s ease"
+      });
+    }
+  });
 
-    // Start: transparent
-    const current = layer.options.fillOpacity ?? 0.7;
-    layer.setStyle({ fillOpacity: 0 });
-
-    // Verzögert auf Ziel-Opacity hochfahren
-    setTimeout(() => {
-      layer.setStyle({ fillOpacity: current });
-    }, i * 8); // 8ms Staffelung pro Layer
-
-    i++;
+  // 2) Ein Frame warten, dann Ziel-Opacity setzen
+  requestAnimationFrame(() => {
+    this._geoLayer.eachLayer(layer => {
+      if (layer.setStyle) {
+        const target = layer.options.originalFillOpacity ?? 0.7;
+        layer.setStyle({ fillOpacity: target });
+      }
+    });
   });
 }
+
 
 
 animateMarkerDrop() {
