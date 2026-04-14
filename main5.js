@@ -3014,14 +3014,10 @@ updateGeoLayer() {
   this.computeMaxValue();
 
   // 2️⃣ Alle Layer aktualisieren
-this._geoLayer.eachLayer(layer => {
-  const path = layer._path;
-  if (path) {
-    path.classList.add("heatmap-reveal");
-  }
-  this.applyStyleToLayer(layer);
-});
-
+  this._geoLayer.eachLayer(layer => {
+    // ❗ KEIN heatmap-reveal hier
+    this.applyStyleToLayer(layer);
+  });
 
   // 3️⃣ Bestreuungsmarker aktualisieren
   this.updateBestreuungMarkers();
@@ -3031,6 +3027,7 @@ this._geoLayer.eachLayer(layer => {
   // ⭐ 4️⃣ Legende aktualisieren (WICHTIG!)
   this.updateHeatmapLegend();
 }
+
 
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
@@ -5007,16 +5004,9 @@ hideLoadingOverlay() {
 
 
 fadeOutMapElements() {
-  // ❗ Map-Pane NICHT mehr ausblenden
-  // Die Karte soll sichtbar bleiben
+  // Karte & Polygone NICHT anfassen – die sollen sichtbar bleiben
 
-  // Nur die Layer (Heatmap + Marker) ausblenden
-  this._geoLayer?.eachLayer(layer => {
-    if (layer._path) {
-      layer._path.style.opacity = "0";
-    }
-  });
-
+  // Nur Marker ausblenden
   this.filteredGroup?.eachLayer(m => m.setOpacity?.(0));
   this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
 }
@@ -5024,25 +5014,25 @@ fadeOutMapElements() {
 
 async animateRevealSequence() {
   return new Promise(resolve => {
-
-    // 0) Karte bleibt sichtbar (grau), nur Heatmap wird animiert
+    // 0) Karte bleibt sichtbar
     const mapPane = this._shadowRoot.querySelector("#map");
     if (mapPane) {
-      mapPane.style.opacity = "1"; // Karte bleibt sichtbar
+      mapPane.style.opacity = "1";
     }
 
     // 1) Marker-Drop sofort starten
     this.dropMarkersAnimation();
 
-    // 2) Heatmap-Reveal vorbereiten (Mask 0%)
-    const paths = this._shadowRoot.querySelectorAll(".heatmap-reveal");
+    // 2) Heatmap-Reveal vorbereiten (Klasse + Start-Mask)
+    const paths = this._shadowRoot.querySelectorAll("path.leaflet-interactive");
     paths.forEach(p => {
+      p.classList.add("heatmap-reveal");
       p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
       p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
       p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
     });
 
-    // 3) Heatmap-Reveal starten (Mask 100%)
+    // 3) Reveal starten
     requestAnimationFrame(() => {
       paths.forEach(p => {
         p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
@@ -5050,17 +5040,14 @@ async animateRevealSequence() {
       });
     });
 
-    // 4) Overlay ausblenden (parallel)
+    // 4) Overlay ausblenden
     this.hideLoadingOverlay();
 
-    // 5) Nach 3 Sekunden Heatmap-Reveal + 1 Sekunde Pause → Zoom
+    // 5) Nach 3s Reveal + 1s Pause → Zoom
     setTimeout(() => {
       this.zoomToFilteredPLZ();
-
-      // 6) Animation abgeschlossen
       resolve();
-
-    }, 4000); // 3s Reveal + 1s Pause
+    }, 4000);
   });
 }
 
