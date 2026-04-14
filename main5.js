@@ -2270,7 +2270,7 @@ updateBestreuungMarkers() {
       this.map.addLayer(this.neighbourGroup);
     }
   }
-   createAllMarkers() {
+createAllMarkers() {
   if (!this.filteredGroup) return;
 
   this.filteredGroup.clearLayers();
@@ -2301,6 +2301,13 @@ updateBestreuungMarkers() {
     this.allMarkers.push(marker);
     this.filteredGroup.addLayer(marker);
 
+    // ⭐ Marker initial unsichtbar
+    const el = marker.getElement();
+    if (el) {
+      el.style.opacity = "0";
+      el.style.transform = "translateY(20px)";
+    }
+
     this.nlMarkers.push({ lat: coords.lat, lng: coords.lon, marker });
     seen.add(nlKey);
   });
@@ -2320,11 +2327,17 @@ updateBestreuungMarkers() {
       this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
 
+      // ⭐ Marker initial unsichtbar
+      const el = marker.getElement();
+      if (el) {
+        el.style.opacity = "0";
+        el.style.transform = "translateY(20px)";
+      }
+
       this.nlMarkers.push({ lat, lng: lon, marker });
     });
   }
 
-  // NL-Auswahl initialisieren
   this.allNLs = [
     ...Object.keys(this.Niederlassung),
     ...(this.extraNLs?.map(e => e.nl) ?? [])
@@ -3088,22 +3101,18 @@ computeMaxValue() {
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
+
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
 
-  // -------------------------------------------------
-  // 0) Layer IMMER klickbar machen (Leaflet-Schutz)
-  // -------------------------------------------------
+  // Layer immer klickbar
   layer.options.interactive = true;
-
   if (layer._path) {
     layer._path.setAttribute("pointer-events", "auto");
   }
 
-  // -------------------------------------------------
-  // 1) Radiuslogik
-  // -------------------------------------------------
+  // Radiuslogik
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
   let inRadius = true;
 
@@ -3113,34 +3122,23 @@ applyStyleToLayer(layer) {
     inRadius = !hasRadius || this.plzImRadius.has(plz);
   }
 
-  // -------------------------------------------------
-  // 2) PLZ ohne Werte oder außerhalb Radius → grau
-  //    (ABER klickbar, Popup soll leer öffnen)
-  // -------------------------------------------------
+  // PLZ ohne Werte oder außerhalb Radius → grau (aber klickbar)
   if (!v || !inRadius) {
+    layer._targetFillColor = "#cfd4da"; // echte Farbe speichern
+
     layer.setStyle({
-      fillColor: "#cfd4da",
+      fillColor: "transparent", // ⭐ NICHT sofort grau anzeigen
       fillOpacity: 0.45,
       color: "#ffffff",
       weight: 1
     });
 
-    // Layer bleibt klickbar!
-    layer.options.interactive = true;
-    if (layer._path) {
-      layer._path.setAttribute("pointer-events", "auto");
-    }
-
-    // Click-Handler trotzdem setzen
     layer.off("click");
     layer.on("click", () => {
       const popupWK = this._shadowRoot.getElementById("side-popup");
       const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
 
-      popupWK?.classList.remove("show");
       popupWK?.classList.add("hidden");
-
-      popupU?.classList.remove("show");
       popupU?.classList.add("hidden");
 
       if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
@@ -3150,10 +3148,9 @@ applyStyleToLayer(layer) {
       }
 
       this.activePopupType = "wk";
-      this.showPopup(layer.feature, {}); // leeres WK-Popup
+      this.showPopup(layer.feature, {});
     });
 
-    // Critical Marker entfernen
     if (this.criticalMarkers?.[plz]) {
       this.map.removeLayer(this.criticalMarkers[plz]);
       delete this.criticalMarkers[plz];
@@ -3162,49 +3159,33 @@ applyStyleToLayer(layer) {
     return;
   }
 
-  // -------------------------------------------------
-  // 3) Farbe berechnen
-  // -------------------------------------------------
+  // Echte Farbe berechnen
   const fillColor = this.computeFillColor(plz);
 
+  // ⭐ Echte Farbe speichern, aber NICHT sofort anzeigen
+  layer._targetFillColor = fillColor;
+
   layer.setStyle({
-    fillColor,
+    fillColor: "transparent", // ⭐ wichtig für Animation
     fillOpacity: 0.7,
     color: "#ffffff",
     weight: 1
   });
 
-  // Sicherheit: Layer klickbar halten
-  layer.options.interactive = true;
-  if (layer._path) {
-    layer._path.setAttribute("pointer-events", "auto");
-  }
-
-  // -------------------------------------------------
-  // 4) Click-Handler neu setzen
-  // -------------------------------------------------
+  // Click-Handler
   layer.off("click");
-
   layer.on("click", () => {
     const values = this.filteredPLZWerte?.[plz];
 
     const popupWK = this._shadowRoot.getElementById("side-popup");
     const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
 
-    popupWK?.classList.remove("show");
     popupWK?.classList.add("hidden");
-
-    popupU?.classList.remove("show");
     popupU?.classList.add("hidden");
 
     if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
       this.activePopupType = "umsatz";
-
-      if (values) {
-        this.showUmsatzPopup(plz, values);
-      } else {
-        this.showEmptyUmsatzPopup(plz);
-      }
+      values ? this.showUmsatzPopup(plz, values) : this.showEmptyUmsatzPopup(plz);
       return;
     }
 
@@ -3213,9 +3194,7 @@ applyStyleToLayer(layer) {
     this.showPopup(layer.feature, kennwerte);
   });
 
-  // -------------------------------------------------
-  // 5) Critical-Marker (nur WK-Modus)
-  // -------------------------------------------------
+  // Critical Marker
   const showCritical = this.currentMapMode === "wk" && this.showCritical;
   const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
 
@@ -5016,31 +4995,37 @@ fadeOutMapElements() {
 async animateRevealSequence() {
   return new Promise(resolve => {
 
-    // 0) Karte bleibt sichtbar
+    // Karte sichtbar lassen
     const mapPane = this._shadowRoot.querySelector("#map");
     if (mapPane) {
       mapPane.style.opacity = "1";
     }
 
-    // ⭐ 1) Sofort reinzoomen (damit die SVG-Paths vollständig gerendert sind)
+    // 1) Sofort reinzoomen
     this.zoomToFilteredPLZ();
 
-    // ⭐ 2) 150ms warten, damit Leaflet die Paths wirklich zeichnet
+    // 2) Warten, bis Leaflet die SVG-Paths gerendert hat
     setTimeout(() => {
 
       // 3) Marker-Drop starten
       this.dropMarkersAnimation();
 
-      // 4) Heatmap-Reveal vorbereiten
+      // 4) Heatmap-Farben aktivieren + Reveal vorbereiten
       const paths = this._shadowRoot.querySelectorAll("path.leaflet-interactive");
       paths.forEach(p => {
         p.classList.add("heatmap-reveal");
+
+        // ⭐ Echte Farbe setzen
+        if (p._targetFillColor) {
+          p.style.fill = p._targetFillColor;
+        }
+
         p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
         p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
         p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
       });
 
-      // 5) Heatmap-Reveal starten
+      // 5) Reveal starten
       requestAnimationFrame(() => {
         paths.forEach(p => {
           p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
@@ -5052,9 +5037,9 @@ async animateRevealSequence() {
       this.hideLoadingOverlay();
 
       // 7) 3s Reveal + 1s Pause
-      setTimeout(() => resolve(), 4000);
+      setTimeout(resolve, 4000);
 
-    }, 5000); // Zoom settle time
+    }, 150); // Zoom settle time
   });
 }
 
