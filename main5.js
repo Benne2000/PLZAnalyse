@@ -5007,15 +5007,20 @@ hideLoadingOverlay() {
 
 
 fadeOutMapElements() {
-  const mapPane = this._shadowRoot.querySelector("#map");
-  if (!mapPane) return;
+  // ❗ Map-Pane NICHT mehr ausblenden
+  // Die Karte soll sichtbar bleiben
 
-  mapPane.style.transition = "opacity 0.25s ease";
-  mapPane.style.opacity = "0";
+  // Nur die Layer (Heatmap + Marker) ausblenden
+  this._geoLayer?.eachLayer(layer => {
+    if (layer._path) {
+      layer._path.style.opacity = "0";
+    }
+  });
 
   this.filteredGroup?.eachLayer(m => m.setOpacity?.(0));
   this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
 }
+
 
 async animateRevealSequence() {
   return new Promise(resolve => {
