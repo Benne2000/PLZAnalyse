@@ -1918,6 +1918,7 @@ legendBtn.addEventListener("click", () => {
   // WK-MODUS
   // ---------------------------------------------------------
 btnWK?.addEventListener("click", () => {
+    this.closeAllPopups();
 
     btnWK.classList.add("active");
     btnUmsatz.classList.remove("active");
@@ -1966,6 +1967,7 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
 
     btnUmsatz.classList.add("active");
     btnWK.classList.remove("active");
+    this.closeAllPopups();
 
     this.currentMapMode = "umsatz-multi";
     this.activePopupType = "umsatz";
@@ -4940,6 +4942,9 @@ if (this.currentMapMode === "wk") {
 
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
+// Legende einklappen
+const legend = this._shadowRoot.getElementById("heatmap-legend");
+legend?.classList.add("hidden");
 
   // 1) UI blockieren + Animation starten
   this.showLoadingOverlay();
@@ -5049,7 +5054,7 @@ async animateRevealSequence() {
       // 7) 3s Reveal + 1s Pause
       setTimeout(() => resolve(), 4000);
 
-    }, 150); // Zoom settle time
+    }, 5000); // Zoom settle time
   });
 }
 
@@ -5085,6 +5090,12 @@ async queryErhebungFromBW(erhID, jahr, nummer) {
   );
 }
 
+closeAllPopups() {
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+  const popupWK = this._shadowRoot.getElementById("side-popup");
+  popupUmsatz?.classList.add("hidden");
+  popupWK?.classList.add("hidden");
+}
 
 
       showNotesOnMap() {
