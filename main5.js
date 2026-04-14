@@ -1016,6 +1016,11 @@
   border: 1px solid #999;
 }
 
+.heatmap-reveal {
+  mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
+  transition: mask-image 0.8s ease, -webkit-mask-image 0.8s ease;
+}
 
 
 </style>
@@ -3007,9 +3012,14 @@ updateGeoLayer() {
   this.computeMaxValue();
 
   // 2️⃣ Alle Layer aktualisieren
-  this._geoLayer.eachLayer(layer => {
-    this.applyStyleToLayer(layer);
-  });
+this._geoLayer.eachLayer(layer => {
+  const path = layer._path;
+  if (path) {
+    path.classList.add("heatmap-reveal");
+  }
+  this.applyStyleToLayer(layer);
+});
+
 
   // 3️⃣ Bestreuungsmarker aktualisieren
   this.updateBestreuungMarkers();
@@ -4959,6 +4969,13 @@ async loadErhebung(erhID, jahr, nummer) {
   // Animation
   await this.animateRevealSequence();
 
+  // 5) Erhebungsinfo vorbereiten (für NL-Übersicht)
+  this.prepareErhebungsInfo();
+
+// 6) Zoom
+  this.zoomToFilteredPLZ();
+
+
   console.log("✅ loadErhebung abgeschlossen");
 }
 
@@ -4998,17 +5015,40 @@ fadeOutMapElements() {
 
 async animateRevealSequence() {
   return new Promise(resolve => {
+
+    // 1) Heatmap-Reveal vorbereiten (Mask von 0% → 100%)
+    const paths = this._shadowRoot.querySelectorAll(".heatmap-reveal");
+    paths.forEach(p => {
+      p.style.transition = "mask-image 0.8s ease, -webkit-mask-image 0.8s ease";
+      p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+      p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
+    });
+
+    // 2) Map-Pane sichtbar machen (Heatmap wird durch Mask animiert)
     const mapPane = this._shadowRoot.querySelector("#map");
     if (mapPane) {
+      mapPane.style.transition = "opacity 0.3s ease";
       mapPane.style.opacity = "1";
     }
 
+    // 3) Heatmap-Reveal starten (Mask aufziehen)
+    requestAnimationFrame(() => {
+      paths.forEach(p => {
+        p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
+        p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
+      });
+    });
+
+    // 4) Nach 300ms → Marker-Drop starten
     setTimeout(() => {
       this.dropMarkersAnimation();
 
+      // 5) Overlay ausblenden
       this.hideLoadingOverlay();
 
+      // 6) Abschluss
       setTimeout(resolve, 250);
+
     }, 300);
   });
 }
@@ -5021,7 +5061,7 @@ dropMarkersAnimation() {
     if (!el) return;
 
     el.style.transition = "transform 0.25s ease, opacity 0.25s ease";
-    el.style.transform = "translateY(-20px)";
+    el.style.transform = "translateY(20px)";
     el.style.opacity = "0";
 
     setTimeout(() => {
@@ -5030,6 +5070,7 @@ dropMarkersAnimation() {
     }, 50 + i * 20);
   });
 }
+
 
 async queryErhebungFromBW(erhID, jahr, nummer) {
   // Aktuell: lokale Datenquelle
