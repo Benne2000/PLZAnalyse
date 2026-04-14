@@ -2821,98 +2821,6 @@ getUmsatzSumForPLZ(v) {
   }
 
 
-applyFilter(erhID, jahr, nummer) {
-
-  if (!erhID || !jahr || !nummer) {
-    console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
-    return;
-  }
-
-  // 🧹 NL-Tabelle schließen
-  const filterContainer = this._shadowRoot.querySelector(".filter-container");
-  if (filterContainer?.classList.contains("nl-info-active")) {
-    this.closeNLTable();
-  }
-
-  this._activeFilter = { erhID, jahr, nummer };
-
-  // 🔄 NL-Auswahl zurücksetzen
-  if (!this._selectedNLs) {
-    this._selectedNLs = new Set();
-  } else {
-    this._selectedNLs.clear();
-  }
-
-  // 1️⃣ Daten filtern
-  const filteredData = this.getFilteredData();
-  this.filteredData = filteredData;
-
-  // 2️⃣ Umsatzwerte vorbereiten
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.computeStreuverlust();
-
-
-  // 3️⃣ MapMode korrekt setzen
-  const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
-
-  if (btnUmsatz?.classList.contains("active")) {
-    this.currentMapMode = "umsatz-multi";
-
-    if (!this.activeCategories || this.activeCategories.size === 0) {
-      this.activeCategories = new Set(["stationaer", "pluscard", "ra", "online"]);
-    }
-
-    this._shadowRoot.getElementById("wk-extra").style.display = "none";
-    this._shadowRoot.getElementById("umsatz-options-row").style.display = "flex";
-
-
-  } else {
-    this.currentMapMode = "wk";
-
-    this._shadowRoot.getElementById("wk-extra").style.display = "block";
-    this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
-
-  }
-
-  // 4️⃣ HZ-Flags neu berechnen
-  this.hzFlags = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const hz = row["dimension_hzflag_0"]?.id?.trim();
-    if (plz) this.hzFlags[plz] = hz === "X";
-  });
-
-  // 5️⃣ PLZ-Liste extrahieren
-  this.filteredPLZs = filteredData
-    .map(row => row["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember");
-
-  // 6️⃣ Karte initial einfärben
-  this.updateGeoLayer();
-
-  // 7️⃣ NL-Marker aktualisieren
-  this.updateMarkers();
-
-  // 8️⃣ Radius anwenden
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.currentRadius = radius;
-  this.applyRadiusFilter(radius);
-
-  // 9️⃣ Tabelle rendern
-  this.renderDataTable(this.filteredKennwerte);
-
-  // 🔟 Zoom
-  this.zoomToFilteredPLZ();
-
-  // 1️⃣1️⃣ Erhebungsinfo aktualisieren
-  this.prepareErhebungsInfo();
-}
-
-
-
-
-
 
 extractPLZWerte(data) {
   const plzWerte = {};
@@ -4942,27 +4850,27 @@ if (this.currentMapMode === "wk") {
 
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
-// Legende einklappen
-const legend = this._shadowRoot.getElementById("heatmap-legend");
-legend?.classList.add("hidden");
 
-  // 1) UI blockieren + Animation starten
+  // Legende einklappen
+  const legend = this._shadowRoot.getElementById("heatmap-legend");
+  legend?.classList.add("hidden");
+
+  // Overlay einblenden
   this.showLoadingOverlay();
-  this.fadeOutMapElements();
   this.closeNLTable?.();
 
-  // 2) BW-Query (einzige Query!)
+  // 1) Daten laden
   const rawData = await this.queryErhebungFromBW(erhID, jahr, nummer);
   this._activeFilter = { erhID, jahr, nummer };
   this.filteredData = rawData;
 
-  // 3) Pre-Aggregation (alles clientseitig)
+  // 2) Pre-Aggregation
   this.prepareMapData(rawData);
   this.prepareUmsatzPLZWerte();
   this.computeWKKennwerte();
   this.computeStreuverlust();
 
-  // 4) Marker + Radius + GeoLayer
+  // 3) Marker + Radius + GeoLayer
   this.createAllMarkers();
 
   const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
@@ -4970,16 +4878,17 @@ legend?.classList.add("hidden");
 
   this.updateGeoLayer();
 
-  // 5) Erhebungsinfo vorbereiten (für NL-Übersicht)
+  // 4) Erhebungsinfo
   this.prepareErhebungsInfo();
 
-
-  // 7) Tabelle aktualisieren
+  // 5) Tabelle
   this.renderDataTable(this.filteredKennwerte);
 
-      this.zoomToFilteredPLZ();
-  // 8) Heatmap + Marker Reveal Animation
-  //await this.animateRevealSequence();
+  // 6) Zoom
+  this.zoomToFilteredPLZ();
+
+  // Overlay ausblenden
+  this.hideLoadingOverlay();
 
   console.log("✅ loadErhebung abgeschlossen");
 }
@@ -4992,7 +4901,9 @@ showLoadingOverlay() {
 
   overlay.classList.remove("hidden");
   overlay.style.opacity = "1";
+  overlay.style.pointerEvents = "auto"; // blockiert UI
 }
+
 
 hideLoadingOverlay() {
   const overlay = this._shadowRoot.getElementById("loading-spinner");
@@ -5000,6 +4911,7 @@ hideLoadingOverlay() {
 
   overlay.style.transition = "opacity 0.25s ease";
   overlay.style.opacity = "0";
+  overlay.style.pointerEvents = "none";
 
   setTimeout(() => {
     overlay.classList.add("hidden");
@@ -5007,77 +4919,6 @@ hideLoadingOverlay() {
 }
 
 
-fadeOutMapElements() {
-  // Karte & Polygone NICHT anfassen – die sollen sichtbar bleiben
-
-  // Nur Marker ausblenden
-  this.filteredGroup?.eachLayer(m => m.setOpacity?.(0));
-  this.neighbourGroup?.eachLayer(m => m.setOpacity?.(0));
-}
-async animateRevealSequence() {
-  return new Promise(resolve => {
-
-    // 0) Karte bleibt sichtbar
-    const mapPane = this._shadowRoot.querySelector("#map");
-    if (mapPane) {
-      mapPane.style.opacity = "1";
-    }
-
-    // ⭐ 1) Sofort reinzoomen (damit die SVG-Paths vollständig gerendert sind)
-    this.zoomToFilteredPLZ();
-
-    // ⭐ 2) 150ms warten, damit Leaflet die Paths wirklich zeichnet
-    setTimeout(() => {
-
-      // 3) Marker-Drop starten
-      this.dropMarkersAnimation();
-
-      // 4) Heatmap-Reveal vorbereiten
-      const paths = this._shadowRoot.querySelectorAll("path.leaflet-interactive");
-      paths.forEach(p => {
-        p.classList.add("heatmap-reveal");
-        p.style.transition = "mask-image 3s ease, -webkit-mask-image 3s ease";
-        p.style.maskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
-        p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 0%, transparent 0%)";
-      });
-
-      // 5) Heatmap-Reveal starten
-      requestAnimationFrame(() => {
-        paths.forEach(p => {
-          p.style.maskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
-          p.style.webkitMaskImage = "linear-gradient(to right, black 0%, black 100%, black 100%)";
-        });
-      });
-
-      // 6) Overlay ausblenden
-      this.hideLoadingOverlay();
-
-      // 7) 3s Reveal + 1s Pause
-      setTimeout(() => resolve(), 4000);
-
-    }, 150); // Zoom settle time
-  });
-}
-
-
-
-dropMarkersAnimation() {
-  if (!this.allMarkers) return;
-
-  this.allMarkers.forEach((m, i) => {
-    const el = m.getElement();
-    if (!el) return;
-
-    el.style.transition = "transform 0.25s ease, opacity 0.25s ease";
-    el.style.transform = "translateY(20px)";
-    el.style.opacity = "0";
-
-    setTimeout(() => {
-      el.style.transform = "translateY(0)";
-      el.style.opacity = "1";
-    }, 50 + i * 20);
-  });
-}
 
 
 async queryErhebungFromBW(erhID, jahr, nummer) {
