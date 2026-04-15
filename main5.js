@@ -4739,7 +4739,6 @@ async render() {
 
   this.hideSpinner();
 }
-
 updateHeatmapLegend() {
 
   const legend = this._shadowRoot.getElementById("heatmap-legend");
@@ -4767,59 +4766,35 @@ updateHeatmapLegend() {
 
       <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
 
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#e31a1c"></div> &gt; 25 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
-      </div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e31a1c"></div> &gt; 25 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %</div>
 
       <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
 
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#cfd4da"></div> &gt; 50 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %
-      </div>
-      <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %
-      </div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#cfd4da"></div> &gt; 50 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %</div>
     `;
     legend.classList.remove("hidden");
     return;
   }
 
   // ============================================================
-  // UMSATZ-HEATMAP → ABSOLUTE WERTE (DYNAMISCH)
+  // UMSATZ-HEATMAP → ABSOLUTE WERTE (DYNAMISCH, MIT getDynamicHeatColor)
   // ============================================================
   if (this.currentMapMode === "umsatz-multi") {
 
     // ---------------------------------------------------------
-    // 1) Heatmap-Modus bestimmen (für getColor)
+    // 1) Heatmap-Modus bestimmen (GENAU wie die Heatmap)
     // ---------------------------------------------------------
-    let mode = "umsatz"; // Default
+    let mode = "umsatz";
 
     if (this.umsatzMainMode === "werbung") {
       mode = "werbung";
@@ -4841,14 +4816,17 @@ updateHeatmapLegend() {
     const max = values.length > 0 ? Math.max(...values) : 0;
 
     // ---------------------------------------------------------
-    // 3) Dynamische Stufen
+    // 3) Dynamische Stufen (identisch zur Heatmap)
     // ---------------------------------------------------------
     const steps = [
       max,
-      max * 0.66,
-      max * 0.40,
-      max * 0.25,
-      max * 0.10,
+      max * 0.85,
+      max * 0.75,
+      max * 0.65,
+      max * 0.55,
+      max * 0.45,
+      max * 0.35,
+      max * 0.20,
       0
     ];
 
@@ -4859,10 +4837,10 @@ updateHeatmapLegend() {
       n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
 
     // ---------------------------------------------------------
-    // 5) HTML erzeugen
+    // 5) HTML erzeugen — WICHTIG: getDynamicHeatColor()
     // ---------------------------------------------------------
     const rows = steps.map(v => {
-      const color = this.getColor(v, mode);
+      const color = this.getDynamicHeatColor(v, max);
       return `
         <div class="heatmap-legend-row">
           <div class="heatmap-legend-color" style="background:${color}"></div>
@@ -4871,14 +4849,13 @@ updateHeatmapLegend() {
       `;
     }).join("");
 
+    const title =
+      mode.includes("werbung") ? "Werbeumsatz" :
+      mode.includes("zusatz") ? "Zusatzumsatz" :
+      "Umsatz";
+
     legend.innerHTML = `
-      <div><strong>${
-        mode.includes("werbung")
-          ? "Werbeumsatz"
-          : mode.includes("zusatz")
-          ? "Zusatzumsatz"
-          : "Umsatz"
-      } (absolut)</strong></div>
+      <div><strong>${title} (absolut)</strong></div>
       ${rows}
     `;
 
@@ -4905,8 +4882,6 @@ updateHeatmapLegend() {
 
   legend.classList.add("hidden");
 }
-
-
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
 
@@ -4931,7 +4906,7 @@ async loadErhebung(erhID, jahr, nummer) {
   this.prepareMapData(rawData);
 
   // ---------------------------------------------------------
-  // 3) ALLE NLs aktivieren (WICHTIG!)
+  // 3) ALLE NLs aktivieren
   // ---------------------------------------------------------
   this.allNLs = [
     ...Object.keys(this.Niederlassung),
@@ -4940,37 +4915,30 @@ async loadErhebung(erhID, jahr, nummer) {
   this._selectedNLs = new Set(this.allNLs);
 
   // ---------------------------------------------------------
-  // 4) MapMode ZWINGEND auf Umsatz setzen,
-  //    damit prepareUmsatzPLZWerte NICHT durch Radiusfilter blockiert wird
-  // ---------------------------------------------------------
-  this.currentMapMode = "umsatz-multi";
-  this.activePopupType = "umsatz";
-
-  // ---------------------------------------------------------
-  // 5) Marker erstellen (setzt plzImRadius korrekt)
+  // 4) Marker erstellen (setzt plzImRadius!)
   // ---------------------------------------------------------
   this.createAllMarkers();
 
   // ---------------------------------------------------------
-  // 6) Radius anwenden (erst jetzt!)
+  // 5) Radius anwenden
   // ---------------------------------------------------------
   const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
   this.applyRadiusFilter(radius);
 
   // ---------------------------------------------------------
-  // 7) Umsatz + WK-Kennwerte berechnen (JETZT korrekt!)
+  // 6) Umsatz + WK-Kennwerte berechnen (JETZT korrekt!)
   // ---------------------------------------------------------
   this.prepareUmsatzPLZWerte();
   this.computeWKKennwerte();
   this.computeStreuverlust();
 
   // ---------------------------------------------------------
-  // 8) GeoLayer aktualisieren
+  // 7) GeoLayer aktualisieren
   // ---------------------------------------------------------
   this.updateGeoLayer();
 
   // ---------------------------------------------------------
-  // 9) Erhebungsinfo + Tabelle + Zoom
+  // 8) Erhebungsinfo + Tabelle + Zoom
   // ---------------------------------------------------------
   this.prepareErhebungsInfo();
   this.renderDataTable(this.filteredKennwerte);
@@ -4981,8 +4949,6 @@ async loadErhebung(erhID, jahr, nummer) {
 
   console.log("✅ loadErhebung abgeschlossen");
 }
-
-
 
 
 showLoadingOverlay() {
