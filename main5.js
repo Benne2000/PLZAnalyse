@@ -2439,18 +2439,8 @@ showPopup(feature) {
   panel.classList.add("panel-medium");
 
   // WK-Daten
-let daten = { ...(this.filteredKennwerte?.[plz] || {}) };
-const umsatz = this.filteredPLZWerte?.[plz] || {};
-
-// ⭐ Umsatzdaten in WK-Daten mergen
-daten = {
-  ...daten,
-  value_ums_erhebung_0: { raw: umsatz.umsatzErhebung ?? 0 },
-  value_kd_erhebung_0: { raw: umsatz.kdErhebung ?? 0 },
-  value_auflage_0: { raw: umsatz.auflage ?? 0 },
-  value_werbeverweigerer_0: { raw: umsatz.werbeverweigerer ?? 0 }
-};
-
+  const daten = this.filteredKennwerte?.[plz] || {};
+  const umsatz = this.filteredPLZWerte?.[plz] || {};
 
   // Symbol bestimmen
   let symbol = "🔴";
@@ -4170,20 +4160,30 @@ computeWKKennwerte() {
     const isCritical = entry.hzCount > 1;
 
     const baseEntry = base[plz] || {};
-    const old = this.filteredPLZWerte?.[plz] || {};
+// Umsatzdaten aus alter PLZWerte-Struktur holen
+const old = this.filteredPLZWerte?.[plz] || {};
 
-    // WK-Kennwerte
-    newFilteredKennwerte[plz] = {
-      ...baseEntry,
-      isHZ,
-      isCritical,
-      value_hr_n_umsatz_0: { raw: umsatzNetto },
-      value_wk_in_percent_0: { raw: wkPercent },
-      value_wk_nachbar_0: { raw: wkNachbarn },
-      value_hz_kosten_0: { raw: hzKosten },
-      value_hz_potentiell_0: { raw: avgPotHz },
-      value_wk_potentiell_0: { raw: potHzPercent }
-    };
+// WK-Kennwerte + Erhebungsdaten
+newFilteredKennwerte[plz] = {
+  ...baseEntry,
+  isHZ,
+  isCritical,
+
+  // WK
+  value_hr_n_umsatz_0: { raw: umsatzNetto },
+  value_wk_in_percent_0: { raw: wkPercent },
+  value_wk_nachbar_0: { raw: wkNachbarn },
+  value_hz_kosten_0: { raw: hzKosten },
+  value_hz_potentiell_0: { raw: avgPotHz },
+  value_wk_potentiell_0: { raw: potHzPercent },
+
+  // ⭐ Erhebungsdaten hinzufügen
+  value_ums_erhebung_0: { raw: old.umsatzErhebung ?? 0 },
+  value_kd_erhebung_0: { raw: old.kdErhebung ?? 0 },
+  value_auflage_0: { raw: old.auflage ?? 0 },
+  value_werbeverweigerer_0: { raw: old.werbeverweigerer ?? 0 }
+};
+
 
     // Umsatzdaten übernehmen
     newFilteredPLZWerte[plz] = {
