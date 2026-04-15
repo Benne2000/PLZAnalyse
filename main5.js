@@ -2439,8 +2439,18 @@ showPopup(feature) {
   panel.classList.add("panel-medium");
 
   // WK-Daten
-  const daten = this.filteredKennwerte?.[plz] || {};
-  const umsatz = this.filteredPLZWerte?.[plz] || {};
+let daten = { ...(this.filteredKennwerte?.[plz] || {}) };
+const umsatz = this.filteredPLZWerte?.[plz] || {};
+
+// ⭐ Umsatzdaten in WK-Daten mergen
+daten = {
+  ...daten,
+  value_ums_erhebung_0: { raw: umsatz.umsatzErhebung ?? 0 },
+  value_kd_erhebung_0: { raw: umsatz.kdErhebung ?? 0 },
+  value_auflage_0: { raw: umsatz.auflage ?? 0 },
+  value_werbeverweigerer_0: { raw: umsatz.werbeverweigerer ?? 0 }
+};
+
 
   // Symbol bestimmen
   let symbol = "🔴";
