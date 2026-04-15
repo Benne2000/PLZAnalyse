@@ -4175,10 +4175,10 @@ newFilteredKennwerte[plz] = {
   value_wk_potentiell_0: { raw: potHzPercent },
 
   // ⭐ Erhebungsdaten hinzufügen
-  value_ums_erhebung_0: { raw: old.umsatzErhebung ?? 0 },
-  value_kd_erhebung_0: { raw: old.kdErhebung ?? 0 },
-  value_auflage_0: { raw: old.auflage ?? 0 },
-  value_werbeverweigerer_0: { raw: old.werbeverweigerer ?? 0 }
+  value_ums_erhebung_0: { raw: umsatzErhebung },
+  value_kd_erhebung_0: { raw: kdErhebung  },
+  value_auflage_0: { raw: auflage  },
+  value_werbeverweigerer_0: { raw: werbeverweigerer }
 };
 
 
