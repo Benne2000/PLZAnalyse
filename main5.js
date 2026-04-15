@@ -4172,7 +4172,12 @@ computeWKKennwerte() {
       value_wk_nachbar_0: { raw: wkNachbarn },
       value_hz_kosten_0: { raw: hzKosten },
       value_hz_potentiell_0: { raw: avgPotHz },
-      value_wk_potentiell_0: { raw: potHzPercent }
+      value_wk_potentiell_0: { raw: potHzPercent },
+      value_ums_erhebung_0: { raw: old.umsatzErhebung ?? 0 },
+      value_kd_erhebung_0: { raw: old.kdErhebung ?? 0 },
+      value_auflage_0: { raw: old.auflage ?? 0 },
+      value_werbeverweigerer_0: { raw: old.werbeverweigerer ?? 0 },
+
     };
 
     // Umsatzdaten übernehmen
@@ -4889,7 +4894,7 @@ async loadErhebung(erhID, jahr, nummer) {
   // Overlay ausblenden
   this.hideLoadingOverlay();
 
-  console.log("✅ loadErhebung abgeschlossen TEST");
+  console.log("✅ loadErhebung abgeschlossen TEST3333");
 }
 
 
