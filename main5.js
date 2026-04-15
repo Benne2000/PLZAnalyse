@@ -3950,27 +3950,14 @@ renderErhebungsInfo() {
         this.render();
       }
 
-
 prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
-  // Reset
-  this.kennwerte = {};
-  this.hzFlags = {};
+  // Reset nur für NL-Daten, NICHT für Kennwerte!
   this.Niederlassung = {};
   this.nlKoordinaten = {};
-  this.plzKennwerte = {};
-  this.filteredKennwerte = {};
+  this.hzFlags = {};
   this.extraNLs = [];
-
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0"
-  ];
 
   // Geo-Notes
   const geoNotes = {};
@@ -3989,7 +3976,7 @@ prepareMapData(filteredData) {
     const lat = parseFloat(row["dimension_Lat_0"]?.label);
     const lon = parseFloat(row["dimension_lon_0"]?.label);
 
-    // --- Niederlassung speichern ---
+    // Niederlassung speichern
     if (nlKey) {
       this.Niederlassung[nlKey] = nlKey;
 
@@ -3998,22 +3985,13 @@ prepareMapData(filteredData) {
       }
     }
 
-    // --- PLZ-Kennwerte speichern ---
-    if (plz && plz !== "@NullMember") {
-      this.filteredKennwerte[plz] = {};
+    // HZ-Flag speichern
+    if (plz) {
       this.hzFlags[plz] = hzFlag;
-
-      kennzahlenIDs.forEach(id => {
-        const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
-      });
-
-      this.filteredKennwerte[plz]["dimension_note_0"] = {
-        label: geoNotes[plz] || ""
-      };
     }
   });
 }
+
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
 getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -4705,55 +4683,56 @@ showEmptyUmsatzPopup(plz) {
       });
     }
   }
-
-  async render() {
-    if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-      console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-      return;
-    }
-
-    this.showSpinner();
-
-    const rawData = this._myDataSource.data;
-
-    // 🔧 Filterstruktur & Dropdowns vorbereiten
-    this._erhData = this.buildErhebungsStruktur(rawData);
-    this.setupFilterDropdowns();
-
-    // 🔍 Filter anwenden oder Rohdaten verwenden
-    const isFiltered = !!this._activeFilter;
-    const filteredData = isFiltered ? this.getFilteredData() : rawData;
-
-    // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
-  //this.prepareMapData(filteredData);
-
-// WK neu berechnen
-this.computeWKKennwerte();
-this.computeStreuverlust();
-
-
-
-
-    // 🌍 GeoJSON laden & Layer aktualisieren
-    await this.loadGeoJson();
-
-    this.updateGeoLayer();
-      this.createAllMarkers();
-    // 📌 PLZs extrahieren für Marker-Filterung
-    const filteredPLZs = isFiltered
-      ? filteredData
-          .map(d => d["dimension_plz_0"]?.id?.trim())
-          .filter(plz => plz && plz !== "@NullMember")
-      : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
-
-    // 📍 Marker anzeigen (gefiltert oder vollständig)
-    this.updateMarkers(filteredPLZs);
-
-    // 📊 Tabelle aktualisieren
-    this.renderDataTable(this.filteredKennwerte);
-
-    this.hideSpinner();
+async render() {
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+    return;
   }
+
+  this.showSpinner();
+
+  const rawData = this._myDataSource.data;
+
+  // Filterstruktur & Dropdowns vorbereiten
+  this._erhData = this.buildErhebungsStruktur(rawData);
+  this.setupFilterDropdowns();
+
+  // Filter anwenden oder Rohdaten verwenden
+  const isFiltered = !!this._activeFilter;
+  const filteredData = isFiltered ? this.getFilteredData() : rawData;
+
+  // prepareMapData darf laufen – zerstört nichts mehr
+  this.prepareMapData(filteredData);
+
+  // WK neu berechnen
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
+
+  // GeoJSON laden & Layer aktualisieren
+  await this.loadGeoJson();
+  this.updateGeoLayer();
+
+  // Marker neu erstellen
+  this.createAllMarkers();
+
+  // PLZs extrahieren
+  const filteredPLZs = isFiltered
+    ? filteredData
+        .map(d => d["dimension_plz_0"]?.id?.trim())
+        .filter(plz => plz && plz !== "@NullMember")
+    : Object.keys(this.allMarkers);
+
+  // Marker anzeigen
+  this.updateMarkers(filteredPLZs);
+
+  // Tabelle aktualisieren
+  this.renderDataTable(this.filteredKennwerte);
+
+  this.hideSpinner();
+}
+
+
 updateHeatmapLegend() {
 
   const legend = this._shadowRoot.getElementById("heatmap-legend");
@@ -4852,7 +4831,6 @@ if (this.currentMapMode === "wk") {
 
   legend.classList.add("hidden");
 }
-
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
 
@@ -4869,12 +4847,22 @@ async loadErhebung(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
   this.filteredData = rawData;
 
-  // 2) Pre-Aggregation
+  // 2) MapData vorbereiten (NL, Koordinaten, HZ-Flags)
+  this.prepareMapData(rawData);
+
+  // 3) Umsatzwerte + WK-Kennwerte berechnen
   this.prepareUmsatzPLZWerte();
   this.computeWKKennwerte();
   this.computeStreuverlust();
 
-  // 3) Marker + Radius + GeoLayer
+  // 4) NL-Auswahl initialisieren
+  this.allNLs = [
+    ...Object.keys(this.Niederlassung),
+    ...(this.extraNLs?.map(e => e.nl) ?? [])
+  ];
+  this._selectedNLs = new Set(this.allNLs);
+
+  // 5) Marker + Radius + GeoLayer
   this.createAllMarkers();
 
   const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
@@ -4882,19 +4870,19 @@ async loadErhebung(erhID, jahr, nummer) {
 
   this.updateGeoLayer();
 
-  // 4) Erhebungsinfo
+  // 6) Erhebungsinfo
   this.prepareErhebungsInfo();
 
-  // 5) Tabelle
+  // 7) Tabelle
   this.renderDataTable(this.filteredKennwerte);
 
-  // 6) Zoom
+  // 8) Zoom
   this.zoomToFilteredPLZ();
 
   // Overlay ausblenden
   this.hideLoadingOverlay();
 
-  console.log("✅ loadErhebung abgeschlossen AGEGED");
+  console.log("✅ loadErhebung abgeschlossen testsetsgd");
 }
 
 
