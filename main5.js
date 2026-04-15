@@ -994,11 +994,12 @@
   transition: opacity 0.25s ease;
 }
 
-/* ⭐ Legende verstecken */
 #heatmap-legend.hidden {
   opacity: 0;
   visibility: hidden;
+  display: none;
 }
+
 
 /* Zeilen */
 #heatmap-legend .heatmap-legend-row {
@@ -1016,11 +1017,6 @@
   border: 1px solid #999;
 }
 
-.heatmap-reveal {
-  mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
-  -webkit-mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
-  transition: mask-image 0.8s ease, -webkit-mask-image 0.8s ease;
-}
 
 
 </style>
@@ -1077,7 +1073,8 @@
     <div id="legend-toggle-btn" title="Legende einblenden"></div>
 
     <!-- 📦 Legenden-Overlay (unten rechts) -->
-    <div id="heatmap-legend" class="heatmap-legend hidden"></div>
+    <div id="heatmap-legend" class="hidden"></div>
+
 
     <!-- 📦 Umsatz-Overview oben rechts -->
     <div id="umsatz-overview" class="hidden"></div>
