@@ -3650,7 +3650,6 @@ prepareUmsatzPLZWerte() {
     }
 
     if (typeof x === "string") {
-      // Tausendertrennzeichen entfernen (egal ob . oder ,)
       const s = x.replace(/[.,\s]/g, "");
       const n = Number(s);
       if (!Number.isFinite(n)) {
@@ -3663,7 +3662,6 @@ prepareUmsatzPLZWerte() {
     return 0;
   };
 
-  // Debug-Safe für Umsatzfelder
   const debugSafe = (label, value, plz) => {
     const parsed = safe(value);
     if (!Number.isFinite(parsed)) {
@@ -3674,13 +3672,6 @@ prepareUmsatzPLZWerte() {
     }
     return parsed;
   };
-
-  // ============================================
-  // (Optional) Cache-Struktur initialisieren – aber NICHT mehr als Short-Cut nutzen
-  // ============================================
-  if (!this._umsatzCache) this._umsatzCache = {};
-  const nlKey = [...(this._selectedNLs || new Set())].sort().join("_") || "ALL";
-  const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
 
   // ============================================
   // 1) Aggregation – IMMER NEU BERECHNEN
@@ -3711,6 +3702,7 @@ prepareUmsatzPLZWerte() {
       aggregated[plz] = {
         _hhValues: [],
 
+        // Umsatzfelder
         umsatz: 0,
         ra: 0,
         onlineshop: 0,
@@ -3724,7 +3716,13 @@ prepareUmsatzPLZWerte() {
         umsatzZusatz: 0,
         raZusatz: 0,
         onlineshopZusatz: 0,
-        pluscardZusatz: 0
+        pluscardZusatz: 0,
+
+        // ⭐ Erhebungsfelder
+        umsatzErhebung: 0,
+        kdErhebung: 0,
+        auflage: 0,
+        werbeverweigerer: 0
       };
     }
 
@@ -3733,9 +3731,13 @@ prepareUmsatzPLZWerte() {
     // Haushalte
     const rawHH = row["value_haushalte_0"]?.raw;
     const hh = parseHH(rawHH);
-
-
     if (hh > 0) v._hhValues.push(hh);
+
+    // ⭐ Erhebungsdaten
+    v.umsatzErhebung   += safe(row["value_ums_erhebung_0"]?.raw);
+    v.kdErhebung       += safe(row["value_kd_erhebung_0"]?.raw);
+    v.auflage          += safe(row["value_auflage_0"]?.raw);
+    v.werbeverweigerer += safe(row["value_werbeverweigerer_0"]?.raw);
 
     // Umsatzfelder
     v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
@@ -3764,8 +3766,6 @@ prepareUmsatzPLZWerte() {
     } else {
       v.haushalte = 0;
     }
-
-
 
     delete v._hhValues;
 
@@ -3812,9 +3812,6 @@ prepareUmsatzPLZWerte() {
     v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
   });
 
-  // optional: aktualisierten Aggregat-Cache speichern
-  this._umsatzCache[cacheKey] = aggregated;
-
   // ============================================
   // 3) Radiusfilter
   // ============================================
@@ -3825,7 +3822,14 @@ prepareUmsatzPLZWerte() {
     if ((this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
-    result[plz] = v;
+
+    result[plz] = {
+      ...v,
+      umsatzErhebung: v.umsatzErhebung ?? 0,
+      kdErhebung: v.kdErhebung ?? 0,
+      auflage: v.auflage ?? 0,
+      werbeverweigerer: v.werbeverweigerer ?? 0
+    };
   });
 
   this.filteredPLZWerte = result;
@@ -4065,6 +4069,7 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
+
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
