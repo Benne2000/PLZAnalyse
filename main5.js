@@ -4739,6 +4739,7 @@ async render() {
 
   this.hideSpinner();
 }
+
 updateHeatmapLegend() {
 
   const legend = this._shadowRoot.getElementById("heatmap-legend");
@@ -4811,18 +4812,37 @@ updateHeatmapLegend() {
   }
 
   // ============================================================
-  // UMSATZ-HEATMAP → ABSOLUTE WERTE
+  // UMSATZ-HEATMAP → ABSOLUTE WERTE (DYNAMISCH)
   // ============================================================
   if (this.currentMapMode === "umsatz-multi") {
 
-    // 1) Max-Umsatz bestimmen
+    // ---------------------------------------------------------
+    // 1) Heatmap-Modus bestimmen (für getColor)
+    // ---------------------------------------------------------
+    let mode = "umsatz"; // Default
+
+    if (this.umsatzMainMode === "werbung") {
+      mode = "werbung";
+    } else if (this.useZusatzUmsatz) {
+      mode = "zusatz";
+    }
+
+    if (this.umsatzDarstellung === "hh") {
+      mode += "ProHaushalt";
+    }
+
+    // ---------------------------------------------------------
+    // 2) Max-Wert bestimmen
+    // ---------------------------------------------------------
     const values = Object.values(this.filteredPLZWerte)
-      .map(v => v.umsatz ?? 0)
+      .map(v => v[mode] ?? 0)
       .filter(v => v > 0);
 
     const max = values.length > 0 ? Math.max(...values) : 0;
 
-    // 2) Dynamische Stufen
+    // ---------------------------------------------------------
+    // 3) Dynamische Stufen
+    // ---------------------------------------------------------
     const steps = [
       max,
       max * 0.66,
@@ -4832,13 +4852,17 @@ updateHeatmapLegend() {
       0
     ];
 
-    // 3) Formatierung
+    // ---------------------------------------------------------
+    // 4) Formatierung
+    // ---------------------------------------------------------
     const fmt = n =>
       n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
 
-    // 4) HTML erzeugen
+    // ---------------------------------------------------------
+    // 5) HTML erzeugen
+    // ---------------------------------------------------------
     const rows = steps.map(v => {
-      const color = this.getColor(v, false); // Umsatz-Heatmap
+      const color = this.getColor(v, mode);
       return `
         <div class="heatmap-legend-row">
           <div class="heatmap-legend-color" style="background:${color}"></div>
@@ -4848,7 +4872,13 @@ updateHeatmapLegend() {
     }).join("");
 
     legend.innerHTML = `
-      <div><strong>Umsatz (absolut)</strong></div>
+      <div><strong>${
+        mode.includes("werbung")
+          ? "Werbeumsatz"
+          : mode.includes("zusatz")
+          ? "Zusatzumsatz"
+          : "Umsatz"
+      } (absolut)</strong></div>
       ${rows}
     `;
 
@@ -4888,59 +4918,70 @@ async loadErhebung(erhID, jahr, nummer) {
   this.showLoadingOverlay();
   this.closeNLTable?.();
 
+  // ---------------------------------------------------------
   // 1) Daten laden
+  // ---------------------------------------------------------
   const rawData = await this.queryErhebungFromBW(erhID, jahr, nummer);
   this._activeFilter = { erhID, jahr, nummer };
   this.filteredData = rawData;
 
-this.filteredData = rawData;
+  // ---------------------------------------------------------
+  // 2) MapData vorbereiten (NLs, Koordinaten, HZ-Flags)
+  // ---------------------------------------------------------
+  this.prepareMapData(rawData);
 
-// NLs extrahieren
-// 1) MapData → NLs extrahieren
-this.prepareMapData(rawData);
-
-// 2) ALLE NLs aktivieren
-this.allNLs = [
-  ...Object.keys(this.Niederlassung),
-  ...(this.extraNLs?.map(e => e.nl) ?? [])
-];
-this._selectedNLs = new Set(this.allNLs);
-
-// 3) Jetzt erst aggregieren
-this.prepareUmsatzPLZWerte();
-this.computeWKKennwerte();
-
-
-
-  // 4) NL-Auswahl initialisieren
+  // ---------------------------------------------------------
+  // 3) ALLE NLs aktivieren (WICHTIG!)
+  // ---------------------------------------------------------
   this.allNLs = [
     ...Object.keys(this.Niederlassung),
     ...(this.extraNLs?.map(e => e.nl) ?? [])
   ];
   this._selectedNLs = new Set(this.allNLs);
 
-  // 5) Marker + Radius + GeoLayer
+  // ---------------------------------------------------------
+  // 4) MapMode ZWINGEND auf Umsatz setzen,
+  //    damit prepareUmsatzPLZWerte NICHT durch Radiusfilter blockiert wird
+  // ---------------------------------------------------------
+  this.currentMapMode = "umsatz-multi";
+  this.activePopupType = "umsatz";
+
+  // ---------------------------------------------------------
+  // 5) Marker erstellen (setzt plzImRadius korrekt)
+  // ---------------------------------------------------------
   this.createAllMarkers();
 
+  // ---------------------------------------------------------
+  // 6) Radius anwenden (erst jetzt!)
+  // ---------------------------------------------------------
   const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
   this.applyRadiusFilter(radius);
 
+  // ---------------------------------------------------------
+  // 7) Umsatz + WK-Kennwerte berechnen (JETZT korrekt!)
+  // ---------------------------------------------------------
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
+
+  // ---------------------------------------------------------
+  // 8) GeoLayer aktualisieren
+  // ---------------------------------------------------------
   this.updateGeoLayer();
 
-  // 6) Erhebungsinfo
+  // ---------------------------------------------------------
+  // 9) Erhebungsinfo + Tabelle + Zoom
+  // ---------------------------------------------------------
   this.prepareErhebungsInfo();
-
-  // 7) Tabelle
   this.renderDataTable(this.filteredKennwerte);
-
-  // 8) Zoom
   this.zoomToFilteredPLZ();
 
   // Overlay ausblenden
   this.hideLoadingOverlay();
 
-  console.log("✅ loadErhebung abgeschlossen testsetsgd");
+  console.log("✅ loadErhebung abgeschlossen");
 }
+
 
 
 
