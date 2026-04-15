@@ -4742,84 +4742,114 @@ updateHeatmapLegend() {
 
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   if (!legend) return;
+
   if (!this.currentMapMode) {
     legend.classList.add("hidden");
     return;
   }
 
-  // WK-Modus → Werbekosten (isHZ === false Skala)
-// WK-Modus → Werbekosten (isHZ === false Skala)
-if (this.currentMapMode === "wk") {
-  legend.innerHTML = `
-    <div><strong>Werbekosten</strong></div>
-
-    <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
-
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
-    </div>
-
-    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
-
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %
-    </div>
-  `;
-  legend.classList.remove("hidden");
-  return;
-}
-
-
-
-  // Umsatz-Heatmap
-  if (this.currentMapMode === "umsatz-multi") {
+  // ============================================================
+  // WK-MODUS (unverändert)
+  // ============================================================
+  if (this.currentMapMode === "wk") {
     legend.innerHTML = `
-      <div><strong>Umsatz-Heatmap</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;95%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#9d131b"></div> 85–95%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 75–85%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#d9483b"></div> 65–75%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 55–65%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f08a3c"></div> 45–55%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 35–45%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 20–35%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;20%</div>
+      <div><strong>Werbekosten</strong></div>
+
+      <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
+
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
+      </div>
+
+      <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
+
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %
+      </div>
+      <div class="heatmap-legend-row">
+        <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %
+      </div>
     `;
     legend.classList.remove("hidden");
     return;
   }
 
-  // Werbeanteil-Heatmap
+  // ============================================================
+  // UMSATZ-HEATMAP → ABSOLUTE WERTE
+  // ============================================================
+  if (this.currentMapMode === "umsatz-multi") {
+
+    // 1) Max-Umsatz bestimmen
+    const values = Object.values(this.filteredPLZWerte)
+      .map(v => v.umsatz ?? 0)
+      .filter(v => v > 0);
+
+    const max = values.length > 0 ? Math.max(...values) : 0;
+
+    // 2) Dynamische Stufen
+    const steps = [
+      max,
+      max * 0.66,
+      max * 0.40,
+      max * 0.25,
+      max * 0.10,
+      0
+    ];
+
+    // 3) Formatierung
+    const fmt = n =>
+      n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
+
+    // 4) HTML erzeugen
+    const rows = steps.map(v => {
+      const color = this.getColor(v, false); // Umsatz-Heatmap
+      return `
+        <div class="heatmap-legend-row">
+          <div class="heatmap-legend-color" style="background:${color}"></div>
+          <div>${fmt(v)}</div>
+        </div>
+      `;
+    }).join("");
+
+    legend.innerHTML = `
+      <div><strong>Umsatz (absolut)</strong></div>
+      ${rows}
+    `;
+
+    legend.classList.remove("hidden");
+    return;
+  }
+
+  // ============================================================
+  // WERBEANTEIL (unverändert)
+  // ============================================================
   if (this.currentMapMode === "werbeanteil") {
     legend.innerHTML = `
       <div><strong>Werbeanteil</strong></div>
@@ -4836,6 +4866,7 @@ if (this.currentMapMode === "wk") {
 
   legend.classList.add("hidden");
 }
+
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
 
@@ -4852,13 +4883,22 @@ async loadErhebung(erhID, jahr, nummer) {
   this._activeFilter = { erhID, jahr, nummer };
   this.filteredData = rawData;
 
-  // 2) MapData vorbereiten (NL, Koordinaten, HZ-Flags)
-  this.prepareMapData(rawData);
+this.filteredData = rawData;
 
-  // 3) Umsatzwerte + WK-Kennwerte berechnen
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.computeStreuverlust();
+// NLs extrahieren
+this.prepareMapData(rawData);
+
+// ALLE NLs aktivieren (wichtig!)
+this.allNLs = [
+  ...Object.keys(this.Niederlassung),
+  ...(this.extraNLs?.map(e => e.nl) ?? [])
+];
+this._selectedNLs = new Set(this.allNLs);
+
+// Jetzt erst aggregieren
+this.prepareUmsatzPLZWerte();
+this.computeWKKennwerte();
+
 
   // 4) NL-Auswahl initialisieren
   this.allNLs = [
@@ -4887,7 +4927,7 @@ async loadErhebung(erhID, jahr, nummer) {
   // Overlay ausblenden
   this.hideLoadingOverlay();
 
-  console.log("✅ loadErhebung abgeschlossen");
+  console.log("✅ loadErhebung abgeschlossen testsetsgd");
 }
 
 
