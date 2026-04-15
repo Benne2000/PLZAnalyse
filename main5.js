@@ -4725,7 +4725,7 @@ showEmptyUmsatzPopup(plz) {
     const filteredData = isFiltered ? this.getFilteredData() : rawData;
 
     // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
-  this.prepareMapData(filteredData);
+  //this.prepareMapData(filteredData);
 
 // WK neu berechnen
 this.computeWKKennwerte();
@@ -4894,7 +4894,7 @@ async loadErhebung(erhID, jahr, nummer) {
   // Overlay ausblenden
   this.hideLoadingOverlay();
 
-  console.log("✅ loadErhebung abgeschlossen TEST3333");
+  console.log("✅ loadErhebung abgeschlossen AGEGED");
 }
 
 
