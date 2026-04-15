@@ -1972,7 +1972,10 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     this.currentMapMode = "umsatz-multi";
     this.activePopupType = "umsatz";
 
+if (this._activeFilter) {
     this.prepareUmsatzPLZWerte();
+}
+
 
     wkExtra.style.display = "none";
     umsatzOptionsRow.style.display = "flex";
@@ -4736,12 +4739,18 @@ async render() {
 
   this.hideSpinner();
 }
-
-
 updateHeatmapLegend() {
 
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   if (!legend) return;
+
+  // ---------------------------------------------------------
+  // Wenn keine Erhebung geladen ist → Legende ausblenden
+  // ---------------------------------------------------------
+  if (!this._activeFilter || !this.filteredPLZWerte || Object.keys(this.filteredPLZWerte).length === 0) {
+    legend.classList.add("hidden");
+    return;
+  }
 
   if (!this.currentMapMode) {
     legend.classList.add("hidden");
@@ -4758,7 +4767,7 @@ updateHeatmapLegend() {
       <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
 
       <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25 %
+        <div class="heatmap-legend-color" style="background:#e31a1c"></div> &gt; 25 %
       </div>
       <div class="heatmap-legend-row">
         <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %
@@ -4779,7 +4788,7 @@ updateHeatmapLegend() {
       <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
 
       <div class="heatmap-legend-row">
-        <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
+        <div class="heatmap-legend-color" style="background:#cfd4da"></div> &gt; 50 %
       </div>
       <div class="heatmap-legend-row">
         <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %
@@ -4867,6 +4876,7 @@ updateHeatmapLegend() {
   legend.classList.add("hidden");
 }
 
+
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
 
@@ -4886,18 +4896,20 @@ async loadErhebung(erhID, jahr, nummer) {
 this.filteredData = rawData;
 
 // NLs extrahieren
+// 1) MapData → NLs extrahieren
 this.prepareMapData(rawData);
 
-// ALLE NLs aktivieren (wichtig!)
+// 2) ALLE NLs aktivieren
 this.allNLs = [
   ...Object.keys(this.Niederlassung),
   ...(this.extraNLs?.map(e => e.nl) ?? [])
 ];
 this._selectedNLs = new Set(this.allNLs);
 
-// Jetzt erst aggregieren
+// 3) Jetzt erst aggregieren
 this.prepareUmsatzPLZWerte();
 this.computeWKKennwerte();
+
 
 
   // 4) NL-Auswahl initialisieren
