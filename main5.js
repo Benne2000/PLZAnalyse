@@ -4889,7 +4889,7 @@ async loadErhebung(erhID, jahr, nummer) {
   // Overlay ausblenden
   this.hideLoadingOverlay();
 
-  console.log("✅ loadErhebung abgeschlossen");
+  console.log("✅ loadErhebung abgeschlossen TEST");
 }
 
 
