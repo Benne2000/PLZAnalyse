@@ -4865,7 +4865,6 @@ async loadErhebung(erhID, jahr, nummer) {
   this.filteredData = rawData;
 
   // 2) Pre-Aggregation
-  this.prepareMapData(rawData);
   this.prepareUmsatzPLZWerte();
   this.computeWKKennwerte();
   this.computeStreuverlust();
