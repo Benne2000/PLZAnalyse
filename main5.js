@@ -994,12 +994,11 @@
   transition: opacity 0.25s ease;
 }
 
+/* ⭐ Legende verstecken */
 #heatmap-legend.hidden {
   opacity: 0;
   visibility: hidden;
-  display: none;
 }
-
 
 /* Zeilen */
 #heatmap-legend .heatmap-legend-row {
@@ -1017,6 +1016,11 @@
   border: 1px solid #999;
 }
 
+.heatmap-reveal {
+  mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
+  transition: mask-image 0.8s ease, -webkit-mask-image 0.8s ease;
+}
 
 
 </style>
@@ -1073,8 +1077,7 @@
     <div id="legend-toggle-btn" title="Legende einblenden"></div>
 
     <!-- 📦 Legenden-Overlay (unten rechts) -->
-    <div id="heatmap-legend" class="hidden"></div>
-
+    <div id="heatmap-legend" class="heatmap-legend hidden"></div>
 
     <!-- 📦 Umsatz-Overview oben rechts -->
     <div id="umsatz-overview" class="hidden"></div>
@@ -4157,30 +4160,20 @@ computeWKKennwerte() {
     const isCritical = entry.hzCount > 1;
 
     const baseEntry = base[plz] || {};
-// Umsatzdaten aus alter PLZWerte-Struktur holen
-const old = this.filteredPLZWerte?.[plz] || {};
+    const old = this.filteredPLZWerte?.[plz] || {};
 
-// WK-Kennwerte + Erhebungsdaten
-newFilteredKennwerte[plz] = {
-  ...baseEntry,
-  isHZ,
-  isCritical,
-
-  // WK
-  value_hr_n_umsatz_0: { raw: umsatzNetto },
-  value_wk_in_percent_0: { raw: wkPercent },
-  value_wk_nachbar_0: { raw: wkNachbarn },
-  value_hz_kosten_0: { raw: hzKosten },
-  value_hz_potentiell_0: { raw: avgPotHz },
-  value_wk_potentiell_0: { raw: potHzPercent },
-
-  // ⭐ Erhebungsdaten hinzufügen
-  value_ums_erhebung_0: { raw: umsatzErhebung },
-  value_kd_erhebung_0: { raw: kdErhebung  },
-  value_auflage_0: { raw: auflage  },
-  value_werbeverweigerer_0: { raw: werbeverweigerer }
-};
-
+    // WK-Kennwerte
+    newFilteredKennwerte[plz] = {
+      ...baseEntry,
+      isHZ,
+      isCritical,
+      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      value_wk_in_percent_0: { raw: wkPercent },
+      value_wk_nachbar_0: { raw: wkNachbarn },
+      value_hz_kosten_0: { raw: hzKosten },
+      value_hz_potentiell_0: { raw: avgPotHz },
+      value_wk_potentiell_0: { raw: potHzPercent }
+    };
 
     // Umsatzdaten übernehmen
     newFilteredPLZWerte[plz] = {
