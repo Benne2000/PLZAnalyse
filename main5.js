@@ -1,4 +1,4 @@
-  let neighbours = true;
+ let neighbours = true;
   let hasTriggeredClick = false;
   (function () {
     const template = document.createElement('template');
@@ -1823,11 +1823,8 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
 initializeMapBase() {
- 
 
-  // Helper
   const $ = id => this._shadowRoot.getElementById(id);
 
   const mapContainer = $("map");
@@ -1837,10 +1834,10 @@ initializeMapBase() {
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
   // Basiszustände
-  this.currentMapMode = "wk";              // wk | umsatz-multi | werbeanteil
-  this.activePopupType = "wk";             // wk | umsatz
-  this.umsatzDarstellung = "abs";          // abs | hh | werbeanteil
-  this.umsatzMainMode = "gesamt";          // gesamt | werbung
+  this.currentMapMode = "wk";
+  this.activePopupType = "wk";
+  this.umsatzDarstellung = "abs";
+  this.umsatzMainMode = "gesamt";
   this.useWerbeUmsatz = true;
   this.useZusatzUmsatz = false;
 
@@ -1900,24 +1897,18 @@ initializeMapBase() {
   const tileBtn = $("map-tile-toggle-btn");
   tileBtn?.addEventListener("click", () => this.toggleMapTiles());
 
-const legendBtn = this._shadowRoot.getElementById("legend-toggle-btn");
-const legendBox = this._shadowRoot.getElementById("heatmap-legend");
+  // Legende
+  const legendBtn = $("legend-toggle-btn");
+  const legendBox = $("heatmap-legend");
+  legendBtn?.addEventListener("click", () => legendBox.classList.toggle("hidden"));
 
-legendBtn.addEventListener("click", () => {
-  legendBox.classList.toggle("hidden");
-});
-
-
-
-  // ---------------------------------------------------------
   // INITIAL: Werbeanteil deaktivieren
-  // ---------------------------------------------------------
-  if (btnWA) btnWA.classList.add("disabled");
+  btnWA?.classList.add("disabled");
 
   // ---------------------------------------------------------
   // WK-MODUS
   // ---------------------------------------------------------
-btnWK?.addEventListener("click", () => {
+  btnWK?.addEventListener("click", () => {
     this.closeAllPopups();
 
     btnWK.classList.add("active");
@@ -1932,38 +1923,29 @@ btnWK?.addEventListener("click", () => {
 
     panel.classList.remove("panel-large", "panel-medium");
 
-    // ⭐ WICHTIG: Checkbox-Wert übernehmen
     this.showCritical = chkDoppel.checked;
 
-    // Darstellung zurücksetzen
     this.umsatzDarstellung = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
 
     btnWA.classList.add("disabled");
 
-   // $("side-popup")?.classList.remove("show");
-   // $("side-popup-umsatz")?.classList.remove("show");
-
-    const { erhID, jahr, nummer } = this._activeFilter || {};
-    if (erhID && jahr && nummer) {
-        this.prepareUmsatzPLZWerte();
-        this.computeWKKennwerte();
-        this.updateGeoLayer();
-    } else {
-        this.updateGeoLayer();
+    if (this._activeFilter) {
+      this.prepareUmsatzPLZWerte();
+      this.computeWKKennwerte();
     }
-    this.updateHeatmapLegend();
-});
 
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
 
   // ---------------------------------------------------------
   // UMSATZ-MODUS
   // ---------------------------------------------------------
   btnUmsatz?.addEventListener("click", () => {
 
-     const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
-typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
+    typeSwitch.classList.add("active-left");
 
     btnUmsatz.classList.add("active");
     btnWK.classList.remove("active");
@@ -1972,10 +1954,10 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     this.currentMapMode = "umsatz-multi";
     this.activePopupType = "umsatz";
 
-if (this._activeFilter) {
-    this.prepareUmsatzPLZWerte();
-}
-
+    if (this._activeFilter) {
+      this.prepareUmsatzPLZWerte();
+      this.computeWKKennwerte();
+    }
 
     wkExtra.style.display = "none";
     umsatzOptionsRow.style.display = "flex";
@@ -1984,17 +1966,11 @@ if (this._activeFilter) {
     panel.classList.remove("panel-medium");
     panel.classList.add("panel-large");
 
-
-    // Darstellung auf ABS setzen
     this.umsatzDarstellung = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
 
-    // Werbeanteil deaktivieren (Umsatztyp = gesamt)
     btnWA.classList.add("disabled");
-
-    //$("side-popup-umsatz")?.classList.remove("show");
-   // $("side-popup")?.classList.remove("show");
 
     this.updateGeoLayer();
     this.updateHeatmapLegend();
@@ -2014,27 +1990,23 @@ if (this._activeFilter) {
     werbeRow.style.display = isWerbung ? "flex" : "none";
 
     if (isWerbung) {
-      // Werbeanteil aktivierbar
       btnWA.classList.remove("disabled");
-
-      // Standard: Werbeumsatz aktiv
       this.useWerbeUmsatz = true;
       this.useZusatzUmsatz = false;
       chkWerbe.checked = true;
       chkMit.checked = false;
       chkMit.disabled = false;
-
     } else {
-      // Werbeanteil deaktivieren
       btnWA.classList.add("disabled");
-
-      // Darstellung zurück auf Absolut
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active");
     }
 
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
@@ -2048,7 +2020,10 @@ if (this._activeFilter) {
       chkWerbe.checked = true;
     }
 
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   chkMit?.addEventListener("change", () => {
@@ -2059,102 +2034,91 @@ if (this._activeFilter) {
       chkWerbe.checked = true;
     }
 
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
-  // 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
+  // 3-WEGE-SWITCH
   // ---------------------------------------------------------
-// ---------------------------------------------------------
-// 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
-// ---------------------------------------------------------
-btnAbs?.addEventListener("click", () => {
-  this.umsatzDarstellung = "abs";
-  this.currentMapMode = "umsatz-multi";
-  this.activePopupType = "umsatz";
+  btnAbs?.addEventListener("click", () => {
+    this.umsatzDarstellung = "abs";
+    this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
-  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-  btnAbs.classList.add("active");
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnAbs.classList.add("active");
 
-  console.log("➡️ Switch: ABS | umsatzDarstellung =", this.umsatzDarstellung);
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
 
-  // 🔁 Werte neu berechnen
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.updateGeoLayer();
-});
+  btnHH?.addEventListener("click", () => {
+    this.umsatzDarstellung = "hh";
+    this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
-btnHH?.addEventListener("click", () => {
-  this.umsatzDarstellung = "hh";
-  this.currentMapMode = "umsatz-multi";
-  this.activePopupType = "umsatz";
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnHH.classList.add("active");
 
-  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-  btnHH.classList.add("active");
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
 
-  console.log("➡️ Switch: HH | umsatzDarstellung =", this.umsatzDarstellung);
+  btnWA?.addEventListener("click", () => {
+    if (this.umsatzMainMode !== "werbung") return;
 
-  // 🔁 Werte neu berechnen (pro HH)
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.updateGeoLayer();
-});
+    this.umsatzDarstellung = "werbeanteil";
+    this.currentMapMode = "werbeanteil";
+    this.activePopupType = "umsatz";
 
-btnWA?.addEventListener("click", () => {
-  if (this.umsatzMainMode !== "werbung") return;
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnWA.classList.add("active");
 
-  this.umsatzDarstellung = "werbeanteil";
-  this.currentMapMode = "werbeanteil";
-  this.activePopupType = "umsatz";
+    chkWerbe.checked = true;
+    this.useWerbeUmsatz = true;
 
-  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-  btnWA.classList.add("active");
+    chkMit.checked = false;
+    chkMit.disabled = true;
+    this.useZusatzUmsatz = false;
 
-  // Automatische Checkbox-Logik
-  chkWerbe.checked = true;
-  this.useWerbeUmsatz = true;
-
-  chkMit.checked = false;
-  chkMit.disabled = true;
-  this.useZusatzUmsatz = false;
-
-  console.log("➡️ Switch: WERBEANTEIL | umsatzDarstellung =", this.umsatzDarstellung);
-
-  // 🔁 Werte neu berechnen (Werbeanteil basiert auf Umsatzaggregation)
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.updateGeoLayer();
-});
-
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
 
   // ---------------------------------------------------------
   // Kategorien
   // ---------------------------------------------------------
-// in initializeMapBase(), bei den Kategorie-Toggles:
-this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
-  toggle.addEventListener("click", () => {
-    const cat = toggle.dataset.cat;
-    if (!cat) return;
+  this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
+    toggle.addEventListener("click", () => {
+      const cat = toggle.dataset.cat;
+      if (!cat) return;
 
-    if (this.activeCategories.has(cat)) {
-      this.activeCategories.delete(cat);
-      toggle.classList.remove("active");
-    } else {
-      this.activeCategories.add(cat);
-      toggle.classList.add("active");
-    }
+      if (this.activeCategories.has(cat)) {
+        this.activeCategories.delete(cat);
+        toggle.classList.remove("active");
+      } else {
+        this.activeCategories.add(cat);
+        toggle.classList.add("active");
+      }
 
-    this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
+      this.currentMapMode = "umsatz-multi";
+      this.activePopupType = "umsatz";
 
-    // ✅ Werbeanteil neu berechnen
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-
-    this.updateGeoLayer();
+      this.prepareUmsatzPLZWerte();
+      this.computeWKKennwerte();
+      this.updateGeoLayer();
+      this.updateHeatmapLegend();
+    });
   });
-});
-
 
   // ---------------------------------------------------------
   // Doppelbestreuung
@@ -2162,6 +2126,7 @@ this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
   chkDoppel?.addEventListener("change", () => {
     this.showCritical = chkDoppel.checked;
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
@@ -2170,6 +2135,7 @@ this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
   chkBestreuung?.addEventListener("change", () => {
     this.showBestreuung = chkBestreuung.checked;
     this.updateBestreuungMarkers();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
@@ -2182,15 +2148,20 @@ this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
       this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
       this.updateGeoLayer();
       this.renderDataTable(this.filteredKennwerte);
+      this.updateHeatmapLegend();
       return;
     }
 
     const slider = $("radius-slider");
     const radius = slider ? Number(slider.value) : 0;
     this.applyRadiusFilter(radius);
+
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 }
-
 
 
 
@@ -4739,6 +4710,7 @@ async render() {
 
   this.hideSpinner();
 }
+
 updateHeatmapLegend() {
 
   const legend = this._shadowRoot.getElementById("heatmap-legend");
@@ -4807,7 +4779,7 @@ updateHeatmapLegend() {
     }
 
     // ---------------------------------------------------------
-    // 2) Max-Wert bestimmen
+    // 2) Max-Wert bestimmen (aus gefilterten Werten!)
     // ---------------------------------------------------------
     const values = Object.values(this.filteredPLZWerte)
       .map(v => v[mode] ?? 0)
@@ -4882,6 +4854,7 @@ updateHeatmapLegend() {
 
   legend.classList.add("hidden");
 }
+
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
 
