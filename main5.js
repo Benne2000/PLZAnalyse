@@ -4759,37 +4759,21 @@ updateHeatmapLegend() {
   }
 
   // ============================================================
-  // UMSATZ-HEATMAP → ABSOLUTE WERTE (DYNAMISCH, MIT getDynamicHeatColor)
+  // UMSATZ-HEATMAP → ABSOLUTE WERTE (IDENTISCH ZUR HEATMAP)
   // ============================================================
   if (this.currentMapMode === "umsatz-multi") {
 
     // ---------------------------------------------------------
-    // 1) Heatmap-Modus bestimmen (GENAU wie die Heatmap)
-    // ---------------------------------------------------------
-    let mode = "umsatz";
-
-    if (this.umsatzMainMode === "werbung") {
-      mode = "werbung";
-    } else if (this.useZusatzUmsatz) {
-      mode = "zusatz";
-    }
-
-    if (this.umsatzDarstellung === "hh") {
-      mode += "ProHaushalt";
-    }
-
-    // ---------------------------------------------------------
-    // 2) Max-Wert bestimmen (aus gefilterten Werten!)
+    // 1) Werte wie Heatmap berechnen (DAS ist der Schlüssel!)
     // ---------------------------------------------------------
     const values = Object.values(this.filteredPLZWerte)
-      .map(v => this.getUmsatzValueForLegend(v))
-
+      .map(v => this.getUmsatzSumForPLZ(v))   // ⭐ Heatmap-Logik
       .filter(v => v > 0);
 
     const max = values.length > 0 ? Math.max(...values) : 0;
 
     // ---------------------------------------------------------
-    // 3) Dynamische Stufen (identisch zur Heatmap)
+    // 2) Dynamische Stufen (identisch zur Heatmap)
     // ---------------------------------------------------------
     const steps = [
       max,
@@ -4804,13 +4788,13 @@ updateHeatmapLegend() {
     ];
 
     // ---------------------------------------------------------
-    // 4) Formatierung
+    // 3) Formatierung
     // ---------------------------------------------------------
     const fmt = n =>
       n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
 
     // ---------------------------------------------------------
-    // 5) HTML erzeugen — WICHTIG: getDynamicHeatColor()
+    // 4) HTML erzeugen — identisch zur Heatmap
     // ---------------------------------------------------------
     const rows = steps.map(v => {
       const color = this.getDynamicHeatColor(v, max);
@@ -4822,13 +4806,8 @@ updateHeatmapLegend() {
       `;
     }).join("");
 
-    const title =
-      mode.includes("werbung") ? "Werbeumsatz" :
-      mode.includes("zusatz") ? "Zusatzumsatz" :
-      "Umsatz";
-
     legend.innerHTML = `
-      <div><strong>${title} (absolut)</strong></div>
+      <div><strong>Umsatz (absolut)</strong></div>
       ${rows}
     `;
 
@@ -4855,6 +4834,7 @@ updateHeatmapLegend() {
 
   legend.classList.add("hidden");
 }
+
 
 getUmsatzValueForLegend(v) {
 
