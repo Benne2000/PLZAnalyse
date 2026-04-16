@@ -4782,7 +4782,8 @@ updateHeatmapLegend() {
     // 2) Max-Wert bestimmen (aus gefilterten Werten!)
     // ---------------------------------------------------------
     const values = Object.values(this.filteredPLZWerte)
-      .map(v => v[mode] ?? 0)
+      .map(v => this.getUmsatzValueForLegend(v))
+
       .filter(v => v > 0);
 
     const max = values.length > 0 ? Math.max(...values) : 0;
@@ -4854,6 +4855,31 @@ updateHeatmapLegend() {
 
   legend.classList.add("hidden");
 }
+
+getUmsatzValueForLegend(v) {
+
+  // 1) Kategorien summieren
+  let sum = 0;
+  for (const cat of this.activeCategories) {
+    if (v[cat] != null) sum += v[cat];
+  }
+
+  // 2) Werbeumsatz / Zusatzumsatz
+  if (this.umsatzMainMode === "werbung") {
+    sum = 0;
+    if (this.useWerbeUmsatz) sum += v.werbung ?? 0;
+    if (this.useZusatzUmsatz) sum += v.zusatz ?? 0;
+  }
+
+  // 3) pro Haushalt
+  if (this.umsatzDarstellung === "hh") {
+    const hh = v.haushalte || 1;
+    sum = sum / hh;
+  }
+
+  return sum;
+}
+
 
 async loadErhebung(erhID, jahr, nummer) {
   console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
