@@ -1,4 +1,4 @@
-  let neighbours = true;
+ let neighbours = true;
   let hasTriggeredClick = false;
   (function () {
     const template = document.createElement('template');
@@ -1016,6 +1016,11 @@
   border: 1px solid #999;
 }
 
+.heatmap-reveal {
+  mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
+  -webkit-mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
+  transition: mask-image 0.8s ease, -webkit-mask-image 0.8s ease;
+}
 
 
 </style>
@@ -1818,11 +1823,8 @@ zoomToFilteredPLZ() {
     console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
   }
 }
-
 initializeMapBase() {
- 
 
-  // Helper
   const $ = id => this._shadowRoot.getElementById(id);
 
   const mapContainer = $("map");
@@ -1832,10 +1834,10 @@ initializeMapBase() {
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
 
   // Basiszustände
-  this.currentMapMode = "wk";              // wk | umsatz-multi | werbeanteil
-  this.activePopupType = "wk";             // wk | umsatz
-  this.umsatzDarstellung = "abs";          // abs | hh | werbeanteil
-  this.umsatzMainMode = "gesamt";          // gesamt | werbung
+  this.currentMapMode = "wk";
+  this.activePopupType = "wk";
+  this.umsatzDarstellung = "abs";
+  this.umsatzMainMode = "gesamt";
   this.useWerbeUmsatz = true;
   this.useZusatzUmsatz = false;
 
@@ -1895,24 +1897,19 @@ initializeMapBase() {
   const tileBtn = $("map-tile-toggle-btn");
   tileBtn?.addEventListener("click", () => this.toggleMapTiles());
 
-const legendBtn = this._shadowRoot.getElementById("legend-toggle-btn");
-const legendBox = this._shadowRoot.getElementById("heatmap-legend");
+  // Legende
+  const legendBtn = $("legend-toggle-btn");
+  const legendBox = $("heatmap-legend");
+  legendBtn?.addEventListener("click", () => legendBox.classList.toggle("hidden"));
 
-legendBtn.addEventListener("click", () => {
-  legendBox.classList.toggle("hidden");
-});
-
-
-
-  // ---------------------------------------------------------
   // INITIAL: Werbeanteil deaktivieren
-  // ---------------------------------------------------------
-  if (btnWA) btnWA.classList.add("disabled");
+  btnWA?.classList.add("disabled");
 
   // ---------------------------------------------------------
   // WK-MODUS
   // ---------------------------------------------------------
-btnWK?.addEventListener("click", () => {
+  btnWK?.addEventListener("click", () => {
+    this.closeAllPopups();
 
     btnWK.classList.add("active");
     btnUmsatz.classList.remove("active");
@@ -1926,46 +1923,41 @@ btnWK?.addEventListener("click", () => {
 
     panel.classList.remove("panel-large", "panel-medium");
 
-    // ⭐ WICHTIG: Checkbox-Wert übernehmen
     this.showCritical = chkDoppel.checked;
 
-    // Darstellung zurücksetzen
     this.umsatzDarstellung = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
 
     btnWA.classList.add("disabled");
 
-   // $("side-popup")?.classList.remove("show");
-   // $("side-popup-umsatz")?.classList.remove("show");
-
-    const { erhID, jahr, nummer } = this._activeFilter || {};
-    if (erhID && jahr && nummer) {
-        this.prepareUmsatzPLZWerte();
-        this.computeWKKennwerte();
-        this.updateGeoLayer();
-    } else {
-        this.updateGeoLayer();
+    if (this._activeFilter) {
+      this.prepareUmsatzPLZWerte();
+      this.computeWKKennwerte();
     }
-    this.updateHeatmapLegend();
-});
 
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
 
   // ---------------------------------------------------------
   // UMSATZ-MODUS
   // ---------------------------------------------------------
   btnUmsatz?.addEventListener("click", () => {
 
-     const typeSwitch = this._shadowRoot.getElementById("umsatz-type-switch");
-typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
+    typeSwitch.classList.add("active-left");
 
     btnUmsatz.classList.add("active");
     btnWK.classList.remove("active");
+    this.closeAllPopups();
 
     this.currentMapMode = "umsatz-multi";
     this.activePopupType = "umsatz";
 
-    this.prepareUmsatzPLZWerte();
+    if (this._activeFilter) {
+      this.prepareUmsatzPLZWerte();
+      this.computeWKKennwerte();
+    }
 
     wkExtra.style.display = "none";
     umsatzOptionsRow.style.display = "flex";
@@ -1974,17 +1966,11 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     panel.classList.remove("panel-medium");
     panel.classList.add("panel-large");
 
-
-    // Darstellung auf ABS setzen
     this.umsatzDarstellung = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
 
-    // Werbeanteil deaktivieren (Umsatztyp = gesamt)
     btnWA.classList.add("disabled");
-
-    //$("side-popup-umsatz")?.classList.remove("show");
-   // $("side-popup")?.classList.remove("show");
 
     this.updateGeoLayer();
     this.updateHeatmapLegend();
@@ -2004,27 +1990,23 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
     werbeRow.style.display = isWerbung ? "flex" : "none";
 
     if (isWerbung) {
-      // Werbeanteil aktivierbar
       btnWA.classList.remove("disabled");
-
-      // Standard: Werbeumsatz aktiv
       this.useWerbeUmsatz = true;
       this.useZusatzUmsatz = false;
       chkWerbe.checked = true;
       chkMit.checked = false;
       chkMit.disabled = false;
-
     } else {
-      // Werbeanteil deaktivieren
       btnWA.classList.add("disabled");
-
-      // Darstellung zurück auf Absolut
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active");
     }
 
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
@@ -2038,7 +2020,10 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
       chkWerbe.checked = true;
     }
 
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   chkMit?.addEventListener("change", () => {
@@ -2049,102 +2034,91 @@ typeSwitch.classList.add("active-left");   // Umsatz = links aktiv
       chkWerbe.checked = true;
     }
 
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
-  // 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
+  // 3-WEGE-SWITCH
   // ---------------------------------------------------------
-// ---------------------------------------------------------
-// 3-WEGE-SWITCH: Absolut / pro HH / Werbeanteil
-// ---------------------------------------------------------
-btnAbs?.addEventListener("click", () => {
-  this.umsatzDarstellung = "abs";
-  this.currentMapMode = "umsatz-multi";
-  this.activePopupType = "umsatz";
+  btnAbs?.addEventListener("click", () => {
+    this.umsatzDarstellung = "abs";
+    this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
-  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-  btnAbs.classList.add("active");
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnAbs.classList.add("active");
 
-  console.log("➡️ Switch: ABS | umsatzDarstellung =", this.umsatzDarstellung);
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
 
-  // 🔁 Werte neu berechnen
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.updateGeoLayer();
-});
+  btnHH?.addEventListener("click", () => {
+    this.umsatzDarstellung = "hh";
+    this.currentMapMode = "umsatz-multi";
+    this.activePopupType = "umsatz";
 
-btnHH?.addEventListener("click", () => {
-  this.umsatzDarstellung = "hh";
-  this.currentMapMode = "umsatz-multi";
-  this.activePopupType = "umsatz";
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnHH.classList.add("active");
 
-  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-  btnHH.classList.add("active");
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
 
-  console.log("➡️ Switch: HH | umsatzDarstellung =", this.umsatzDarstellung);
+  btnWA?.addEventListener("click", () => {
+    if (this.umsatzMainMode !== "werbung") return;
 
-  // 🔁 Werte neu berechnen (pro HH)
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.updateGeoLayer();
-});
+    this.umsatzDarstellung = "werbeanteil";
+    this.currentMapMode = "werbeanteil";
+    this.activePopupType = "umsatz";
 
-btnWA?.addEventListener("click", () => {
-  if (this.umsatzMainMode !== "werbung") return;
+    darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
+    btnWA.classList.add("active");
 
-  this.umsatzDarstellung = "werbeanteil";
-  this.currentMapMode = "werbeanteil";
-  this.activePopupType = "umsatz";
+    chkWerbe.checked = true;
+    this.useWerbeUmsatz = true;
 
-  darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-  btnWA.classList.add("active");
+    chkMit.checked = false;
+    chkMit.disabled = true;
+    this.useZusatzUmsatz = false;
 
-  // Automatische Checkbox-Logik
-  chkWerbe.checked = true;
-  this.useWerbeUmsatz = true;
-
-  chkMit.checked = false;
-  chkMit.disabled = true;
-  this.useZusatzUmsatz = false;
-
-  console.log("➡️ Switch: WERBEANTEIL | umsatzDarstellung =", this.umsatzDarstellung);
-
-  // 🔁 Werte neu berechnen (Werbeanteil basiert auf Umsatzaggregation)
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.updateGeoLayer();
-});
-
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
+  });
 
   // ---------------------------------------------------------
   // Kategorien
   // ---------------------------------------------------------
-// in initializeMapBase(), bei den Kategorie-Toggles:
-this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
-  toggle.addEventListener("click", () => {
-    const cat = toggle.dataset.cat;
-    if (!cat) return;
+  this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
+    toggle.addEventListener("click", () => {
+      const cat = toggle.dataset.cat;
+      if (!cat) return;
 
-    if (this.activeCategories.has(cat)) {
-      this.activeCategories.delete(cat);
-      toggle.classList.remove("active");
-    } else {
-      this.activeCategories.add(cat);
-      toggle.classList.add("active");
-    }
+      if (this.activeCategories.has(cat)) {
+        this.activeCategories.delete(cat);
+        toggle.classList.remove("active");
+      } else {
+        this.activeCategories.add(cat);
+        toggle.classList.add("active");
+      }
 
-    this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
+      this.currentMapMode = "umsatz-multi";
+      this.activePopupType = "umsatz";
 
-    // ✅ Werbeanteil neu berechnen
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-
-    this.updateGeoLayer();
+      this.prepareUmsatzPLZWerte();
+      this.computeWKKennwerte();
+      this.updateGeoLayer();
+      this.updateHeatmapLegend();
+    });
   });
-});
-
 
   // ---------------------------------------------------------
   // Doppelbestreuung
@@ -2152,6 +2126,7 @@ this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
   chkDoppel?.addEventListener("change", () => {
     this.showCritical = chkDoppel.checked;
     this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
@@ -2160,6 +2135,7 @@ this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
   chkBestreuung?.addEventListener("change", () => {
     this.showBestreuung = chkBestreuung.checked;
     this.updateBestreuungMarkers();
+    this.updateHeatmapLegend();
   });
 
   // ---------------------------------------------------------
@@ -2172,15 +2148,20 @@ this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
       this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
       this.updateGeoLayer();
       this.renderDataTable(this.filteredKennwerte);
+      this.updateHeatmapLegend();
       return;
     }
 
     const slider = $("radius-slider");
     const radius = slider ? Number(slider.value) : 0;
     this.applyRadiusFilter(radius);
+
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.updateGeoLayer();
+    this.updateHeatmapLegend();
   });
 }
-
 
 
 
@@ -2814,98 +2795,6 @@ getUmsatzSumForPLZ(v) {
   }
 
 
-applyFilter(erhID, jahr, nummer) {
-
-  if (!erhID || !jahr || !nummer) {
-    console.warn("⛔ applyFilter abgebrochen: Filter unvollständig");
-    return;
-  }
-
-  // 🧹 NL-Tabelle schließen
-  const filterContainer = this._shadowRoot.querySelector(".filter-container");
-  if (filterContainer?.classList.contains("nl-info-active")) {
-    this.closeNLTable();
-  }
-
-  this._activeFilter = { erhID, jahr, nummer };
-
-  // 🔄 NL-Auswahl zurücksetzen
-  if (!this._selectedNLs) {
-    this._selectedNLs = new Set();
-  } else {
-    this._selectedNLs.clear();
-  }
-
-  // 1️⃣ Daten filtern
-  const filteredData = this.getFilteredData();
-  this.filteredData = filteredData;
-
-  // 2️⃣ Umsatzwerte vorbereiten
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.computeStreuverlust();
-
-
-  // 3️⃣ MapMode korrekt setzen
-  const btnUmsatz = this._shadowRoot.getElementById("btn-umsatz");
-
-  if (btnUmsatz?.classList.contains("active")) {
-    this.currentMapMode = "umsatz-multi";
-
-    if (!this.activeCategories || this.activeCategories.size === 0) {
-      this.activeCategories = new Set(["stationaer", "pluscard", "ra", "online"]);
-    }
-
-    this._shadowRoot.getElementById("wk-extra").style.display = "none";
-    this._shadowRoot.getElementById("umsatz-options-row").style.display = "flex";
-
-
-  } else {
-    this.currentMapMode = "wk";
-
-    this._shadowRoot.getElementById("wk-extra").style.display = "block";
-    this._shadowRoot.getElementById("umsatz-options-row").style.display = "none";
-
-  }
-
-  // 4️⃣ HZ-Flags neu berechnen
-  this.hzFlags = {};
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const hz = row["dimension_hzflag_0"]?.id?.trim();
-    if (plz) this.hzFlags[plz] = hz === "X";
-  });
-
-  // 5️⃣ PLZ-Liste extrahieren
-  this.filteredPLZs = filteredData
-    .map(row => row["dimension_plz_0"]?.id?.trim())
-    .filter(plz => plz && plz !== "@NullMember");
-
-  // 6️⃣ Karte initial einfärben
-  this.updateGeoLayer();
-
-  // 7️⃣ NL-Marker aktualisieren
-  this.updateMarkers();
-
-  // 8️⃣ Radius anwenden
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.currentRadius = radius;
-  this.applyRadiusFilter(radius);
-
-  // 9️⃣ Tabelle rendern
-  this.renderDataTable(this.filteredKennwerte);
-
-  // 🔟 Zoom
-  this.zoomToFilteredPLZ();
-
-  // 1️⃣1️⃣ Erhebungsinfo aktualisieren
-  this.prepareErhebungsInfo();
-}
-
-
-
-
-
 
 extractPLZWerte(data) {
   const plzWerte = {};
@@ -2997,6 +2886,8 @@ getFilteredData() {
                             "#cfd4da";    // Grau
   }
   }
+
+
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
@@ -3008,6 +2899,7 @@ updateGeoLayer() {
 
   // 2️⃣ Alle Layer aktualisieren
   this._geoLayer.eachLayer(layer => {
+    // ❗ KEIN heatmap-reveal hier
     this.applyStyleToLayer(layer);
   });
 
@@ -3019,6 +2911,7 @@ updateGeoLayer() {
   // ⭐ 4️⃣ Legende aktualisieren (WICHTIG!)
   this.updateHeatmapLegend();
 }
+
 
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
@@ -3450,7 +3343,8 @@ setupFilterDropdowns() {
       const selectedNummer = nummerSelect.value;
 
       if (selectedID && selectedJahr && selectedNummer) {
-        this.applyFilter(selectedID, selectedJahr, selectedNummer);
+        this.loadErhebung(selectedID, selectedJahr, selectedNummer);
+
       } else {
         console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
       }
@@ -3730,7 +3624,6 @@ prepareUmsatzPLZWerte() {
     }
 
     if (typeof x === "string") {
-      // Tausendertrennzeichen entfernen (egal ob . oder ,)
       const s = x.replace(/[.,\s]/g, "");
       const n = Number(s);
       if (!Number.isFinite(n)) {
@@ -3743,7 +3636,6 @@ prepareUmsatzPLZWerte() {
     return 0;
   };
 
-  // Debug-Safe für Umsatzfelder
   const debugSafe = (label, value, plz) => {
     const parsed = safe(value);
     if (!Number.isFinite(parsed)) {
@@ -3754,13 +3646,6 @@ prepareUmsatzPLZWerte() {
     }
     return parsed;
   };
-
-  // ============================================
-  // (Optional) Cache-Struktur initialisieren – aber NICHT mehr als Short-Cut nutzen
-  // ============================================
-  if (!this._umsatzCache) this._umsatzCache = {};
-  const nlKey = [...(this._selectedNLs || new Set())].sort().join("_") || "ALL";
-  const cacheKey = `${erhID}_${jahr}_${nummer}_${nlKey}`;
 
   // ============================================
   // 1) Aggregation – IMMER NEU BERECHNEN
@@ -3791,6 +3676,7 @@ prepareUmsatzPLZWerte() {
       aggregated[plz] = {
         _hhValues: [],
 
+        // Umsatzfelder
         umsatz: 0,
         ra: 0,
         onlineshop: 0,
@@ -3804,7 +3690,13 @@ prepareUmsatzPLZWerte() {
         umsatzZusatz: 0,
         raZusatz: 0,
         onlineshopZusatz: 0,
-        pluscardZusatz: 0
+        pluscardZusatz: 0,
+
+        // ⭐ Erhebungsfelder
+        umsatzErhebung: 0,
+        kdErhebung: 0,
+        auflage: 0,
+        werbeverweigerer: 0
       };
     }
 
@@ -3813,9 +3705,13 @@ prepareUmsatzPLZWerte() {
     // Haushalte
     const rawHH = row["value_haushalte_0"]?.raw;
     const hh = parseHH(rawHH);
-
-
     if (hh > 0) v._hhValues.push(hh);
+
+    // ⭐ Erhebungsdaten
+    v.umsatzErhebung   += safe(row["value_ums_erhebung_0"]?.raw);
+    v.kdErhebung       += safe(row["value_kd_erhebung_0"]?.raw);
+    v.auflage          += safe(row["value_auflage_0"]?.raw);
+    v.werbeverweigerer += safe(row["value_werbeverweigerer_0"]?.raw);
 
     // Umsatzfelder
     v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
@@ -3844,8 +3740,6 @@ prepareUmsatzPLZWerte() {
     } else {
       v.haushalte = 0;
     }
-
-
 
     delete v._hhValues;
 
@@ -3892,9 +3786,6 @@ prepareUmsatzPLZWerte() {
     v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
   });
 
-  // optional: aktualisierten Aggregat-Cache speichern
-  this._umsatzCache[cacheKey] = aggregated;
-
   // ============================================
   // 3) Radiusfilter
   // ============================================
@@ -3905,7 +3796,14 @@ prepareUmsatzPLZWerte() {
     if ((this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
-    result[plz] = v;
+
+    result[plz] = {
+      ...v,
+      umsatzErhebung: v.umsatzErhebung ?? 0,
+      kdErhebung: v.kdErhebung ?? 0,
+      auflage: v.auflage ?? 0,
+      werbeverweigerer: v.werbeverweigerer ?? 0
+    };
   });
 
   this.filteredPLZWerte = result;
@@ -4029,26 +3927,15 @@ renderErhebungsInfo() {
 
         this.render();
       }
+
 prepareMapData(filteredData) {
-  const rawData = this._myDataSource?.data || [];
   const geoFeatures = this._geoData?.features || [];
 
-  // Reset
-  this.kennwerte = {};
-  this.hzFlags = {};
+  // Reset nur für NL-Daten, NICHT für Kennwerte!
   this.Niederlassung = {};
   this.nlKoordinaten = {};
-  this.plzKennwerte = {};
-  this.filteredKennwerte = {};
+  this.hzFlags = {};
   this.extraNLs = [];
-
-  const kennzahlenIDs = [
-    "value_hr_n_umsatz_0", "value_umsatz_p_hh_0", "value_wk_in_percent_0",
-    "value_wk_nachbar_0", "value_hz_kosten_0",
-    "value_werbeverweigerer_0", "value_haushalte_0", "value_kaufkraft_0",
-    "value_ums_erhebung_0", "value_kd_erhebung_0",
-    "value_bon_erhebung_0", "value_auflage_0"
-  ];
 
   // Geo-Notes
   const geoNotes = {};
@@ -4067,7 +3954,7 @@ prepareMapData(filteredData) {
     const lat = parseFloat(row["dimension_Lat_0"]?.label);
     const lon = parseFloat(row["dimension_lon_0"]?.label);
 
-    // --- Niederlassung speichern ---
+    // Niederlassung speichern
     if (nlKey) {
       this.Niederlassung[nlKey] = nlKey;
 
@@ -4076,22 +3963,13 @@ prepareMapData(filteredData) {
       }
     }
 
-    // --- PLZ-Kennwerte speichern ---
-    if (plz && plz !== "@NullMember") {
-      this.filteredKennwerte[plz] = {};
+    // HZ-Flag speichern
+    if (plz) {
       this.hzFlags[plz] = hzFlag;
-
-      kennzahlenIDs.forEach(id => {
-        const raw = row[id]?.raw;
-        this.filteredKennwerte[plz][id] = typeof raw === "number" ? raw : "–";
-      });
-
-      this.filteredKennwerte[plz]["dimension_note_0"] = {
-        label: geoNotes[plz] || ""
-      };
     }
   });
 }
+
 
 // getDistanceKm(lat1, lon1, lat2, lon2)
 getDistanceKm(lat1, lon1, lat2, lon2) {
@@ -4165,6 +4043,7 @@ this.updateGeoLayer();
 this.renderDataTable(this.filteredKennwerte);
 
 }
+
 computeWKKennwerte() {
   if (!this.filteredData) return;
 
@@ -4250,7 +4129,12 @@ computeWKKennwerte() {
       value_wk_nachbar_0: { raw: wkNachbarn },
       value_hz_kosten_0: { raw: hzKosten },
       value_hz_potentiell_0: { raw: avgPotHz },
-      value_wk_potentiell_0: { raw: potHzPercent }
+      value_wk_potentiell_0: { raw: potHzPercent },
+      value_ums_erhebung_0: { raw: old.umsatzErhebung ?? 0 },
+      value_kd_erhebung_0: { raw: old.kdErhebung ?? 0 },
+      value_auflage_0: { raw: old.auflage ?? 0 },
+      value_werbeverweigerer_0: { raw: old.werbeverweigerer ?? 0 },
+
     };
 
     // Umsatzdaten übernehmen
@@ -4598,15 +4482,6 @@ getFilteredDataWithRadius() {
 }
 
 
-closeAllPopups() {
-  ["side-popup", "side-popup-umsatz"].forEach(id => {
-    const el = this._shadowRoot.getElementById(id);
-    if (!el) return;
-    el.classList.remove("show");
-    el.classList.add("hidden");
-    el.style.display = "none";
-  });
-}
 
 closeNLTable() {
   const nlContainer = this._shadowRoot.getElementById("nl-info-container");
@@ -4782,141 +4657,167 @@ showEmptyUmsatzPopup(plz) {
         const selectedJahr = jahrSelect.value;
         const selectedNummer = nummerSelect.value;
 
-        this.applyFilter(selectedID, selectedJahr, selectedNummer);
+       this.loadErhebung(selectedID, selectedJahr, selectedNummer);
+
       });
     }
   }
+async render() {
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
+    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
+    return;
+  }
 
-  async render() {
-    if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-      console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-      return;
-    }
+  this.showSpinner();
 
-    this.showSpinner();
+  const rawData = this._myDataSource.data;
 
-    const rawData = this._myDataSource.data;
+  // Filterstruktur & Dropdowns vorbereiten
+  this._erhData = this.buildErhebungsStruktur(rawData);
+  this.setupFilterDropdowns();
 
-    // 🔧 Filterstruktur & Dropdowns vorbereiten
-    this._erhData = this.buildErhebungsStruktur(rawData);
-    this.setupFilterDropdowns();
+  // Filter anwenden oder Rohdaten verwenden
+  const isFiltered = !!this._activeFilter;
+  const filteredData = isFiltered ? this.getFilteredData() : rawData;
 
-    // 🔍 Filter anwenden oder Rohdaten verwenden
-    const isFiltered = !!this._activeFilter;
-    const filteredData = isFiltered ? this.getFilteredData() : rawData;
-
-    // 📦 Daten vorbereiten für Marker, Kennzahlen etc.
+  // prepareMapData darf laufen – zerstört nichts mehr
   this.prepareMapData(filteredData);
 
-// WK neu berechnen
-this.computeWKKennwerte();
-this.computeStreuverlust();
+  // WK neu berechnen
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
 
+  // GeoJSON laden & Layer aktualisieren
+  await this.loadGeoJson();
+  this.updateGeoLayer();
 
+  // Marker neu erstellen
+  this.createAllMarkers();
 
+  // PLZs extrahieren
+  const filteredPLZs = isFiltered
+    ? filteredData
+        .map(d => d["dimension_plz_0"]?.id?.trim())
+        .filter(plz => plz && plz !== "@NullMember")
+    : Object.keys(this.allMarkers);
 
-    // 🌍 GeoJSON laden & Layer aktualisieren
-    await this.loadGeoJson();
+  // Marker anzeigen
+  this.updateMarkers(filteredPLZs);
 
-    this.updateGeoLayer();
-      this.createAllMarkers();
-    // 📌 PLZs extrahieren für Marker-Filterung
-    const filteredPLZs = isFiltered
-      ? filteredData
-          .map(d => d["dimension_plz_0"]?.id?.trim())
-          .filter(plz => plz && plz !== "@NullMember")
-      : Object.keys(this.allMarkers); // ⬅️ Initial: alle Marker anzeigen
+  // Tabelle aktualisieren
+  this.renderDataTable(this.filteredKennwerte);
 
-    // 📍 Marker anzeigen (gefiltert oder vollständig)
-    this.updateMarkers(filteredPLZs);
+  this.hideSpinner();
+}
 
-    // 📊 Tabelle aktualisieren
-    this.renderDataTable(this.filteredKennwerte);
-
-    this.hideSpinner();
-  }
 updateHeatmapLegend() {
 
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   if (!legend) return;
+
+  // ---------------------------------------------------------
+  // Wenn keine Erhebung geladen ist → Legende ausblenden
+  // ---------------------------------------------------------
+  if (!this._activeFilter || !this.filteredPLZWerte || Object.keys(this.filteredPLZWerte).length === 0) {
+    legend.classList.add("hidden");
+    return;
+  }
+
   if (!this.currentMapMode) {
     legend.classList.add("hidden");
     return;
   }
 
-  // WK-Modus → Werbekosten (isHZ === false Skala)
-// WK-Modus → Werbekosten (isHZ === false Skala)
-if (this.currentMapMode === "wk") {
-  legend.innerHTML = `
-    <div><strong>Werbekosten</strong></div>
-
-    <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
-
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#e31a1c"></div> > 25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %
-    </div>
-
-    <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
-
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#cfd4da"></div> > 50 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %
-    </div>
-    <div class="heatmap-legend-row">
-      <div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %
-    </div>
-  `;
-  legend.classList.remove("hidden");
-  return;
-}
-
-
-
-  // Umsatz-Heatmap
-  if (this.currentMapMode === "umsatz-multi") {
+  // ============================================================
+  // WK-MODUS (unverändert)
+  // ============================================================
+  if (this.currentMapMode === "wk") {
     legend.innerHTML = `
-      <div><strong>Umsatz-Heatmap</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;95%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#9d131b"></div> 85–95%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 75–85%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#d9483b"></div> 65–75%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 55–65%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f08a3c"></div> 45–55%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 35–45%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 20–35%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;20%</div>
+      <div><strong>Werbekosten</strong></div>
+
+      <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
+
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e31a1c"></div> &gt; 25 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %</div>
+
+      <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
+
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#cfd4da"></div> &gt; 50 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %</div>
+      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %</div>
     `;
     legend.classList.remove("hidden");
     return;
   }
 
-  // Werbeanteil-Heatmap
+  // ============================================================
+  // UMSATZ-HEATMAP → ABSOLUTE WERTE (IDENTISCH ZUR HEATMAP)
+  // ============================================================
+  if (this.currentMapMode === "umsatz-multi") {
+
+    // ---------------------------------------------------------
+    // 1) Werte wie Heatmap berechnen (DAS ist der Schlüssel!)
+    // ---------------------------------------------------------
+    const values = Object.values(this.filteredPLZWerte)
+      .map(v => this.getUmsatzSumForPLZ(v))   // ⭐ Heatmap-Logik
+      .filter(v => v > 0);
+
+    const max = values.length > 0 ? Math.max(...values) : 0;
+
+    // ---------------------------------------------------------
+    // 2) Dynamische Stufen (identisch zur Heatmap)
+    // ---------------------------------------------------------
+    const steps = [
+      max,
+      max * 0.85,
+      max * 0.75,
+      max * 0.65,
+      max * 0.55,
+      max * 0.45,
+      max * 0.35,
+      max * 0.20,
+      0
+    ];
+
+    // ---------------------------------------------------------
+    // 3) Formatierung
+    // ---------------------------------------------------------
+    const fmt = n =>
+      n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
+
+    // ---------------------------------------------------------
+    // 4) HTML erzeugen — identisch zur Heatmap
+    // ---------------------------------------------------------
+    const rows = steps.map(v => {
+      const color = this.getDynamicHeatColor(v, max);
+      return `
+        <div class="heatmap-legend-row">
+          <div class="heatmap-legend-color" style="background:${color}"></div>
+          <div>${fmt(v)}</div>
+        </div>
+      `;
+    }).join("");
+
+    legend.innerHTML = `
+      <div><strong>Umsatz (absolut)</strong></div>
+      ${rows}
+    `;
+
+    legend.classList.remove("hidden");
+    return;
+  }
+
+  // ============================================================
+  // WERBEANTEIL (unverändert)
+  // ============================================================
   if (this.currentMapMode === "werbeanteil") {
     legend.innerHTML = `
       <div><strong>Werbeanteil</strong></div>
@@ -4935,7 +4836,143 @@ if (this.currentMapMode === "wk") {
 }
 
 
+getUmsatzValueForLegend(v) {
 
+  // 1) Kategorien summieren
+  let sum = 0;
+  for (const cat of this.activeCategories) {
+    if (v[cat] != null) sum += v[cat];
+  }
+
+  // 2) Werbeumsatz / Zusatzumsatz
+  if (this.umsatzMainMode === "werbung") {
+    sum = 0;
+    if (this.useWerbeUmsatz) sum += v.werbung ?? 0;
+    if (this.useZusatzUmsatz) sum += v.zusatz ?? 0;
+  }
+
+  // 3) pro Haushalt
+  if (this.umsatzDarstellung === "hh") {
+    const hh = v.haushalte || 1;
+    sum = sum / hh;
+  }
+
+  return sum;
+}
+
+
+async loadErhebung(erhID, jahr, nummer) {
+  console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
+
+  // Legende einklappen
+  const legend = this._shadowRoot.getElementById("heatmap-legend");
+  legend?.classList.add("hidden");
+
+  // Overlay einblenden
+  this.showLoadingOverlay();
+  this.closeNLTable?.();
+
+  // ---------------------------------------------------------
+  // 1) Daten laden
+  // ---------------------------------------------------------
+  const rawData = await this.queryErhebungFromBW(erhID, jahr, nummer);
+  this._activeFilter = { erhID, jahr, nummer };
+  this.filteredData = rawData;
+
+  // ---------------------------------------------------------
+  // 2) MapData vorbereiten (NLs, Koordinaten, HZ-Flags)
+  // ---------------------------------------------------------
+  this.prepareMapData(rawData);
+
+  // ---------------------------------------------------------
+  // 3) ALLE NLs aktivieren
+  // ---------------------------------------------------------
+  this.allNLs = [
+    ...Object.keys(this.Niederlassung),
+    ...(this.extraNLs?.map(e => e.nl) ?? [])
+  ];
+  this._selectedNLs = new Set(this.allNLs);
+
+  // ---------------------------------------------------------
+  // 4) Marker erstellen (setzt plzImRadius!)
+  // ---------------------------------------------------------
+  this.createAllMarkers();
+
+  // ---------------------------------------------------------
+  // 5) Radius anwenden
+  // ---------------------------------------------------------
+  const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
+  this.applyRadiusFilter(radius);
+
+  // ---------------------------------------------------------
+  // 6) Umsatz + WK-Kennwerte berechnen (JETZT korrekt!)
+  // ---------------------------------------------------------
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
+
+  // ---------------------------------------------------------
+  // 7) GeoLayer aktualisieren
+  // ---------------------------------------------------------
+  this.updateGeoLayer();
+
+  // ---------------------------------------------------------
+  // 8) Erhebungsinfo + Tabelle + Zoom
+  // ---------------------------------------------------------
+  this.prepareErhebungsInfo();
+  this.renderDataTable(this.filteredKennwerte);
+  this.zoomToFilteredPLZ();
+
+  // Overlay ausblenden
+  this.hideLoadingOverlay();
+
+  console.log("✅ loadErhebung abgeschlossen");
+}
+
+
+showLoadingOverlay() {
+  const overlay = this._shadowRoot.getElementById("loading-spinner");
+  if (!overlay) return;
+
+  overlay.classList.remove("hidden");
+  overlay.style.opacity = "1";
+  overlay.style.pointerEvents = "auto"; // blockiert UI
+}
+
+
+hideLoadingOverlay() {
+  const overlay = this._shadowRoot.getElementById("loading-spinner");
+  if (!overlay) return;
+
+  overlay.style.transition = "opacity 0.25s ease";
+  overlay.style.opacity = "0";
+  overlay.style.pointerEvents = "none";
+
+  setTimeout(() => {
+    overlay.classList.add("hidden");
+  }, 250);
+}
+
+
+
+
+async queryErhebungFromBW(erhID, jahr, nummer) {
+  // Aktuell: lokale Datenquelle
+  const raw = this._myDataSource?.data || [];
+
+  return raw.filter(row =>
+    row["dimension_erhebung_0"]?.id == erhID &&
+    row["dimension_jahr_0"]?.id == jahr &&
+    row["dimension_erhebungsnummer_0"]?.id == nummer
+  );
+}
+
+closeAllPopups() {
+  const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+  const popupWK = this._shadowRoot.getElementById("side-popup");
+  popupUmsatz?.classList.add("hidden");
+  popupWK?.classList.add("hidden");
+}
 
 
       showNotesOnMap() {
