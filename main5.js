@@ -1263,7 +1263,6 @@ async loadGeoJson() {
     );
     this._geoData = await response.json();
 
-    // Notes extrahieren
     this.geoNotes = {};
     (this._geoData.features || []).forEach(feature => {
       const plz = feature.properties?.plz?.trim();
@@ -1271,19 +1270,15 @@ async loadGeoJson() {
       if (plz && note) this.geoNotes[plz] = note;
     });
 
-    // Erste Kennwerte berechnen
     const filteredData = this.getFilteredData();
     const plzWerte = this.extractPLZWerte(filteredData);
 
-    // GeoJSON Layer
     this._geoLayer = L.geoJSON(this._geoData, {
       style: feature => {
         const plz = feature.properties?.plz?.trim();
         const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
         const isHZ = this.hzFlags?.[plz] ?? false;
-
         const value = isHZ ? values.wk : values.wkPot;
-
         return {
           fillColor: this.getColor(value, isHZ),
           weight: 1,
@@ -1292,48 +1287,17 @@ async loadGeoJson() {
           fillOpacity: 0.5
         };
       },
-
-      onEachFeature: (feature, layer) => {
-        layer.on("click", e => {
-          const plz = String(e.target.feature.properties.plz).padStart(5, "0");
-
-          this.highlightMapArea(plz);
-          this.highlightTableRowByPLZ(plz);
-
-          const popupWK = this._shadowRoot.getElementById("side-popup");
-          const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-
-          popupWK?.classList.remove("show");
-          popupWK?.classList.add("hidden");
-
-          popupU?.classList.remove("show");
-          popupU?.classList.add("hidden");
-
-          // -----------------------------
-          // Umsatz-Modi (inkl. Werbeanteil)
-          // -----------------------------
-          if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
-            this.activePopupType = "umsatz";
-
-            const values = this.filteredPLZWerte?.[plz];
-            if (!values) {
-              this.showEmptyUmsatzPopup(plz);
-              return;
-            }
-
-            this.showUmsatzPopup(plz, values);
-            return;
-          }
-
-          // -----------------------------
-          // WK-Modus
-          // -----------------------------
-          this.activePopupType = "wk";
-          const kennwerte = this.filteredKennwerte?.[plz];
-          this.showPopup(e.target.feature, kennwerte);
-        });
-      }
+      // Click-Handler werden in applyStyleToLayer gesetzt – hier weglassen
     }).addTo(this.map);
+
+    // ⭐ INDEX AUFBAUEN – einmalig, O(1) Lookup danach
+    this._layerByPLZ = {};
+    this._geoLayer.eachLayer(layer => {
+      const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+      this._layerByPLZ[plz] = layer;
+    });
+
+    console.log(`✅ Layer-Index aufgebaut: ${Object.keys(this._layerByPLZ).length} PLZs`);
 
   } catch (err) {
     console.error("Fehler beim Laden des GeoJSON:", err);
@@ -1698,67 +1662,65 @@ highlightTableRowByPLZ(plz) {
   });
 }
 
-   
-openPopupFromTable(plz) {
-  if (!this._geoLayer) return;
+   openPopupFromTable(plz) {
+  if (!this._layerByPLZ) return;
 
-  let targetLayer = null;
-
-  // Layer finden
-  this._geoLayer.eachLayer(layer => {
-    if (String(layer.feature?.properties?.plz).padStart(5, "0") === plz) {
-      targetLayer = layer;
-    }
-  });
-
+  const targetLayer = this._layerByPLZ[plz];
   if (!targetLayer) return;
 
-  // Popups referenzieren
   const popupWK = this._shadowRoot.getElementById("side-popup");
   const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
 
-  // Beide schließen (safe)
-  if (popupWK) {
-    popupWK.classList.remove("show");
-    popupWK.classList.add("hidden");
-  }
-  if (popupUmsatz) {
-    popupUmsatz.classList.remove("show");
-    popupUmsatz.classList.add("hidden");
-  }
+  popupWK?.classList.remove("show");
+  popupWK?.classList.add("hidden");
+  popupUmsatz?.classList.remove("show");
+  popupUmsatz?.classList.add("hidden");
 
-  // Umsatzmodus → Umsatz-Popup öffnen
   if (this.currentMapMode === "umsatz-multi") {
     const values = this.filteredPLZWerte?.[plz];
-
-    if (values) {
-      this.showUmsatzPopup(plz, values);
-    } else {
-      this.showEmptyUmsatzPopup(plz);
-    }
-
+    values ? this.showUmsatzPopup(plz, values) : this.showEmptyUmsatzPopup(plz);
     return;
   }
 
-  // WK-Modus → WK-Popup öffnen
   const kennwerte = this.filteredKennwerte?.[plz] || {};
   this.showPopup(targetLayer.feature, kennwerte);
 }
 
+_buildDistanceCache() {
+  if (!this._layerByPLZ || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-      
-// highlightMapArea(plz)
-highlightMapArea(plz) {
-  if (!this._geoLayer) return;
+  console.time("⏱ DistanceCache aufbauen");
 
-  let targetLayer = null;
+  this._plzCenterCache = {};
+  this._distanceCache = {};
 
-  this._geoLayer.eachLayer(layer => {
-    if (layer.feature?.properties?.plz === plz) {
-      targetLayer = layer;
+  const plzList = Object.keys(this._layerByPLZ);
+
+  for (let i = 0; i < plzList.length; i++) {
+    const plz = plzList[i];
+    const layer = this._layerByPLZ[plz];
+    const center = layer.getBounds().getCenter();
+    this._plzCenterCache[plz] = center;
+
+    let minDist = Infinity;
+    for (let j = 0; j < this.nlMarkers.length; j++) {
+      const nl = this.nlMarkers[j];
+      const d = this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng);
+      if (d < minDist) minDist = d;
     }
-  });
+    // Minimaldistanz direkt speichern – kein NL-Key-Loop in applyRadiusFilter nötig
+    this._distanceCache[plz] = minDist;
+  }
 
+  console.timeEnd("⏱ DistanceCache aufbauen");
+  console.log(`✅ Distanz-Cache: ${plzList.length} PLZs vorberechnet`);
+}
+
+
+highlightMapArea(plz) {
+  if (!this._layerByPLZ) return;
+
+  const targetLayer = this._layerByPLZ[plz];
   if (!targetLayer) return;
 
   if (this._lastHighlightedLayer) {
@@ -1779,6 +1741,7 @@ highlightMapArea(plz) {
 
   this._lastHighlightedLayer = targetLayer;
 }
+
 
       
 updateSortIcons(activeIndex) {
@@ -2003,10 +1966,7 @@ initializeMapBase() {
       btnAbs.classList.add("active");
     }
 
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+ this._refreshAll();
   });
 
   // ---------------------------------------------------------
@@ -2020,10 +1980,7 @@ initializeMapBase() {
       chkWerbe.checked = true;
     }
 
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+this._refreshAll();
   });
 
   chkMit?.addEventListener("change", () => {
@@ -2034,10 +1991,7 @@ initializeMapBase() {
       chkWerbe.checked = true;
     }
 
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+this._refreshAll();
   });
 
   // ---------------------------------------------------------
@@ -2051,10 +2005,7 @@ initializeMapBase() {
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
 
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+this._refreshAll();
   });
 
   btnHH?.addEventListener("click", () => {
@@ -2065,10 +2016,7 @@ initializeMapBase() {
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnHH.classList.add("active");
 
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+this._refreshAll();
   });
 
   btnWA?.addEventListener("click", () => {
@@ -2088,10 +2036,7 @@ initializeMapBase() {
     chkMit.disabled = true;
     this.useZusatzUmsatz = false;
 
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+this._refreshAll();
   });
 
   // ---------------------------------------------------------
@@ -2113,10 +2058,7 @@ initializeMapBase() {
       this.currentMapMode = "umsatz-multi";
       this.activePopupType = "umsatz";
 
-      this.prepareUmsatzPLZWerte();
-      this.computeWKKennwerte();
-      this.updateGeoLayer();
-      this.updateHeatmapLegend();
+this._refreshAll();
     });
   });
 
@@ -2156,58 +2098,37 @@ initializeMapBase() {
     const radius = slider ? Number(slider.value) : 0;
     this.applyRadiusFilter(radius);
 
-    this.prepareUmsatzPLZWerte();
-    this.computeWKKennwerte();
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+this._refreshAll();
   });
 }
 
 
 
-
-
 updateBestreuungMarkers() {
-  // Erst alles löschen
   this.bestreuungGroup.clearLayers();
+  if (!this.showBestreuung || !this._layerByPLZ) return;
 
-  if (!this.showBestreuung) return;
-
-  if (!this._geoLayer) return;
-
-  this._geoLayer.eachLayer(layer => {
-    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
-
+  const plzList = Object.keys(this._layerByPLZ);
+  for (let i = 0; i < plzList.length; i++) {
+    const plz = plzList[i];
     const daten = this.filteredKennwerte?.[plz];
-    if (!daten) return;
+    if (!daten?.isHZ) continue;
 
-    // Nur HZ-Flag X anzeigen
-    if (daten.isHZ !== true) return;
-
-    const center = layer.getBounds().getCenter();
+    const layer = this._layerByPLZ[plz];
+    const center = this._plzCenterCache?.[plz] ?? layer.getBounds().getCenter();
 
     const icon = L.divIcon({
-      html: `<div style="
-        background:#ffffff;
-        border:2px solid #1565c0;
-        border-radius:50%;
-        width:22px;
-        height:22px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:14px;
-        font-weight:bold;
-        color:#1565c0;
-      ">H</div>`,
+      html: `<div style="background:#fff;border:2px solid #1565c0;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;color:#1565c0;">H</div>`,
       className: "",
       iconSize: [22, 22],
       iconAnchor: [11, 11]
     });
 
     L.marker(center, { icon, interactive: false }).addTo(this.bestreuungGroup);
-  });
+  }
 }
+
+
 
 
 
@@ -2313,6 +2234,7 @@ updateBestreuungMarkers() {
 
   this.updateGeoLayer();
   this.updateNLSelectionUI?.();
+  this._buildDistanceCache();
 }
 
 
@@ -2891,24 +2813,21 @@ getFilteredData() {
 updateGeoLayer() {
   if (!this._geoLayer) return;
 
-  console.group("🧪 updateGeoLayer()");
-  console.log("➡️ Modus:", this.currentMapMode, "| Haushaltmodus:", this.umsatzDarstellung);
-
-  // 1️⃣ Max-Wert global berechnen (für Umsatz-Heatmap)
   this.computeMaxValue();
 
-  // 2️⃣ Alle Layer aktualisieren
-  this._geoLayer.eachLayer(layer => {
-    // ❗ KEIN heatmap-reveal hier
-    this.applyStyleToLayer(layer);
-  });
+  // ⭐ Index statt eachLayer() – deutlich schneller
+  const index = this._layerByPLZ;
+  if (index) {
+    const plzList = Object.keys(index);
+    for (let i = 0; i < plzList.length; i++) {
+      this.applyStyleToLayer(index[plzList[i]]);
+    }
+  } else {
+    // Fallback falls Index noch nicht aufgebaut
+    this._geoLayer.eachLayer(layer => this.applyStyleToLayer(layer));
+  }
 
-  // 3️⃣ Bestreuungsmarker aktualisieren
   this.updateBestreuungMarkers();
-
-  console.groupEnd();
-
-  // ⭐ 4️⃣ Legende aktualisieren (WICHTIG!)
   this.updateHeatmapLegend();
 }
 
@@ -3991,57 +3910,31 @@ getPolygonCenter(layer) {
   return layer.getBounds().getCenter();
 }
 
-
 applyRadiusFilter(radiusKm) {
-  if (!this._geoLayer || !this.nlMarkers || this.nlMarkers.length === 0) return;
+  if (!this._layerByPLZ) return;
 
-  // Cache initialisieren
-  if (!this._plzCenterCache) this._plzCenterCache = {};
-  if (!this._distanceCache) this._distanceCache = {};
+  // Cache noch nicht vorhanden → aufbauen
+  if (!this._distanceCache || Object.keys(this._distanceCache).length === 0) {
+    this._buildDistanceCache();
+  }
 
   const plzImRadius = new Set();
+  const cache = this._distanceCache;
 
-  this._geoLayer.eachLayer(layer => {
-    const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
-    if (!plz) return;
-
-    // 1) PLZ-Zentrum cachen
-    if (!this._plzCenterCache[plz]) {
-      this._plzCenterCache[plz] = layer.getBounds().getCenter();
-    }
-    const center = this._plzCenterCache[plz];
-
-    // 2) Distanz zu NLs cachen
-    if (!this._distanceCache[plz]) this._distanceCache[plz] = {};
-
-    let minDist = Infinity;
-
-    for (const nl of this.nlMarkers) {
-      const key = nl.lat + "," + nl.lng;
-
-      if (!this._distanceCache[plz][key]) {
-        this._distanceCache[plz][key] =
-          this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng);
-      }
-
-      const d = this._distanceCache[plz][key];
-      if (d < minDist) minDist = d;
-    }
-
-    // 3) Radiusentscheidung
-    if (minDist <= radiusKm) {
+  const plzList = Object.keys(this._layerByPLZ);
+  for (let i = 0; i < plzList.length; i++) {
+    const plz = plzList[i];
+    if ((cache[plz] ?? Infinity) <= radiusKm) {
       plzImRadius.add(plz);
     }
-  });
+  }
 
   this.plzImRadius = plzImRadius;
 
-  // 4) Karte + Tabelle aktualisieren
-this.computeWKKennwerte();
-this.computeStreuverlust();
-this.updateGeoLayer();
-this.renderDataTable(this.filteredKennwerte);
-
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
+  this.updateGeoLayer();
+  this.renderDataTable(this.filteredKennwerte);
 }
 
 computeWKKennwerte() {
@@ -4224,27 +4117,38 @@ initRadiusSlider() {
   const slider = this._shadowRoot.getElementById("radius-slider");
   const valueLabel = this._shadowRoot.getElementById("radius-value");
 
-  if (!slider) {
-    console.warn("⚠️ Radius-Slider nicht gefunden!");
-    return;
-  }
+  if (!slider) return;
 
-  // Standardwert anzeigen
   valueLabel.textContent = slider.value;
+
+  // ⭐ Debounce: 80ms – fühlt sich reaktiv an, vermeidet Spam
+  let debounceTimer = null;
 
   slider.addEventListener("input", () => {
     const radius = Number(slider.value);
     valueLabel.textContent = radius;
 
-    // 1) Karte live filtern
-    this.applyRadiusFilter(radius);
-
-    // 2) Tabelle live filtern
-    this.renderDataTable(this.filteredKennwerte);
-
-    // 3) Optional: Zoom live aktualisieren
-    // this.zoomToFilteredPLZ();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      this.applyRadiusFilter(radius);
+      this.renderDataTable(this.filteredKennwerte);
+    }, 80);
   });
+}
+
+
+// ============================================================
+// 9. _refreshAll() – verhindert Doppelberechnungen
+//    → Überall wo prepareUmsatz + computeWK hintereinander stehen
+//      durch this._refreshAll() ersetzen
+// ============================================================
+
+_refreshAll() {
+  this.prepareUmsatzPLZWerte();
+  this.computeWKKennwerte();
+  this.computeStreuverlust();
+  this.updateGeoLayer();
+  this.updateHeatmapLegend();
 }
 
 
@@ -4860,73 +4764,312 @@ getUmsatzValueForLegend(v) {
   return sum;
 }
 
-
 async loadErhebung(erhID, jahr, nummer) {
-  console.log("🚀 loadErhebung gestartet:", erhID, jahr, nummer);
+  console.log("🚀 loadErhebung:", erhID, jahr, nummer);
 
-  // Legende einklappen
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   legend?.classList.add("hidden");
 
-  // Overlay einblenden
-  this.showLoadingOverlay();
   this.closeNLTable?.();
 
-  // ---------------------------------------------------------
-  // 1) Daten laden
-  // ---------------------------------------------------------
-  const rawData = await this.queryErhebungFromBW(erhID, jahr, nummer);
-  this._activeFilter = { erhID, jahr, nummer };
-  this.filteredData = rawData;
+  // ⭐ NEUE Lade-Animation starten
+  this._showCinematicLoader();
 
-  // ---------------------------------------------------------
-  // 2) MapData vorbereiten (NLs, Koordinaten, HZ-Flags)
-  // ---------------------------------------------------------
-  this.prepareMapData(rawData);
+  try {
+    // --- PHASE 1: Daten laden ---
+    this._updateLoaderPhase(1, "Erhebungsdaten werden geladen…");
+    const rawData = await this.queryErhebungFromBW(erhID, jahr, nummer);
+    this._activeFilter = { erhID, jahr, nummer };
+    this.filteredData = rawData;
 
-  // ---------------------------------------------------------
-  // 3) ALLE NLs aktivieren
-  // ---------------------------------------------------------
-  this.allNLs = [
-    ...Object.keys(this.Niederlassung),
-    ...(this.extraNLs?.map(e => e.nl) ?? [])
-  ];
-  this._selectedNLs = new Set(this.allNLs);
+    // --- PHASE 2: Karte vorbereiten ---
+    this._updateLoaderPhase(2, "Karte wird vorbereitet…");
+    this.prepareMapData(rawData);
+    await this.loadGeoJson(); // lädt GeoJSON + baut Index auf
 
-  // ---------------------------------------------------------
-  // 4) Marker erstellen (setzt plzImRadius!)
-  // ---------------------------------------------------------
-  this.createAllMarkers();
+    // --- PHASE 3: Marker + Radius ---
+    this._updateLoaderPhase(3, "Niederlassungen werden gesetzt…");
+    this.allNLs = [
+      ...Object.keys(this.Niederlassung),
+      ...(this.extraNLs?.map(e => e.nl) ?? [])
+    ];
+    this._selectedNLs = new Set(this.allNLs);
+    this.createAllMarkers();
 
-  // ---------------------------------------------------------
-  // 5) Radius anwenden
-  // ---------------------------------------------------------
-  const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
-  this.applyRadiusFilter(radius);
+    const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 40);
+    // ⭐ Cache NACH createAllMarkers() aufbauen (nlMarkers ist jetzt befüllt)
+    this._buildDistanceCache();
+    this.applyRadiusFilter(radius);
 
-  // ---------------------------------------------------------
-  // 6) Umsatz + WK-Kennwerte berechnen (JETZT korrekt!)
-  // ---------------------------------------------------------
-  this.prepareUmsatzPLZWerte();
-  this.computeWKKennwerte();
-  this.computeStreuverlust();
+    // --- PHASE 4: Kennwerte berechnen ---
+    this._updateLoaderPhase(4, "Kennwerte werden berechnet…");
+    this.prepareUmsatzPLZWerte();
+    this.computeWKKennwerte();
+    this.computeStreuverlust();
 
-  // ---------------------------------------------------------
-  // 7) GeoLayer aktualisieren
-  // ---------------------------------------------------------
-  this.updateGeoLayer();
+    // --- Finaler Render ---
+    this.updateGeoLayer();
+    this.prepareErhebungsInfo();
+    this.renderDataTable(this.filteredKennwerte);
+    this.zoomToFilteredPLZ();
 
-  // ---------------------------------------------------------
-  // 8) Erhebungsinfo + Tabelle + Zoom
-  // ---------------------------------------------------------
-  this.prepareErhebungsInfo();
-  this.renderDataTable(this.filteredKennwerte);
-  this.zoomToFilteredPLZ();
+    // ⭐ Kurze Pause für den "Fertig"-Zustand, dann ausblenden
+    this._updateLoaderPhase(5, "Fertig!");
+    await new Promise(r => setTimeout(r, 600));
 
-  // Overlay ausblenden
-  this.hideLoadingOverlay();
+  } finally {
+    this._hideCinematicLoader();
+  }
 
   console.log("✅ loadErhebung abgeschlossen");
+}
+_showCinematicLoader() {
+  // Alten Loader entfernen falls vorhanden
+  this._hideCinematicLoader(true);
+
+  const overlay = document.createElement("div");
+  overlay.id = "cinematic-loader";
+
+  overlay.innerHTML = `
+    <style>
+      #cinematic-loader {
+        position: absolute;
+        inset: 0;
+        z-index: 99999;
+        background: linear-gradient(135deg, #0a0a0a 0%, #1a0305 50%, #0a0a0a 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        animation: loaderFadeIn 0.3s ease;
+      }
+
+      @keyframes loaderFadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+
+      #cinematic-loader .loader-logo {
+        width: 72px;
+        height: 72px;
+        margin-bottom: 32px;
+        position: relative;
+      }
+
+      /* Äußerer Ring – dreht sich langsam */
+      #cinematic-loader .loader-logo::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        border-top-color: #b41821;
+        border-right-color: #b41821;
+        animation: spinSlow 1.8s linear infinite;
+      }
+
+      /* Innerer Ring – dreht sich schneller, entgegengesetzt */
+      #cinematic-loader .loader-logo::after {
+        content: '';
+        position: absolute;
+        inset: 10px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        border-bottom-color: rgba(180,24,33,0.5);
+        animation: spinFast 0.9s linear infinite reverse;
+      }
+
+      /* Kern-Punkt */
+      #cinematic-loader .loader-core {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 12px; height: 12px;
+        border-radius: 50%;
+        background: #b41821;
+        box-shadow: 0 0 20px #b41821, 0 0 40px rgba(180,24,33,0.4);
+        animation: corePulse 1.8s ease-in-out infinite;
+      }
+
+      @keyframes spinSlow  { to { transform: rotate(360deg); } }
+      @keyframes spinFast  { to { transform: rotate(360deg); } }
+      @keyframes corePulse {
+        0%, 100% { transform: translate(-50%,-50%) scale(1);   opacity: 1;   }
+        50%       { transform: translate(-50%,-50%) scale(1.4); opacity: 0.7; }
+      }
+
+      /* Phasen-Text */
+      #cinematic-loader .loader-phase {
+        color: #ffffff;
+        font-size: 1rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        margin-bottom: 6px;
+        min-height: 1.4em;
+        text-align: center;
+        transition: opacity 0.25s ease;
+      }
+
+      /* Fortschrittsbalken */
+      #cinematic-loader .loader-bar-track {
+        width: 260px;
+        height: 3px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 2px;
+        margin-top: 20px;
+        overflow: hidden;
+      }
+
+      #cinematic-loader .loader-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #b41821, #e96a3a);
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 0 8px rgba(180,24,33,0.6);
+      }
+
+      /* Phasen-Dots */
+      #cinematic-loader .loader-dots {
+        display: flex;
+        gap: 20px;
+        margin-top: 24px;
+      }
+
+      #cinematic-loader .loader-dot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        opacity: 0.3;
+        transition: opacity 0.4s ease;
+      }
+
+      #cinematic-loader .loader-dot.active {
+        opacity: 1;
+      }
+
+      #cinematic-loader .loader-dot.done {
+        opacity: 0.6;
+      }
+
+      #cinematic-loader .dot-circle {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #b41821;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      #cinematic-loader .loader-dot.active .dot-circle {
+        transform: scale(1.4);
+        box-shadow: 0 0 8px #b41821;
+      }
+
+      #cinematic-loader .dot-label {
+        font-size: 0.65rem;
+        color: rgba(255,255,255,0.6);
+        font-weight: 500;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      #cinematic-loader.fade-out {
+        animation: loaderFadeOut 0.4s ease forwards;
+      }
+
+      @keyframes loaderFadeOut {
+        to { opacity: 0; pointer-events: none; }
+      }
+    </style>
+
+    <div class="loader-logo">
+      <div class="loader-core"></div>
+    </div>
+
+    <div class="loader-phase" id="loader-phase-text">Verbindung wird aufgebaut…</div>
+
+    <div class="loader-bar-track">
+      <div class="loader-bar-fill" id="loader-bar"></div>
+    </div>
+
+    <div class="loader-dots">
+      <div class="loader-dot" data-phase="1">
+        <div class="dot-circle"></div>
+        <div class="dot-label">Daten</div>
+      </div>
+      <div class="loader-dot" data-phase="2">
+        <div class="dot-circle"></div>
+        <div class="dot-label">Karte</div>
+      </div>
+      <div class="loader-dot" data-phase="3">
+        <div class="dot-circle"></div>
+        <div class="dot-label">Standorte</div>
+      </div>
+      <div class="loader-dot" data-phase="4">
+        <div class="dot-circle"></div>
+        <div class="dot-label">Kennzahlen</div>
+      </div>
+    </div>
+  `;
+
+  // In map-container einhängen
+  const mapContainer = this._shadowRoot.querySelector(".map-container");
+  if (mapContainer) {
+    mapContainer.appendChild(overlay);
+  } else {
+    // Fallback: Shadow Root
+    this._shadowRoot.appendChild(overlay);
+  }
+
+  this._cinematicLoader = overlay;
+}
+
+_updateLoaderPhase(phase, text) {
+  const loader = this._shadowRoot.getElementById("cinematic-loader");
+  if (!loader) return;
+
+  // Text aktualisieren
+  const phaseText = loader.querySelector("#loader-phase-text");
+  if (phaseText) {
+    phaseText.style.opacity = "0";
+    setTimeout(() => {
+      phaseText.textContent = text;
+      phaseText.style.opacity = "1";
+    }, 150);
+  }
+
+  // Fortschrittsbalken
+  const bar = loader.querySelector("#loader-bar");
+  const progressMap = { 1: 15, 2: 40, 3: 65, 4: 85, 5: 100 };
+  if (bar) bar.style.width = (progressMap[phase] || 0) + "%";
+
+  // Dots aktualisieren
+  loader.querySelectorAll(".loader-dot").forEach(dot => {
+    const dotPhase = Number(dot.dataset.phase);
+    dot.classList.remove("active", "done");
+
+    if (dotPhase === phase) {
+      dot.classList.add("active");
+    } else if (dotPhase < phase) {
+      dot.classList.add("done");
+    }
+  });
+}
+
+_hideCinematicLoader(immediate = false) {
+  const loader = this._shadowRoot.getElementById("cinematic-loader");
+  if (!loader) return;
+
+  if (immediate) {
+    loader.remove();
+    return;
+  }
+
+  loader.classList.add("fade-out");
+  setTimeout(() => loader.remove(), 420);
 }
 
 
