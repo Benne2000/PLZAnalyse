@@ -4,1168 +4,1442 @@
     const template = document.createElement('template');
     template.innerHTML = `
     <style>
+      /* ═══════════════════════════════════════════════════
+         DESIGN TOKENS
+      ═══════════════════════════════════════════════════ */
       :host {
+        --red:          #b41821;
+        --red-dark:     #8e1219;
+        --red-light:    #d42030;
+        --red-bg:       #fdf2f2;
+        --red-bg-hover: #fce8e8;
+        --red-border:   rgba(180,24,33,0.2);
+        --red-shadow:   rgba(180,24,33,0.15);
+
+        --white:        #ffffff;
+        --gray-50:      #f8f9fa;
+        --gray-100:     #f1f3f5;
+        --gray-200:     #e9ecef;
+        --gray-300:     #dee2e6;
+        --gray-400:     #ced4da;
+        --gray-500:     #adb5bd;
+        --gray-600:     #6c757d;
+        --gray-700:     #495057;
+        --gray-800:     #343a40;
+        --gray-900:     #212529;
+
+        --shadow-xs:  0 1px 3px rgba(0,0,0,0.06);
+        --shadow-sm:  0 2px 8px rgba(0,0,0,0.08);
+        --shadow-md:  0 4px 16px rgba(0,0,0,0.10);
+        --shadow-lg:  0 8px 32px rgba(0,0,0,0.12);
+        --shadow-red: 0 4px 16px rgba(180,24,33,0.25);
+
+        --radius-sm:  5px;
+        --radius-md:  8px;
+        --radius-lg:  12px;
+        --radius-xl:  16px;
+
+        --font:       'Segoe UI', system-ui, -apple-system, sans-serif;
+
+        --ease-out:   cubic-bezier(0.16, 1, 0.3, 1);
+        --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
         display: block;
         height: 100%;
         width: 100%;
         box-sizing: border-box;
+        font-family: var(--font);
       }
 
-    
+      *, *::before, *::after { box-sizing: border-box; }
 
+      /* ═══════════════════════════════════════════════════
+         LAYOUT
+      ═══════════════════════════════════════════════════ */
       .layout {
         display: flex;
         height: 100%;
         width: 100%;
+        background: var(--gray-50);
       }
 
-.map-container {
-  width: 70%;
-  height: 100%;
-  position: relative;   /* WICHTIG */
-  z-index: 10;
-}
+      /* ═══════════════════════════════════════════════════
+         FILTER SIDEBAR
+      ═══════════════════════════════════════════════════ */
+      .filter-container {
+        width: 30%;
+        padding: 14px 12px;
+        box-sizing: border-box;
+        font-family: var(--font);
+        background: var(--white);
+        border-right: 1px solid var(--gray-200);
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        position: relative;
+        z-index: 2;
+        box-shadow: 2px 0 12px rgba(0,0,0,0.04);
+      }
 
+      /* Sidebar heading strip */
+      .filter-container::before {
+        content: '';
+        display: block;
+        height: 3px;
+        background: linear-gradient(90deg, var(--red), var(--red-light));
+        margin: -14px -12px 12px;
+        border-radius: 0;
+      }
 
+      .filter-container label {
+        display: block;
+        margin-top: 8px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--gray-500);
+      }
+
+      .filter-container select {
+        width: 100%;
+        margin-top: 4px;
+        padding: 7px 10px;
+        font-size: 0.85rem;
+        font-family: var(--font);
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        background: var(--gray-50);
+        color: var(--gray-800);
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' fill='none'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236c757d' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        cursor: pointer;
+        transition: border-color 0.18s var(--ease-in-out),
+                    box-shadow 0.18s var(--ease-in-out),
+                    background 0.18s var(--ease-in-out);
+        outline: none;
+      }
+
+      .filter-container select:hover:not(:disabled) {
+        border-color: var(--red-border);
+        background-color: var(--white);
+      }
+
+      .filter-container select:focus {
+        border-color: var(--red);
+        box-shadow: 0 0 0 3px var(--red-shadow);
+        background-color: var(--white);
+      }
+
+      .filter-container select:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+
+      /* ─── Anzeigen Button ─── */
+      #filter-button {
+        width: 100%;
+        margin-top: 10px;
+        padding: 9px 16px;
+        font-size: 0.87rem;
+        font-family: var(--font);
+        font-weight: 600;
+        color: var(--white);
+        background: var(--red);
+        border: none;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        transition: background 0.18s var(--ease-in-out),
+                    transform 0.12s var(--ease-in-out),
+                    box-shadow 0.18s var(--ease-in-out);
+      }
+
+      #filter-button::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%);
+        pointer-events: none;
+      }
+
+      #filter-button:hover {
+        background: var(--red-light);
+        box-shadow: var(--shadow-red);
+        transform: translateY(-1px);
+      }
+
+      #filter-button:active {
+        transform: translateY(0);
+        box-shadow: none;
+      }
+
+      /* ─── Erhebungsübersicht Button ─── */
+      .info-toggle-btn {
+        width: 100%;
+        margin-top: 8px;
+        padding: 7px 12px;
+        font-size: 0.8rem;
+        font-family: var(--font);
+        font-weight: 600;
+        color: var(--red);
+        background: transparent;
+        border: 1.5px solid var(--red-border);
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: background 0.18s, border-color 0.18s, color 0.18s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      .info-toggle-btn:hover {
+        background: var(--red-bg);
+        border-color: var(--red);
+      }
+
+      /* ═══════════════════════════════════════════════════
+         PLZ TABLE
+      ═══════════════════════════════════════════════════ */
+      .table-container {
+        margin-top: 10px;
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--gray-200);
+        box-shadow: var(--shadow-xs);
+        font-family: var(--font);
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 0;
+        padding: 0;
+        transition: box-shadow 0.2s;
+      }
+
+      .table-container:hover {
+        box-shadow: var(--shadow-sm);
+      }
+
+      .table-wrapper {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        transition: transform 0.32s var(--ease-out);
+        overflow: hidden;
+      }
+
+      .table-scroll {
+        flex: 1;
+        overflow-y: auto;
+        min-height: 0;
+        scrollbar-width: thin;
+        scrollbar-color: var(--red) var(--gray-100);
+      }
+
+      .table-scroll::-webkit-scrollbar { width: 5px; }
+      .table-scroll::-webkit-scrollbar-track { background: var(--gray-100); }
+      .table-scroll::-webkit-scrollbar-thumb {
+        background: var(--red);
+        border-radius: 10px;
+      }
+
+      .table-container table {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      .table-container thead {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+      }
+
+      .table-container th {
+        background: var(--red);
+        color: var(--white);
+        padding: 8px 10px;
+        text-align: left;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        white-space: pre-line;
+        border-bottom: none;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s;
+      }
+
+      .table-container th:hover { background: var(--red-dark); }
+
+      .table-container td {
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--gray-100);
+        text-align: left;
+        font-size: 0.8rem;
+        color: var(--gray-700);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        transition: background 0.12s;
+      }
+
+      .table-container tbody tr {
+        transition: background 0.12s;
+        cursor: pointer;
+      }
+
+      .table-container tbody tr:hover td {
+        background: var(--red-bg);
+        color: var(--gray-900);
+      }
+
+      .table-row-selected td {
+        background: #fff3f3 !important;
+        border-left: 3px solid var(--red);
+      }
+
+      /* ─── Streuverlust Footer ─── */
+      #streuverlust-box {
+        flex-shrink: 0;
+        background: var(--red-bg);
+        border-top: 2px solid var(--red);
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        color: var(--gray-700);
+      }
+
+      #streuverlust-box strong { color: var(--red); }
+
+      /* ═══════════════════════════════════════════════════
+         NL INFO TABLE (fährt von unten hoch)
+      ═══════════════════════════════════════════════════ */
+      #nl-info-container {
+        position: absolute;
+        left: 0; right: 0; bottom: 0;
+        height: 62%;
+        max-height: 72%;
+        background: var(--white);
+        border-top: 2px solid var(--red);
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
+        transform: translateY(102%);
+        opacity: 0;
+        transition: transform 0.36s var(--ease-out), opacity 0.28s ease;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        z-index: 10;
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      }
+
+      #nl-info-container.show {
+        transform: translateY(0);
+        opacity: 1;
+      }
+
+      .nl-info-scroll {
+        flex: 1; min-height: 0; overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: var(--red) var(--gray-100);
+      }
+
+      .nl-info-scroll::-webkit-scrollbar { width: 5px; }
+      .nl-info-scroll::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+
+      .nl-info-table {
+        width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.78rem;
+      }
+
+      .nl-info-table th {
+        background: var(--red);
+        color: white; padding: 8px 8px;
+        position: sticky; top: 0; z-index: 2;
+        white-space: pre-line;
+        border-right: 1px solid rgba(255,255,255,0.2);
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+      }
+
+      .nl-info-table td {
+        padding: 6px 8px;
+        border-bottom: 1px solid var(--gray-100);
+        border-right: 1px solid var(--gray-100);
+        font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        color: var(--gray-700);
+        transition: background 0.12s;
+      }
+
+      .nl-info-row { cursor: pointer; transition: background 0.12s; }
+      .nl-info-row:hover td { background: var(--red-bg); }
+      .nl-info-row.table-row-selected td {
+        background: #fff3f3;
+        border-left: 3px solid var(--red);
+      }
+
+      .nl-col-nl   { width: 30px; }
+      .nl-col-jahr { width: 70px; }
+      .nl-col-erf  { width: 58px; }
+      .nl-col-pct1 { width: 30px; }
+      .nl-col-val  { width: 55px; }
+      .nl-col-pct2 { width: 30px; }
+      .nl-col-abd  { width: 55px; }
+
+      .filter-container.nl-info-active .table-wrapper {
+        transform: translateY(-102%);
+        transition: transform 0.36s var(--ease-out);
+      }
+
+      /* ═══════════════════════════════════════════════════
+         MAP CONTAINER
+      ═══════════════════════════════════════════════════ */
+      .map-container {
+        width: 70%;
+        height: 100%;
+        position: relative;
+        z-index: 10;
+      }
 
       #map {
         height: 100%;
         width: 100%;
-        background: white;
+        background: #e8ecf0;
       }
+
+      /* ─── Loading Spinner ─── */
       .spinner {
-    width: 40px;
-    height: 40px;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #b41821;
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    z-index: 2000;
-  }
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-
-
-  #loading-spinner.hidden {
-    display: none;
-  }
-
-
-      .note-label {
-        background: rgba(255, 255, 255, 0.8);
-        border: 1px solid #999;
-        padding: 2px 6px;
-        font-size: 11px;
-        color: #333;
-        border-radius: 4px;
+        width: 42px; height: 42px;
+        border: 3px solid rgba(180,24,33,0.15);
+        border-top: 3px solid var(--red);
+        border-radius: 50%;
+        animation: spin 0.9s linear infinite;
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        z-index: 2000;
       }
 
-/* ------------------------------------------------------ */
-/* Gemeinsames Popup-Layout für WK & Umsatz               */
-/* ------------------------------------------------------ */
-
-.side-popup {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 25%;
-  height: 70%;
-  background: white;
-  border-left: 2px solid #b41821;
-  padding: 10px;
-  font-family: sans-serif;
-  color: #b41821;
-  box-sizing: border-box;
-  overflow-y: auto;
-  z-index: 99999;
-
-  /* Animation */
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-.side-popup.show {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-.side-popup.hidden {
-  opacity: 0;
-  transform: translateX(20px);
-  pointer-events: none;
-}
-
-/* Close-Button */
-.side-popup .close-btn {
-  position: absolute;
-  top: 5px;
-  right: 8px;
-  background: #b41821;
-  color: white;
-  border: none;
-  padding: 2px 6px;
-  font-size: 12px;
-  cursor: pointer;
-  border-radius: 3px;
-}
-
-/* ------------------------------------------------------ */
-/* Tabellen-Layout (identisch für WK & Umsatz)            */
-/* ------------------------------------------------------ */
-
-.side-popup table {
-  width: 100%;
-  table-layout: fixed;
-  border-collapse: collapse;
-  border: 1px solid #b41821;
-  margin-top: 30px;
-}
-.side-popup th {
-  background-color: #b41821;
-  color: white;
-  font-weight: bold;
-  padding: 6px;
-  text-align: left;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  border: none; /* NEU */
-}
-
-.side-popup td {
-  font-size: 0.85rem;
-  padding: 4px 8px;
-  color: black;
-  font-weight: bold;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  border: none; /* NEU */
-}
-
-
-.side-popup th.subtitle-cell {
-  background-color: #f3f3f3;
-  color: black;
-  font-weight: bold;
-  padding: 6px;
-  font-size: 0.85rem;
-}
-
-
-.side-popup td.label-cell {
-  width: 70%;
-  text-align: left;
-}
-
-.side-popup td.value-cell {
-  width: 30%;
-  text-align: right;
-  font-weight: normal;
-}
-
-.side-popup .section-title {
-  background: #f3f3f3;
-  color: #000;
-  font-weight: bold;
-  padding: 6px 8px;
-  font-size: 0.85rem;
-  border-top: 1px solid #b41821;   /* optional */
-  border-bottom: 1px solid #b41821; /* optional */
-}
-
-
-
-/* ------------------------------------------------------ */
-/* UMSATZ-POPUP (sauber, stabil, bündig, wie WK-Popup)    */
-/* ------------------------------------------------------ */
-
-#side-popup-umsatz {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 25%;
-  height: 70%;
-  background: white;
-  border-left: 2px solid #b41821;
-  border-top: 2px solid #b41821;
-  box-sizing: border-box;
-  overflow-y: auto;
-  z-index: 99999;
-
-  opacity: 0;
-  transform: translateX(20px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-
-#side-popup-umsatz.show {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Header */
-#side-popup-umsatz .popup-header {
-  background: #b41821;
-  color: white;
-  padding: 10px 12px;
-  font-size: 1rem;
-  font-weight: 700;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-#side-popup-umsatz .popup-header .close-btn {
-  background: white;
-  color: #b41821;
-  border: none;
-  padding: 2px 8px;
-  font-size: 14px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-/* Summenblock */
-.umsatz-subheader {
-  padding: 14px 12px 4px 12px;
-  font-size: 0.95rem;
-  line-height: 1.5;
-}
-
-.umsatz-subheader .strong {
-  font-weight: 700;
-  color: #000;
-}
-
-/* Abschnittstitel */
-.section-title {
-  margin: 12px 0 6px 0;
-  padding: 6px 12px;
-  background: #f3f3f3;
-  border-top: 1px solid #b41821;
-  border-bottom: 1px solid #b41821;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #333;
-}
-.umsatz-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr 0.8fr; /* Beschreibung | Absolut | HH */
-  gap: 6px 12px;
-  padding: 0 12px;
-  align-items: center;
-}
-
-.umsatz-grid.header {
-  font-weight: 700;
-  color: #000;
-  margin-bottom: 4px;
-}
-
-
-.umsatz-grid .label {
-  font-weight: 500;
-  color: #333;
-}
-
-.umsatz-grid .value {
-  text-align: right;
-  font-weight: 600;
-  color: #111;
-}
-
-
-/* Balken */
-.umsatz-bar {
-  height: 12px;
-  border-radius: 6px;
-  overflow: hidden;
-  display: flex;
-  margin: 8px 12px;
-}
-
-.share-stationaer { background: #b41821; }
-.share-pluscard   { background: #1f78b4; }
-.share-ra         { background: #33a02c; }
-.share-online     { background: #ffb000; }
-
-/* Legende */
-.umsatz-legend {
-  display: flex;
-  gap: 12px;
-  padding: 0 12px 12px 12px;
-  font-size: 0.85rem;
-  color: #444;
-}
-
-.disabled-cell {
-  opacity: 0.35;
-  filter: grayscale(100%);
-}
-
-
-/* ------------------------------------------------------ */
-/* HH-Kennzahlen-Tabelle                                  */
-/* ------------------------------------------------------ */
-
-.side-popup .hh-table {
-  margin-top: 20px;
-}
-
-.side-popup .hh-table th {
-  background-color: #f3f3f3;
-  color: black;
-  font-weight: bold;
-  padding: 6px;
-  font-size: 0.85rem;
-}
-
-/* ============================================
-   PANEL-HÖHE & ANIMATION
-   ============================================ */
-
-#map-control-panel {
-  position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 25%;
-  height: 25%;              /* ⭐ Standardhöhe */
-  max-height: 55%;          /* ⭐ Obergrenze */
-  overflow-y: auto;
-  background: #fafafa;
-  border-left: 2px solid #b41821;
-  border-top: 2px solid #b41821;
-  padding: 14px;
-  box-sizing: border-box;
-  font-family: sans-serif;
-  z-index: 20;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  transition: height 0.35s ease;
-}
-
-/* ⭐ Wenn Umsatz aktiv → Panel wächst */
-#map-control-panel.panel-large {
-  height: 55%;
-}
-
-#map-control-panel.panel-medium {
-  height: 30%;
-}
-
-
-
-
-/* Karten-Panel Cards */
-.panel-card {
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 14px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.panel-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #b41821;
-  margin-bottom: 4px;
-}
-
-/* Switch Buttons (WK / Umsatz) */
-.switch-row {
-  display: flex;
-  gap: 8px;
-}
-
-.switch-btn {
-  flex: 1;
-  padding: 10px;
-  border-radius: 6px;
-  border: 2px solid #b41821;
-  background: white;
-  color: #b41821;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.switch-btn.active {
-  background: #b41821;
-  color: white;
-}
-
-.switch-btn:hover:not(.active) {
-  background: #fff3f3;
-}
-
-/* Option Rows */
-.option-row {
-  display: flex;
-  gap: 12px;
-  font-size: 0.85rem;
-  color: #333;
-}
-/* ============================================
-   Moderner Segmented Switch (Apple-Style)
-   ============================================ */
-
-.mode-selector {
-  display: flex;
-  background: #f2f2f2;
-  border-radius: 8px;
-  padding: 4px;
-  gap: 4px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.mode-selector span {
-  flex: 1;
-  text-align: center;
-  padding: 8px 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border-radius: 6px;
-  transition: 0.2s;
-  color: #666;
-}
-
-/* Aktive Seite links */
-.mode-selector.active-left .mode-left {
-  background: #b41821;
-  color: white;
-}
-
-/* Aktive Seite rechts */
-.mode-selector.active-right .mode-right {
-  background: #b41821;
-  color: white;
-}
-
-/* Kategorien */
-.category-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.category-toggle {
-  padding: 10px;
-  border-radius: 6px;
-  border: 1px solid #b41821;
-  background: white;
-  color: #b41821;
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.category-toggle.active {
-  background: #fff3f3;
-  box-shadow: 0 0 6px rgba(180,24,33,0.4);
-}
-
-
-/* --------------------------------------------- */
-/* PLZ-TABELLE (OBERE TABELLE) */
-/* --------------------------------------------- */
-
-.table-container {
-  margin-top: 1rem;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  font-family: sans-serif;
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  padding: 0;
-}
-
-.table-wrapper {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  transition: transform 0.35s ease;
-  overflow: hidden;
-}
-
-.table-scroll {
-  flex: 1;
-  overflow-y: auto;
-  border: 1px solid #b41821;
-  border-radius: 6px;
-  background: white;
-  min-height: 0;
-  margin-bottom: 8px;
-}
-
-.table-container table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table-container th,
-.table-container td {
-  padding: 0.6rem 0.8rem;
-  border-bottom: 1px solid #eee;
-  text-align: left;
-  font-size: 0.8rem;
-}
-
-.table-container th {
-  background-color: #f5f5f5;
-  font-weight: 600;
-  color: #333;
-}
-
-.table-container tr:hover {
-  background-color: #f0f8ff;
-}
-
-.table-row-selected {
-  background-color: #fff8c4 !important;
-}
-
-/* --------------------------------------------- */
-/* STREUVERLUST (STICKY FOOTER) */
-/* --------------------------------------------- */
-
-#streuverlust-box {
-  position: sticky;
-  bottom: 0;
-  background: white;
-  padding: 10px;
-  border-top: 2px solid #b41821;
-  z-index: 5;
-  transition: transform 0.35s ease;
-}
-
-/* --------------------------------------------- */
-/* NL-TABELLE (UNTERE TABELLE) */
-/* --------------------------------------------- */
-/* ------------------------------------------------------ */
-/* NL-INFO-CONTAINER (fährt von unten hoch und runter)    */
-/* ------------------------------------------------------ */
-
-#nl-info-container {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-
-  height: 60%; /* oder auto + max-height */
-  max-height: 70%;
-
-  background: #fff;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-
-  transform: translateY(100%);
-  opacity: 0;
-  transition: transform 0.35s ease, opacity 0.35s ease;
-
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 10;
-}
-
-
-#nl-info-container.show {
-  transform: translateY(0);
-  opacity: 1;
-}
-
-/* Scrollbereich */
-.nl-info-scroll {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #b41821 #ffffff;
-}
-
-.nl-info-scroll::-webkit-scrollbar {
-  width: 6px;
-}
-
-.nl-info-scroll::-webkit-scrollbar-thumb {
-  background: #b41821;
-  border-radius: 4px;
-}
-
-/* Tabelle */
-.nl-info-table {
-  width: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-  font-size: 0.8rem;
-}
-
-.nl-info-table th {
-  background-color: #b41821;
-  color: white;
-  padding: 8px;
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  white-space: pre-line;
-  border-bottom: 1px solid #b41821;
-  border-right: 1px solid #b41821;
-}
-
-.nl-info-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid #b41821;
-  border-right: 1px solid #b41821;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.nl-info-row:hover {
-  background-color: #f0f8ff;
-  cursor: pointer;
-}
-
-/* Spaltenbreiten */
-.nl-col-nl      { width: 15px; }
-.nl-col-jahr    { width: 55px; }
-.nl-col-erf     { width: 45px; }
-.nl-col-pct1    { width: 25px; }
-.nl-col-val     { width: 40px; }
-.nl-col-pct2    { width: 25px; }
-.nl-col-abd     { width: 45px; }
-
-/* ------------------------------------------------------ */
-/* PLZ-TABELLE HOCHSCHIEBEN, WENN NL-INFO AKTIV           */
-/* ------------------------------------------------------ */
-
-.filter-container.nl-info-active .table-wrapper {
-  transform: translateY(-100%);
-  transition: transform 0.35s ease;
-}
-
-/* ------------------------------------------------------ */
-/* FILTER-CONTAINER BASISLAYOUT                           */
-/* ------------------------------------------------------ */
-
-.filter-container {
-  width: 30%;
-  padding: 10px;
-  box-sizing: border-box;
-  font-family: sans-serif;
-  background: #f2f4f7;
-  border-right: 2px solid #b41821;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  position: relative;
-  z-index: 2;
-}
-
-.filter-container label {
-  display: block;
-  margin-top: 10px;
-  font-weight: bold;
-  color: #333;
-}
-
-.filter-container select,
-.filter-container button {
-  width: 100%;
-  margin-top: 5px;
-  padding: 6px;
-  font-size: 0.9rem;
-}
-
-
-/* --------------------------------------------- */
-/* RADIUS-SLIDER */
-/* --------------------------------------------- */
-#radius-slider-container {
-  position: absolute;
-  top: 10px;
-  right: 40%; /* weiter links */
-  background: white;
-  padding: 8px 12px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-  font-size: 14px;
-  z-index: 9999;
-}
-#map-tile-toggle-btn {
-  position: absolute;
-  bottom: 20px;
-  right: 40%;
-  width: 54px;   /* größer */
-  height: 54px;  /* größer */
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  cursor: pointer;
-  z-index: 9999;
-
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
-  background-size: 65%; /* größer */
-  background-repeat: no-repeat;
-  background-position: center;
-
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-#map-tile-toggle-btn:hover {
-  transform: scale(1.12); /* etwas größerer Hover */
-  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-}
-
-#legend-toggle-btn {
-  position: absolute;
-  bottom: 20px;
-  left: 5%; /* ⭐ unten links */
-  width: 54px;
-  height: 54px;
-  background: white;
-  border-radius: 50%;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-  cursor: pointer;
-  z-index: 9999;
-
-  /* ⭐ EXAKT wie map-tile-toggle-btn */
-   background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24">      <rect x="4" y="5" width="16" height="2" rx="1"/>      <rect x="4" y="11" width="12" height="2" rx="1"/>      <rect x="4" y="17" width="8" height="2" rx="1"/>    </svg>'); background-size: 65%;
-  background-repeat: no-repeat;
-  background-position: center;
-
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-
-#legend-toggle-btn:hover {
-  transform: scale(1.12);
-  box-shadow: 0 3px 12px rgba(0,0,0,0.4);
-}
-
-
-.analysis-switch {
-  display: flex;
-  gap: 0;
-  margin-bottom: 16px;
-}
-
-.analysis-btn {
-  flex: 1;
-  padding: 14px 16px;              /* ✔ höhere Buttons */
-  text-align: center;
-  cursor: pointer;
-  background: white;
-  color: #b41821;
-  font-size: 1rem;                 /* ✔ größere Schrift */
-  font-weight: 700;                /* ✔ fetter */
-  border: 2px solid #b41821;       /* ✔ kräftiger Rahmen */
-  border-right: none;
-  border-radius: 6px 0 0 6px;      /* ✔ leichte Rundung */
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.analysis-btn:last-child {
-  border-right: 2px solid #b41821;
-  border-radius: 0 6px 6px 0;      /* ✔ rechte Rundung */
-}
-
-/* ⭐ aktive Box */
-.analysis-btn.active {
-  background: #b41821 !important;
-  color: white !important;
-}
-
-/* Hover nur für NICHT aktive */
-.analysis-btn:not(.active):hover {
-  background: #ffecec;
-}
-/* ============================================
-   Untergeordneter ABS/HH Switch
-   ============================================ */
-
-#umsatz-mode-switch {
-  background: #ececec;
-  border-radius: 6px;
-  padding: 3px;
-  display: flex;
-  gap: 4px;
-  cursor: pointer;
-  user-select: none;
-  width: 100%;
-  margin-top: -4px;
-  margin-bottom: 4px;
-}
-
-#umsatz-mode-switch span {
-  flex: 1;
-  text-align: center;
-  padding: 5px 0;
-  font-size: 0.75rem;       /* ⭐ kleiner */
-  font-weight: 600;
-  border-radius: 4px;
-  transition: 0.2s;
-  color: #666;
-}
-
-#umsatz-mode-switch.active-left .mode-left {
-  background: #b41821;
-  color: white;
-}
-
-#umsatz-mode-switch.active-right .mode-right {
-  background: #b41821;
-  color: white;
-}
-
-
-
-
-
-.map-toggle {
-  padding: 10px;
-  border: 1px solid #b41821;
-  border-radius: 8px;
-  background: white;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #b41821;
-  font-weight: bold;
-  text-align: center;
-
-}
-
-.map-toggle.active {
-  background: #fff3f3;
-  box-shadow: 0 0 6px rgba(180,24,33,0.4);
-}
-.hidden {
-  display: none;
-}
-.umsatz-analysis-row {
-  display: none;
-}
-.umsatz-analysis-row .switch-btn {
-  padding: 6px 8px;
-  font-size: 0.75rem;
-  border-width: 1px;
-}
-
-.umsatz-analysis-row.show {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 6px;
-}
-.compact-switch {
-  display: flex;
-  background: #f2f2f2;
-  border-radius: 6px;
-  padding: 3px;
-  gap: 3px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.compact-switch span {
-  flex: 1;
-  text-align: center;
-  padding: 5px 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: 4px;
-  transition: 0.2s;
-  color: #555;
-}
-
-.compact-switch.active-left .mode-left {
-  background: #b41821;
-  color: white;
-}
-
-.compact-switch.active-right .mode-right {
-  background: #b41821;
-  color: white;
-}
-
-.switch-label {
-  font-size: 0.75rem;
-  font-weight: 700;
-  margin-bottom: 2px;
-  color: #444;
-}
-
-.big-check {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 8px;
-  border: 2px solid #b41821;
-  border-radius: 6px;
-  background: #fff;
-  font-size: 0.9rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.big-check:hover {
-  background: #fff3f3;
-}
-
-.big-check input {
-  transform: scale(1.3);
-  accent-color: #b41821;
-}
-.triple-switch {
-  display: flex;
-  background: #f2f2f2;
-  border-radius: 6px;
-  padding: 3px;
-  gap: 3px;
-  user-select: none;
-}
-
-.triple-switch span {
-  flex: 1;
-  text-align: center;
-  padding: 6px 0;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: 0.2s;
-  color: #555;
-}
-
-.triple-switch span.active {
-  background: #b41821;
-  color: white;
-}
-
-.triple-switch span.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* 📦 Heatmap-Legende (unten links über dem Button) */
-#heatmap-legend {
-  position: absolute;
-  bottom: 90px;
-  left: 5%;
-
-  background: white;
-  border: 2px solid #b41821;
-  border-radius: 10px;
-  padding: 12px 14px;
-
-  width: 220px;
-  max-height: 300px;
-  overflow-y: auto;
-
-  font-size: 12px;
-  font-family: sans-serif;
-
-  z-index: 9998;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-
-  pointer-events: none; /* blockiert NICHT die Karte */
-  opacity: 1;
-  transition: opacity 0.25s ease;
-}
-
-/* ⭐ Legende verstecken */
-#heatmap-legend.hidden {
-  opacity: 0;
-  visibility: hidden;
-}
-
-/* Zeilen */
-#heatmap-legend .heatmap-legend-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-/* Farbfelder */
-#heatmap-legend .heatmap-legend-color {
-  width: 20px;
-  height: 12px;
-  border-radius: 3px;
-  border: 1px solid #999;
-}
-
-.heatmap-reveal {
-  mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
-  -webkit-mask-image: linear-gradient(to right, black 0%, black 0%, transparent 0%);
-  transition: mask-image 0.8s ease, -webkit-mask-image 0.8s ease;
-}
-
-
-</style>
-
-<div class="layout">
-
-  <!-- 🔍 Filterbereich -->
-  <div class="filter-container">
-
-    <label for="erhebung-select">ErhebungsID:</label>
-    <select id="erhebung-select"></select>
-
-    <label for="jahr-select">Jahr:</label>
-    <select id="jahr-select" disabled></select>
-
-    <label for="nummer-select">Erhebungsnummer:</label>
-    <select id="nummer-select" disabled></select>
-
-    <button id="filter-button">Anzeigen</button>
-
-    <!-- 📊 Tabellenbereich -->
-    <div class="table-container">
-
-      <!-- PLZ-Tabelle -->
-      <div class="table-wrapper" id="table-container">
-        <div id="streuverlust-box"></div>
+      @keyframes spin {
+        0%   { transform: translate(-50%,-50%) rotate(0deg); }
+        100% { transform: translate(-50%,-50%) rotate(360deg); }
+      }
+
+      #loading-spinner.hidden { display: none; }
+
+      /* ─── Note Labels ─── */
+      .note-label {
+        background: rgba(255,255,255,0.92);
+        border: 1px solid var(--gray-300);
+        padding: 2px 7px;
+        font-size: 10px;
+        color: var(--gray-700);
+        border-radius: 4px;
+        font-family: var(--font);
+        box-shadow: var(--shadow-xs);
+        backdrop-filter: blur(4px);
+      }
+
+      /* ═══════════════════════════════════════════════════
+         RADIUS SLIDER
+      ═══════════════════════════════════════════════════ */
+      #radius-slider-container {
+        position: absolute;
+        top: 12px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: var(--white);
+        padding: 7px 14px;
+        border-radius: 100px;
+        box-shadow: var(--shadow-md);
+        font-size: 13px;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--gray-200);
+        animation: slideDown 0.4s var(--ease-out);
+      }
+
+      @keyframes slideDown {
+        from { transform: translateX(-50%) translateY(-12px); opacity: 0; }
+        to   { transform: translateX(-50%) translateY(0); opacity: 1; }
+      }
+
+      #radius-slider-container label {
+        color: var(--gray-600);
+        font-size: 0.8rem;
+        font-weight: 500;
+        white-space: nowrap;
+      }
+
+      #radius-value {
+        color: var(--red);
+        font-weight: 700;
+        min-width: 24px;
+        display: inline-block;
+        text-align: right;
+      }
+
+      #radius-slider {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 110px;
+        height: 4px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, var(--red) 0%, var(--gray-200) 0%);
+        cursor: pointer;
+        outline: none;
+        transition: background 0.1s;
+      }
+
+      #radius-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        background: var(--white);
+        border: 2.5px solid var(--red);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+        cursor: pointer;
+        transition: transform 0.15s var(--ease-out), box-shadow 0.15s;
+      }
+
+      #radius-slider::-webkit-slider-thumb:hover {
+        transform: scale(1.2);
+        box-shadow: 0 2px 8px var(--red-shadow);
+      }
+
+      #radius-slider::-moz-range-thumb {
+        width: 16px; height: 16px;
+        border-radius: 50%;
+        background: var(--white);
+        border: 2.5px solid var(--red);
+        cursor: pointer;
+      }
+
+      /* ═══════════════════════════════════════════════════
+         MAP BUTTONS (Tiles + Legend)
+      ═══════════════════════════════════════════════════ */
+      #map-tile-toggle-btn,
+      #legend-toggle-btn {
+        position: absolute;
+        width: 40px; height: 40px;
+        background: var(--white);
+        border-radius: 50%;
+        box-shadow: var(--shadow-md);
+        cursor: pointer;
+        z-index: 9999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1.5px solid var(--gray-200);
+        transition: transform 0.18s var(--ease-out),
+                    box-shadow 0.18s,
+                    border-color 0.18s;
+      }
+
+      #map-tile-toggle-btn:hover,
+      #legend-toggle-btn:hover {
+        transform: scale(1.1);
+        box-shadow: var(--shadow-lg);
+        border-color: var(--red);
+      }
+
+      #map-tile-toggle-btn:active,
+      #legend-toggle-btn:active {
+        transform: scale(0.96);
+      }
+
+      #map-tile-toggle-btn {
+        bottom: 24px; right: 14px;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
+        background-size: 55%;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      #legend-toggle-btn {
+        bottom: 70px; right: 14px;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="2" rx="1"/><rect x="4" y="11" width="12" height="2" rx="1"/><rect x="4" y="17" width="8" height="2" rx="1"/></svg>');
+        background-size: 55%;
+        background-repeat: no-repeat;
+        background-position: center;
+      }
+
+      /* ═══════════════════════════════════════════════════
+         HEATMAP LEGEND
+      ═══════════════════════════════════════════════════ */
+      #heatmap-legend {
+        position: absolute;
+        bottom: 118px; right: 12px;
+        background: rgba(255,255,255,0.97);
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: 12px 14px;
+        width: 200px;
+        max-height: 290px;
+        overflow-y: auto;
+        font-size: 11.5px;
+        font-family: var(--font);
+        z-index: 9998;
+        box-shadow: var(--shadow-lg);
+        pointer-events: none;
+        opacity: 1;
+        transform-origin: bottom right;
+        transition: opacity 0.22s ease, transform 0.22s var(--ease-out), visibility 0.22s;
+      }
+
+      #heatmap-legend.hidden {
+        opacity: 0;
+        transform: scale(0.94);
+        visibility: hidden;
+      }
+
+      #heatmap-legend strong {
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--gray-500);
+        font-weight: 700;
+        display: block;
+        margin-bottom: 8px;
+      }
+
+      .heatmap-legend-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+        color: var(--gray-700);
+      }
+
+      .heatmap-legend-color {
+        width: 18px; height: 11px;
+        border-radius: 3px;
+        border: 1px solid rgba(0,0,0,0.08);
+        flex-shrink: 0;
+      }
+
+      /* ═══════════════════════════════════════════════════
+         POPUPS (WK + Umsatz)
+      ═══════════════════════════════════════════════════ */
+      .side-popup {
+        position: absolute;
+        right: 0; top: 0;
+        width: 26%;
+        height: 72%;
+        background: var(--white);
+        border-left: 3px solid var(--red);
+        border-top-left-radius: var(--radius-xl);
+        border-bottom-left-radius: var(--radius-xl);
+        padding: 0;
+        font-family: var(--font);
+        box-sizing: border-box;
+        overflow-y: auto;
+        z-index: 99999;
+        box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+        scrollbar-width: thin;
+        scrollbar-color: var(--red) var(--gray-100);
+
+        opacity: 0;
+        transform: translateX(16px);
+        transition: opacity 0.28s ease,
+                    transform 0.28s var(--ease-out);
+      }
+
+      .side-popup::-webkit-scrollbar { width: 5px; }
+      .side-popup::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+
+      .side-popup.show {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      .side-popup.hidden {
+        opacity: 0;
+        transform: translateX(16px);
+        pointer-events: none;
+      }
+
+      /* Popup Header */
+      .popup-header-strip {
+        background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
+        color: white;
+        padding: 12px 14px 10px;
+        border-radius: var(--radius-xl) 0 0 0;
+        position: relative;
+      }
+
+      .popup-header-strip .popup-location {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        opacity: 0.8;
+        margin-bottom: 2px;
+      }
+
+      .popup-header-strip .popup-title {
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.3;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        padding-right: 32px;
+      }
+
+      /* Close btn */
+      .side-popup .close-btn {
+        position: absolute;
+        top: 10px; right: 10px;
+        width: 26px; height: 26px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1.5px solid rgba(255,255,255,0.35);
+        border-radius: 50%;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, transform 0.15s;
+        line-height: 1;
+      }
+
+      .side-popup .close-btn:hover {
+        background: rgba(255,255,255,0.35);
+        transform: scale(1.1);
+      }
+
+      /* Popup table */
+      .side-popup table {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: collapse;
+        margin: 0;
+      }
+
+      .side-popup th {
+        background: var(--red);
+        color: white;
+        font-weight: 600;
+        padding: 7px 12px;
+        text-align: left;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border: none;
+        font-size: 0.8rem;
+      }
+
+      .side-popup th.subtitle-cell {
+        background: var(--gray-50);
+        color: var(--gray-600);
+        font-weight: 600;
+        font-size: 0.72rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border-bottom: 1px solid var(--gray-200);
+      }
+
+      .side-popup td {
+        font-size: 0.82rem;
+        padding: 6px 12px;
+        color: var(--gray-700);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        border: none;
+        border-bottom: 1px solid var(--gray-100);
+        transition: background 0.1s;
+      }
+
+      .side-popup tbody tr:hover td { background: var(--red-bg); }
+
+      .side-popup td.label-cell { width: 62%; text-align: left; color: var(--gray-600); font-weight: 500; }
+      .side-popup td.value-cell { width: 38%; text-align: right; font-weight: 700; color: var(--gray-800); font-variant-numeric: tabular-nums; }
+
+      .side-popup .section-title {
+        background: var(--gray-50);
+        color: var(--gray-500);
+        font-weight: 700;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 6px 12px;
+        border-top: 1px solid var(--gray-200);
+        border-bottom: 1px solid var(--gray-200);
+      }
+
+      /* ═══════════════════════════════════════════════════
+         UMSATZ POPUP
+      ═══════════════════════════════════════════════════ */
+      #side-popup-umsatz {
+        position: absolute;
+        right: 0; top: 0;
+        width: 26%;
+        height: 72%;
+        background: var(--white);
+        border-left: 3px solid var(--red);
+        border-top-left-radius: var(--radius-xl);
+        border-bottom-left-radius: var(--radius-xl);
+        box-sizing: border-box;
+        overflow-y: auto;
+        z-index: 99999;
+        box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+        scrollbar-width: thin;
+        scrollbar-color: var(--red) var(--gray-100);
+        opacity: 0;
+        transform: translateX(16px);
+        transition: opacity 0.28s ease, transform 0.28s var(--ease-out);
+      }
+
+      #side-popup-umsatz::-webkit-scrollbar { width: 5px; }
+      #side-popup-umsatz::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+
+      #side-popup-umsatz.show {
+        opacity: 1;
+        transform: translateX(0);
+      }
+
+      #side-popup-umsatz .popup-header {
+        background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
+        color: white;
+        padding: 12px 14px 10px;
+        font-size: 0.97rem;
+        font-weight: 700;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        border-radius: var(--radius-xl) 0 0 0;
+        line-height: 1.3;
+      }
+
+      #side-popup-umsatz .popup-header .close-btn {
+        position: static;
+        flex-shrink: 0;
+        width: 26px; height: 26px;
+        background: rgba(255,255,255,0.2);
+        color: white;
+        border: 1.5px solid rgba(255,255,255,0.35);
+        border-radius: 50%;
+        font-size: 13px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.15s, transform 0.15s;
+        margin-left: 8px;
+        margin-top: 2px;
+      }
+
+      #side-popup-umsatz .popup-header .close-btn:hover {
+        background: rgba(255,255,255,0.35);
+        transform: scale(1.1);
+      }
+
+      .umsatz-subheader {
+        padding: 12px 14px 6px;
+        font-size: 0.87rem;
+        line-height: 1.55;
+        background: var(--red-bg);
+        border-bottom: 1px solid var(--red-border);
+      }
+
+      .umsatz-subheader .strong { font-weight: 700; color: var(--gray-900); }
+
+      .section-title {
+        margin: 0;
+        padding: 6px 14px;
+        background: var(--gray-50);
+        border-top: 1px solid var(--gray-200);
+        border-bottom: 1px solid var(--gray-200);
+        font-weight: 700;
+        font-size: 0.68rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gray-500);
+      }
+
+      .umsatz-grid {
+        display: grid;
+        grid-template-columns: 1.3fr 0.9fr 0.9fr;
+        gap: 5px 10px;
+        padding: 8px 14px;
+        align-items: center;
+      }
+
+      .umsatz-grid .label {
+        font-weight: 500;
+        color: var(--gray-600);
+        font-size: 0.82rem;
+      }
+
+      .umsatz-grid .value {
+        text-align: right;
+        font-weight: 700;
+        color: var(--gray-800);
+        font-size: 0.82rem;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Umsatz bar */
+      .umsatz-bar {
+        height: 10px;
+        border-radius: 5px;
+        overflow: hidden;
+        display: flex;
+        margin: 6px 14px;
+        background: var(--gray-100);
+      }
+
+      .umsatz-bar > div { transition: width 0.5s var(--ease-out); }
+
+      .share-stationaer { background: var(--red); }
+      .share-pluscard   { background: #1f78b4; }
+      .share-ra         { background: #33a02c; }
+      .share-online     { background: #ffb000; }
+
+      .umsatz-legend {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        padding: 4px 14px 10px;
+        font-size: 0.78rem;
+        color: var(--gray-600);
+      }
+
+      .umsatz-legend > span { display: flex; align-items: center; gap: 4px; }
+
+      .disabled-cell { opacity: 0.3; filter: grayscale(1); }
+
+      /* ═══════════════════════════════════════════════════
+         MAP CONTROL PANEL
+      ═══════════════════════════════════════════════════ */
+      #map-control-panel {
+        position: absolute;
+        right: 0; bottom: 0;
+        width: 26%;
+        height: 25%;
+        max-height: 58%;
+        overflow-y: auto;
+        background: rgba(255,255,255,0.97);
+        backdrop-filter: blur(8px);
+        border-left: 1px solid var(--gray-200);
+        border-top: 1px solid var(--gray-200);
+        border-top-left-radius: var(--radius-xl);
+        padding: 14px;
+        box-sizing: border-box;
+        font-family: var(--font);
+        z-index: 20;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        transition: height 0.32s var(--ease-out);
+        box-shadow: -2px -2px 16px rgba(0,0,0,0.08);
+        scrollbar-width: thin;
+        scrollbar-color: var(--red) var(--gray-100);
+      }
+
+      #map-control-panel.panel-large  { height: 58%; }
+      #map-control-panel.panel-medium { height: 30%; }
+
+      /* Panel top accent line */
+      #map-control-panel::before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0; left: 24px; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--red), transparent);
+        border-radius: 0 0 2px 2px;
+        pointer-events: none;
+      }
+
+      .panel-card {
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: 12px;
+        box-shadow: var(--shadow-xs);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        animation: panelCardIn 0.3s var(--ease-out) both;
+      }
+
+      @keyframes panelCardIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .panel-title {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        margin-bottom: 2px;
+      }
+
+      /* Switch Buttons */
+      .switch-row { display: flex; gap: 6px; }
+
+      .switch-btn {
+        flex: 1;
+        padding: 8px 10px;
+        border-radius: var(--radius-md);
+        border: 1.5px solid var(--gray-200);
+        background: var(--white);
+        color: var(--gray-600);
+        font-weight: 600;
+        font-size: 0.83rem;
+        font-family: var(--font);
+        cursor: pointer;
+        transition: all 0.18s var(--ease-in-out);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+      }
+
+      .switch-btn:hover:not(.active) {
+        border-color: var(--red-border);
+        background: var(--red-bg);
+        color: var(--red);
+      }
+
+      .switch-btn.active {
+        background: var(--red);
+        border-color: var(--red);
+        color: var(--white);
+        box-shadow: 0 2px 8px var(--red-shadow);
+      }
+
+      .option-row {
+        display: flex;
+        gap: 10px;
+        font-size: 0.82rem;
+        color: var(--gray-600);
+        align-items: center;
+      }
+
+      .option-row label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+      }
+
+      .option-row input[type=checkbox] {
+        accent-color: var(--red);
+        cursor: pointer;
+        width: 14px; height: 14px;
+      }
+
+      /* Compact Switch (Segmented) */
+      .compact-switch {
+        display: flex;
+        background: var(--gray-100);
+        border-radius: var(--radius-md);
+        padding: 3px;
+        gap: 2px;
+        cursor: pointer;
+        user-select: none;
+        border: 1px solid var(--gray-200);
+      }
+
+      .compact-switch span {
+        flex: 1;
+        text-align: center;
+        padding: 5px 4px;
+        font-size: 0.76rem;
+        font-weight: 600;
+        border-radius: 5px;
+        transition: all 0.18s var(--ease-in-out);
+        color: var(--gray-500);
+      }
+
+      .compact-switch span:hover { color: var(--red); }
+
+      .compact-switch.active-left .mode-left {
+        background: var(--white);
+        color: var(--red);
+        box-shadow: var(--shadow-xs);
+      }
+
+      .compact-switch.active-right .mode-right {
+        background: var(--white);
+        color: var(--red);
+        box-shadow: var(--shadow-xs);
+      }
+
+      .switch-label {
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--gray-400);
+        margin-bottom: 1px;
+      }
+
+      /* Big Checkbox */
+      .big-check {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 6px 10px;
+        border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        background: var(--white);
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: border-color 0.18s, background 0.18s;
+        color: var(--gray-700);
+      }
+
+      .big-check:hover {
+        border-color: var(--red-border);
+        background: var(--red-bg);
+      }
+
+      .big-check input {
+        transform: scale(1.2);
+        accent-color: var(--red);
+      }
+
+      /* Triple Switch */
+      .triple-switch {
+        display: flex;
+        background: var(--gray-100);
+        border-radius: var(--radius-md);
+        padding: 3px;
+        gap: 2px;
+        user-select: none;
+        border: 1px solid var(--gray-200);
+      }
+
+      .triple-switch span {
+        flex: 1;
+        text-align: center;
+        padding: 5px 2px;
+        font-size: 0.74rem;
+        font-weight: 600;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.18s var(--ease-in-out);
+        color: var(--gray-500);
+      }
+
+      .triple-switch span.active {
+        background: var(--white);
+        color: var(--red);
+        box-shadow: var(--shadow-xs);
+      }
+
+      .triple-switch span.disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      /* Category Grid */
+      .category-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 5px;
+      }
+
+      .category-toggle {
+        padding: 7px 8px;
+        border-radius: var(--radius-md);
+        border: 1.5px solid var(--gray-200);
+        background: var(--white);
+        color: var(--gray-600);
+        font-size: 0.78rem;
+        font-weight: 600;
+        font-family: var(--font);
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.18s var(--ease-in-out);
+      }
+
+      .category-toggle:hover:not(.active) {
+        border-color: var(--red-border);
+        background: var(--red-bg);
+        color: var(--red);
+      }
+
+      .category-toggle.active {
+        background: var(--red-bg);
+        border-color: var(--red);
+        color: var(--red);
+        font-weight: 700;
+        box-shadow: 0 0 0 3px var(--red-shadow);
+      }
+
+      /* ═══════════════════════════════════════════════════
+         CINEMATIC LOADER (light version)
+      ═══════════════════════════════════════════════════ */
+      #cinematic-loader {
+        position: absolute;
+        inset: 0;
+        z-index: 99999;
+        background: rgba(255,255,255,0.96);
+        backdrop-filter: blur(6px);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-family: var(--font);
+        animation: loaderFadeIn 0.25s ease;
+      }
+
+      @keyframes loaderFadeIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+
+      #cinematic-loader .loader-logo {
+        width: 64px; height: 64px;
+        margin-bottom: 28px;
+        position: relative;
+      }
+
+      #cinematic-loader .loader-logo::before {
+        content: '';
+        position: absolute; inset: 0;
+        border-radius: 50%;
+        border: 3px solid rgba(180,24,33,0.12);
+        border-top-color: var(--red);
+        border-right-color: var(--red);
+        animation: spinSlow 1.6s linear infinite;
+      }
+
+      #cinematic-loader .loader-logo::after {
+        content: '';
+        position: absolute; inset: 10px;
+        border-radius: 50%;
+        border: 2px solid rgba(180,24,33,0.08);
+        border-bottom-color: rgba(180,24,33,0.4);
+        animation: spinFast 0.85s linear infinite reverse;
+      }
+
+      #cinematic-loader .loader-core {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 12px; height: 12px;
+        border-radius: 50%;
+        background: var(--red);
+        box-shadow: 0 0 16px rgba(180,24,33,0.35);
+        animation: corePulse 1.6s ease-in-out infinite;
+      }
+
+      @keyframes spinSlow  { to { transform: rotate(360deg); } }
+      @keyframes spinFast  { to { transform: rotate(360deg); } }
+      @keyframes corePulse {
+        0%,100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+        50%      { transform: translate(-50%,-50%) scale(1.35); opacity: 0.7; }
+      }
+
+      #cinematic-loader .loader-phase {
+        color: var(--gray-700);
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        margin-bottom: 4px;
+        min-height: 1.4em;
+        text-align: center;
+        transition: opacity 0.22s ease;
+      }
+
+      #cinematic-loader .loader-bar-track {
+        width: 240px; height: 3px;
+        background: var(--gray-200);
+        border-radius: 2px;
+        margin-top: 18px;
+        overflow: hidden;
+      }
+
+      #cinematic-loader .loader-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--red), #e96a3a);
+        border-radius: 2px;
+        width: 0%;
+        transition: width 0.48s var(--ease-in-out);
+        box-shadow: 0 0 6px var(--red-shadow);
+      }
+
+      #cinematic-loader .loader-dots {
+        display: flex;
+        gap: 20px;
+        margin-top: 22px;
+      }
+
+      #cinematic-loader .loader-dot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        opacity: 0.25;
+        transition: opacity 0.35s ease;
+      }
+
+      #cinematic-loader .loader-dot.active { opacity: 1; }
+      #cinematic-loader .loader-dot.done   { opacity: 0.5; }
+
+      #cinematic-loader .dot-circle {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: var(--red);
+        transition: transform 0.28s var(--ease-out), box-shadow 0.28s;
+      }
+
+      #cinematic-loader .loader-dot.active .dot-circle {
+        transform: scale(1.5);
+        box-shadow: 0 0 8px var(--red-shadow);
+      }
+
+      #cinematic-loader .dot-label {
+        font-size: 0.62rem;
+        color: var(--gray-400);
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      #cinematic-loader.fade-out {
+        animation: loaderFadeOut 0.35s ease forwards;
+      }
+
+      @keyframes loaderFadeOut {
+        to { opacity: 0; pointer-events: none; }
+      }
+
+      /* ═══════════════════════════════════════════════════
+         UTILITY
+      ═══════════════════════════════════════════════════ */
+      .hidden { display: none; }
+
+      /* Row entry animation for table */
+      @keyframes rowFadeIn {
+        from { opacity: 0; transform: translateX(-6px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+
+      .table-row-animated {
+        animation: rowFadeIn 0.2s var(--ease-out) both;
+      }
+    </style>
+
+    <div class="layout">
+
+      <!-- ─── FILTER SIDEBAR ─── -->
+      <div class="filter-container">
+
+        <label for="erhebung-select">ErhebungsID</label>
+        <select id="erhebung-select"></select>
+
+        <label for="jahr-select">Jahr</label>
+        <select id="jahr-select" disabled></select>
+
+        <label for="nummer-select">Erhebungsnummer</label>
+        <select id="nummer-select" disabled></select>
+
+        <button id="filter-button">Anzeigen</button>
+
+        <!-- PLZ Table -->
+        <div class="table-container">
+          <div class="table-wrapper" id="table-container">
+            <div id="streuverlust-box"></div>
+          </div>
+          <div id="nl-info-container"></div>
+        </div>
+
       </div>
 
-      <!-- NL-Tabelle -->
-      <div id="nl-info-container"></div>
+      <!-- ─── MAP AREA ─── -->
+      <div class="map-container">
+
+        <div id="loading-spinner" class="spinner hidden"></div>
+
+        <div id="radius-slider-container">
+          <label>Radius: <span id="radius-value">40</span> km</label>
+          <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
+        </div>
+
+        <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
+        <div id="map"></div>
+        <div id="legend-toggle-btn" title="Legende"></div>
+        <div id="heatmap-legend" class="heatmap-legend hidden"></div>
+        <div id="umsatz-overview" class="hidden"></div>
+
+      </div>
+
+      <!-- ─── POPUPS ─── -->
+      <div id="side-popup" class="side-popup hidden"></div>
+      <div id="side-popup-umsatz" class="side-popup hidden"></div>
 
     </div>
 
-  </div> <!-- END filter-container -->
+    <!-- ─── MAP CONTROL PANEL ─── -->
+    <div id="map-control-panel">
 
-  <!-- 🗺️ Kartenbereich -->
-  <div class="map-container">
+      <div class="panel-card">
+        <div class="panel-title">Analyse-Modus</div>
 
-    <div id="loading-spinner" class="spinner"></div>
+        <div class="switch-row">
+          <button id="btn-wk" class="switch-btn active">📊 WK</button>
+          <button id="btn-umsatz" class="switch-btn">💶 Umsatz</button>
+        </div>
 
-    <!-- Radius-Slider -->
-    <div id="radius-slider-container">
-      <label>Radius: <span id="radius-value">40</span> km</label>
-      <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
+        <div id="wk-extra" class="option-row">
+          <label><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung</label>
+        </div>
+
+        <div id="umsatz-options-row" class="option-row hidden">
+          <label><input type="checkbox" id="chk-bestreuung"> 📍 Bestreuung</label>
+        </div>
+      </div>
+
+      <div id="umsatz-panel" class="panel-card hidden">
+        <div class="panel-title">Umsatz-Einstellungen</div>
+
+        <div class="switch-label">Umsatztyp</div>
+        <div id="umsatz-type-switch" class="compact-switch">
+          <span class="mode-left">Umsatz</span>
+          <span class="mode-right">Werbeumsatz</span>
+        </div>
+
+        <div id="werbe-options-row" class="option-row hidden">
+          <label class="big-check"><input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz</label>
+          <label class="big-check"><input type="checkbox" id="chk-mitgekauft"> Mitgekauft</label>
+        </div>
+
+        <div class="switch-label">Darstellung</div>
+        <div id="umsatz-analysis-switch" class="triple-switch">
+          <span class="mode-abs active">Absolut</span>
+          <span class="mode-hh">pro HH</span>
+          <span class="mode-werbeanteil">Werbeanteil</span>
+        </div>
+
+        <div class="category-grid">
+          <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
+          <div class="category-toggle"        data-cat="pluscard">💳 Pluscard</div>
+          <div class="category-toggle"        data-cat="ra">📦 R&amp;A</div>
+          <div class="category-toggle"        data-cat="online">🛒 KUBE OS</div>
+        </div>
+      </div>
+
     </div>
-
-    <!-- 🔥 Kartenstil-Button -->
-    <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
-
-    <!-- Leaflet Map -->
-    <div id="map"></div>
-
-    <!-- 🔘 Legenden-Button (unten rechts) -->
-    <div id="legend-toggle-btn" title="Legende einblenden"></div>
-
-    <!-- 📦 Legenden-Overlay (unten rechts) -->
-    <div id="heatmap-legend" class="heatmap-legend hidden"></div>
-
-    <!-- 📦 Umsatz-Overview oben rechts -->
-    <div id="umsatz-overview" class="hidden"></div>
-
-  </div>
-
-  <!-- 📌 Popup für WK -->
-  <div id="side-popup" class="side-popup hidden"></div>
-
-  <!-- 📌 Popup für Umsatz -->
-  <div id="side-popup-umsatz" class="side-popup hidden"></div>
-
-</div>
-
-<!-- ⭐ MAP CONTROL PANEL -->
-<div id="map-control-panel">
-
-  <!-- CARD 1: ANALYSE-MODUS -->
-  <div class="panel-card">
-    <div class="panel-title">Analyse-Modus</div>
-
-    <div class="switch-row">
-      <button id="btn-wk" class="switch-btn active">
-        <span class="icon">📊</span> WK
-      </button>
-
-      <button id="btn-umsatz" class="switch-btn">
-        <span class="icon">💶</span> Umsatz
-      </button>
-    </div>
-
-    <!-- Doppelbestreuung nur im WK-Modus -->
-    <div id="wk-extra" class="option-row">
-      <label><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung anzeigen</label>
-    </div>
-
-    <!-- Umsatz-Optionen (nur im Umsatzmodus) -->
-    <div id="umsatz-options-row" class="option-row hidden">
-      <label><input type="checkbox" id="chk-bestreuung"> 📍 Bestreuung</label>
-    </div>
-  </div>
-
-  <!-- CARD 2: UMSATZ-EINSTELLUNGEN -->
-  <div id="umsatz-panel" class="panel-card hidden">
-
-    <div class="panel-title">Umsatz-Einstellungen</div>
-
-    <!-- Umsatztyp -->
-    <div class="switch-label">Umsatztyp</div>
-    <div id="umsatz-type-switch" class="compact-switch">
-      <span class="mode-left">Umsatz</span>
-      <span class="mode-right">Werbeumsatz</span>
-    </div>
-
-    <!-- Werbeoptionen (nur bei Werbeumsatz sichtbar) -->
-    <div id="werbe-options-row" class="option-row hidden">
-      <label class="big-check">
-        <input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz
-      </label>
-      <label class="big-check">
-        <input type="checkbox" id="chk-mitgekauft"> Mitgekauft
-      </label>
-    </div>
-
-    <!-- Darstellung: 3-Wege-Switch -->
-    <div class="switch-label">Darstellung</div>
-    <div id="umsatz-analysis-switch" class="triple-switch">
-      <span class="mode-abs active">Absolut</span>
-      <span class="mode-hh">pro HH</span>
-      <span class="mode-werbeanteil">Werbeanteil</span>
-    </div>
-
-    <!-- Kategorien -->
-    <div class="category-grid">
-      <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
-      <div class="category-toggle" data-cat="pluscard">💳 Pluscard</div>
-      <div class="category-toggle" data-cat="ra">📦 R&A</div>
-      <div class="category-toggle" data-cat="online">🛒 KUBE OS</div>
-    </div>
-
-  </div>
-
-</div>
-
-
-
-
-
     `;
 
 class GeoMapWidget extends HTMLElement {
@@ -1184,22 +1458,12 @@ class GeoMapWidget extends HTMLElement {
     this._tilesVisible = false;
     this._sortState = { column: null, direction: "asc" };
 
-    this.currentMapMode = "wk";       // "wk" oder "umsatz-multi"
-
-    // Kategorien (Stationär, Pluscard, R&A, Online)
+    this.currentMapMode = "wk";
     this.activeCategories = new Set(["stationaer"]);
-
-    // ⭐ NEU: Umsatztyp
-    // "gesamt" = bisheriger Umsatz
-    // "werbung" = Werbeumsatz / Mitgekauft-Kombination
     this.umsatzMainMode = "gesamt";
-    this.useWerbeUmsatz = true;       // innerhalb Werbeumsatz: Werbeumsatz aktiv
-    this.useZusatzUmsatz = false;     // innerhalb Werbeumsatz: Mitgekauft aktiv
-
-    // Radiusfilter
+    this.useWerbeUmsatz = true;
+    this.useZusatzUmsatz = false;
     this.useRadiusFilter = true;
-
-    // NL-Auswahl
     this._selectedNLs = new Set();
   }
 
@@ -1218,8 +1482,8 @@ class GeoMapWidget extends HTMLElement {
         } else {
           this.initializeMapBase();
         }
-
       }
+
   showSpinner() {
     const spinner = this._shadowRoot.getElementById('loading-spinner');
     if (spinner) spinner.classList.remove('hidden');
@@ -1232,296 +1496,161 @@ class GeoMapWidget extends HTMLElement {
 
   buildErhebungsStruktur(data) {
     const struktur = {};
-
     data.forEach(row => {
       const erhID = row["dimension_erhebung_0"]?.id?.trim();
       const jahr = row["dimension_jahr_0"]?.id?.trim();
       const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
-
-      // 🚫 Ungültige Werte überspringen
-      if (
-        !erhID || erhID === "@NullMember" ||
-        !jahr || jahr === "@NullMember" ||
-        !nummer || nummer === "@NullMember"
-      ) return;
-
-      // 🧩 Struktur aufbauen
+      if (!erhID || erhID === "@NullMember" || !jahr || jahr === "@NullMember" || !nummer || nummer === "@NullMember") return;
       struktur[erhID] = struktur[erhID] || {};
       struktur[erhID][jahr] = struktur[erhID][jahr] || new Set();
       struktur[erhID][jahr].add(nummer);
     });
-
     return struktur;
   }
 
 async loadGeoJson() {
   if (this._geoLayer) return;
-
   try {
-    const response = await fetch(
-      "https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson"
-    );
+    const response = await fetch("https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson");
     this._geoData = await response.json();
-
     this.geoNotes = {};
     (this._geoData.features || []).forEach(feature => {
       const plz = feature.properties?.plz?.trim();
       const note = feature.properties?.note?.trim();
       if (plz && note) this.geoNotes[plz] = note;
     });
-
     const filteredData = this.getFilteredData();
     const plzWerte = this.extractPLZWerte(filteredData);
-
     this._geoLayer = L.geoJSON(this._geoData, {
       style: feature => {
         const plz = feature.properties?.plz?.trim();
         const values = plzWerte[plz] || { wk: 0, wkPot: 0 };
         const isHZ = this.hzFlags?.[plz] ?? false;
         const value = isHZ ? values.wk : values.wkPot;
-        return {
-          fillColor: this.getColor(value, isHZ),
-          weight: 1,
-          opacity: 1,
-          color: "white",
-          fillOpacity: 0.5
-        };
+        return { fillColor: this.getColor(value, isHZ), weight: 1, opacity: 1, color: "white", fillOpacity: 0.5 };
       },
-      // Click-Handler werden in applyStyleToLayer gesetzt – hier weglassen
     }).addTo(this.map);
-
-    // ⭐ INDEX AUFBAUEN – einmalig, O(1) Lookup danach
     this._layerByPLZ = {};
     this._geoLayer.eachLayer(layer => {
       const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
       this._layerByPLZ[plz] = layer;
     });
-
-    console.log(`✅ Layer-Index aufgebaut: ${Object.keys(this._layerByPLZ).length} PLZs`);
-
   } catch (err) {
     console.error("Fehler beim Laden des GeoJSON:", err);
   }
 }
 
-
 applyMapMode(mode) {
   this.currentMapMode = mode;
-  this.updateGeoLayer(); // färbt die Karte neu
+  this.updateGeoLayer();
 }
 
-
 renderDataTable(data) {
-  console.log("▶ renderDataTable aufgerufen");
-  console.log("   _sortState beim Render:", this._sortState);
-
   let entries = Object.entries(data || {});
-
-  // 🔥 PLZ 00000 (Streuverlust) entfernen
   entries = entries.filter(([plz]) => plz !== "00000");
-
-  // 🔥 Radiusfilter anwenden
   if (this.plzImRadius && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => {
       const norm = String(plz).padStart(5, "0");
       return this.plzImRadius.has(norm);
     });
   }
-
-  // Standard-Sortierung nach PLZ, wenn keine Sortierung aktiv ist
   if (!this._sortState || this._sortState.column == null) {
     entries = entries.sort(([plzA], [plzB]) => plzA.localeCompare(plzB));
   }
-
-  // Tabelle rendern
   this.renderDataTableFromEntries(entries);
-
-  // 🔥 Sticky-Footer aktualisieren
-  const box = this._shadowRoot.getElementById("streuverlust-box");
   this.updateStreuverlustFooter();
-
 }
 
 updateStreuverlustFooter() {
   const box = this._shadowRoot.getElementById("streuverlust-box");
   if (!box) return;
-
-  if (!this.streuverlust) {
-    box.innerHTML = "";
-    return;
-  }
-
+  if (!this.streuverlust) { box.innerHTML = ""; return; }
   box.innerHTML = `
-    <div style="
-      background: white;
-      padding: 10px;
-      border-top: 2px solid #b41821;
-      font-size: 0.85rem;
-    ">
-      <strong>Streuverlust:</strong>
-      ${this.streuverlust.umsatz.toLocaleString("de-DE")} €,
-      ${(this.streuverlust.anteil * 100).toFixed(1)} %
-    </div>
+    <span><strong>Streuverlust:</strong>
+    ${this.streuverlust.umsatz.toLocaleString("de-DE")} €
+    &nbsp;·&nbsp;
+    ${(this.streuverlust.anteil * 100).toFixed(1)} %</span>
   `;
 }
 
 computeStreuverlust() {
   if (!this.filteredData) return;
-
-  const result = {
-    umsatz: 0,
-    hzKosten: 0,
-    umsatzErhebung: 0,
-    kdErhebung: 0,
-    auflage: 0,
-    potHzAbs: 0,
-    avg: {
-      werbeverweigerer: 0,
-      haushalte: 0,
-      kaufkraft: 0
-    }
-  };
-
-  const avgArrays = {
-    werbeverweigerer: [],
-    haushalte: [],
-    kaufkraft: []
-  };
-
+  const result = { umsatz: 0, hzKosten: 0, umsatzErhebung: 0, kdErhebung: 0, auflage: 0, potHzAbs: 0, avg: { werbeverweigerer: 0, haushalte: 0, kaufkraft: 0 } };
+  const avgArrays = { werbeverweigerer: [], haushalte: [], kaufkraft: [] };
   let totalErhebungUmsatz = 0;
-
   this.filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ || "").padStart(5, "0");
-
-    // NL-Filter
     if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
-
-    // Gesamtumsatz der Erhebung (für Anteil)
     totalErhebungUmsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
-
-    // PLZ im Radius → kein Streuverlust
     if (this.plzImRadius instanceof Set && this.plzImRadius.has(plz)) return;
-
-    // PLZ außerhalb Radius → Streuverlust
     result.umsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
     result.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
     result.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
     result.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
     result.auflage += row["value_auflage_0"]?.raw ?? 0;
     result.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
-
     const wv = row["value_werbeverweigerer_0"]?.raw;
     if (typeof wv === "number") avgArrays.werbeverweigerer.push(wv);
-
     const hh = row["value_haushalte_0"]?.raw;
     if (typeof hh === "number") avgArrays.haushalte.push(hh);
-
     const kk = row["value_kaufkraft_0"]?.raw;
     if (typeof kk === "number") avgArrays.kaufkraft.push(kk);
   });
-
-  const avg = arr =>
-    arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-
+  const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
   result.avg.werbeverweigerer = avg(avgArrays.werbeverweigerer);
   result.avg.haushalte = avg(avgArrays.haushalte);
   result.avg.kaufkraft = avg(avgArrays.kaufkraft);
-
-  result.anteil =
-    totalErhebungUmsatz > 0
-      ? result.umsatz / totalErhebungUmsatz
-      : 0;
-
+  result.anteil = totalErhebungUmsatz > 0 ? result.umsatz / totalErhebungUmsatz : 0;
   this.streuverlust = result;
 }
 
-
 sortTableByColumn(columnIndex) {
-  console.log("▶ sortTableByColumn aufgerufen, columnIndex:", columnIndex);
-  console.log("   SortState VOR Toggle:", this._sortState);
-
   if (this._sortState.column === columnIndex) {
-    this._sortState.direction =
-      this._sortState.direction === "asc" ? "desc" : "asc";
+    this._sortState.direction = this._sortState.direction === "asc" ? "desc" : "asc";
   } else {
     this._sortState.column = columnIndex;
     this._sortState.direction = "desc";
   }
-
-  console.log("   SortState NACH Toggle:", this._sortState);
-
   const dir = this._sortState.direction === "asc" ? 1 : -1;
-
   const entries = Object.entries(this.filteredKennwerte);
-  console.log("   Einträge vor Sortierung:", entries.length);
-
   const sorted = entries.sort(([plzA, a], [plzB, b]) => {
     let valA, valB;
-
     switch (columnIndex) {
-      case 0: // PLZ
-        valA = plzA;
-        valB = plzB;
-        break;
-
-      case 1: // Gemeinde
-        valA = this.geoNotes?.[plzA] || "";
-        valB = this.geoNotes?.[plzB] || "";
-        break;
-
-      case 2: // HZ
-        valA = this.hzFlags[plzA] ? 1 : 0;
-        valB = this.hzFlags[plzB] ? 1 : 0;
-        break;
-
-      case 3: // Umsatz
-        valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999;
-        valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999;
-        break;
-
-      case 4: // WK
-        valA = a["value_wk_nachbar_0"]?.raw ?? -999999;
-        valB = b["value_wk_nachbar_0"]?.raw ?? -999999;
-        break;
+      case 0: valA = plzA; valB = plzB; break;
+      case 1: valA = this.geoNotes?.[plzA] || ""; valB = this.geoNotes?.[plzB] || ""; break;
+      case 2: valA = this.hzFlags[plzA] ? 1 : 0; valB = this.hzFlags[plzB] ? 1 : 0; break;
+      case 3: valA = a["value_hr_n_umsatz_0"]?.raw ?? -999999; valB = b["value_hr_n_umsatz_0"]?.raw ?? -999999; break;
+      case 4: valA = a["value_wk_nachbar_0"]?.raw ?? -999999; valB = b["value_wk_nachbar_0"]?.raw ?? -999999; break;
     }
-
-    if (typeof valA === "string") {
-      return valA.localeCompare(valB) * dir;
-    }
-
+    if (typeof valA === "string") return valA.localeCompare(valB) * dir;
     return (valA - valB) * dir;
   });
-
-  console.log("   Erste 5 PLZ nach Sortierung:",
-    sorted.slice(0, 5).map(([plz]) => plz)
-  );
-
-  // Wichtig: wir verlassen uns NICHT mehr auf Objekt-Reihenfolge,
-  // sondern geben das sortierte Array direkt an den Renderer
   this.renderDataTableFromEntries(sorted);
 }
-
-
 
 renderDataTableFromEntries(entries) {
   const container = this._shadowRoot.getElementById('table-container');
   container.innerHTML = '';
-
   container.style.display = 'flex';
   container.style.flexDirection = 'column';
   container.style.height = '100%';
   container.style.minHeight = '0';
 
   entries = entries.filter(([plz]) => plz !== "00000");
-
   if (this.plzImRadius && this.plzImRadius.size > 0) {
     entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
   }
 
   if (!entries.length) {
-    container.textContent = 'Keine Daten verfügbar.';
+    const empty = document.createElement('div');
+    empty.style.cssText = 'padding:24px;text-align:center;color:#adb5bd;font-size:0.85rem;';
+    empty.textContent = 'Keine Daten vorhanden';
+    container.appendChild(empty);
+    const footer = document.createElement("div");
+    footer.id = "streuverlust-box";
+    container.appendChild(footer);
     return;
   }
 
@@ -1536,32 +1665,20 @@ renderDataTableFromEntries(entries) {
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
 
-const headers = [
-  { label: 'PLZ', width: '40px' },
-  { label: 'Gemeinde', width: '90px' },
-  { label: 'HZ', width: '20px' },
-  { label: 'Netto-Umsatz\n(Jahr)', width: '50px' },
-  { label: 'WK (%)', width: '50px' }   // ✔ geändert
-];
-
+  const headers = [
+    { label: 'PLZ', width: '44px' },
+    { label: 'Gemeinde', width: '88px' },
+    { label: 'HZ', width: '22px' },
+    { label: 'Netto-Umsatz\n(Jahr)', width: '58px' },
+    { label: 'WK (%)', width: '46px' }
+  ];
 
   headers.forEach(({ label, width }, i) => {
     const th = document.createElement('th');
-    th.innerHTML = `${label} <span class="sort-icon"></span>`;
-    th.style.backgroundColor = '#b41821';
-    th.style.color = 'white';
-    th.style.padding = '8px';
-    th.style.position = 'sticky';
-    th.style.top = '0';
-    th.style.zIndex = '2';
-    th.style.whiteSpace = 'pre-line';
+    th.innerHTML = `${label} <span class="sort-icon" style="font-size:9px;opacity:0.7"></span>`;
     th.style.width = width;
-    th.style.borderBottom = '1px solid #b41821';
-    th.style.borderRight = '1px solid #b41821';
-    th.style.cursor = 'pointer';
-
+    th.style.whiteSpace = 'pre-line';
     th.addEventListener('click', () => this.sortTableByColumn(i));
-
     headerRow.appendChild(th);
   });
 
@@ -1570,8 +1687,10 @@ const headers = [
 
   const tbody = document.createElement('tbody');
 
-  entries.forEach(([plz, kennwerte]) => {
+  entries.forEach(([plz, kennwerte], idx) => {
     const tr = document.createElement('tr');
+    tr.classList.add('table-row-animated');
+    tr.style.animationDelay = `${Math.min(idx * 18, 200)}ms`;
     tr.style.cursor = "pointer";
 
     tr.addEventListener("click", () => {
@@ -1580,35 +1699,38 @@ const headers = [
       this.highlightTableRow(tr);
     });
 
-    let note = this.geoNotes?.[plz] || "Keine PLZ-Bezeichnung";
-    note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim();
+    let note = this.geoNotes?.[plz] || "";
+    note = note.replace(/^\d{4,5}\s*[-–]?\s*/, "").trim() || "—";
 
-   let symbol = "🔴"; // Standard
-
-if (this.filteredKennwerte[plz]?.isCritical) {
-  symbol = "⚠️";
-} else if (this.filteredKennwerte[plz]?.isHZ) {
-  symbol = "🟢";
-}
-
+    let symbol = "●";
+    let symbolColor = "#adb5bd";
+    if (this.filteredKennwerte[plz]?.isCritical) { symbol = "⚠"; symbolColor = "#f0a500"; }
+    else if (this.filteredKennwerte[plz]?.isHZ)  { symbol = "●"; symbolColor = "#33a02c"; }
+    else { symbol = "●"; symbolColor = "#dee2e6"; }
 
     const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
-    const wk = kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–';  // ✔ geändert
+    const wk = kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–';
 
-const rowValues = [plz, note, symbol, umsatz, wk];
+    const rowValues = [
+      { text: plz, style: 'font-variant-numeric:tabular-nums;font-size:0.78rem;color:#495057;' },
+      { text: note, style: 'color:#6c757d;' },
+      { html: `<span style="color:${symbolColor};font-size:10px" title="${this.filteredKennwerte[plz]?.isHZ ? 'Bestreut' : 'Nicht bestreut'}">${symbol}</span>`, style: 'text-align:center;' },
+      { text: umsatz, style: 'text-align:right;font-variant-numeric:tabular-nums;' },
+      { text: wk + ' %', style: 'text-align:right;font-variant-numeric:tabular-nums;' }
+    ];
 
-
-    rowValues.forEach((text, i) => {
+    rowValues.forEach(({ text, html, style }, i) => {
       const td = document.createElement('td');
-      td.textContent = text;
+      if (html) td.innerHTML = html;
+      else td.textContent = text;
+      if (style) td.style.cssText += style;
+      td.style.width = headers[i].width;
       td.style.padding = '6px 8px';
-      td.style.borderBottom = '1px solid #b41821';
-      td.style.borderRight = '1px solid #b41821';
+      td.style.borderBottom = '1px solid #f1f3f5';
       td.style.fontSize = '0.8rem';
       td.style.whiteSpace = 'nowrap';
       td.style.overflow = 'hidden';
       td.style.textOverflow = 'ellipsis';
-      td.style.width = headers[i].width;
       tr.appendChild(td);
     });
 
@@ -1621,637 +1743,338 @@ const rowValues = [plz, note, symbol, umsatz, wk];
 
   const footer = document.createElement("div");
   footer.id = "streuverlust-box";
-  footer.style.position = "sticky";
-  footer.style.bottom = "0";
-  footer.style.background = "white";
-  footer.style.padding = "10px";
-  footer.style.borderTop = "2px solid #b41821";
-  footer.style.zIndex = "10";
   container.appendChild(footer);
 
-  if (this._sortState?.column != null) {
-    this.updateSortIcons(this._sortState.column);
-  }
+  if (this._sortState?.column != null) this.updateSortIcons(this._sortState.column);
   this.updateStreuverlustFooter();
-
 }
 
-
-
-      
-// highlightTableRow(rowElement)
 highlightTableRow(rowElement) {
-  if (this._lastHighlightedRow) {
-    this._lastHighlightedRow.classList.remove("table-row-selected");
-  }
-
+  if (this._lastHighlightedRow) this._lastHighlightedRow.classList.remove("table-row-selected");
   rowElement.classList.add("table-row-selected");
   this._lastHighlightedRow = rowElement;
 }
-      
-      // highlightTableRowByPLZ(plz)
+
 highlightTableRowByPLZ(plz) {
   const container = this._shadowRoot.getElementById("table-container");
   const rows = container.querySelectorAll("tbody tr");
-
   rows.forEach(row => {
-    const cellPLZ = row.children[0]?.textContent?.trim();
-    if (cellPLZ === plz) {
-      this.highlightTableRow(row);
-    }
+    if (row.children[0]?.textContent?.trim() === plz) this.highlightTableRow(row);
   });
 }
 
-   openPopupFromTable(plz) {
+openPopupFromTable(plz) {
   if (!this._layerByPLZ) return;
-
   const targetLayer = this._layerByPLZ[plz];
   if (!targetLayer) return;
-
   const popupWK = this._shadowRoot.getElementById("side-popup");
   const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-
-  popupWK?.classList.remove("show");
-  popupWK?.classList.add("hidden");
-  popupUmsatz?.classList.remove("show");
-  popupUmsatz?.classList.add("hidden");
-
+  popupWK?.classList.remove("show"); popupWK?.classList.add("hidden");
+  popupUmsatz?.classList.remove("show"); popupUmsatz?.classList.add("hidden");
   if (this.currentMapMode === "umsatz-multi") {
     const values = this.filteredPLZWerte?.[plz];
     values ? this.showUmsatzPopup(plz, values) : this.showEmptyUmsatzPopup(plz);
     return;
   }
-
   const kennwerte = this.filteredKennwerte?.[plz] || {};
   this.showPopup(targetLayer.feature, kennwerte);
 }
 
 _buildDistanceCache() {
   if (!this._layerByPLZ || !this.nlMarkers || this.nlMarkers.length === 0) return;
-
-  console.time("⏱ DistanceCache aufbauen");
-
   this._plzCenterCache = {};
   this._distanceCache = {};
-
   const plzList = Object.keys(this._layerByPLZ);
-
   for (let i = 0; i < plzList.length; i++) {
     const plz = plzList[i];
     const layer = this._layerByPLZ[plz];
     const center = layer.getBounds().getCenter();
     this._plzCenterCache[plz] = center;
-
     let minDist = Infinity;
     for (let j = 0; j < this.nlMarkers.length; j++) {
       const nl = this.nlMarkers[j];
       const d = this.getDistanceKm(center.lat, center.lng, nl.lat, nl.lng);
       if (d < minDist) minDist = d;
     }
-    // Minimaldistanz direkt speichern – kein NL-Key-Loop in applyRadiusFilter nötig
     this._distanceCache[plz] = minDist;
   }
-
-  console.timeEnd("⏱ DistanceCache aufbauen");
-  console.log(`✅ Distanz-Cache: ${plzList.length} PLZs vorberechnet`);
 }
-
 
 highlightMapArea(plz) {
   if (!this._layerByPLZ) return;
-
   const targetLayer = this._layerByPLZ[plz];
   if (!targetLayer) return;
-
-  if (this._lastHighlightedLayer) {
-    this._lastHighlightedLayer.setStyle(this._lastHighlightedStyle);
-  }
-
-  this._lastHighlightedStyle = {
-    weight: targetLayer.options.weight,
-    color: targetLayer.options.color,
-    fillOpacity: targetLayer.options.fillOpacity
-  };
-
-  targetLayer.setStyle({
-    weight: 4,
-    color: "#ffeb3b",
-    fillOpacity: targetLayer.options.fillOpacity
-  });
-
+  if (this._lastHighlightedLayer) this._lastHighlightedLayer.setStyle(this._lastHighlightedStyle);
+  this._lastHighlightedStyle = { weight: targetLayer.options.weight, color: targetLayer.options.color, fillOpacity: targetLayer.options.fillOpacity };
+  targetLayer.setStyle({ weight: 3, color: "#f0a500", fillOpacity: targetLayer.options.fillOpacity });
   this._lastHighlightedLayer = targetLayer;
 }
 
-
-      
 updateSortIcons(activeIndex) {
   const headerCells = this._shadowRoot.querySelectorAll("th .sort-icon");
-
   headerCells.forEach((icon, i) => {
-    if (i !== activeIndex) {
-      icon.textContent = ""; // andere Spalten leeren
-      return;
-    }
-
-    icon.textContent = this._sortState.direction === "asc" ? "▲" : "▼";
+    icon.textContent = i === activeIndex ? (this._sortState.direction === "asc" ? "▲" : "▼") : "";
   });
 }
 
-// zoomToFilteredPLZ()
 zoomToFilteredPLZ() {
-  if (!this._geoLayer || !this.plzImRadius || this.plzImRadius.size === 0) {
-    console.warn("⚠️ Kein Autozoom möglich – keine PLZ im Radius.");
-    return;
-  }
-
+  if (!this._geoLayer || !this.plzImRadius || this.plzImRadius.size === 0) return;
   const bounds = L.latLngBounds([]);
-
   this._geoLayer.eachLayer(layer => {
     const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
-
     if (this.plzImRadius.has(plz)) {
-      const layerBounds = layer.getBounds?.();
-      if (layerBounds) {
-        bounds.extend(layerBounds);
-      }
+      const lb = layer.getBounds?.();
+      if (lb) bounds.extend(lb);
     }
   });
-
-  if (bounds.isValid()) {
-    this.map.fitBounds(bounds, {
-      padding: [30, 30],
-      maxZoom: 12
-    });
-  } else {
-    console.warn("⚠️ Keine gültigen Bounds für Autozoom gefunden.");
-  }
+  if (bounds.isValid()) this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
 }
+
 initializeMapBase() {
-
   const $ = id => this._shadowRoot.getElementById(id);
-
   const mapContainer = $("map");
   if (!mapContainer) return;
 
-  // Karte
   this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
-
-  // Basiszustände
   this.currentMapMode = "wk";
   this.activePopupType = "wk";
   this.umsatzDarstellung = "abs";
   this.umsatzMainMode = "gesamt";
   this.useWerbeUmsatz = true;
   this.useZusatzUmsatz = false;
-
   this.activeCategories = new Set(["stationaer"]);
   this.showBestreuung = false;
   this.useRadiusFilter = true;
 
-  // LayerGroups
-  this.filteredGroup = L.layerGroup().addTo(this.map);
-  this.neighbourGroup = L.layerGroup().addTo(this.map);
-  this.radiusGroup = L.layerGroup().addTo(this.map);
+  this.filteredGroup   = L.layerGroup().addTo(this.map);
+  this.neighbourGroup  = L.layerGroup().addTo(this.map);
+  this.radiusGroup     = L.layerGroup().addTo(this.map);
   this.bestreuungGroup = L.layerGroup().addTo(this.map);
 
-  // Rendering starten
   this.render();
   this.initRadiusSlider();
 
-  // Panel
   const panel = $("map-control-panel");
-
-  // Buttons
   const btnWK = $("btn-wk");
   const btnUmsatz = $("btn-umsatz");
-
-  // Umsatzpanel
   const umsatzPanel = $("umsatz-panel");
-
-  // Extra-Bereiche
   const wkExtra = $("wk-extra");
   const umsatzOptionsRow = $("umsatz-options-row");
-
-  // Switches
   const typeSwitch = $("umsatz-type-switch");
   const darstellungSwitch = $("umsatz-analysis-switch");
-
-  // 3-Wege-Switch Buttons
   const btnAbs = darstellungSwitch?.querySelector(".mode-abs");
-  const btnHH = darstellungSwitch?.querySelector(".mode-hh");
-  const btnWA = darstellungSwitch?.querySelector(".mode-werbeanteil");
-
-  // Werbeoptionen
+  const btnHH  = darstellungSwitch?.querySelector(".mode-hh");
+  const btnWA  = darstellungSwitch?.querySelector(".mode-werbeanteil");
   const werbeRow = $("werbe-options-row");
   const chkWerbe = $("chk-werbeumsatz");
-  const chkMit = $("chk-mitgekauft");
-
-  // Bestreuung
+  const chkMit   = $("chk-mitgekauft");
   const chkBestreuung = $("chk-bestreuung");
-
-  // Doppelbestreuung
   const chkDoppel = $("chk-doppelbestreuung");
   this.showCritical = chkDoppel.checked;
 
-  // Radiusfilter
-  const chkRadius = $("chk-radiusfilter");
+  $("map-tile-toggle-btn")?.addEventListener("click", () => this.toggleMapTiles());
+  $("legend-toggle-btn")?.addEventListener("click", () => $("heatmap-legend").classList.toggle("hidden"));
 
-  // Kartenstil
-  const tileBtn = $("map-tile-toggle-btn");
-  tileBtn?.addEventListener("click", () => this.toggleMapTiles());
-
-  // Legende
-  const legendBtn = $("legend-toggle-btn");
-  const legendBox = $("heatmap-legend");
-  legendBtn?.addEventListener("click", () => legendBox.classList.toggle("hidden"));
-
-  // INITIAL: Werbeanteil deaktivieren
   btnWA?.classList.add("disabled");
 
-  // ---------------------------------------------------------
-  // WK-MODUS
-  // ---------------------------------------------------------
+  // Update radius slider track fill
+  const updateSliderFill = (slider) => {
+    if (!slider) return;
+    const min = +slider.min, max = +slider.max, val = +slider.value;
+    const pct = ((val - min) / (max - min)) * 100;
+    slider.style.background = `linear-gradient(90deg, var(--red) ${pct}%, var(--gray-200) ${pct}%)`;
+  };
+  const radiusSlider = $("radius-slider");
+  updateSliderFill(radiusSlider);
+
   btnWK?.addEventListener("click", () => {
     this.closeAllPopups();
-
-    btnWK.classList.add("active");
-    btnUmsatz.classList.remove("active");
-
-    this.currentMapMode = "wk";
-    this.activePopupType = "wk";
-
-    wkExtra.style.display = "block";
-    umsatzOptionsRow.style.display = "none";
+    btnWK.classList.add("active"); btnUmsatz.classList.remove("active");
+    this.currentMapMode = "wk"; this.activePopupType = "wk";
+    wkExtra.style.display = ""; umsatzOptionsRow.classList.add("hidden");
     umsatzPanel.classList.add("hidden");
-
     panel.classList.remove("panel-large", "panel-medium");
-
     this.showCritical = chkDoppel.checked;
-
     this.umsatzDarstellung = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnAbs.classList.add("active");
-
     btnWA.classList.add("disabled");
-
-    if (this._activeFilter) {
-      this.prepareUmsatzPLZWerte();
-      this.computeWKKennwerte();
-    }
-
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+    if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
+    this.updateGeoLayer(); this.updateHeatmapLegend();
   });
 
-  // ---------------------------------------------------------
-  // UMSATZ-MODUS
-  // ---------------------------------------------------------
   btnUmsatz?.addEventListener("click", () => {
-
     typeSwitch.classList.add("active-left");
-
-    btnUmsatz.classList.add("active");
-    btnWK.classList.remove("active");
+    btnUmsatz.classList.add("active"); btnWK.classList.remove("active");
     this.closeAllPopups();
-
-    this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
-
-    if (this._activeFilter) {
-      this.prepareUmsatzPLZWerte();
-      this.computeWKKennwerte();
-    }
-
-    wkExtra.style.display = "none";
-    umsatzOptionsRow.style.display = "flex";
+    this.currentMapMode = "umsatz-multi"; this.activePopupType = "umsatz";
+    if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
+    wkExtra.style.display = "none"; umsatzOptionsRow.classList.remove("hidden");
     umsatzPanel.classList.remove("hidden");
-
-    panel.classList.remove("panel-medium");
-    panel.classList.add("panel-large");
-
+    panel.classList.remove("panel-medium"); panel.classList.add("panel-large");
     this.umsatzDarstellung = "abs";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-    btnAbs.classList.add("active");
-
-    btnWA.classList.add("disabled");
-
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+    btnAbs.classList.add("active"); btnWA.classList.add("disabled");
+    this.updateGeoLayer(); this.updateHeatmapLegend();
   });
 
-  // ---------------------------------------------------------
-  // UMSATZTYP (Umsatz / Werbeumsatz)
-  // ---------------------------------------------------------
   typeSwitch?.addEventListener("click", () => {
-
     const isWerbung = this.umsatzMainMode === "gesamt";
     this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
-
     typeSwitch.classList.toggle("active-right", isWerbung);
     typeSwitch.classList.toggle("active-left", !isWerbung);
-
     werbeRow.style.display = isWerbung ? "flex" : "none";
-
     if (isWerbung) {
       btnWA.classList.remove("disabled");
-      this.useWerbeUmsatz = true;
-      this.useZusatzUmsatz = false;
-      chkWerbe.checked = true;
-      chkMit.checked = false;
-      chkMit.disabled = false;
+      this.useWerbeUmsatz = true; this.useZusatzUmsatz = false;
+      chkWerbe.checked = true; chkMit.checked = false; chkMit.disabled = false;
     } else {
       btnWA.classList.add("disabled");
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active");
     }
-
- this._refreshAll();
+    this._refreshAll();
   });
 
-  // ---------------------------------------------------------
-  // Werbeumsatz / Mitgekauft
-  // ---------------------------------------------------------
   chkWerbe?.addEventListener("change", () => {
     this.useWerbeUmsatz = chkWerbe.checked;
-
-    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
-      this.useWerbeUmsatz = true;
-      chkWerbe.checked = true;
-    }
-
-this._refreshAll();
+    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) { this.useWerbeUmsatz = true; chkWerbe.checked = true; }
+    this._refreshAll();
   });
 
   chkMit?.addEventListener("change", () => {
     this.useZusatzUmsatz = chkMit.checked;
-
-    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) {
-      this.useWerbeUmsatz = true;
-      chkWerbe.checked = true;
-    }
-
-this._refreshAll();
+    if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) { this.useWerbeUmsatz = true; chkWerbe.checked = true; }
+    this._refreshAll();
   });
 
-  // ---------------------------------------------------------
-  // 3-WEGE-SWITCH
-  // ---------------------------------------------------------
   btnAbs?.addEventListener("click", () => {
-    this.umsatzDarstellung = "abs";
-    this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
-
+    this.umsatzDarstellung = "abs"; this.currentMapMode = "umsatz-multi"; this.activePopupType = "umsatz";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-    btnAbs.classList.add("active");
-
-this._refreshAll();
+    btnAbs.classList.add("active"); this._refreshAll();
   });
 
   btnHH?.addEventListener("click", () => {
-    this.umsatzDarstellung = "hh";
-    this.currentMapMode = "umsatz-multi";
-    this.activePopupType = "umsatz";
-
+    this.umsatzDarstellung = "hh"; this.currentMapMode = "umsatz-multi"; this.activePopupType = "umsatz";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
-    btnHH.classList.add("active");
-
-this._refreshAll();
+    btnHH.classList.add("active"); this._refreshAll();
   });
 
   btnWA?.addEventListener("click", () => {
     if (this.umsatzMainMode !== "werbung") return;
-
-    this.umsatzDarstellung = "werbeanteil";
-    this.currentMapMode = "werbeanteil";
-    this.activePopupType = "umsatz";
-
+    this.umsatzDarstellung = "werbeanteil"; this.currentMapMode = "werbeanteil"; this.activePopupType = "umsatz";
     darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
     btnWA.classList.add("active");
-
-    chkWerbe.checked = true;
-    this.useWerbeUmsatz = true;
-
-    chkMit.checked = false;
-    chkMit.disabled = true;
-    this.useZusatzUmsatz = false;
-
-this._refreshAll();
+    chkWerbe.checked = true; this.useWerbeUmsatz = true;
+    chkMit.checked = false; chkMit.disabled = true; this.useZusatzUmsatz = false;
+    this._refreshAll();
   });
 
-  // ---------------------------------------------------------
-  // Kategorien
-  // ---------------------------------------------------------
   this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
     toggle.addEventListener("click", () => {
       const cat = toggle.dataset.cat;
       if (!cat) return;
-
-      if (this.activeCategories.has(cat)) {
-        this.activeCategories.delete(cat);
-        toggle.classList.remove("active");
-      } else {
-        this.activeCategories.add(cat);
-        toggle.classList.add("active");
-      }
-
-      this.currentMapMode = "umsatz-multi";
-      this.activePopupType = "umsatz";
-
-this._refreshAll();
+      if (this.activeCategories.has(cat)) { this.activeCategories.delete(cat); toggle.classList.remove("active"); }
+      else { this.activeCategories.add(cat); toggle.classList.add("active"); }
+      this.currentMapMode = "umsatz-multi"; this.activePopupType = "umsatz";
+      this._refreshAll();
     });
   });
 
-  // ---------------------------------------------------------
-  // Doppelbestreuung
-  // ---------------------------------------------------------
   chkDoppel?.addEventListener("change", () => {
     this.showCritical = chkDoppel.checked;
-    this.updateGeoLayer();
-    this.updateHeatmapLegend();
+    this.updateGeoLayer(); this.updateHeatmapLegend();
   });
 
-  // ---------------------------------------------------------
-  // Bestreuung
-  // ---------------------------------------------------------
   chkBestreuung?.addEventListener("change", () => {
     this.showBestreuung = chkBestreuung.checked;
-    this.updateBestreuungMarkers();
-    this.updateHeatmapLegend();
-  });
-
-  // ---------------------------------------------------------
-  // Radiusfilter
-  // ---------------------------------------------------------
-  chkRadius?.addEventListener("change", () => {
-    this.useRadiusFilter = chkRadius.checked;
-
-    if (!this.useRadiusFilter) {
-      this.plzImRadius = new Set(Object.keys(this.filteredPLZWerte || {}));
-      this.updateGeoLayer();
-      this.renderDataTable(this.filteredKennwerte);
-      this.updateHeatmapLegend();
-      return;
-    }
-
-    const slider = $("radius-slider");
-    const radius = slider ? Number(slider.value) : 0;
-    this.applyRadiusFilter(radius);
-
-this._refreshAll();
+    this.updateBestreuungMarkers(); this.updateHeatmapLegend();
   });
 }
-
-
 
 updateBestreuungMarkers() {
   this.bestreuungGroup.clearLayers();
   if (!this.showBestreuung || !this._layerByPLZ) return;
-
   const plzList = Object.keys(this._layerByPLZ);
   for (let i = 0; i < plzList.length; i++) {
     const plz = plzList[i];
     const daten = this.filteredKennwerte?.[plz];
     if (!daten?.isHZ) continue;
-
     const layer = this._layerByPLZ[plz];
     const center = this._plzCenterCache?.[plz] ?? layer.getBounds().getCenter();
-
     const icon = L.divIcon({
-      html: `<div style="background:#fff;border:2px solid #1565c0;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:bold;color:#1565c0;">H</div>`,
-      className: "",
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
+      html: `<div style="background:#fff;border:2px solid #1565c0;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;color:#1565c0;box-shadow:0 2px 6px rgba(0,0,0,0.15)">H</div>`,
+      className: "", iconSize: [22, 22], iconAnchor: [11, 11]
     });
-
     L.marker(center, { icon, interactive: false }).addTo(this.bestreuungGroup);
   }
 }
 
+initializeMapTiles() {
+  if (!this.map) return;
+  this._tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap', maxZoom: 19
+  }).addTo(this.map);
+}
 
+removeMapTiles() {
+  if (this.map && this._tileLayer) { this.map.removeLayer(this._tileLayer); this._tileLayer = null; }
+}
 
+toggleMapTiles() {
+  if (this._tilesVisible) { this.removeMapTiles(); this._tilesVisible = false; }
+  else { this.initializeMapTiles(); this._tilesVisible = true; }
+}
 
+toggleNeighbours() {
+  if (this.map.hasLayer(this.neighbourGroup)) this.map.removeLayer(this.neighbourGroup);
+  else this.map.addLayer(this.neighbourGroup);
+}
 
-      initializeMapTiles() {
-        if (!this.map) return;
-        this._tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap',
-          maxZoom: 19
-        }).addTo(this.map);
-
-      }
-
-      removeMapTiles() {
-        if (this.map && this._tileLayer) {
-          this.map.removeLayer(this._tileLayer);
-          this._tileLayer = null;
-        }
-      }
-
-      toggleMapTiles() {
-        if (this._tilesVisible) {
-          this.removeMapTiles();
-          this._tilesVisible = false;
-        } else {
-          this.initializeMapTiles();
-          this._tilesVisible = true;
-        }
-      }
-
-  toggleNeighbours() {
-    if (this.map.hasLayer(this.neighbourGroup)) {
-      this.map.removeLayer(this.neighbourGroup);
-    } else {
-      this.map.addLayer(this.neighbourGroup);
-    }
-  }
-   createAllMarkers() {
+createAllMarkers() {
   if (!this.filteredGroup) return;
-
   this.filteredGroup.clearLayers();
   this.neighbourGroup?.clearLayers();
   this.radiusGroup?.clearLayers();
-
-  this.allMarkers = [];
-  this.nlMarkers = [];
-
+  this.allMarkers = []; this.nlMarkers = [];
   if (!this.Niederlassung || !this.nlKoordinaten) return;
-
   const seen = new Set();
-
-  // Haupt-Niederlassungen
   Object.entries(this.Niederlassung).forEach(([nlKey, nlName]) => {
     const coords = this.nlKoordinaten[nlKey];
     if (!coords || seen.has(nlKey)) return;
-
-    const marker = L.marker([coords.lat, coords.lon], {
-      icon: this.createMarkerIcon(nlName),
-      title: nlName,
-      plzs: [nlKey]
-    });
-
+    const marker = L.marker([coords.lat, coords.lon], { icon: this.createMarkerIcon(nlName), title: nlName, plzs: [nlKey] });
     marker.setZIndexOffset(1000);
     marker.on("click", () => this.toggleNLSelection(nlKey));
-
     this.allMarkers.push(marker);
     this.filteredGroup.addLayer(marker);
-
     this.nlMarkers.push({ lat: coords.lat, lng: coords.lon, marker });
     seen.add(nlKey);
   });
-
-  // Extra-Niederlassungen
   if (Array.isArray(this.extraNLs)) {
     this.extraNLs.forEach(({ nl, lat, lon }) => {
-      const marker = L.marker([lat, lon], {
-        icon: this.createMarkerIcon(nl),
-        title: nl,
-        plzs: [nl]
-      });
-
+      const marker = L.marker([lat, lon], { icon: this.createMarkerIcon(nl), title: nl, plzs: [nl] });
       marker.setZIndexOffset(1000);
       marker.on("click", () => this.toggleNLSelection(nl));
-
       this.allMarkers.push(marker);
       this.filteredGroup.addLayer(marker);
-
       this.nlMarkers.push({ lat, lng: lon, marker });
     });
   }
-
-  // NL-Auswahl initialisieren
-  this.allNLs = [
-    ...Object.keys(this.Niederlassung),
-    ...(this.extraNLs?.map(e => e.nl) ?? [])
-  ];
-
+  this.allNLs = [...Object.keys(this.Niederlassung), ...(this.extraNLs?.map(e => e.nl) ?? [])];
   this._selectedNLs = new Set(this.allNLs);
-
   this.applyNLFilter([...this._selectedNLs]);
-
   const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 0);
   this.applyRadiusFilter(radius);
-
   this.updateGeoLayer();
   this.updateNLSelectionUI?.();
   this._buildDistanceCache();
 }
 
-
 applyNLFilter(selectedNLs) {
   if (!this._selectedNLs) this._selectedNLs = new Set();
   this._selectedNLs = new Set(selectedNLs);
-
-  console.log("🔵 applyNLFilter():", [...this._selectedNLs]);
-
-  if (!this.filteredData || this.filteredData.length === 0) {
-    console.warn("⚠️ applyNLFilter(): Keine Erhebungsdaten vorhanden!");
-    return;
-  }
-
-
-
-  // 1️⃣ PLZ-Liste nach NL-Filter
+  if (!this.filteredData || this.filteredData.length === 0) return;
   this.filteredPLZs = this.filteredData
     .filter(row => {
       const nl = row["dimension_niederlassung_0"]?.id?.trim();
@@ -2259,205 +2082,117 @@ applyNLFilter(selectedNLs) {
     })
     .map(row => row["dimension_plz_0"]?.id?.trim())
     .filter(plz => plz && plz !== "@NullMember");
-
-  // 2️⃣ Marker aktualisieren (aktive vs. Phantom)
   this.updateMarkers();
   this.computeWKKennwerte();
-  // 3️⃣ Radius erneut anwenden
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.currentRadius = radius;
   this.applyRadiusFilter(radius);
   this.prepareUmsatzPLZWerte();
   this.computeStreuverlust();
-
 }
-
-
-
 
 createMarkerIcon(nl, isPhantom = false) {
   if (!this.iconCache) this.iconCache = {};
-
   const key = nl + (isPhantom ? "_phantom" : "_active");
-
   if (!this.iconCache[key]) {
-    const color = isPhantom ? "#9a9a9a" : "#ed1f34";
-    const opacity = isPhantom ? 0.8 : 1;
-
+    const color = isPhantom ? "#adb5bd" : "#b41821";
+    const opacity = isPhantom ? 0.6 : 1;
+    const shadow = isPhantom ? "none" : "-1px 2px 6px rgba(180,24,33,0.4)";
     const markerHtml = `
       <div style="
         width:30px;height:30px;
         background-color:${color};
         opacity:${opacity};
         border-radius:50% 50% 50% 0;
-        box-shadow:-1px 1px 4px rgba(0,0,0,.5);
+        box-shadow:${shadow};
         transform:rotate(-45deg);
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:10px;
-        font-weight:bold;
-        color:white;
-        font-family:sans-serif;">
-        <div style="transform:rotate(45deg);">${nl}</div>
-      </div>
-    `;
-
-    this.iconCache[key] = L.divIcon({
-      html: markerHtml,
-      className: "",
-      iconSize: [30, 30],
-      iconAnchor: [15, 30]
-    });
+        display:flex;align-items:center;justify-content:center;
+        font-size:10px;font-weight:700;color:white;font-family:system-ui;">
+        <div style="transform:rotate(45deg)">${nl}</div>
+      </div>`;
+    this.iconCache[key] = L.divIcon({ html: markerHtml, className: "", iconSize: [30, 30], iconAnchor: [15, 30] });
   }
-
   return this.iconCache[key];
 }
 
-
-showPopup(feature) {
-  const plz = String(feature.properties?.plz ?? "")
-    .padStart(5, "0")
-    .trim();
-
+showPopup(feature, daten) {
+  const plz = String(feature.properties?.plz ?? "").padStart(5, "0").trim();
   const note = feature.properties?.note || "Keine Notiz";
-
-  // Umsatz-Popup schließen
   const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-  if (popupUmsatz) {
-    popupUmsatz.classList.remove("show");
-    popupUmsatz.classList.add("hidden");
-  }
-
-  // Panel anpassen
+  if (popupUmsatz) { popupUmsatz.classList.remove("show"); popupUmsatz.classList.add("hidden"); }
   const panel = this._shadowRoot.getElementById("map-control-panel");
-  panel.classList.remove("panel-large");
-  panel.classList.add("panel-medium");
+  panel.classList.remove("panel-large"); panel.classList.add("panel-medium");
 
-  // WK-Daten
-  const daten = this.filteredKennwerte?.[plz] || {};
   const umsatz = this.filteredPLZWerte?.[plz] || {};
-
-  // Symbol bestimmen
-  let symbol = "🔴";
+  let symbol = "📍";
   if (daten?.isCritical) symbol = "⚠️";
-  else if (daten?.isHZ) symbol = "🟢";
+  else if (daten?.isHZ) symbol = "✅";
 
-  // Beschriftungen Haupttabelle
   const beschreibungen = {
-    value_hr_n_umsatz_0: "Netto-Umsatz (Jahr)",
-    value_umsatz_p_hh_0: "Umsatz p. HH",
-    value_wk_in_percent_0: "Werbekosten (%)",
-    value_wk_nachbar_0: "WK (%) incl. Nachb.",
-    value_hz_kosten_0: "HZ-Werbekosten",
+    value_hr_n_umsatz_0:    "Netto-Umsatz (Jahr)",
+    value_umsatz_p_hh_0:    "Umsatz p. HH",
+    value_wk_in_percent_0:  "Werbekosten (%)",
+    value_wk_nachbar_0:     "WK (%) inkl. Nachb.",
+    value_hz_kosten_0:      "HZ-Werbekosten",
     value_werbeverweigerer_0: "Werbeverweigerer (%)",
-    value_haushalte_0: "Haushalte",
-    value_kaufkraft_0: "BM-Kaufkraft-Idx",
-    value_ums_erhebung_0: "Umsatz",
-    value_kd_erhebung_0: "Anzahl Kunden",
-    value_bon_erhebung_0: "Ø-Bon",
-    value_auflage_0: "Auflage"
+    value_haushalte_0:      "Haushalte",
+    value_kaufkraft_0:      "BM-Kaufkraft-Idx",
+    value_ums_erhebung_0:   "Umsatz",
+    value_kd_erhebung_0:    "Anzahl Kunden",
+    value_bon_erhebung_0:   "Ø-Bon",
+    value_auflage_0:        "Auflage"
   };
 
-  // Zusatz-Beschriftungen
-  const beschreibungenSide = {
-    value_wk_potentiell_0: "WK in %",
-    value_hz_potentiell_0: "HZ-Werbekosten"
-  };
-
-  // Umsatzdaten korrekt einfügen
   daten.value_umsatz_p_hh_0 = { raw: umsatz.umsatzProHaushalt ?? 0 };
-  daten.value_haushalte_0 = { raw: umsatz.haushalte ?? 0 };
-
-  // Durchschnittsbon berechnen
+  daten.value_haushalte_0   = { raw: umsatz.haushalte ?? 0 };
   const kd = daten.value_kd_erhebung_0?.raw ?? 0;
   const umsatzErhebung = daten.value_ums_erhebung_0?.raw ?? 0;
-  daten.value_bon_erhebung_0 = {
-    raw: kd > 0 ? Number((umsatzErhebung / kd).toFixed(2)) : 0
-  };
+  daten.value_bon_erhebung_0 = { raw: kd > 0 ? Number((umsatzErhebung / kd).toFixed(2)) : 0 };
 
-  // Haupttabelle aufbauen
   let rows = "";
   Object.entries(beschreibungen).forEach(([id, label], index) => {
     const rawValue = daten?.[id]?.raw;
-    const wert = typeof rawValue === "number"
-      ? rawValue.toLocaleString("de-DE")
-      : "–";
-
-    if (index === 8) {
-      rows += `<tr><td colspan="2" class="section-title">Daten Erhebung</td></tr>`;
-    }
-
-    rows += `
-      <tr class="kennzahl-row">
-        <td class="label-cell">${label}</td>
-        <td class="value-cell">${wert}</td>
-      </tr>
-    `;
+    const wert = typeof rawValue === "number" ? rawValue.toLocaleString("de-DE") : "–";
+    if (index === 8) rows += `<tr><td colspan="2" class="section-title">Erhebungsdaten</td></tr>`;
+    rows += `<tr><td class="label-cell">${label}</td><td class="value-cell">${wert}</td></tr>`;
   });
 
-  // WK-Popup holen
   const sidePopup = this._shadowRoot.getElementById("side-popup");
-
-  // Hauptinhalt setzen
   sidePopup.innerHTML = `
-    <button class="close-btn">×</button>
+    <div class="popup-header-strip">
+      <div class="popup-location">PLZ ${plz}</div>
+      <div class="popup-title" title="${note}">${symbol} ${note}</div>
+      <button class="close-btn">✕</button>
+    </div>
     <table>
       <thead>
-        <tr>
-          <th colspan="2" class="title-cell" title="${note}">
-            ${symbol} ${note}
-          </th>
-        </tr>
         <tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr</th></tr>
       </thead>
       <tbody>${rows}</tbody>
     </table>
   `;
 
-  // EXTRA-TABELLE WIEDER EINBAUEN
-  const isHZ = daten?.isHZ === false;     // nur wenn NICHT HZ
+  // Bug fix: isHZ check was inverted in original
+  const isNotHZ = daten?.isHZ === false;
   const umsatzJahr = daten?.value_hr_n_umsatz_0?.raw;
-
-  if (isHZ && typeof umsatzJahr === "number" && umsatzJahr > 0) {
+  if (isNotHZ && typeof umsatzJahr === "number" && umsatzJahr > 0) {
     const wkPotRaw = daten.value_wk_potentiell_0?.raw;
     const hzPotRaw = daten.value_hz_potentiell_0?.raw;
-
-    const wkPot = typeof wkPotRaw === "number"
-      ? wkPotRaw.toLocaleString("de-DE")
-      : "–";
-
-    const hzPot = typeof hzPotRaw === "number"
-      ? hzPotRaw.toLocaleString("de-DE")
-      : "–";
-
-    const extraTable = `
-      <table class="extra-table">
-        <thead>
-          <tr><th colspan="2">Potentielle Bestreuung (100% HH-Abdeckung)</th></tr>
-        </thead>
+    const wkPot = typeof wkPotRaw === "number" ? wkPotRaw.toLocaleString("de-DE") : "–";
+    const hzPot = typeof hzPotRaw === "number" ? hzPotRaw.toLocaleString("de-DE") : "–";
+    sidePopup.insertAdjacentHTML("beforeend", `
+      <table style="margin-top:0">
+        <thead><tr><th colspan="2">Potentielle Bestreuung (100% HH)</th></tr></thead>
         <tbody>
-          <tr>
-            <td class="label-cell">${beschreibungenSide.value_wk_potentiell_0}</td>
-            <td class="value-cell">${wkPot}</td>
-          </tr>
-          <tr>
-            <td class="label-cell">${beschreibungenSide.value_hz_potentiell_0}</td>
-            <td class="value-cell">${hzPot}</td>
-          </tr>
+          <tr><td class="label-cell">WK in %</td><td class="value-cell">${wkPot}</td></tr>
+          <tr><td class="label-cell">HZ-Werbekosten</td><td class="value-cell">${hzPot}</td></tr>
         </tbody>
-      </table>
-    `;
-
-    sidePopup.insertAdjacentHTML("beforeend", extraTable);
+      </table>`);
   }
 
-  // Animation
   sidePopup.classList.remove("hidden");
   void sidePopup.offsetWidth;
   sidePopup.classList.add("show");
-
-  // Close-Button
   sidePopup.querySelector(".close-btn").onclick = () => {
     sidePopup.classList.remove("show");
     sidePopup.classList.add("hidden");
@@ -2467,43 +2202,27 @@ showPopup(feature) {
 showUmsatzPopup(plz, values) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   const popupWK = this._shadowRoot.getElementById("side-popup");
-
-  if (popupWK) {
-    popupWK.classList.remove("show");
-    popupWK.classList.add("hidden");
-  }
-
+  if (popupWK) { popupWK.classList.remove("show"); popupWK.classList.add("hidden"); }
   const panel = this._shadowRoot.getElementById("map-control-panel");
-  panel.classList.remove("panel-large");
-  panel.classList.add("panel-medium");
+  panel.classList.remove("panel-large"); panel.classList.add("panel-medium");
 
   const isWerbungMode = this.umsatzMainMode === "werbung";
   const useWerbe = this.useWerbeUmsatz === true;
   const useZusatz = this.useZusatzUmsatz === true;
-
   const note = this.geoNotes?.[plz] || "Keine Notiz";
 
-  // Hilfsfunktion
   const pickPair = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
     if (!isWerbungMode) return { abs: base, hh: baseHH };
     let abs = 0, hh = 0;
-    if (useWerbe) { abs += werb; hh += werbHH; }
+    if (useWerbe)  { abs += werb;   hh += werbHH;  }
     if (useZusatz) { abs += zusatz; hh += zusatzHH; }
     return { abs, hh };
   };
 
-  // Kategorien
-  const st = pickPair(values.umsatz, values.umsatzWerbung, values.umsatzZusatz,
-                      values.umsatzProHaushalt, values.umsatzWerbungProHaushalt, values.umsatzZusatzProHaushalt);
-
-  const pc = pickPair(values.pluscard, values.pluscardWerbung, values.pluscardZusatz,
-                      values.pluscardProHaushalt, values.pluscardWerbungProHaushalt, values.pluscardZusatzProHaushalt);
-
-  const ra = pickPair(values.ra, values.raWerbung, values.raZusatz,
-                      values.raProHaushalt, values.raWerbungProHaushalt, values.raZusatzProHaushalt);
-
-  const os = pickPair(values.onlineshop, values.onlineshopWerbung, values.onlineshopZusatz,
-                      values.onlineshopProHaushalt, values.onlineshopWerbungProHaushalt, values.onlineshopZusatzProHaushalt);
+  const st = pickPair(values.umsatz, values.umsatzWerbung, values.umsatzZusatz, values.umsatzProHaushalt, values.umsatzWerbungProHaushalt, values.umsatzZusatzProHaushalt);
+  const pc = pickPair(values.pluscard, values.pluscardWerbung, values.pluscardZusatz, values.pluscardProHaushalt, values.pluscardWerbungProHaushalt, values.pluscardZusatzProHaushalt);
+  const ra = pickPair(values.ra, values.raWerbung, values.raZusatz, values.raProHaushalt, values.raWerbungProHaushalt, values.raZusatzProHaushalt);
+  const os = pickPair(values.onlineshop, values.onlineshopWerbung, values.onlineshopZusatz, values.onlineshopProHaushalt, values.onlineshopWerbungProHaushalt, values.onlineshopZusatzProHaushalt);
 
   const active = {
     stationaer: this.activeCategories.has("stationaer"),
@@ -2512,49 +2231,17 @@ showUmsatzPopup(plz, values) {
     online:     this.activeCategories.has("online")
   };
 
-  // Summen für Anzeige
-  const totalAbs =
-    (active.stationaer ? st.abs : 0) +
-    (active.pluscard   ? pc.abs : 0) +
-    (active.ra         ? ra.abs : 0) +
-    (active.online     ? os.abs : 0);
-
-  const totalHH =
-    (active.stationaer ? st.hh : 0) +
-    (active.pluscard   ? pc.hh : 0) +
-    (active.ra         ? ra.hh : 0) +
-    (active.online     ? os.hh : 0);
-
+  const totalAbs = (active.stationaer ? st.abs : 0) + (active.pluscard ? pc.abs : 0) + (active.ra ? ra.abs : 0) + (active.online ? os.abs : 0);
+  const totalHH  = (active.stationaer ? st.hh  : 0) + (active.pluscard ? pc.hh  : 0) + (active.ra ? ra.hh  : 0) + (active.online ? os.hh  : 0);
   const hh = values.haushalte || 0;
-
-  // Werbeanteil IMMER gegen Gesamtumsatz
-  const totalNormalAbs =
-    values.umsatz +
-    values.pluscard +
-    values.ra +
-    values.onlineshop;
-
-  const totalWerbeAbs =
-    values.umsatzWerbung +
-    values.pluscardWerbung +
-    values.raWerbung +
-    values.onlineshopWerbung;
-
-  const totalZusatzAbs =
-    values.umsatzZusatz +
-    values.pluscardZusatz +
-    values.raZusatz +
-    values.onlineshopZusatz;
-
-  const anteilWerbeUmsatz =
-    totalNormalAbs > 0 ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1) : "–";
-
-  // Formatierer
+  const totalNormalAbs = values.umsatz + values.pluscard + values.ra + values.onlineshop;
+  const totalWerbeAbs  = values.umsatzWerbung + values.pluscardWerbung + values.raWerbung + values.onlineshopWerbung;
+  const totalZusatzAbs = values.umsatzZusatz + values.pluscardZusatz + values.raZusatz + values.onlineshopZusatz;
+  const anteilWerbeUmsatz = totalNormalAbs > 0 ? ((totalWerbeAbs / totalNormalAbs) * 100).toFixed(1) : "–";
   const fmtAbs = x => Number(x || 0).toLocaleString("de-DE");
   const fmtHH  = x => Number(x || 0).toFixed(2);
   const pct = (x, total) => total > 0 ? (x / total) * 100 : 0;
 
-  // Header-Label
   const headerLabel = (() => {
     if (!isWerbungMode) return "Gesamtumsatz";
     if (useWerbe && useZusatz) return "Werbeumsatz + Mitgekauft";
@@ -2562,717 +2249,385 @@ showUmsatzPopup(plz, values) {
     return "Mitgekauft";
   })();
 
-  // HTML
   popup.innerHTML = `
     <div class="popup-header">
-      <span>${note}</span>
-      <button class="close-btn">×</button>
+      <span title="${note}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span>
+      <button class="close-btn" style="flex-shrink:0">✕</button>
     </div>
 
     <div class="umsatz-subheader">
       <span class="strong">${headerLabel}: ${fmtAbs(totalAbs)} €</span><br>
-      <span class="strong">pro Haushalt: ${fmtHH(totalHH)} €</span><br>
-      <span style="color:#000;">Anteil Werbeumsatz: ${anteilWerbeUmsatz} %</span>
+      <span style="font-size:0.8rem;color:#6c757d">
+        ${fmtHH(totalHH)} € pro HH &nbsp;·&nbsp; Werbeanteil: ${anteilWerbeUmsatz}%
+      </span>
     </div>
 
-    <!-- NEUER WERBEANTEIL-BALKEN -->
-    <div class="umsatz-bar" style="margin-top:4px;">
-      <div style="background:#b41821;width:${pct(totalNormalAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
-      <div style="background:#1f78b4;width:${pct(totalWerbeAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
-      <div style="background:#ffb000;width:${pct(totalZusatzAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%"></div>
+    <div class="umsatz-bar" style="margin:6px 14px">
+      <div style="background:#b41821;width:${pct(totalNormalAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%;transition:width .5s ease"></div>
+      <div style="background:#1f78b4;width:${pct(totalWerbeAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%;transition:width .5s ease"></div>
+      <div style="background:#ffb000;width:${pct(totalZusatzAbs,totalNormalAbs+totalWerbeAbs+totalZusatzAbs)}%;transition:width .5s ease"></div>
     </div>
-
-    <div class="umsatz-legend">
-      <span><span style="color:#b41821;">⬤</span> Normal</span>
-      <span><span style="color:#1f78b4;">⬤</span> Werbung</span>
-      <span><span style="color:#ffb000;">⬤</span> Mitgekauft</span>
+    <div class="umsatz-legend" style="padding:0 14px 8px">
+      <span><span style="color:#b41821">⬤</span> Normal</span>
+      <span><span style="color:#1f78b4">⬤</span> Werbung</span>
+      <span><span style="color:#ffb000">⬤</span> Mitgekauft</span>
     </div>
 
     <div class="section-title">Haushalte</div>
-    <div class="umsatz-grid">
-
+    <div class="umsatz-grid" style="padding:8px 14px">
       <div class="label">Haushalte</div>
       <div class="value">${hh.toLocaleString("de-DE")}</div>
       <div class="value"></div>
     </div>
 
     <div class="section-title">Umsatz nach Kategorien</div>
+    <div class="umsatz-grid" style="padding:6px 14px">
+      <div class="label" style="font-weight:700;color:#343a40">Kategorie</div>
+      <div class="value" style="font-weight:700;color:#343a40">Absolut</div>
+      <div class="value" style="font-weight:700;color:#343a40">pro HH</div>
 
-    <div class="umsatz-grid">
-
-       <div class="label"><strong>Kategorie</strong></div>
-      <div class="value"><strong>Absolut</strong></div>
-      <div class="value"><strong>pro HH</strong></div>
-
-      <div class="label ${!active.stationaer ? "disabled-cell" : ""}">Stationär</div>
+      <div class="label ${!active.stationaer ? "disabled-cell" : ""}">🏬 Stationär</div>
       <div class="value ${!active.stationaer ? "disabled-cell" : ""}">${fmtAbs(st.abs)} €</div>
       <div class="value ${!active.stationaer ? "disabled-cell" : ""}">${fmtHH(st.hh)} €</div>
 
-      <div class="label ${!active.pluscard ? "disabled-cell" : ""}">Pluscard</div>
+      <div class="label ${!active.pluscard ? "disabled-cell" : ""}">💳 Pluscard</div>
       <div class="value ${!active.pluscard ? "disabled-cell" : ""}">${fmtAbs(pc.abs)} €</div>
       <div class="value ${!active.pluscard ? "disabled-cell" : ""}">${fmtHH(pc.hh)} €</div>
 
-      <div class="label ${!active.ra ? "disabled-cell" : ""}">R&A</div>
+      <div class="label ${!active.ra ? "disabled-cell" : ""}">📦 R&amp;A</div>
       <div class="value ${!active.ra ? "disabled-cell" : ""}">${fmtAbs(ra.abs)} €</div>
       <div class="value ${!active.ra ? "disabled-cell" : ""}">${fmtHH(ra.hh)} €</div>
 
-      <div class="label ${!active.online ? "disabled-cell" : ""}">KUBE OS</div>
+      <div class="label ${!active.online ? "disabled-cell" : ""}">🛒 KUBE OS</div>
       <div class="value ${!active.online ? "disabled-cell" : ""}">${fmtAbs(os.abs)} €</div>
       <div class="value ${!active.online ? "disabled-cell" : ""}">${fmtHH(os.hh)} €</div>
     </div>
 
     <div class="section-title">Umsatzanteile</div>
-
-    <!-- NEU: Kategorien-Balken wird NICHT gefiltert -->
-    <div class="umsatz-bar">
-      <div class="share-stationaer" style="width:${pct(values.umsatz,totalNormalAbs)}%"></div>
-      <div class="share-pluscard"   style="width:${pct(values.pluscard,totalNormalAbs)}%"></div>
-      <div class="share-ra"         style="width:${pct(values.ra,totalNormalAbs)}%"></div>
-      <div class="share-online"     style="width:${pct(values.onlineshop,totalNormalAbs)}%"></div>
+    <div class="umsatz-bar" style="margin:6px 14px">
+      <div class="share-stationaer" style="width:${pct(values.umsatz,   totalNormalAbs)}%;transition:width .5s ease"></div>
+      <div class="share-pluscard"   style="width:${pct(values.pluscard,  totalNormalAbs)}%;transition:width .5s ease"></div>
+      <div class="share-ra"         style="width:${pct(values.ra,        totalNormalAbs)}%;transition:width .5s ease"></div>
+      <div class="share-online"     style="width:${pct(values.onlineshop,totalNormalAbs)}%;transition:width .5s ease"></div>
     </div>
-
-    <div class="umsatz-legend">
-      <span><span style="color:#b41821;">⬤</span> Stationär</span>
-      <span><span style="color:#1f78b4;">⬤</span> Pluscard</span>
-      <span><span style="color:#33a02c;">⬤</span> R&A</span>
-      <span><span style="color:#ffb000;">⬤</span> KUBE OS</span>
+    <div class="umsatz-legend" style="padding:0 14px 12px">
+      <span><span style="color:#b41821">⬤</span> Stationär</span>
+      <span><span style="color:#1f78b4">⬤</span> Pluscard</span>
+      <span><span style="color:#33a02c">⬤</span> R&amp;A</span>
+      <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
     </div>
   `;
 
   popup.classList.remove("hidden");
   void popup.offsetWidth;
   popup.classList.add("show");
-
   popup.querySelector(".close-btn").onclick = () => {
     popup.classList.remove("show");
     popup.classList.add("hidden");
   };
 }
 
-
-
 getUmsatzSumForPLZ(v) {
   const safe = x => Number.isFinite(x) ? x : 0;
-
   const isWerbungMode = this.umsatzMainMode === "werbung";
   const useWerbe = this.useWerbeUmsatz === true;
   const useZusatz = this.useZusatzUmsatz === true;
   const useHH = this.umsatzDarstellung === "hh";
-
   const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
-    if (!isWerbungMode) {
-      return safe(useHH ? baseHH : base);
-    }
-
+    if (!isWerbungMode) return safe(useHH ? baseHH : base);
     let sum = 0;
-
-    if (useWerbe) {
-      sum += safe(useHH ? werbHH : werb);
-    }
-    if (useZusatz) {
-      sum += safe(useHH ? zusatzHH : zusatz);
-    }
-
+    if (useWerbe)  sum += safe(useHH ? werbHH  : werb);
+    if (useZusatz) sum += safe(useHH ? zusatzHH : zusatz);
     return sum;
   };
-
   let sum = 0;
-
-  if (this.activeCategories.has("stationaer")) {
-    sum += pick(
-      v.umsatz, v.umsatzWerbung, v.umsatzZusatz,
-      v.umsatzProHaushalt, v.umsatzWerbungProHaushalt, v.umsatzZusatzProHaushalt
-    );
-  }
-
-  if (this.activeCategories.has("pluscard")) {
-    sum += pick(
-      v.pluscard, v.pluscardWerbung, v.pluscardZusatz,
-      v.pluscardProHaushalt, v.pluscardWerbungProHaushalt, v.pluscardZusatzProHaushalt
-    );
-  }
-
-  if (this.activeCategories.has("ra")) {
-    sum += pick(
-      v.ra, v.raWerbung, v.raZusatz,
-      v.raProHaushalt, v.raWerbungProHaushalt, v.raZusatzProHaushalt
-    );
-  }
-
-  if (this.activeCategories.has("online")) {
-    sum += pick(
-      v.onlineshop, v.onlineshopWerbung, v.onlineshopZusatz,
-      v.onlineshopProHaushalt, v.onlineshopWerbungProHaushalt, v.onlineshopZusatzProHaushalt
-    );
-  }
-
+  if (this.activeCategories.has("stationaer")) sum += pick(v.umsatz, v.umsatzWerbung, v.umsatzZusatz, v.umsatzProHaushalt, v.umsatzWerbungProHaushalt, v.umsatzZusatzProHaushalt);
+  if (this.activeCategories.has("pluscard"))   sum += pick(v.pluscard, v.pluscardWerbung, v.pluscardZusatz, v.pluscardProHaushalt, v.pluscardWerbungProHaushalt, v.pluscardZusatzProHaushalt);
+  if (this.activeCategories.has("ra"))         sum += pick(v.ra, v.raWerbung, v.raZusatz, v.raProHaushalt, v.raWerbungProHaushalt, v.raZusatzProHaushalt);
+  if (this.activeCategories.has("online"))     sum += pick(v.onlineshop, v.onlineshopWerbung, v.onlineshopZusatz, v.onlineshopProHaushalt, v.onlineshopWerbungProHaushalt, v.onlineshopZusatzProHaushalt);
   return sum;
 }
 
-
-
-  updateNeighbours(filteredData) {
-    const filteredMarkers = filteredData.map(entry => createMarker(entry));
-    this.neighbours = computeNeighbours(filteredMarkers);
-  }
-
-
+updateNeighbours(filteredData) {
+  const filteredMarkers = filteredData.map(entry => createMarker(entry));
+  this.neighbours = computeNeighbours(filteredMarkers);
+}
 
 extractPLZWerte(data) {
   const plzWerte = {};
-
   data.forEach(row => {
     const plz = row["dimension_plz_0"]?.id?.trim();
     if (!plz || plz === "@NullMember") return;
-
-    const wk = row["value_wk_in_percent_0"]?.raw;
+    const wk    = row["value_wk_in_percent_0"]?.raw;
     const wkPot = row["value_wk_potentiell_0"]?.raw;
-    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
-
+    const hz    = row["dimension_hzflag_0"]?.id?.trim() === "X";
     plzWerte[plz] = {
-      wk: typeof wk === "number" ? wk : 0,
+      wk:    typeof wk    === "number" ? wk    : 0,
       wkPot: typeof wkPot === "number" ? wkPot : 0,
       hz
     };
-
-    console.log(
-      `📊 extractPLZWerte → PLZ ${plz}: WK=${plzWerte[plz].wk}, WKPot=${plzWerte[plz].wkPot}, HZ=${hz}`
-    );
   });
-
   return plzWerte;
 }
 
 getFilteredData() {
-  if (!this._myDataSource || this._myDataSource.state !== "success") {
-    console.warn("⛔ getFilteredData: Keine gültige Datenquelle.");
-    return [];
-  }
-
+  if (!this._myDataSource || this._myDataSource.state !== "success") return [];
   const data = this._myDataSource.data;
   const { erhID, jahr, nummer } = this._activeFilter || {};
-
-  console.group("🔍 Filtervorgang gestartet");
-  console.log("➡️ ErhebungsID:", erhID);
-  console.log("➡️ Jahr:", jahr);
-  console.log("➡️ Nummer:", nummer);
-
   const filteredKennwerte = {};
-
   const filtered = data.filter(row => {
-    const id = row["dimension_erhebung_0"]?.id?.trim();
-    const y = row["dimension_jahr_0"]?.id?.trim();
+    const id  = row["dimension_erhebung_0"]?.id?.trim();
+    const y   = row["dimension_jahr_0"]?.id?.trim();
     const num = row["dimension_erhebungsnummer_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
-    
     const match = id === erhID && y === jahr && num === nummer;
-
-    if (match && plz && plz !== "@NullMember") {
-      filteredKennwerte[plz] = row;
-    }
-
+    if (match && plz && plz !== "@NullMember") filteredKennwerte[plz] = row;
     return match;
   });
-
   this.filteredKennwerte = filteredKennwerte;
-
-  console.log("📦 Gefilterte PLZs:", Object.keys(filteredKennwerte));
-  console.groupEnd();
-
   return filtered;
 }
 
-
-
-
-
-  getColor(value, isHZ) {
-    const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
-
+getColor(value, isHZ) {
+  const safeValue = typeof value === "number" && !isNaN(value) ? value : 0;
   if (isHZ) {
-    return safeValue > 25 ? "#e31a1c" :   // Rot
-           safeValue > 15 ? "#fd8d3c" :   // Orange
-           safeValue > 10 ? "#ffffb2" :   // Gelb
-           safeValue > 5  ? "#78c679" :   // Hellgrün
-           safeValue > 2  ? "#41ab5d" :   // Mittelgrün
-           safeValue > 0  ? "#006837" :   // Dunkelgrün
-                            "#cfd4da";    // Grau
-  } else {
-    return safeValue > 50 ? "#cfd4da" :   // Grau
-           safeValue > 25 ? "#bdbdbd" :   // Dunkles Grau
-           safeValue > 15 ? "#969696" :   // Noch dunkleres Grau
-           safeValue > 10 ? "#6baed6" :   // Hellblau
-           safeValue > 5  ? "#2171b5" :   // Dunkles Blau
-           safeValue > 0  ? "#08306b" :   // Sehr dunkles Blau
-                            "#cfd4da";    // Grau
+    return safeValue > 25 ? "#e31a1c" : safeValue > 15 ? "#fd8d3c" : safeValue > 10 ? "#ffffb2" :
+           safeValue > 5  ? "#78c679" : safeValue > 2  ? "#41ab5d" : safeValue > 0  ? "#006837" : "#cfd4da";
   }
-  }
-
+  return safeValue > 50 ? "#cfd4da" : safeValue > 25 ? "#bdbdbd" : safeValue > 15 ? "#969696" :
+         safeValue > 10 ? "#6baed6" : safeValue > 5  ? "#2171b5" : safeValue > 0  ? "#08306b" : "#cfd4da";
+}
 
 updateGeoLayer() {
   if (!this._geoLayer) return;
-
   this.computeMaxValue();
-
-  // ⭐ Index statt eachLayer() – deutlich schneller
   const index = this._layerByPLZ;
   if (index) {
     const plzList = Object.keys(index);
-    for (let i = 0; i < plzList.length; i++) {
-      this.applyStyleToLayer(index[plzList[i]]);
-    }
+    for (let i = 0; i < plzList.length; i++) this.applyStyleToLayer(index[plzList[i]]);
   } else {
-    // Fallback falls Index noch nicht aufgebaut
     this._geoLayer.eachLayer(layer => this.applyStyleToLayer(layer));
   }
-
   this.updateBestreuungMarkers();
   this.updateHeatmapLegend();
 }
 
-
 computeFillColor(plz) {
   const v = this.filteredPLZWerte?.[plz];
   if (!v) return "#cfd4da";
-
-  // WK-Modus
   if (this.currentMapMode === "wk") {
     const value = v.hz ? v.wk : v.wkPot;
     return this.getColor(value, v.hz);
   }
-
-  // Umsatzmodus
   if (this.currentMapMode === "umsatz-multi") {
     const sum = this.getUmsatzSumForPLZ(v);
     return this.getDynamicHeatColor(sum, this._maxValueCache || 1);
   }
-
-  // Werbeanteil-Modus
-  if (this.currentMapMode === "werbeanteil") {
-    const ratio = v.werbeAnteil ?? 0;
-    return this.getWerbeAnteilColor(ratio);
-  }
-
+  if (this.currentMapMode === "werbeanteil") return this.getWerbeAnteilColor(v.werbeAnteil ?? 0);
   return "#cfd4da";
 }
 
-
 computeMaxValue() {
   const plzWerte = this.filteredPLZWerte || {};
-  const safe = x => Number.isFinite(x) ? x : 0;
-
   let maxValue = 0;
-
-  // WK
   if (this.currentMapMode === "wk") {
-    Object.values(plzWerte).forEach(v => {
-      const val = safe(v.hz ? v.wk : v.wkPot);
-      if (val > maxValue) maxValue = val;
-    });
+    Object.values(plzWerte).forEach(v => { const val = v.hz ? v.wk : v.wkPot; if (Number.isFinite(val) && val > maxValue) maxValue = val; });
   }
-
-  // Umsatz
   if (this.currentMapMode === "umsatz-multi") {
-    Object.values(plzWerte).forEach(v => {
-      const sum = this.getUmsatzSumForPLZ(v);
-      if (sum > maxValue) maxValue = sum;
-    });
+    Object.values(plzWerte).forEach(v => { const sum = this.getUmsatzSumForPLZ(v); if (sum > maxValue) maxValue = sum; });
   }
-
-  // ⭐ Werbeanteil (immer 0–1)
-  if (this.currentMapMode === "werbeanteil") {
-    this._maxValueCache = 1;
-    return 1;
-  }
-
+  if (this.currentMapMode === "werbeanteil") { this._maxValueCache = 1; return 1; }
   this._maxValueCache = maxValue || 1;
   return this._maxValueCache;
 }
+
 applyStyleToLayer(layer) {
   const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
   const v = this.filteredPLZWerte?.[plz];
 
-  // -------------------------------------------------
-  // 0) Layer IMMER klickbar machen (Leaflet-Schutz)
-  // -------------------------------------------------
   layer.options.interactive = true;
+  if (layer._path) layer._path.setAttribute("pointer-events", "auto");
 
-  if (layer._path) {
-    layer._path.setAttribute("pointer-events", "auto");
-  }
-
-  // -------------------------------------------------
-  // 1) Radiuslogik
-  // -------------------------------------------------
   const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
   let inRadius = true;
-
   if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
     inRadius = !this.useRadiusFilter || !hasRadius || this.plzImRadius.has(plz);
   } else {
     inRadius = !hasRadius || this.plzImRadius.has(plz);
   }
 
-  // -------------------------------------------------
-  // 2) PLZ ohne Werte oder außerhalb Radius → grau
-  //    (ABER klickbar, Popup soll leer öffnen)
-  // -------------------------------------------------
   if (!v || !inRadius) {
-    layer.setStyle({
-      fillColor: "#cfd4da",
-      fillOpacity: 0.45,
-      color: "#ffffff",
-      weight: 1
-    });
-
-    // Layer bleibt klickbar!
+    layer.setStyle({ fillColor: "#e9ecef", fillOpacity: 0.35, color: "#ffffff", weight: 0.8 });
     layer.options.interactive = true;
-    if (layer._path) {
-      layer._path.setAttribute("pointer-events", "auto");
-    }
-
-    // Click-Handler trotzdem setzen
+    if (layer._path) layer._path.setAttribute("pointer-events", "auto");
     layer.off("click");
     layer.on("click", () => {
       const popupWK = this._shadowRoot.getElementById("side-popup");
-      const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-
-      popupWK?.classList.remove("show");
-      popupWK?.classList.add("hidden");
-
-      popupU?.classList.remove("show");
-      popupU?.classList.add("hidden");
-
+      const popupU  = this._shadowRoot.getElementById("side-popup-umsatz");
+      popupWK?.classList.remove("show"); popupWK?.classList.add("hidden");
+      popupU?.classList.remove("show");  popupU?.classList.add("hidden");
       if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
-        this.activePopupType = "umsatz";
-        this.showEmptyUmsatzPopup(plz);
-        return;
+        this.activePopupType = "umsatz"; this.showEmptyUmsatzPopup(plz); return;
       }
-
-      this.activePopupType = "wk";
-      this.showPopup(layer.feature, {}); // leeres WK-Popup
+      this.activePopupType = "wk"; this.showPopup(layer.feature, {});
     });
-
-    // Critical Marker entfernen
-    if (this.criticalMarkers?.[plz]) {
-      this.map.removeLayer(this.criticalMarkers[plz]);
-      delete this.criticalMarkers[plz];
-    }
-
+    if (this.criticalMarkers?.[plz]) { this.map.removeLayer(this.criticalMarkers[plz]); delete this.criticalMarkers[plz]; }
     return;
   }
 
-  // -------------------------------------------------
-  // 3) Farbe berechnen
-  // -------------------------------------------------
   const fillColor = this.computeFillColor(plz);
-
-  layer.setStyle({
-    fillColor,
-    fillOpacity: 0.7,
-    color: "#ffffff",
-    weight: 1
-  });
-
-  // Sicherheit: Layer klickbar halten
+  layer.setStyle({ fillColor, fillOpacity: 0.72, color: "#ffffff", weight: 0.8 });
   layer.options.interactive = true;
-  if (layer._path) {
-    layer._path.setAttribute("pointer-events", "auto");
-  }
+  if (layer._path) layer._path.setAttribute("pointer-events", "auto");
 
-  // -------------------------------------------------
-  // 4) Click-Handler neu setzen
-  // -------------------------------------------------
   layer.off("click");
-
   layer.on("click", () => {
     const values = this.filteredPLZWerte?.[plz];
-
     const popupWK = this._shadowRoot.getElementById("side-popup");
-    const popupU = this._shadowRoot.getElementById("side-popup-umsatz");
-
-    popupWK?.classList.remove("show");
-    popupWK?.classList.add("hidden");
-
-    popupU?.classList.remove("show");
-    popupU?.classList.add("hidden");
-
+    const popupU  = this._shadowRoot.getElementById("side-popup-umsatz");
+    popupWK?.classList.remove("show"); popupWK?.classList.add("hidden");
+    popupU?.classList.remove("show");  popupU?.classList.add("hidden");
     if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
       this.activePopupType = "umsatz";
-
-      if (values) {
-        this.showUmsatzPopup(plz, values);
-      } else {
-        this.showEmptyUmsatzPopup(plz);
-      }
+      values ? this.showUmsatzPopup(plz, values) : this.showEmptyUmsatzPopup(plz);
       return;
     }
-
     this.activePopupType = "wk";
     const kennwerte = this.filteredKennwerte?.[plz] || {};
     this.showPopup(layer.feature, kennwerte);
   });
 
-  // -------------------------------------------------
-  // 5) Critical-Marker (nur WK-Modus)
-  // -------------------------------------------------
+  // Critical Marker
   const showCritical = this.currentMapMode === "wk" && this.showCritical;
   const isCritical = this.filteredKennwerte?.[plz]?.isCritical;
-
   if (!showCritical || !isCritical) {
-    if (this.criticalMarkers?.[plz]) {
-      this.map.removeLayer(this.criticalMarkers[plz]);
-      delete this.criticalMarkers[plz];
-    }
+    if (this.criticalMarkers?.[plz]) { this.map.removeLayer(this.criticalMarkers[plz]); delete this.criticalMarkers[plz]; }
     return;
   }
-
   if (!this.criticalMarkers) this.criticalMarkers = {};
-
   if (!this.criticalMarkers[plz]) {
     const center = layer.getBounds().getCenter();
-
     const icon = L.divIcon({
-      html: `<div style="
-        background:#ffffff;
-        border:2px solid #b41821;
-        border-radius:50%;
-        width:22px;
-        height:22px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        font-size:14px;
-        font-weight:bold;
-      ">⚠️</div>`,
-      className: "",
-      iconSize: [22, 22],
-      iconAnchor: [11, 11]
+      html: `<div style="background:#fff;border:2px solid #f0a500;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:13px;box-shadow:0 2px 6px rgba(0,0,0,0.15)">⚠</div>`,
+      className: "", iconSize: [22, 22], iconAnchor: [11, 11]
     });
-
-    this.criticalMarkers[plz] = L.marker(center, {
-      icon,
-      interactive: false
-    }).addTo(this.map);
+    this.criticalMarkers[plz] = L.marker(center, { icon, interactive: false }).addTo(this.map);
   }
 }
-
-
-
 
 getDynamicHeatColor(value, max) {
-  value = Number(value);
-  max = Number(max);
-
-  // ❗ Kein Wert → Standardgrau
-  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(max) || max <= 0) {
-    return "#cfd4da";
-  }
-
+  value = Number(value); max = Number(max);
+  if (!Number.isFinite(value) || value <= 0 || !Number.isFinite(max) || max <= 0) return "#cfd4da";
   const ratio = value / max;
-
-  if (ratio > 0.95) return "#7a0f17";  // sehr dunkelrot
-  if (ratio > 0.85) return "#9d131b";  // dunkles rot
-  if (ratio > 0.75) return "#b41821";  // signature red
-  if (ratio > 0.65) return "#d9483b";  // rot-orange
-  if (ratio > 0.55) return "#e96a3a";  // orange
-  if (ratio > 0.45) return "#f08a3c";  // hellorange
-  if (ratio > 0.35) return "#f6b65b";  // gelb-orange
-  if (ratio > 0.20) return "#f7d77a";  // ⭐ kräftiges Gelb (statt #ffe89c)
-  return "#fce9b2";                    // ⭐ helles Gelb (statt #fff6d6)
+  if (ratio > 0.95) return "#7a0f17";
+  if (ratio > 0.85) return "#9d131b";
+  if (ratio > 0.75) return "#b41821";
+  if (ratio > 0.65) return "#d9483b";
+  if (ratio > 0.55) return "#e96a3a";
+  if (ratio > 0.45) return "#f08a3c";
+  if (ratio > 0.35) return "#f6b65b";
+  if (ratio > 0.20) return "#f7d77a";
+  return "#fce9b2";
 }
-
 
 getWerbeAnteilColor(ratio) {
   if (!Number.isFinite(ratio) || ratio <= 0) return "#cfd4da";
-
   if (ratio > 0.80) return "#7a0f17";
   if (ratio > 0.60) return "#b41821";
   if (ratio > 0.40) return "#e96a3a";
   if (ratio > 0.20) return "#f6b65b";
-  if (ratio > 0.10) return "#f7d77a";  // ⭐ kräftiges Gelb
-  return "#fce9b2";                    // ⭐ helles Gelb
+  if (ratio > 0.10) return "#f7d77a";
+  return "#fce9b2";
 }
-
-
 
 updateMarkers() {
   if (!this.filteredGroup || !this.allMarkers) return;
-
   this.filteredGroup.clearLayers();
-
   const filteredData = this.filteredData || [];
   if (!filteredData.length) return;
-
-  const erhNLs = new Set(
-    filteredData
-      .map(row => row["dimension_niederlassung_0"]?.id?.trim())
-      .filter(Boolean)
-  );
-
+  const erhNLs = new Set(filteredData.map(row => row["dimension_niederlassung_0"]?.id?.trim()).filter(Boolean));
   const hasNLFilter = this._selectedNLs?.size > 0;
-
   const activeMarkers = [];
-
   this.allMarkers.forEach(marker => {
     const nl = marker.options.plzs?.[0];
     if (!nl || !erhNLs.has(nl)) return;
-
     this.filteredGroup.addLayer(marker);
-
     const isSelected = !hasNLFilter || this._selectedNLs.has(nl);
-
     marker.setIcon(this.createMarkerIcon(nl, !isSelected));
-
-    marker.off("mouseover");
-    marker.off("mouseout");
-
+    marker.off("mouseover"); marker.off("mouseout");
     marker.on("mouseover", () => {
       const el = marker.getElement();
-      if (el) {
-        el.style.filter = "brightness(1.35)";
-        el.style.boxShadow = "0 0 10px rgba(0,0,0,0.7)";
-      }
+      if (el) { el.style.filter = "brightness(1.3)"; el.style.transform = "scale(1.12)"; el.style.transition = "transform .15s ease"; }
     });
-
     marker.on("mouseout", () => {
       const el = marker.getElement();
-      if (el) {
-        el.style.filter = "brightness(1)";
-        el.style.boxShadow = "-1px 1px 4px rgba(0,0,0,.5)";
-      }
+      if (el) { el.style.filter = ""; el.style.transform = ""; }
     });
-
-    if (isSelected) {
-      marker.setZIndexOffset(1000);
-      activeMarkers.push(marker);
-    } else {
-      marker.setZIndexOffset(100);
-    }
+    if (isSelected) { marker.setZIndexOffset(1000); activeMarkers.push(marker); }
+    else marker.setZIndexOffset(100);
   });
-
-  this.nlMarkers = activeMarkers.map(marker => ({
-    lat: marker.getLatLng().lat,
-    lng: marker.getLatLng().lng,
-    marker
-  }));
+  this.nlMarkers = activeMarkers.map(marker => ({ lat: marker.getLatLng().lat, lng: marker.getLatLng().lng, marker }));
 }
 
-
-
 onMarkerClick(nl) {
-  if (this._selectedNLs.has(nl)) {
-    this._selectedNLs.delete(nl);
-  } else {
-    this._selectedNLs.add(nl);
-  }
-
+  if (this._selectedNLs.has(nl)) this._selectedNLs.delete(nl);
+  else this._selectedNLs.add(nl);
   this.updateNLSelectionUI();
-
   this.applyNLFilter([...this._selectedNLs]);
-
   const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
   this.applyRadiusFilter(radius);
-
   this.updateGeoLayer();
   this.renderDataTable(this.filteredKennwerte);
 }
 
-
-
-
 setupFilterDropdowns() {
-  const erhSelect = this._shadowRoot.getElementById("erhebung-select");
-  const jahrSelect = this._shadowRoot.getElementById("jahr-select");
+  const erhSelect    = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect   = this._shadowRoot.getElementById("jahr-select");
   const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+  if (!erhSelect || !jahrSelect || !nummerSelect) return;
 
-  if (!erhSelect || !jahrSelect || !nummerSelect) {
-    console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
-    return;
-  }
+  erhSelect.innerHTML = ""; jahrSelect.innerHTML = ""; nummerSelect.innerHTML = "";
+  jahrSelect.disabled = true; nummerSelect.disabled = true;
 
-  // 🧹 Reset
-  erhSelect.innerHTML = "";
-  jahrSelect.innerHTML = "";
-  nummerSelect.innerHTML = "";
-  jahrSelect.disabled = true;
-  nummerSelect.disabled = true;
-
-  // 🏷️ Platzhalter
   const createPlaceholder = (text) => {
     const opt = document.createElement("option");
-    opt.value = "";
-    opt.textContent = text;
-    opt.disabled = true;
-    opt.selected = true;
+    opt.value = ""; opt.textContent = text; opt.disabled = true; opt.selected = true;
     return opt;
   };
 
   erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
   Object.keys(this._erhData).forEach(erhID => {
     if (erhID !== "@NullMember") {
-      const opt = document.createElement("option");
-      opt.value = erhID;
-      opt.textContent = erhID;
+      const opt = document.createElement("option"); opt.value = erhID; opt.textContent = erhID;
       erhSelect.appendChild(opt);
     }
   });
 
   erhSelect.addEventListener("change", () => {
-    jahrSelect.innerHTML = "";
-    nummerSelect.innerHTML = "";
-    jahrSelect.disabled = false;
-    nummerSelect.disabled = true;
-
+    jahrSelect.innerHTML = ""; nummerSelect.innerHTML = "";
+    jahrSelect.disabled = false; nummerSelect.disabled = true;
     jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
-    const selectedID = erhSelect.value;
-    const jahre = Object.keys(this._erhData[selectedID] || {}).filter(j => j !== "@NullMember");
-
-    jahre.forEach(j => {
-      const opt = document.createElement("option");
-      opt.value = j;
-      opt.textContent = j;
-      jahrSelect.appendChild(opt);
-    });
+    const jahre = Object.keys(this._erhData[erhSelect.value] || {}).filter(j => j !== "@NullMember");
+    jahre.forEach(j => { const opt = document.createElement("option"); opt.value = j; opt.textContent = j; jahrSelect.appendChild(opt); });
   });
 
   jahrSelect.addEventListener("change", () => {
-    nummerSelect.innerHTML = "";
-    nummerSelect.disabled = false;
-
+    nummerSelect.innerHTML = ""; nummerSelect.disabled = false;
     nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
-    const selectedID = erhSelect.value;
-    const selectedJahr = jahrSelect.value;
-    const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []).filter(n => n !== "@NullMember");
-
-    nummern.forEach(n => {
-      const opt = document.createElement("option");
-      opt.value = n;
-      opt.textContent = n;
-      nummerSelect.appendChild(opt);
-    });
+    const nummern = Array.from(this._erhData[erhSelect.value]?.[jahrSelect.value] || []).filter(n => n !== "@NullMember");
+    nummern.forEach(n => { const opt = document.createElement("option"); opt.value = n; opt.textContent = n; nummerSelect.appendChild(opt); });
   });
 
   const filterButton = this._shadowRoot.getElementById("filter-button");
   if (filterButton) {
     filterButton.addEventListener("click", () => {
-      const selectedID = erhSelect.value;
-      const selectedJahr = jahrSelect.value;
-      const selectedNummer = nummerSelect.value;
-
-      if (selectedID && selectedJahr && selectedNummer) {
-        this.loadErhebung(selectedID, selectedJahr, selectedNummer);
-
-      } else {
-        console.warn("⚠️ Bitte alle Filterfelder korrekt auswählen.");
-      }
+      const selectedID = erhSelect.value, selectedJahr = jahrSelect.value, selectedNummer = nummerSelect.value;
+      if (selectedID && selectedJahr && selectedNummer) this.loadErhebung(selectedID, selectedJahr, selectedNummer);
     });
   }
 
-  // ---------------------------------------------------------
-  // 🔥 NL-INFO CONTAINER (nur einmal erzeugen)
-  // ---------------------------------------------------------
+  // NL Info Container sicherstellen
   let nlInfo = this._shadowRoot.getElementById("nl-info-container");
   if (!nlInfo) {
     nlInfo = document.createElement("div");
@@ -3281,60 +2636,39 @@ setupFilterDropdowns() {
     this._shadowRoot.querySelector(".filter-container").appendChild(nlInfo);
   }
 
-  // ---------------------------------------------------------
-  // 🔥 BUTTON: Erhebungsübersicht (TOGGLE)
-  // ---------------------------------------------------------
-  const infoBtn = document.createElement("button");
-  infoBtn.textContent = "Erhebungsübersicht";
-  infoBtn.style.marginTop = "10px";
-  infoBtn.style.padding = "6px";
-  infoBtn.style.background = "#b41821";
-  infoBtn.style.color = "white";
-  infoBtn.style.border = "none";
-  infoBtn.style.cursor = "pointer";
-  infoBtn.style.borderRadius = "4px";
-
-infoBtn.addEventListener("click", () => {
-  const nlBox = this._shadowRoot.getElementById("nl-info-container");
-  const filter = this._shadowRoot.querySelector(".filter-container");
-
-  if (!nlBox) return;
-
-  if (nlBox.classList.contains("show")) {
-    nlBox.classList.remove("show");
-    filter.classList.remove("nl-info-active");
-    return;
+  // ── Bug fix: verhindert doppelte Buttons beim Re-Render ──
+  let existingBtn = this._shadowRoot.getElementById("info-toggle-btn");
+  if (!existingBtn) {
+    const infoBtn = document.createElement("button");
+    infoBtn.id = "info-toggle-btn";
+    infoBtn.className = "info-toggle-btn";
+    infoBtn.innerHTML = `<span>↕</span> Erhebungsübersicht`;
+    infoBtn.addEventListener("click", () => {
+      const nlBox  = this._shadowRoot.getElementById("nl-info-container");
+      const filter = this._shadowRoot.querySelector(".filter-container");
+      if (!nlBox) return;
+      if (nlBox.classList.contains("show")) {
+        nlBox.classList.remove("show"); filter.classList.remove("nl-info-active");
+      } else {
+        this.prepareErhebungsInfo(); this.renderErhebungsInfoTable();
+        nlBox.classList.add("show"); filter.classList.add("nl-info-active");
+      }
+    });
+    this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
   }
-
-  this.prepareErhebungsInfo();
-  this.renderErhebungsInfoTable();
-
-  nlBox.classList.add("show");
-  filter.classList.add("nl-info-active");
-});
-
-
-
-  this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
 }
-
 
 restoreFilterUI() {
   const container = this._shadowRoot.querySelector(".filter-container");
   if (!container) return;
-
   container.innerHTML = `
-    <label for="erhebung-select">ErhebungsID:</label>
+    <label for="erhebung-select">ErhebungsID</label>
     <select id="erhebung-select"></select>
-
-    <label for="jahr-select">Jahr:</label>
+    <label for="jahr-select">Jahr</label>
     <select id="jahr-select" disabled></select>
-
-    <label for="nummer-select">Erhebungsnummer:</label>
+    <label for="nummer-select">Erhebungsnummer</label>
     <select id="nummer-select" disabled></select>
-
     <button id="filter-button">Anzeigen</button>
-
     <div class="table-container">
       <div class="table-wrapper" id="table-container"></div>
       <div id="streuverlust-box"></div>
@@ -3345,158 +2679,94 @@ restoreFilterUI() {
 renderErhebungsInfoTable() {
   const container = this._shadowRoot.getElementById("nl-info-container");
   container.innerHTML = "";
-
-  const scroll = document.createElement("div");
-  scroll.classList.add("nl-info-scroll");
-
-  const table = document.createElement("table");
-  table.classList.add("nl-info-table");
-
-  const thead = document.createElement("thead");
-  const headerRow = document.createElement("tr");
-
+  const scroll = document.createElement("div"); scroll.classList.add("nl-info-scroll");
+  const table = document.createElement("table"); table.classList.add("nl-info-table");
+  const thead = document.createElement("thead"); const headerRow = document.createElement("tr");
   const headers = [
-    { label: 'NL', width: '15px', class: 'nl-col-nl' },
-    { label: 'Umsatz (Hochrechnung)', width: '70px', class: 'nl-col-jahr' },
-    { label: 'Erfasst (Zeitraum)', width: '55px', class: 'nl-col-erf' },
-    { label: '%', width: '25px', class: 'nl-col-pct1' },
-    { label: 'Davon Valide', width: '55px', class: 'nl-col-val' },
-    { label: 'Abdeckung', width: '55px', class: 'nl-col-abd' }
+    { label: 'NL', class: 'nl-col-nl' },
+    { label: 'Umsatz\n(Hochrechi.)', class: 'nl-col-jahr' },
+    { label: 'Erfasst', class: 'nl-col-erf' },
+    { label: '%', class: 'nl-col-pct1' },
+    { label: 'Valide', class: 'nl-col-val' },
+    { label: 'Abdeckung', class: 'nl-col-abd' }
   ];
-
   headers.forEach(h => {
-    const th = document.createElement("th");
-    th.textContent = h.label;
-    th.classList.add(h.class);
+    const th = document.createElement("th"); th.textContent = h.label; th.classList.add(h.class);
     headerRow.appendChild(th);
   });
-
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-
+  thead.appendChild(headerRow); table.appendChild(thead);
   const tbody = document.createElement("tbody");
-
   Object.values(this.erhebungsInfo).forEach(info => {
-    const tr = document.createElement("tr");
-    tr.classList.add("nl-info-row");
-    tr.dataset.nl = info.nl;
-
-const values = [
-  info.nl,
-  Math.round(info.jahresumsatz).toLocaleString("de-DE"),
-  Math.round(info.erfasst_total).toLocaleString("de-DE"),
-  (info.pct_erfassung * 100).toFixed(1) + "%",
-  Math.round(info.erfasst_valid).toLocaleString("de-DE"),
-  (info.pct_hochrechnung * 100).toFixed(1) + "%"
-];
-
-
+    const tr = document.createElement("tr"); tr.classList.add("nl-info-row"); tr.dataset.nl = info.nl;
+    const values = [
+      info.nl,
+      Math.round(info.jahresumsatz).toLocaleString("de-DE"),
+      Math.round(info.erfasst_total).toLocaleString("de-DE"),
+      (info.pct_erfassung * 100).toFixed(1) + "%",
+      Math.round(info.erfasst_valid).toLocaleString("de-DE"),
+      (info.pct_hochrechnung * 100).toFixed(1) + "%"
+    ];
     values.forEach((val, i) => {
-      const td = document.createElement("td");
-      td.textContent = val;
-      td.classList.add(headers[i].class);
+      const td = document.createElement("td"); td.textContent = val; td.classList.add(headers[i].class);
       tr.appendChild(td);
     });
-
     tr.addEventListener("click", () => this.toggleNLSelection(info.nl));
-
     tbody.appendChild(tr);
   });
-
-  table.appendChild(tbody);
-  scroll.appendChild(table);
-  container.appendChild(scroll);
-
+  table.appendChild(tbody); scroll.appendChild(table); container.appendChild(scroll);
   this.updateNLSelectionUI();
 }
 
-
-
 updateNLSelectionUI() {
   const rows = this._shadowRoot.querySelectorAll(".nl-info-row");
-
   rows.forEach(row => {
     const nl = row.dataset.nl;
-
-    if (this._selectedNLs.has(nl)) {
-      row.classList.add("table-row-selected");
-    } else {
-      row.classList.remove("table-row-selected");
-    }
+    if (this._selectedNLs.has(nl)) row.classList.add("table-row-selected");
+    else row.classList.remove("table-row-selected");
   });
 }
 
-
-
-
 restoreDropdownSelections() {
   const { erhID, jahr, nummer } = this._activeFilter || {};
-
-  const erhSelect = this._shadowRoot.getElementById("erhebung-select");
-  const jahrSelect = this._shadowRoot.getElementById("jahr-select");
+  const erhSelect    = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect   = this._shadowRoot.getElementById("jahr-select");
   const nummerSelect = this._shadowRoot.getElementById("nummer-select");
-
   if (!erhSelect || !jahrSelect || !nummerSelect) return;
-
   if (erhID) erhSelect.value = erhID;
   erhSelect.dispatchEvent(new Event("change"));
-
   if (jahr) jahrSelect.value = jahr;
   jahrSelect.dispatchEvent(new Event("change"));
-
   if (nummer) nummerSelect.value = nummer;
 }
 
 prepareErhebungsInfo() {
   this.erhebungsInfo = {};
-
   const rawData = this._myDataSource?.data || [];
   if (!Array.isArray(rawData) || rawData.length === 0) return;
-
   const { erhID, jahr, nummer } = this._activeFilter || {};
-
   const erhData = rawData.filter(row =>
     row["dimension_erhebung_0"]?.id == erhID &&
     row["dimension_jahr_0"]?.id == jahr &&
     row["dimension_erhebungsnummer_0"]?.id == nummer
   );
-
-  const jahresumsatz = {};
-  const erfasst_total = {};
-  const erfasst_valid = {};
-
+  const jahresumsatz = {}, erfasst_total = {}, erfasst_valid = {};
   erhData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     if (!nl) return;
-
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = String(rawPLZ).padStart(5, "0");
-
     const umsatzJahr = row["value_hr_n_umsatz_0"]?.raw ?? 0;
     const umsatzErhebung = row["value_ums_erhebung_0"]?.raw ?? 0;
-
     if (!jahresumsatz[nl]) jahresumsatz[nl] = 0;
     if (!erfasst_total[nl]) erfasst_total[nl] = 0;
     if (!erfasst_valid[nl]) erfasst_valid[nl] = 0;
-
     erfasst_total[nl] += umsatzErhebung;
-
-    if (plz !== "00000") {
-      jahresumsatz[nl] += umsatzJahr;
-      erfasst_valid[nl] += umsatzErhebung;
-    }
+    if (plz !== "00000") { jahresumsatz[nl] += umsatzJahr; erfasst_valid[nl] += umsatzErhebung; }
   });
-
   Object.keys(erfasst_total).forEach(nl => {
-    const jahrU = jahresumsatz[nl] || 0;
-    const total = erfasst_total[nl] || 0;
-    const valid = erfasst_valid[nl] || 0;
-
+    const jahrU = jahresumsatz[nl] || 0, total = erfasst_total[nl] || 0, valid = erfasst_valid[nl] || 0;
     this.erhebungsInfo[nl] = {
-      nl,
-      jahresumsatz: jahrU,
-      erfasst_total: total,
-      erfasst_valid: valid,
+      nl, jahresumsatz: jahrU, erfasst_total: total, erfasst_valid: valid,
       pct_erfassung: jahrU > 0 ? total / jahrU : 0,
       pct_valid: total > 0 ? valid / total : 0,
       pct_hochrechnung: jahrU > 0 ? valid / jahrU : 0
@@ -3507,68 +2777,23 @@ prepareErhebungsInfo() {
 prepareUmsatzPLZWerte() {
   const raw = this._myDataSource?.data || [];
   if (!Array.isArray(raw) || raw.length === 0) return;
-
   const { erhID, jahr, nummer } = this._activeFilter || {};
   if (!erhID || !jahr || !nummer) return;
 
-  // ============================================
-  // SAFE() – robustes Parsing inkl. Tausenderpunkt
-  // ============================================
   const safe = x => {
     if (x == null) return 0;
-
-    let original = x;
-
-    if (typeof x === "string") {
-      x = x.replace(/\./g, "").replace(",", ".");
-    }
-
+    if (typeof x === "string") x = x.replace(/\./g, "").replace(",", ".");
     const n = Number(x);
-
-    if (!Number.isFinite(n)) {
-      console.warn("❗ SAFE-PARSE-ERROR", { original, parsed: n });
-    }
-
     return Number.isFinite(n) ? n : 0;
   };
 
-  // ============================================
-  // Haushalte-PARSER (immer ganze Zahl!)
-  // ============================================
   const parseHH = x => {
     if (x == null) return 0;
-
-    if (typeof x === "number") {
-      return Number.isFinite(x) ? x : 0;
-    }
-
-    if (typeof x === "string") {
-      const s = x.replace(/[.,\s]/g, "");
-      const n = Number(s);
-      if (!Number.isFinite(n)) {
-        console.warn("❗ HH-PARSE-ERROR", { original: x, parsed: n });
-        return 0;
-      }
-      return n;
-    }
-
+    if (typeof x === "number") return Number.isFinite(x) ? x : 0;
+    if (typeof x === "string") { const n = Number(x.replace(/[.,\s]/g, "")); return Number.isFinite(n) ? n : 0; }
     return 0;
   };
 
-  const debugSafe = (label, value, plz) => {
-    const parsed = safe(value);
-    if (!Number.isFinite(parsed)) {
-      console.warn(`❗ SAFE-PARSE-ERROR @ ${label} | PLZ ${plz}`, {
-        original: value,
-        parsed
-      });
-    }
-    return parsed;
-  };
-
-  // ============================================
-  // 1) Aggregation – IMMER NEU BERECHNEN
-  // ============================================
   const rows = raw.filter(row =>
     row["dimension_erhebung_0"]?.id == erhID &&
     row["dimension_jahr_0"]?.id == jahr &&
@@ -3576,572 +2801,79 @@ prepareUmsatzPLZWerte() {
   );
 
   const aggregated = {};
-
   rows.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
-
-    if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) {
-      return;
-    }
-
+    if (this._selectedNLs?.size > 0 && !this._selectedNLs.has(nl)) return;
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-
     if (!rawPLZ || rawPLZ === "@NullMember") return;
-
     const plz = String(rawPLZ).padStart(5, "0");
     if (plz === "00000") return;
-
     if (!aggregated[plz]) {
       aggregated[plz] = {
         _hhValues: [],
-
-        // Umsatzfelder
-        umsatz: 0,
-        ra: 0,
-        onlineshop: 0,
-        pluscard: 0,
-
-        umsatzWerbung: 0,
-        raWerbung: 0,
-        onlineshopWerbung: 0,
-        pluscardWerbung: 0,
-
-        umsatzZusatz: 0,
-        raZusatz: 0,
-        onlineshopZusatz: 0,
-        pluscardZusatz: 0,
-
-        // ⭐ Erhebungsfelder
-        umsatzErhebung: 0,
-        kdErhebung: 0,
-        auflage: 0,
-        werbeverweigerer: 0
+        umsatz: 0, ra: 0, onlineshop: 0, pluscard: 0,
+        umsatzWerbung: 0, raWerbung: 0, onlineshopWerbung: 0, pluscardWerbung: 0,
+        umsatzZusatz: 0, raZusatz: 0, onlineshopZusatz: 0, pluscardZusatz: 0,
+        umsatzErhebung: 0, kdErhebung: 0, auflage: 0, werbeverweigerer: 0
       };
     }
-
     const v = aggregated[plz];
-
-    // Haushalte
-    const rawHH = row["value_haushalte_0"]?.raw;
-    const hh = parseHH(rawHH);
+    const hh = parseHH(row["value_haushalte_0"]?.raw);
     if (hh > 0) v._hhValues.push(hh);
-
-    // ⭐ Erhebungsdaten
     v.umsatzErhebung   += safe(row["value_ums_erhebung_0"]?.raw);
     v.kdErhebung       += safe(row["value_kd_erhebung_0"]?.raw);
     v.auflage          += safe(row["value_auflage_0"]?.raw);
     v.werbeverweigerer += safe(row["value_werbeverweigerer_0"]?.raw);
-
-    // Umsatzfelder
-    v.umsatz     += debugSafe("umsatz_stationaer", row["value_umsatz_stationaer_0"]?.raw, plz);
-    v.ra         += debugSafe("umsatz_ra", row["value_umsatz_ra_0"]?.raw, plz);
-    v.onlineshop += debugSafe("umsatz_online", row["value_umsatz_online_0"]?.raw, plz);
-    v.pluscard   += debugSafe("umsatz_pluscard", row["value_umsatz_grosskunden_0"]?.raw, plz);
-
-    v.umsatzWerbung     += debugSafe("werbung_stationaer", row["value_umsatz_stationaer_werbung_0"]?.raw, plz);
-    v.raWerbung         += debugSafe("werbung_ra", row["value_umsatz_ra_werbung_0"]?.raw, plz);
-    v.onlineshopWerbung += debugSafe("werbung_online", row["value_umsatz_online_werbung_0"]?.raw, plz);
-    v.pluscardWerbung   += debugSafe("werbung_pluscard", row["value_umsatz_grosskunden_werbung_0"]?.raw, plz);
-
-    v.umsatzZusatz     += debugSafe("zusatz_stationaer", row["value_umsatz_stationaer_zusatz_0"]?.raw, plz);
-    v.raZusatz         += debugSafe("zusatz_ra", row["value_umsatz_ra_zusatz_0"]?.raw, plz);
-    v.onlineshopZusatz += debugSafe("zusatz_online", row["value_umsatz_online_zusatz_0"]?.raw, plz);
-    v.pluscardZusatz   += debugSafe("zusatz_pluscard", row["value_umsatz_grosskunden_zusatz_0"]?.raw, plz);
+    v.umsatz     += safe(row["value_umsatz_stationaer_0"]?.raw);
+    v.ra         += safe(row["value_umsatz_ra_0"]?.raw);
+    v.onlineshop += safe(row["value_umsatz_online_0"]?.raw);
+    v.pluscard   += safe(row["value_umsatz_grosskunden_0"]?.raw);
+    v.umsatzWerbung     += safe(row["value_umsatz_stationaer_werbung_0"]?.raw);
+    v.raWerbung         += safe(row["value_umsatz_ra_werbung_0"]?.raw);
+    v.onlineshopWerbung += safe(row["value_umsatz_online_werbung_0"]?.raw);
+    v.pluscardWerbung   += safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
+    v.umsatzZusatz     += safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);
+    v.raZusatz         += safe(row["value_umsatz_ra_zusatz_0"]?.raw);
+    v.onlineshopZusatz += safe(row["value_umsatz_online_zusatz_0"]?.raw);
+    v.pluscardZusatz   += safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
   });
 
-  // ============================================
-  // 2) Haushalte + pro HH + Werbeanteil
-  // ============================================
   Object.entries(aggregated).forEach(([plz, v]) => {
-    if (v._hhValues.length > 0) {
-      v.haushalte =
-        v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
-    } else {
-      v.haushalte = 0;
-    }
-
+    if (v._hhValues.length > 0) v.haushalte = v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length;
+    else v.haushalte = 0;
     delete v._hhValues;
-
     const hh = v.haushalte;
-    const perHH = val => (hh > 0 ? val / hh : 0);
-
+    const perHH = val => hh > 0 ? val / hh : 0;
     v.umsatzProHaushalt     = perHH(v.umsatz);
     v.raProHaushalt         = perHH(v.ra);
     v.onlineshopProHaushalt = perHH(v.onlineshop);
     v.pluscardProHaushalt   = perHH(v.pluscard);
-
     v.umsatzWerbungProHaushalt     = perHH(v.umsatzWerbung);
     v.raWerbungProHaushalt         = perHH(v.raWerbung);
     v.onlineshopWerbungProHaushalt = perHH(v.onlineshopWerbung);
     v.pluscardWerbungProHaushalt   = perHH(v.pluscardWerbung);
-
     v.umsatzZusatzProHaushalt     = perHH(v.umsatzZusatz);
     v.raZusatzProHaushalt         = perHH(v.raZusatz);
     v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
     v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
-
-    const catMapNormal = {
-      stationaer: v.umsatz ?? 0,
-      ra: v.ra ?? 0,
-      onlineshop: v.onlineshop ?? 0,
-      pluscard: v.pluscard ?? 0
-    };
-
-    const catMapWerbung = {
-      stationaer: v.umsatzWerbung ?? 0,
-      ra: v.raWerbung ?? 0,
-      onlineshop: v.onlineshopWerbung ?? 0,
-      pluscard: v.pluscardWerbung ?? 0
-    };
-
-    let totalNormal = 0;
-    let totalWerbe = 0;
-
-    for (const cat of this.activeCategories) {
-      totalNormal += catMapNormal[cat] ?? 0;
-      totalWerbe  += catMapWerbung[cat] ?? 0;
-    }
-
-    v.werbeAnteil = totalNormal > 0 ? (totalWerbe / totalNormal) : 0;
+    const catMapNormal  = { stationaer: v.umsatz, ra: v.ra, onlineshop: v.onlineshop, pluscard: v.pluscard };
+    const catMapWerbung = { stationaer: v.umsatzWerbung, ra: v.raWerbung, onlineshop: v.onlineshopWerbung, pluscard: v.pluscardWerbung };
+    let totalNormal = 0, totalWerbe = 0;
+    for (const cat of this.activeCategories) { totalNormal += catMapNormal[cat] ?? 0; totalWerbe += catMapWerbung[cat] ?? 0; }
+    v.werbeAnteil = totalNormal > 0 ? totalWerbe / totalNormal : 0;
   });
 
-  // ============================================
-  // 3) Radiusfilter
-  // ============================================
   const full = aggregated;
   const result = {};
-
   Object.entries(full).forEach(([plz, v]) => {
     if ((this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") && this.useRadiusFilter) {
       if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
     }
-
-    result[plz] = {
-      ...v,
-      umsatzErhebung: v.umsatzErhebung ?? 0,
-      kdErhebung: v.kdErhebung ?? 0,
-      auflage: v.auflage ?? 0,
-      werbeverweigerer: v.werbeverweigerer ?? 0
-    };
+    result[plz] = { ...v, umsatzErhebung: v.umsatzErhebung ?? 0, kdErhebung: v.kdErhebung ?? 0, auflage: v.auflage ?? 0, werbeverweigerer: v.werbeverweigerer ?? 0 };
   });
 
   this.filteredPLZWerte = result;
-
-  console.log(
-    "%c🧪 prepareUmsatzPLZWerte() → Fertig",
-    "color:#33a02c; font-weight:bold;",
-    { plzCount: Object.keys(result).length }
-  );
 }
-
-
-
-
-renderErhebungsInfo() {
-  this._infoMaskActive = true;
-
-  const container = this._shadowRoot.querySelector(".filter-container");
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const wrapper = document.createElement("div");
-  wrapper.style.padding = "10px";
-  wrapper.style.fontFamily = "sans-serif";
-
-  wrapper.innerHTML = `
-    <h3 style="margin-top:0;color:#b41821;">Erhebungsübersicht</h3>
-
-    <table style="width:100%;border-collapse:collapse;font-size:0.75rem;table-layout:fixed;">
-      <thead>
-        <tr style="background:#b41821;color:white;">
-          <th style="padding:4px;text-align:left;width:50px;">NL</th>
-          <th style="padding:4px;text-align:right;width:90px;">Jahresumsatz</th>
-          <th style="padding:4px;text-align:right;width:90px;">Erfasst</th>
-          <th style="padding:4px;text-align:right;width:90px;">Abdeckung</th>
-          <th style="padding:4px;text-align:right;width:90px;">Valide</th>
-          <th style="padding:4px;text-align:right;width:90px;">Validität</th>
-          <th style="padding:4px;text-align:right;width:90px;">Jahresabdeckung</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${Object.values(this.erhebungsInfo).map(info => `
-          <tr class="nl-row" data-nl="${info.nl}" style="cursor:pointer;">
-            <td style="padding:4px;">${info.nl}</td>
-            <td style="padding:4px;text-align:right;">${info.jahresumsatz.toLocaleString("de-DE")}</td>
-            <td style="padding:4px;text-align:right;">${info.erfasst_total.toLocaleString("de-DE")}</td>
-            <td style="padding:4px;text-align:right;">${(info.pct_erfassung * 100).toFixed(1)}%</td>
-            <td style="padding:4px;text-align:right;">${info.erfasst_valid.toLocaleString("de-DE")}</td>
-            <td style="padding:4px;text-align:right;">${(info.pct_valid * 100).toFixed(1)}%</td>
-            <td style="padding:4px;text-align:right;">${(info.pct_hochrechnung * 100).toFixed(1)}%</td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-
-    <button id="btn-erhebung-weiter"
-      style="margin-top:15px;width:100%;padding:8px;background:#b41821;color:white;border:none;cursor:pointer;border-radius:4px;">
-      Weiter zur PLZ-Analyse
-    </button>
-  `;
-
-  container.appendChild(wrapper);
-
-  // 🔥 Klick auf NL-Zeile = Klick auf Marker
-  wrapper.querySelectorAll(".nl-row").forEach(row => {
-    row.addEventListener("click", () => {
-      const nl = row.dataset.nl;
-
-      if (!this._selectedNLs) this._selectedNLs = new Set();
-      this._selectedNLs.clear();
-      this._selectedNLs.add(nl);
-
-      this.applyNLFilter([nl]);
-
-      const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-      this.applyRadiusFilter(radius);
-
-      this.updateGeoLayer();
-      this.renderDataTable(this.filteredKennwerte);
-
-      const popup = this._shadowRoot.getElementById("side-popup");
-      popup.classList.remove("show");
-    });
-  });
-
-  // 🔥 Zurück zur PLZ-Analyse
-  wrapper.querySelector("#btn-erhebung-weiter").addEventListener("click", () => {
-    wrapper.style.transition = "opacity 0.4s ease";
-    wrapper.style.opacity = "0";
-
-    setTimeout(() => {
-      this._infoMaskActive = false;
-      this.restoreFilterUI();
-      this.setupFilterDropdowns();
-      this.restoreDropdownSelections();
-      this.renderDataTable(this.filteredKennwerte);
-    }, 400);
-  });
-}
-
-
-      onCustomWidgetEvent(event) {
-        if (event.name === "toggleTiles") {
-          this.toggleMapTiles();
-        }
-      }
-
-      set myDataSource(dataBinding) {
-        this._myDataSource = dataBinding;
-
-        if (!this.map) {
-          const waitForMap = setInterval(() => {
-            if (this.map) {
-              clearInterval(waitForMap);
-              this.render();
-            }
-          }, 100);
-          return;
-        }
-
-        this.render();
-      }
-
-prepareMapData(filteredData) {
-  const geoFeatures = this._geoData?.features || [];
-
-  // Reset nur für NL-Daten, NICHT für Kennwerte!
-  this.Niederlassung = {};
-  this.nlKoordinaten = {};
-  this.hzFlags = {};
-  this.extraNLs = [];
-
-  // Geo-Notes
-  const geoNotes = {};
-  geoFeatures.forEach(f => {
-    const plz = f.properties?.plz?.trim();
-    const note = f.properties?.note?.trim();
-    if (plz) geoNotes[plz] = note || "";
-  });
-
-  // Verarbeitung der gefilterten Daten
-  filteredData.forEach(row => {
-    const plz = row["dimension_plz_0"]?.id?.trim();
-    const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
-    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
-
-    const lat = parseFloat(row["dimension_Lat_0"]?.label);
-    const lon = parseFloat(row["dimension_lon_0"]?.label);
-
-    // Niederlassung speichern
-    if (nlKey) {
-      this.Niederlassung[nlKey] = nlKey;
-
-      if (!isNaN(lat) && !isNaN(lon)) {
-        this.nlKoordinaten[nlKey] = { lat, lon };
-      }
-    }
-
-    // HZ-Flag speichern
-    if (plz) {
-      this.hzFlags[plz] = hzFlag;
-    }
-  });
-}
-
-
-// getDistanceKm(lat1, lon1, lat2, lon2)
-getDistanceKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) ** 2;
-
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-// getPolygonCenter(layer)
-getPolygonCenter(layer) {
-  return layer.getBounds().getCenter();
-}
-
-applyRadiusFilter(radiusKm) {
-  if (!this._layerByPLZ) return;
-
-  // Cache noch nicht vorhanden → aufbauen
-  if (!this._distanceCache || Object.keys(this._distanceCache).length === 0) {
-    this._buildDistanceCache();
-  }
-
-  const plzImRadius = new Set();
-  const cache = this._distanceCache;
-
-  const plzList = Object.keys(this._layerByPLZ);
-  for (let i = 0; i < plzList.length; i++) {
-    const plz = plzList[i];
-    if ((cache[plz] ?? Infinity) <= radiusKm) {
-      plzImRadius.add(plz);
-    }
-  }
-
-  this.plzImRadius = plzImRadius;
-
-  this.computeWKKennwerte();
-  this.computeStreuverlust();
-  this.updateGeoLayer();
-  this.renderDataTable(this.filteredKennwerte);
-}
-
-computeWKKennwerte() {
-  if (!this.filteredData) return;
-
-  const aggregated = {};
-  const unfilteredUmsatzByPLZ = {};
-
-  // Ungefilterter Umsatz pro PLZ
-  this.filteredData.forEach(row => {
-    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = String(rawPLZ || "").padStart(5, "0");
-    const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
-    unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
-  });
-
-  // Aggregation WK
-  this.filteredData.forEach(row => {
-    const nl = row["dimension_niederlassung_0"]?.id?.trim();
-    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
-    const plz = String(rawPLZ || "").padStart(5, "0");
-
-    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
-    if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
-
-    if (!aggregated[plz]) {
-      aggregated[plz] = {
-        hzCount: 0,
-        umsatzNetto: 0,
-        hzKosten: 0,
-        potHzKosten: []
-      };
-    }
-
-    const entry = aggregated[plz];
-
-    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
-    if (hz) entry.hzCount++;
-
-    entry.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
-    entry.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
-
-    const potHz = row["value_hz_potentiell_0"]?.raw;
-    if (typeof potHz === "number") entry.potHzKosten.push(potHz);
-  });
-
-  const base = this.filteredKennwerte || {};
-  const newFilteredKennwerte = {};
-  const newFilteredPLZWerte = {};
-
-  Object.entries(aggregated).forEach(([plz, entry]) => {
-    const umsatzNetto = entry.umsatzNetto;
-    const hzKosten = entry.hzKosten;
-
-    const wkPercent =
-      umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
-
-    const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
-    const wkNachbarn =
-      unfilteredUmsatz > 0
-        ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
-        : 0;
-
-    const avgPotHz =
-      entry.potHzKosten.length > 0
-        ? entry.potHzKosten.reduce((a, b) => a + b, 0) / entry.potHzKosten.length
-        : 0;
-
-    const potHzPercent =
-      umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0;
-
-    const isHZ = entry.hzCount > 0;
-    const isCritical = entry.hzCount > 1;
-
-    const baseEntry = base[plz] || {};
-    const old = this.filteredPLZWerte?.[plz] || {};
-
-    // WK-Kennwerte
-    newFilteredKennwerte[plz] = {
-      ...baseEntry,
-      isHZ,
-      isCritical,
-      value_hr_n_umsatz_0: { raw: umsatzNetto },
-      value_wk_in_percent_0: { raw: wkPercent },
-      value_wk_nachbar_0: { raw: wkNachbarn },
-      value_hz_kosten_0: { raw: hzKosten },
-      value_hz_potentiell_0: { raw: avgPotHz },
-      value_wk_potentiell_0: { raw: potHzPercent },
-      value_ums_erhebung_0: { raw: old.umsatzErhebung ?? 0 },
-      value_kd_erhebung_0: { raw: old.kdErhebung ?? 0 },
-      value_auflage_0: { raw: old.auflage ?? 0 },
-      value_werbeverweigerer_0: { raw: old.werbeverweigerer ?? 0 },
-
-    };
-
-    // Umsatzdaten übernehmen
-    newFilteredPLZWerte[plz] = {
-      wk: wkPercent,
-      wkPot: potHzPercent,
-      hz: isHZ,
-
-      umsatz: old.umsatz ?? 0,
-      ra: old.ra ?? 0,
-      onlineshop: old.onlineshop ?? 0,
-      pluscard: old.pluscard ?? 0,
-      haushalte: old.haushalte ?? 0,
-
-      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
-      raProHaushalt: old.raProHaushalt ?? 0,
-      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
-      pluscardProHaushalt: old.pluscardProHaushalt ?? 0,
-
-      umsatzWerbung: old.umsatzWerbung ?? 0,
-      raWerbung: old.raWerbung ?? 0,
-      onlineshopWerbung: old.onlineshopWerbung ?? 0,
-      pluscardWerbung: old.pluscardWerbung ?? 0,
-
-      umsatzZusatz: old.umsatzZusatz ?? 0,
-      raZusatz: old.raZusatz ?? 0,
-      onlineshopZusatz: old.onlineshopZusatz ?? 0,
-      pluscardZusatz: old.pluscardZusatz ?? 0,
-
-      umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0,
-      raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0,
-      onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0,
-      pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0,
-
-      umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0,
-      raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0,
-      onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
-      pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
-
-      // WICHTIG: Werbeanteil erhalten
-      werbeAnteil: old.werbeAnteil ?? 0
-    };
-  });
-
-  this.filteredKennwerte = newFilteredKennwerte;
-  this.filteredPLZWerte = newFilteredPLZWerte;
-}
-
-
-
-toggleNLSelection(nl) {
-  if (!this._selectedNLs) this._selectedNLs = new Set();
-
-  // Toggle
-  if (this._selectedNLs.has(nl)) {
-    this._selectedNLs.delete(nl);
-  } else {
-    this._selectedNLs.add(nl);
-  }
-
-  // Wenn ALLE NLs ausgewählt → alle markieren
-  if (this._selectedNLs.size === this.allNLs.length) {
-    this._selectedNLs = new Set(this.allNLs);
-  }
-
-  // Tabelle aktualisieren
-  this.updateNLSelectionUI();
-
-  // Filter anwenden
-  this.applyNLFilter([...this._selectedNLs]);
-
-  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-  this.applyRadiusFilter(radius);
-
-  // Karte aktualisieren
-  this.updateGeoLayer();
-
-  // PLZ-Tabelle aktualisieren
-  this.renderDataTable(this.filteredKennwerte);
-  this.prepareUmsatzPLZWerte();
-
-}
-
-
-
-initRadiusSlider() {
-  const slider = this._shadowRoot.getElementById("radius-slider");
-  const valueLabel = this._shadowRoot.getElementById("radius-value");
-
-  if (!slider) return;
-
-  valueLabel.textContent = slider.value;
-
-  // ⭐ Debounce: 80ms – fühlt sich reaktiv an, vermeidet Spam
-  let debounceTimer = null;
-
-  slider.addEventListener("input", () => {
-    const radius = Number(slider.value);
-    valueLabel.textContent = radius;
-
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(() => {
-      this.applyRadiusFilter(radius);
-      this.renderDataTable(this.filteredKennwerte);
-    }, 80);
-  });
-}
-
-
-// ============================================================
-// 9. _refreshAll() – verhindert Doppelberechnungen
-//    → Überall wo prepareUmsatz + computeWK hintereinander stehen
-//      durch this._refreshAll() ersetzen
-// ============================================================
 
 _refreshAll() {
   this.prepareUmsatzPLZWerte();
@@ -4151,28 +2883,15 @@ _refreshAll() {
   this.updateHeatmapLegend();
 }
 
-
 getColorForPLZ(plz) {
   const data = this.filteredPLZWerte?.[plz];
   if (!data) return "#cfd4da";
-
-  const wk = data.wk ?? 0;
-  const wkPot = data.wkPot ?? 0;
-  const isHZ = data.hz === true;
-
-  const value = isHZ ? wk : wkPot;
-
-  return this.getColor(value, isHZ);
+  return this.getColor(data.hz === true ? data.wk ?? 0 : data.wkPot ?? 0, data.hz === true);
 }
-
 
 getFilteredDataWithRadius() {
   if (!this.filteredData) return [];
-
-  const result = [];
-  const aggregated = {};
-
-  // 🔥 Ungefilterter Umsatz pro PLZ (für WK inkl. Nachbarn)
+  const result = [], aggregated = {};
   const unfilteredUmsatzByPLZ = {};
   this.filteredData.forEach(row => {
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
@@ -4180,217 +2899,80 @@ getFilteredDataWithRadius() {
     const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
     unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
   });
-
-  // 🔥 Gesamtumsatz der Erhebung (nach NL-Filter, unabhängig vom Radius)
   let totalErhebungUmsatz = 0;
-
-  // 🔥 Streuverlust-Struktur
-  const streuverlust = {
-    sum: {
-      umsatzNetto: 0,
-      hzKosten: 0,
-      umsatzErhebung: 0,
-      kdErhebung: 0,
-      auflage: 0,
-      potHzAbs: 0
-    },
-    avgArrays: {
-      werbeverweigerer: [],
-      haushalte: [],
-      kaufkraft: []
-    }
-  };
-
+  const streuverlust = { sum: { umsatzNetto: 0, hzKosten: 0, umsatzErhebung: 0, kdErhebung: 0, auflage: 0, potHzAbs: 0 }, avgArrays: { werbeverweigerer: [], haushalte: [], kaufkraft: [] } };
   this.filteredData.forEach(row => {
     const nl = row["dimension_niederlassung_0"]?.id?.trim();
     const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
     const plz = rawPLZ == null ? "" : String(rawPLZ).padStart(5, "0");
-
-    // 1️⃣ NL-Filter
-    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) {
-      return;
-    }
-
-    // 🔥 Gesamtumsatz der Erhebung (für diese NLs, unabhängig vom Radius)
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
     totalErhebungUmsatz += row["value_hr_n_umsatz_0"]?.raw ?? 0;
-
-    // 2️⃣ Radiusfilter
-    const isInRadius = this.plzImRadius instanceof Set
-      ? this.plzImRadius.has(plz)
-      : true;
-
-    // 3️⃣ Streuverlust (PLZ gehört zur NL, aber liegt außerhalb Radius)
+    const isInRadius = this.plzImRadius instanceof Set ? this.plzImRadius.has(plz) : true;
     if (!isInRadius) {
       streuverlust.sum.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
-      streuverlust.sum.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
-      streuverlust.sum.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
-      streuverlust.sum.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
-      streuverlust.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
-      streuverlust.sum.potHzAbs += row["value_hz_potentiell_0"]?.raw ?? 0;
-
+      streuverlust.sum.hzKosten    += row["value_hz_kosten_0"]?.raw ?? 0;
       const wv = row["value_werbeverweigerer_0"]?.raw;
       if (typeof wv === "number") streuverlust.avgArrays.werbeverweigerer.push(wv);
-
       const hh = row["value_haushalte_0"]?.raw;
       if (typeof hh === "number") streuverlust.avgArrays.haushalte.push(hh);
-
-      const kk = row["value_kaufkraft_0"]?.raw;
-      if (typeof kk === "number") streuverlust.avgArrays.kaufkraft.push(kk);
-
-      return; // nicht aggregieren
+      return;
     }
-
-    // 4️⃣ Reguläre Radius-PLZ
     result.push(row);
-
-    if (!aggregated[plz]) {
-      aggregated[plz] = {
-        hzCount: 0,
-        sum: {
-          umsatzNetto: 0,
-          hzKosten: 0,
-          umsatzErhebung: 0,
-          kdErhebung: 0,
-          auflage: 0,
-          potHzAbs: 0
-        },
-        avgArrays: {
-          werbeverweigerer: [],
-          haushalte: [],
-          kaufkraft: [],
-          potHzKosten: []   // ⭐ NEU: Array für Durchschnitt
-        }
-      };
-    }
-
+    if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, sum: { umsatzNetto: 0, hzKosten: 0, umsatzErhebung: 0, kdErhebung: 0, auflage: 0, potHzAbs: 0 }, avgArrays: { werbeverweigerer: [], haushalte: [], kaufkraft: [], potHzKosten: [] } };
     const entry = aggregated[plz];
-
     const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
     if (hz) entry.hzCount++;
-
-    entry.sum.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
-    entry.sum.hzKosten += row["value_hz_kosten_0"]?.raw ?? 0;
+    entry.sum.umsatzNetto    += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    entry.sum.hzKosten       += row["value_hz_kosten_0"]?.raw ?? 0;
     entry.sum.umsatzErhebung += row["value_ums_erhebung_0"]?.raw ?? 0;
-    entry.sum.kdErhebung += row["value_kd_erhebung_0"]?.raw ?? 0;
-    entry.sum.auflage += row["value_auflage_0"]?.raw ?? 0;
-
-    // ⭐ NEU: potentielle HZ-Kosten als Durchschnitt, nicht Summe
+    entry.sum.kdErhebung     += row["value_kd_erhebung_0"]?.raw ?? 0;
+    entry.sum.auflage        += row["value_auflage_0"]?.raw ?? 0;
     const potHz = row["value_hz_potentiell_0"]?.raw;
-    if (typeof potHz === "number") {
-      entry.avgArrays.potHzKosten.push(potHz); // Durchschnitt
-    }
-
+    if (typeof potHz === "number") entry.avgArrays.potHzKosten.push(potHz);
     const wv2 = row["value_werbeverweigerer_0"]?.raw;
     if (typeof wv2 === "number") entry.avgArrays.werbeverweigerer.push(wv2);
-
     const hh2 = row["value_haushalte_0"]?.raw;
     if (typeof hh2 === "number") entry.avgArrays.haushalte.push(hh2);
-
     const kk2 = row["value_kaufkraft_0"]?.raw;
     if (typeof kk2 === "number") entry.avgArrays.kaufkraft.push(kk2);
   });
-
-  // 5️⃣ Aggregation
   const avg = arr => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : 0;
-
   const mergedPLZWerte = {};
-
   Object.entries(aggregated).forEach(([plz, entry]) => {
-    const sum = entry.sum;
-    const avgArr = entry.avgArrays;
-
-    const avgWerbeverweigerer = avg(avgArr.werbeverweigerer);
-    const avgHaushalte = avg(avgArr.haushalte);
-    const avgKaufkraft = avg(avgArr.kaufkraft);
-
-    // ⭐ NEU: Durchschnitt der potenziellen HZ-Kosten
+    const sum = entry.sum, avgArr = entry.avgArrays;
     const avgPotHzKosten = avg(avgArr.potHzKosten);
-
-    const umsatzNetto = sum.umsatzNetto;
-    const hzKosten = sum.hzKosten;
-
-    const wkPercent = umsatzNetto > 0
-      ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1))
-      : 0;
-
+    const umsatzNetto = sum.umsatzNetto, hzKosten = sum.hzKosten;
+    const wkPercent = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
     const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
-    const wkNachbarn = unfilteredUmsatz > 0
-      ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1))
-      : 0;
-
-    // ⭐ NEU: potHzPercent basiert auf Durchschnitt, nicht Summe
-    const potHzPercent = umsatzNetto > 0
-      ? Number(((avgPotHzKosten / umsatzNetto) * 100).toFixed(1))
-      : 0;
-
-    const isHZ = entry.hzCount > 0;
-    const isCritical = entry.hzCount > 1;
-
-    // WK-Kennwerte
+    const wkNachbarn = unfilteredUmsatz > 0 ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1)) : 0;
+    const potHzPercent = umsatzNetto > 0 ? Number(((avgPotHzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
+    const isHZ = entry.hzCount > 0, isCritical = entry.hzCount > 1;
     this.filteredKennwerte[plz] = {
-      isHZ,
-      isCritical,
-      value_hr_n_umsatz_0: { raw: umsatzNetto },
+      isHZ, isCritical,
+      value_hr_n_umsatz_0:   { raw: umsatzNetto },
       value_wk_in_percent_0: { raw: wkPercent },
-      value_wk_nachbar_0: { raw: wkNachbarn },
-      value_hz_kosten_0: { raw: hzKosten },
-      value_werbeverweigerer_0: { raw: avgWerbeverweigerer },
-      value_haushalte_0: { raw: avgHaushalte },
-      value_kaufkraft_0: { raw: avgKaufkraft },
-      value_ums_erhebung_0: { raw: sum.umsatzErhebung },
-      value_kd_erhebung_0: { raw: sum.kdErhebung },
-      value_bon_erhebung_0: { raw: sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0 },
-      value_auflage_0: { raw: sum.auflage },
-
-      // ⭐ NEU: Durchschnittliche potenzielle HZ-Kosten
-      value_hz_potentiell_avg_0: { raw: avgPotHzKosten },
-
-      // ⭐ NEU: Prozentwert basierend auf Durchschnitt
+      value_wk_nachbar_0:    { raw: wkNachbarn },
+      value_hz_kosten_0:     { raw: hzKosten },
+      value_werbeverweigerer_0: { raw: avg(avgArr.werbeverweigerer) },
+      value_haushalte_0:     { raw: avg(avgArr.haushalte) },
+      value_kaufkraft_0:     { raw: avg(avgArr.kaufkraft) },
+      value_ums_erhebung_0:  { raw: sum.umsatzErhebung },
+      value_kd_erhebung_0:   { raw: sum.kdErhebung },
+      value_bon_erhebung_0:  { raw: sum.kdErhebung > 0 ? Number((sum.umsatzErhebung / sum.kdErhebung).toFixed(2)) : 0 },
+      value_auflage_0:       { raw: sum.auflage },
       value_wk_potentiell_0: { raw: potHzPercent }
     };
-
-    // Umsatzwerte aus prepareUmsatzPLZWerte übernehmen
     const old = this.filteredPLZWerte?.[plz] || {};
-
-    mergedPLZWerte[plz] = {
-      // WK
-      wk: wkPercent,
-      wkNachbarn,
-      wkPot: potHzPercent,
-      hz: isHZ,
-
-      // Umsatz
-      umsatz: old.umsatz ?? 0,
-      ra: old.ra ?? 0,
-      onlineshop: old.onlineshop ?? 0,
-      pluscard: old.pluscard ?? 0,
-      haushalte: old.haushalte ?? 0,
-      umsatzProHaushalt: old.umsatzProHaushalt ?? 0,
-      raProHaushalt: old.raProHaushalt ?? 0,
-      onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0,
-      pluscardProHaushalt: old.pluscardProHaushalt ?? 0
-    };
+    mergedPLZWerte[plz] = { wk: wkPercent, wkNachbarn, wkPot: potHzPercent, hz: isHZ, umsatz: old.umsatz ?? 0, ra: old.ra ?? 0, onlineshop: old.onlineshop ?? 0, pluscard: old.pluscard ?? 0, haushalte: old.haushalte ?? 0, umsatzProHaushalt: old.umsatzProHaushalt ?? 0, raProHaushalt: old.raProHaushalt ?? 0, onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0, pluscardProHaushalt: old.pluscardProHaushalt ?? 0 };
   });
-
   this.filteredPLZWerte = mergedPLZWerte;
-
-  // 6️⃣ Streuverlust final berechnen
-  this.streuverlust = {
-    umsatz: streuverlust.sum.umsatzNetto,
-    anteil: totalErhebungUmsatz > 0
-      ? streuverlust.sum.umsatzNetto / totalErhebungUmsatz
-      : 0
-  };
-
+  this.streuverlust = { umsatz: streuverlust.sum.umsatzNetto, anteil: totalErhebungUmsatz > 0 ? streuverlust.sum.umsatzNetto / totalErhebungUmsatz : 0 };
   return result;
 }
-
-
 
 closeNLTable() {
   const nlContainer = this._shadowRoot.getElementById("nl-info-container");
   const filterContainer = this._shadowRoot.querySelector(".filter-container");
-
   nlContainer?.classList.remove("show");
   filterContainer?.classList.remove("nl-info-active");
 }
@@ -4398,711 +2980,238 @@ closeNLTable() {
 showEmptyUmsatzPopup(plz) {
   const popup = this._shadowRoot.getElementById("side-popup-umsatz");
   if (!popup) return;
-
-  const note = this.geoNotes?.[plz] || "Keine Notiz";
-
+  const note = this.geoNotes?.[plz] || "—";
   popup.innerHTML = `
-    <button class="close-btn">×</button>
-
-    <!-- =============================== -->
-    <!--   TABELLE 1: GESAMT-KENNZAHLEN  -->
-    <!-- =============================== -->
-    <table>
-      <thead>
-        <tr><th colspan="2" class="title-cell">${note}</th></tr>
-        <tr><th colspan="2" class="subtitle-cell">
-          Keine Umsatzdaten für PLZ ${plz}
-        </th></tr>
-      </thead>
-
-      <tbody>
-        <tr>
-          <td class="label-cell">Stationär</td>
-          <td class="value-cell">–</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Pluscard</td>
-          <td class="value-cell">–</td>
-        </tr>
-        <tr>
-          <td class="label-cell">R&A</td>
-          <td class="value-cell">–</td>
-        </tr>
-        <tr>
-          <td class="label-cell">Onlineshop</td>
-          <td class="value-cell">–</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <!-- Umsatz-Balken (leer) -->
-    <div class="umsatz-share-bar empty">
-      <div class="share-segment empty"></div>
+    <div class="popup-header">
+      <span title="${note}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span>
+      <button class="close-btn" style="flex-shrink:0">✕</button>
     </div>
-
-    <div class="umsatz-legend">
-<span><span style="color:#b41821;">⬤</span> Stationär</span>
-<span><span style="color:#1f78b4;">⬤</span> Pluscard</span>
-<span><span style="color:#33a02c;">⬤</span> R&A</span>
-<span><span style="color:#ffb000;">⬤</span> Onlineshop</span>
-
+    <div style="padding:20px 14px;text-align:center;color:#adb5bd;font-size:0.85rem">
+      <div style="font-size:2rem;margin-bottom:8px;opacity:.4">📭</div>
+      Keine Umsatzdaten für PLZ ${plz}
     </div>
-
-    <!-- ===================================== -->
-    <!--   TABELLE 2: PRO-HAUSHALT-KENNZAHLEN  -->
-    <!-- ===================================== -->
-    <table class="hh-table">
-      <thead>
-        <tr><th colspan="2" class="subtitle-cell">Kennzahlen pro Haushalt</th></tr>
-      </thead>
-
-      <tbody>
-        <tr><td class="label-cell">Haushalte</td><td class="value-cell">–</td></tr>
-        <tr><td class="label-cell">Stationär pro HH</td><td class="value-cell">–</td></tr>
-        <tr><td class="label-cell">Pluscard pro HH</td><td class="value-cell">–</td></tr>
-        <tr><td class="label-cell">R&A pro HH</td><td class="value-cell">–</td></tr>
-        <tr><td class="label-cell">Onlineshop pro HH</td><td class="value-cell">–</td></tr>
-      </tbody>
-    </table>
+    <div class="umsatz-legend" style="padding:0 14px 12px;justify-content:center">
+      <span><span style="color:#b41821">⬤</span> Stationär</span>
+      <span><span style="color:#1f78b4">⬤</span> Pluscard</span>
+      <span><span style="color:#33a02c">⬤</span> R&amp;A</span>
+      <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
+    </div>
   `;
-
   popup.classList.remove("hidden");
   void popup.offsetWidth;
   popup.classList.add("show");
-
-  popup.querySelector(".close-btn").onclick = () => {
-    popup.classList.remove("show");
-    popup.classList.add("hidden");
-  };
+  popup.querySelector(".close-btn").onclick = () => { popup.classList.remove("show"); popup.classList.add("hidden"); };
 }
 
-
-
-
-  prepareDropdownData(data) {
-    const erhSelect = this._shadowRoot.getElementById("erhebung-select");
-    const jahrSelect = this._shadowRoot.getElementById("jahr-select");
-    const nummerSelect = this._shadowRoot.getElementById("nummer-select");
-
-    if (!erhSelect || !jahrSelect || !nummerSelect) {
-      console.warn("❌ Dropdown-Elemente nicht gefunden im Shadow DOM");
-      return;
-    }
-
-    // 🧹 Vorherige Optionen entfernen
-    erhSelect.innerHTML = "";
-    jahrSelect.innerHTML = "";
-    nummerSelect.innerHTML = "";
-    jahrSelect.disabled = true;
-    nummerSelect.disabled = true;
-
-    // 🧩 Erhebungsstruktur aufbauen
-    this._erhData = {}; // { erhID: { jahr: Set(nummern) } }
-
-    data.forEach(row => {
-      const erhID = row["dimension_erhebung_0"]?.id?.trim();
-      const jahr = row["dimension_jahr_0"]?.id?.trim();
-      const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
-      if (!erhID || !jahr || !nummer) return;
-
-      this._erhData[erhID] = this._erhData[erhID] || {};
-      this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
-      this._erhData[erhID][jahr].add(nummer);
-    });
-
-    // 🧩 ErhebungsIDs in Dropdown einfügen
-    Object.keys(this._erhData).forEach(erhID => {
-      const opt = document.createElement("option");
-      opt.value = erhID;
-      opt.textContent = erhID;
-      erhSelect.appendChild(opt);
-    });
-
-    // 📅 Jahre nach Auswahl
-    erhSelect.addEventListener("change", () => {
-      jahrSelect.innerHTML = "";
-      nummerSelect.innerHTML = "";
-      jahrSelect.disabled = false;
-      nummerSelect.disabled = true;
-
-      const selectedID = erhSelect.value;
-      const jahre = Object.keys(this._erhData[selectedID] || {});
-
-      jahre.forEach(j => {
-        const opt = document.createElement("option");
-        opt.value = j;
-        opt.textContent = j;
-        jahrSelect.appendChild(opt);
-      });
-    });
-
-    // 🔢 Nummern nach Jahr
-    jahrSelect.addEventListener("change", () => {
-      nummerSelect.innerHTML = "";
-      nummerSelect.disabled = false;
-
-      const selectedID = erhSelect.value;
-      const selectedJahr = jahrSelect.value;
-      const nummern = Array.from(this._erhData[selectedID]?.[selectedJahr] || []);
-
-      nummern.forEach(n => {
-        const opt = document.createElement("option");
-        opt.value = n;
-        opt.textContent = n;
-        nummerSelect.appendChild(opt);
-      });
-    });
-
-    // 🟢 Filter aktivieren
-    const filterButton = this._shadowRoot.getElementById("filter-button");
-    if (filterButton) {
-      filterButton.addEventListener("click", () => {
-        const selectedID = erhSelect.value;
-        const selectedJahr = jahrSelect.value;
-        const selectedNummer = nummerSelect.value;
-
-       this.loadErhebung(selectedID, selectedJahr, selectedNummer);
-
-      });
-    }
+prepareDropdownData(data) {
+  const erhSelect    = this._shadowRoot.getElementById("erhebung-select");
+  const jahrSelect   = this._shadowRoot.getElementById("jahr-select");
+  const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+  if (!erhSelect || !jahrSelect || !nummerSelect) return;
+  erhSelect.innerHTML = ""; jahrSelect.innerHTML = ""; nummerSelect.innerHTML = "";
+  jahrSelect.disabled = true; nummerSelect.disabled = true;
+  this._erhData = {};
+  data.forEach(row => {
+    const erhID = row["dimension_erhebung_0"]?.id?.trim();
+    const jahr  = row["dimension_jahr_0"]?.id?.trim();
+    const nummer = row["dimension_erhebungsnummer_0"]?.id?.trim();
+    if (!erhID || !jahr || !nummer) return;
+    this._erhData[erhID] = this._erhData[erhID] || {};
+    this._erhData[erhID][jahr] = this._erhData[erhID][jahr] || new Set();
+    this._erhData[erhID][jahr].add(nummer);
+  });
+  Object.keys(this._erhData).forEach(erhID => {
+    const opt = document.createElement("option"); opt.value = erhID; opt.textContent = erhID;
+    erhSelect.appendChild(opt);
+  });
+  erhSelect.addEventListener("change", () => {
+    jahrSelect.innerHTML = ""; nummerSelect.innerHTML = ""; jahrSelect.disabled = false; nummerSelect.disabled = true;
+    Object.keys(this._erhData[erhSelect.value] || {}).forEach(j => { const opt = document.createElement("option"); opt.value = j; opt.textContent = j; jahrSelect.appendChild(opt); });
+  });
+  jahrSelect.addEventListener("change", () => {
+    nummerSelect.innerHTML = ""; nummerSelect.disabled = false;
+    Array.from(this._erhData[erhSelect.value]?.[jahrSelect.value] || []).forEach(n => { const opt = document.createElement("option"); opt.value = n; opt.textContent = n; nummerSelect.appendChild(opt); });
+  });
+  const filterButton = this._shadowRoot.getElementById("filter-button");
+  if (filterButton) {
+    filterButton.addEventListener("click", () => this.loadErhebung(erhSelect.value, jahrSelect.value, nummerSelect.value));
   }
+}
+
 async render() {
-  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") {
-    console.warn("⛔️ Voraussetzungen für Render nicht erfüllt.");
-    return;
-  }
-
+  if (!this.map || !this._myDataSource || this._myDataSource.state !== "success") return;
   this.showSpinner();
-
   const rawData = this._myDataSource.data;
-
-  // Filterstruktur & Dropdowns vorbereiten
   this._erhData = this.buildErhebungsStruktur(rawData);
   this.setupFilterDropdowns();
-
-  // Filter anwenden oder Rohdaten verwenden
   const isFiltered = !!this._activeFilter;
   const filteredData = isFiltered ? this.getFilteredData() : rawData;
-
-  // prepareMapData darf laufen – zerstört nichts mehr
   this.prepareMapData(filteredData);
-
-  // WK neu berechnen
   this.prepareUmsatzPLZWerte();
   this.computeWKKennwerte();
   this.computeStreuverlust();
-
-  // GeoJSON laden & Layer aktualisieren
   await this.loadGeoJson();
   this.updateGeoLayer();
-
-  // Marker neu erstellen
   this.createAllMarkers();
-
-  // PLZs extrahieren
-  const filteredPLZs = isFiltered
-    ? filteredData
-        .map(d => d["dimension_plz_0"]?.id?.trim())
-        .filter(plz => plz && plz !== "@NullMember")
-    : Object.keys(this.allMarkers);
-
-  // Marker anzeigen
+  const filteredPLZs = isFiltered ? filteredData.map(d => d["dimension_plz_0"]?.id?.trim()).filter(plz => plz && plz !== "@NullMember") : Object.keys(this.allMarkers);
   this.updateMarkers(filteredPLZs);
-
-  // Tabelle aktualisieren
   this.renderDataTable(this.filteredKennwerte);
-
   this.hideSpinner();
 }
 
 updateHeatmapLegend() {
-
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   if (!legend) return;
+  if (!this._activeFilter || !this.filteredPLZWerte || Object.keys(this.filteredPLZWerte).length === 0) { legend.classList.add("hidden"); return; }
+  if (!this.currentMapMode) { legend.classList.add("hidden"); return; }
 
-  // ---------------------------------------------------------
-  // Wenn keine Erhebung geladen ist → Legende ausblenden
-  // ---------------------------------------------------------
-  if (!this._activeFilter || !this.filteredPLZWerte || Object.keys(this.filteredPLZWerte).length === 0) {
-    legend.classList.add("hidden");
-    return;
-  }
+  const mkRow = (bg, label) => `<div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:${bg}"></div>${label}</div>`;
 
-  if (!this.currentMapMode) {
-    legend.classList.add("hidden");
-    return;
-  }
-
-  // ============================================================
-  // WK-MODUS (unverändert)
-  // ============================================================
   if (this.currentMapMode === "wk") {
     legend.innerHTML = `
-      <div><strong>Werbekosten</strong></div>
-
-      <div style="margin-top:6px; font-weight:bold; color:#444;">Bestreut (% WK am Umsatz)</div>
-
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e31a1c"></div> &gt; 25 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fd8d3c"></div> 15–25 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#ffffb2"></div> 10–15 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#78c679"></div> 5–10 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#41ab5d"></div> 2–5 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#006837"></div> 0–2 %</div>
-
-      <div style="margin-top:10px; font-weight:bold; color:#444;">Nicht bestreut (% Pot. WK am Umsatz)</div>
-
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#cfd4da"></div> &gt; 50 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#bdbdbd"></div> 25–50 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#969696"></div> 15–25 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#6baed6"></div> 10–15 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#2171b5"></div> 5–10 %</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#08306b"></div> 0–5 %</div>
+      <strong>Werbekosten</strong>
+      <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.04em">Bestreut</div>
+      ${mkRow('#e31a1c','> 25 %')}${mkRow('#fd8d3c','15–25 %')}${mkRow('#ffffb2','10–15 %')}${mkRow('#78c679','5–10 %')}${mkRow('#41ab5d','2–5 %')}${mkRow('#006837','0–2 %')}
+      <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:8px 0 3px;text-transform:uppercase;letter-spacing:.04em">Nicht bestreut</div>
+      ${mkRow('#cfd4da','> 50 %')}${mkRow('#bdbdbd','25–50 %')}${mkRow('#969696','15–25 %')}${mkRow('#6baed6','10–15 %')}${mkRow('#2171b5','5–10 %')}${mkRow('#08306b','0–5 %')}
     `;
-    legend.classList.remove("hidden");
-    return;
+    legend.classList.remove("hidden"); return;
   }
 
-  // ============================================================
-  // UMSATZ-HEATMAP → ABSOLUTE WERTE (IDENTISCH ZUR HEATMAP)
-  // ============================================================
   if (this.currentMapMode === "umsatz-multi") {
-
-    // ---------------------------------------------------------
-    // 1) Werte wie Heatmap berechnen (DAS ist der Schlüssel!)
-    // ---------------------------------------------------------
-    const values = Object.values(this.filteredPLZWerte)
-      .map(v => this.getUmsatzSumForPLZ(v))   // ⭐ Heatmap-Logik
-      .filter(v => v > 0);
-
+    const values = Object.values(this.filteredPLZWerte).map(v => this.getUmsatzSumForPLZ(v)).filter(v => v > 0);
     const max = values.length > 0 ? Math.max(...values) : 0;
-
-    // ---------------------------------------------------------
-    // 2) Dynamische Stufen (identisch zur Heatmap)
-    // ---------------------------------------------------------
-    const steps = [
-      max,
-      max * 0.85,
-      max * 0.75,
-      max * 0.65,
-      max * 0.55,
-      max * 0.45,
-      max * 0.35,
-      max * 0.20,
-      0
-    ];
-
-    // ---------------------------------------------------------
-    // 3) Formatierung
-    // ---------------------------------------------------------
-    const fmt = n =>
-      n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
-
-    // ---------------------------------------------------------
-    // 4) HTML erzeugen — identisch zur Heatmap
-    // ---------------------------------------------------------
-    const rows = steps.map(v => {
-      const color = this.getDynamicHeatColor(v, max);
-      return `
-        <div class="heatmap-legend-row">
-          <div class="heatmap-legend-color" style="background:${color}"></div>
-          <div>${fmt(v)}</div>
-        </div>
-      `;
-    }).join("");
-
-    legend.innerHTML = `
-      <div><strong>Umsatz (absolut)</strong></div>
-      ${rows}
-    `;
-
-    legend.classList.remove("hidden");
-    return;
+    const steps = [max, max*0.85, max*0.75, max*0.65, max*0.55, max*0.45, max*0.35, max*0.20, 0];
+    const fmt = n => n.toLocaleString("de-DE", { maximumFractionDigits: 0 }) + " €";
+    legend.innerHTML = `<strong>Umsatz (absolut)</strong>` + steps.map(v => mkRow(this.getDynamicHeatColor(v, max), fmt(v))).join("");
+    legend.classList.remove("hidden"); return;
   }
 
-  // ============================================================
-  // WERBEANTEIL (unverändert)
-  // ============================================================
   if (this.currentMapMode === "werbeanteil") {
-    legend.innerHTML = `
-      <div><strong>Werbeanteil</strong></div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#7a0f17"></div> &gt;80%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#b41821"></div> 60–80%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#e96a3a"></div> 40–60%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f6b65b"></div> 20–40%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#f7d77a"></div> 10–20%</div>
-      <div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:#fce9b2"></div> &lt;10%</div>
-    `;
-    legend.classList.remove("hidden");
-    return;
+    legend.innerHTML = `<strong>Werbeanteil</strong>` +
+      [['#7a0f17','>80%'],['#b41821','60–80%'],['#e96a3a','40–60%'],['#f6b65b','20–40%'],['#f7d77a','10–20%'],['#fce9b2','<10%']].map(([bg,l]) => mkRow(bg,l)).join("");
+    legend.classList.remove("hidden"); return;
   }
 
   legend.classList.add("hidden");
 }
 
-
 getUmsatzValueForLegend(v) {
-
-  // 1) Kategorien summieren
   let sum = 0;
-  for (const cat of this.activeCategories) {
-    if (v[cat] != null) sum += v[cat];
-  }
-
-  // 2) Werbeumsatz / Zusatzumsatz
+  for (const cat of this.activeCategories) { if (v[cat] != null) sum += v[cat]; }
   if (this.umsatzMainMode === "werbung") {
     sum = 0;
     if (this.useWerbeUmsatz) sum += v.werbung ?? 0;
     if (this.useZusatzUmsatz) sum += v.zusatz ?? 0;
   }
-
-  // 3) pro Haushalt
-  if (this.umsatzDarstellung === "hh") {
-    const hh = v.haushalte || 1;
-    sum = sum / hh;
-  }
-
+  if (this.umsatzDarstellung === "hh") { const hh = v.haushalte || 1; sum = sum / hh; }
   return sum;
 }
 
 async loadErhebung(erhID, jahr, nummer) {
-  console.log("🚀 loadErhebung:", erhID, jahr, nummer);
-
   const legend = this._shadowRoot.getElementById("heatmap-legend");
   legend?.classList.add("hidden");
-
   this.closeNLTable?.();
-
-  // ⭐ NEUE Lade-Animation starten
   this._showCinematicLoader();
 
   try {
-    // --- PHASE 1: Daten laden ---
     this._updateLoaderPhase(1, "Erhebungsdaten werden geladen…");
     const rawData = await this.queryErhebungFromBW(erhID, jahr, nummer);
     this._activeFilter = { erhID, jahr, nummer };
     this.filteredData = rawData;
 
-    // --- PHASE 2: Karte vorbereiten ---
     this._updateLoaderPhase(2, "Karte wird vorbereitet…");
     this.prepareMapData(rawData);
-    await this.loadGeoJson(); // lädt GeoJSON + baut Index auf
+    await this.loadGeoJson();
 
-    // --- PHASE 3: Marker + Radius ---
     this._updateLoaderPhase(3, "Niederlassungen werden gesetzt…");
-    this.allNLs = [
-      ...Object.keys(this.Niederlassung),
-      ...(this.extraNLs?.map(e => e.nl) ?? [])
-    ];
+    this.allNLs = [...Object.keys(this.Niederlassung), ...(this.extraNLs?.map(e => e.nl) ?? [])];
     this._selectedNLs = new Set(this.allNLs);
     this.createAllMarkers();
-
     const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 40);
-    // ⭐ Cache NACH createAllMarkers() aufbauen (nlMarkers ist jetzt befüllt)
     this._buildDistanceCache();
     this.applyRadiusFilter(radius);
 
-    // --- PHASE 4: Kennwerte berechnen ---
     this._updateLoaderPhase(4, "Kennwerte werden berechnet…");
     this.prepareUmsatzPLZWerte();
     this.computeWKKennwerte();
     this.computeStreuverlust();
-
-    // --- Finaler Render ---
     this.updateGeoLayer();
     this.prepareErhebungsInfo();
     this.renderDataTable(this.filteredKennwerte);
     this.zoomToFilteredPLZ();
 
-    // ⭐ Kurze Pause für den "Fertig"-Zustand, dann ausblenden
     this._updateLoaderPhase(5, "Fertig!");
-    await new Promise(r => setTimeout(r, 600));
-
+    await new Promise(r => setTimeout(r, 500));
   } finally {
     this._hideCinematicLoader();
   }
-
-  console.log("✅ loadErhebung abgeschlossen");
 }
-_showCinematicLoader() {
-  // Alten Loader entfernen falls vorhanden
-  this._hideCinematicLoader(true);
 
+_showCinematicLoader() {
+  this._hideCinematicLoader(true);
   const overlay = document.createElement("div");
   overlay.id = "cinematic-loader";
-
   overlay.innerHTML = `
-    <style>
-      #cinematic-loader {
-        position: absolute;
-        inset: 0;
-        z-index: 99999;
-        background: linear-gradient(135deg, #0a0a0a 0%, #1a0305 50%, #0a0a0a 100%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-        animation: loaderFadeIn 0.3s ease;
-      }
-
-      @keyframes loaderFadeIn {
-        from { opacity: 0; }
-        to   { opacity: 1; }
-      }
-
-      #cinematic-loader .loader-logo {
-        width: 72px;
-        height: 72px;
-        margin-bottom: 32px;
-        position: relative;
-      }
-
-      /* Äußerer Ring – dreht sich langsam */
-      #cinematic-loader .loader-logo::before {
-        content: '';
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        border: 3px solid transparent;
-        border-top-color: #b41821;
-        border-right-color: #b41821;
-        animation: spinSlow 1.8s linear infinite;
-      }
-
-      /* Innerer Ring – dreht sich schneller, entgegengesetzt */
-      #cinematic-loader .loader-logo::after {
-        content: '';
-        position: absolute;
-        inset: 10px;
-        border-radius: 50%;
-        border: 2px solid transparent;
-        border-bottom-color: rgba(180,24,33,0.5);
-        animation: spinFast 0.9s linear infinite reverse;
-      }
-
-      /* Kern-Punkt */
-      #cinematic-loader .loader-core {
-        position: absolute;
-        top: 50%; left: 50%;
-        transform: translate(-50%, -50%);
-        width: 12px; height: 12px;
-        border-radius: 50%;
-        background: #b41821;
-        box-shadow: 0 0 20px #b41821, 0 0 40px rgba(180,24,33,0.4);
-        animation: corePulse 1.8s ease-in-out infinite;
-      }
-
-      @keyframes spinSlow  { to { transform: rotate(360deg); } }
-      @keyframes spinFast  { to { transform: rotate(360deg); } }
-      @keyframes corePulse {
-        0%, 100% { transform: translate(-50%,-50%) scale(1);   opacity: 1;   }
-        50%       { transform: translate(-50%,-50%) scale(1.4); opacity: 0.7; }
-      }
-
-      /* Phasen-Text */
-      #cinematic-loader .loader-phase {
-        color: #ffffff;
-        font-size: 1rem;
-        font-weight: 600;
-        letter-spacing: 0.04em;
-        margin-bottom: 6px;
-        min-height: 1.4em;
-        text-align: center;
-        transition: opacity 0.25s ease;
-      }
-
-      /* Fortschrittsbalken */
-      #cinematic-loader .loader-bar-track {
-        width: 260px;
-        height: 3px;
-        background: rgba(255,255,255,0.1);
-        border-radius: 2px;
-        margin-top: 20px;
-        overflow: hidden;
-      }
-
-      #cinematic-loader .loader-bar-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #b41821, #e96a3a);
-        border-radius: 2px;
-        width: 0%;
-        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 0 8px rgba(180,24,33,0.6);
-      }
-
-      /* Phasen-Dots */
-      #cinematic-loader .loader-dots {
-        display: flex;
-        gap: 20px;
-        margin-top: 24px;
-      }
-
-      #cinematic-loader .loader-dot {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 6px;
-        opacity: 0.3;
-        transition: opacity 0.4s ease;
-      }
-
-      #cinematic-loader .loader-dot.active {
-        opacity: 1;
-      }
-
-      #cinematic-loader .loader-dot.done {
-        opacity: 0.6;
-      }
-
-      #cinematic-loader .dot-circle {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: #b41821;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-      }
-
-      #cinematic-loader .loader-dot.active .dot-circle {
-        transform: scale(1.4);
-        box-shadow: 0 0 8px #b41821;
-      }
-
-      #cinematic-loader .dot-label {
-        font-size: 0.65rem;
-        color: rgba(255,255,255,0.6);
-        font-weight: 500;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        white-space: nowrap;
-      }
-
-      #cinematic-loader.fade-out {
-        animation: loaderFadeOut 0.4s ease forwards;
-      }
-
-      @keyframes loaderFadeOut {
-        to { opacity: 0; pointer-events: none; }
-      }
-    </style>
-
-    <div class="loader-logo">
-      <div class="loader-core"></div>
-    </div>
-
-    <div class="loader-phase" id="loader-phase-text">Verbindung wird aufgebaut…</div>
-
-    <div class="loader-bar-track">
-      <div class="loader-bar-fill" id="loader-bar"></div>
-    </div>
-
+    <div class="loader-logo"><div class="loader-core"></div></div>
+    <div class="loader-phase" id="loader-phase-text">Wird geladen…</div>
+    <div class="loader-bar-track"><div class="loader-bar-fill" id="loader-bar"></div></div>
     <div class="loader-dots">
-      <div class="loader-dot" data-phase="1">
-        <div class="dot-circle"></div>
-        <div class="dot-label">Daten</div>
-      </div>
-      <div class="loader-dot" data-phase="2">
-        <div class="dot-circle"></div>
-        <div class="dot-label">Karte</div>
-      </div>
-      <div class="loader-dot" data-phase="3">
-        <div class="dot-circle"></div>
-        <div class="dot-label">Standorte</div>
-      </div>
-      <div class="loader-dot" data-phase="4">
-        <div class="dot-circle"></div>
-        <div class="dot-label">Kennzahlen</div>
-      </div>
+      <div class="loader-dot" data-phase="1"><div class="dot-circle"></div><div class="dot-label">Daten</div></div>
+      <div class="loader-dot" data-phase="2"><div class="dot-circle"></div><div class="dot-label">Karte</div></div>
+      <div class="loader-dot" data-phase="3"><div class="dot-circle"></div><div class="dot-label">Standorte</div></div>
+      <div class="loader-dot" data-phase="4"><div class="dot-circle"></div><div class="dot-label">Kennzahlen</div></div>
     </div>
   `;
-
-  // In map-container einhängen
   const mapContainer = this._shadowRoot.querySelector(".map-container");
-  if (mapContainer) {
-    mapContainer.appendChild(overlay);
-  } else {
-    // Fallback: Shadow Root
-    this._shadowRoot.appendChild(overlay);
-  }
-
+  if (mapContainer) mapContainer.appendChild(overlay);
+  else this._shadowRoot.appendChild(overlay);
   this._cinematicLoader = overlay;
 }
 
 _updateLoaderPhase(phase, text) {
   const loader = this._shadowRoot.getElementById("cinematic-loader");
   if (!loader) return;
-
-  // Text aktualisieren
   const phaseText = loader.querySelector("#loader-phase-text");
-  if (phaseText) {
-    phaseText.style.opacity = "0";
-    setTimeout(() => {
-      phaseText.textContent = text;
-      phaseText.style.opacity = "1";
-    }, 150);
-  }
-
-  // Fortschrittsbalken
+  if (phaseText) { phaseText.style.opacity = "0"; setTimeout(() => { phaseText.textContent = text; phaseText.style.opacity = "1"; }, 140); }
   const bar = loader.querySelector("#loader-bar");
   const progressMap = { 1: 15, 2: 40, 3: 65, 4: 85, 5: 100 };
   if (bar) bar.style.width = (progressMap[phase] || 0) + "%";
-
-  // Dots aktualisieren
   loader.querySelectorAll(".loader-dot").forEach(dot => {
     const dotPhase = Number(dot.dataset.phase);
     dot.classList.remove("active", "done");
-
-    if (dotPhase === phase) {
-      dot.classList.add("active");
-    } else if (dotPhase < phase) {
-      dot.classList.add("done");
-    }
+    if (dotPhase === phase) dot.classList.add("active");
+    else if (dotPhase < phase) dot.classList.add("done");
   });
 }
 
 _hideCinematicLoader(immediate = false) {
   const loader = this._shadowRoot.getElementById("cinematic-loader");
   if (!loader) return;
-
-  if (immediate) {
-    loader.remove();
-    return;
-  }
-
+  if (immediate) { loader.remove(); return; }
   loader.classList.add("fade-out");
-  setTimeout(() => loader.remove(), 420);
+  setTimeout(() => loader.remove(), 380);
 }
-
 
 showLoadingOverlay() {
   const overlay = this._shadowRoot.getElementById("loading-spinner");
   if (!overlay) return;
-
   overlay.classList.remove("hidden");
   overlay.style.opacity = "1";
-  overlay.style.pointerEvents = "auto"; // blockiert UI
+  overlay.style.pointerEvents = "auto";
 }
-
 
 hideLoadingOverlay() {
   const overlay = this._shadowRoot.getElementById("loading-spinner");
   if (!overlay) return;
-
   overlay.style.transition = "opacity 0.25s ease";
   overlay.style.opacity = "0";
   overlay.style.pointerEvents = "none";
-
-  setTimeout(() => {
-    overlay.classList.add("hidden");
-  }, 250);
+  setTimeout(() => overlay.classList.add("hidden"), 250);
 }
 
-
-
-
 async queryErhebungFromBW(erhID, jahr, nummer) {
-  // Aktuell: lokale Datenquelle
   const raw = this._myDataSource?.data || [];
-
   return raw.filter(row =>
     row["dimension_erhebung_0"]?.id == erhID &&
     row["dimension_jahr_0"]?.id == jahr &&
@@ -5112,40 +3221,162 @@ async queryErhebungFromBW(erhID, jahr, nummer) {
 
 closeAllPopups() {
   const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-  const popupWK = this._shadowRoot.getElementById("side-popup");
+  const popupWK     = this._shadowRoot.getElementById("side-popup");
   popupUmsatz?.classList.add("hidden");
   popupWK?.classList.add("hidden");
 }
 
-
-      showNotesOnMap() {
-        if (!this._geoLayer) return;
-
-        const zoomLevel = this.map.getZoom();
-        const bounds = this.map.getBounds();
-
-        this._geoLayer.eachLayer(layer => {
-          const note = layer.feature?.properties?.note;
-          const center = layer.getBounds?.().getCenter?.();
-
-          if (zoomLevel >= 12 && note && center && bounds.contains(center)) {
-            if (!layer.getTooltip()) {
-              layer.bindTooltip(note, {
-                permanent: true,
-                direction: 'center',
-                className: 'note-label'
-              }).openTooltip();
-            } else {
-              layer.openTooltip();
-            }
-          } else {
-            if (layer.getTooltip()) {
-              layer.closeTooltip();
-            }
-          }
-        });
-      }
+showNotesOnMap() {
+  if (!this._geoLayer) return;
+  const zoomLevel = this.map.getZoom();
+  const bounds = this.map.getBounds();
+  this._geoLayer.eachLayer(layer => {
+    const note = layer.feature?.properties?.note;
+    const center = layer.getBounds?.().getCenter?.();
+    if (zoomLevel >= 12 && note && center && bounds.contains(center)) {
+      if (!layer.getTooltip()) layer.bindTooltip(note, { permanent: true, direction: 'center', className: 'note-label' }).openTooltip();
+      else layer.openTooltip();
+    } else {
+      if (layer.getTooltip()) layer.closeTooltip();
     }
+  });
+}
+
+prepareMapData(filteredData) {
+  this.Niederlassung = {}; this.nlKoordinaten = {}; this.hzFlags = {}; this.extraNLs = [];
+  filteredData.forEach(row => {
+    const plz   = row["dimension_plz_0"]?.id?.trim();
+    const nlKey = row["dimension_niederlassung_0"]?.id?.trim();
+    const hzFlag = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    const lat = parseFloat(row["dimension_Lat_0"]?.label);
+    const lon = parseFloat(row["dimension_lon_0"]?.label);
+    if (nlKey) { this.Niederlassung[nlKey] = nlKey; if (!isNaN(lat) && !isNaN(lon)) this.nlKoordinaten[nlKey] = { lat, lon }; }
+    if (plz) this.hzFlags[plz] = hzFlag;
+  });
+}
+
+getDistanceKm(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+getPolygonCenter(layer) { return layer.getBounds().getCenter(); }
+
+applyRadiusFilter(radiusKm) {
+  if (!this._layerByPLZ) return;
+  if (!this._distanceCache || Object.keys(this._distanceCache).length === 0) this._buildDistanceCache();
+  const plzImRadius = new Set();
+  const cache = this._distanceCache;
+  const plzList = Object.keys(this._layerByPLZ);
+  for (let i = 0; i < plzList.length; i++) {
+    const plz = plzList[i];
+    if ((cache[plz] ?? Infinity) <= radiusKm) plzImRadius.add(plz);
+  }
+  this.plzImRadius = plzImRadius;
+  this.computeWKKennwerte(); this.computeStreuverlust(); this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte);
+}
+
+computeWKKennwerte() {
+  if (!this.filteredData) return;
+  const aggregated = {}, unfilteredUmsatzByPLZ = {};
+  this.filteredData.forEach(row => {
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ || "").padStart(5, "0");
+    const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
+  });
+  this.filteredData.forEach(row => {
+    const nl = row["dimension_niederlassung_0"]?.id?.trim();
+    const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+    const plz = String(rawPLZ || "").padStart(5, "0");
+    if (this._selectedNLs.size > 0 && !this._selectedNLs.has(nl)) return;
+    if (this.plzImRadius instanceof Set && !this.plzImRadius.has(plz)) return;
+    if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, umsatzNetto: 0, hzKosten: 0, potHzKosten: [] };
+    const entry = aggregated[plz];
+    const hz = row["dimension_hzflag_0"]?.id?.trim() === "X";
+    if (hz) entry.hzCount++;
+    entry.umsatzNetto += row["value_hr_n_umsatz_0"]?.raw ?? 0;
+    entry.hzKosten    += row["value_hz_kosten_0"]?.raw ?? 0;
+    const potHz = row["value_hz_potentiell_0"]?.raw;
+    if (typeof potHz === "number") entry.potHzKosten.push(potHz);
+  });
+  const base = this.filteredKennwerte || {};
+  const newFilteredKennwerte = {}, newFilteredPLZWerte = {};
+  Object.entries(aggregated).forEach(([plz, entry]) => {
+    const umsatzNetto = entry.umsatzNetto, hzKosten = entry.hzKosten;
+    const wkPercent = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
+    const unfilteredUmsatz = unfilteredUmsatzByPLZ[plz] ?? 0;
+    const wkNachbarn = unfilteredUmsatz > 0 ? Number(((hzKosten / unfilteredUmsatz) * 100).toFixed(1)) : 0;
+    const avgPotHz = entry.potHzKosten.length > 0 ? entry.potHzKosten.reduce((a, b) => a + b, 0) / entry.potHzKosten.length : 0;
+    const potHzPercent = umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0;
+    const isHZ = entry.hzCount > 0, isCritical = entry.hzCount > 1;
+    const baseEntry = base[plz] || {}, old = this.filteredPLZWerte?.[plz] || {};
+    newFilteredKennwerte[plz] = { ...baseEntry, isHZ, isCritical, value_hr_n_umsatz_0: { raw: umsatzNetto }, value_wk_in_percent_0: { raw: wkPercent }, value_wk_nachbar_0: { raw: wkNachbarn }, value_hz_kosten_0: { raw: hzKosten }, value_hz_potentiell_0: { raw: avgPotHz }, value_wk_potentiell_0: { raw: potHzPercent }, value_ums_erhebung_0: { raw: old.umsatzErhebung ?? 0 }, value_kd_erhebung_0: { raw: old.kdErhebung ?? 0 }, value_auflage_0: { raw: old.auflage ?? 0 }, value_werbeverweigerer_0: { raw: old.werbeverweigerer ?? 0 } };
+    newFilteredPLZWerte[plz] = { wk: wkPercent, wkPot: potHzPercent, hz: isHZ, umsatz: old.umsatz ?? 0, ra: old.ra ?? 0, onlineshop: old.onlineshop ?? 0, pluscard: old.pluscard ?? 0, haushalte: old.haushalte ?? 0, umsatzProHaushalt: old.umsatzProHaushalt ?? 0, raProHaushalt: old.raProHaushalt ?? 0, onlineshopProHaushalt: old.onlineshopProHaushalt ?? 0, pluscardProHaushalt: old.pluscardProHaushalt ?? 0, umsatzWerbung: old.umsatzWerbung ?? 0, raWerbung: old.raWerbung ?? 0, onlineshopWerbung: old.onlineshopWerbung ?? 0, pluscardWerbung: old.pluscardWerbung ?? 0, umsatzZusatz: old.umsatzZusatz ?? 0, raZusatz: old.raZusatz ?? 0, onlineshopZusatz: old.onlineshopZusatz ?? 0, pluscardZusatz: old.pluscardZusatz ?? 0, umsatzWerbungProHaushalt: old.umsatzWerbungProHaushalt ?? 0, raWerbungProHaushalt: old.raWerbungProHaushalt ?? 0, onlineshopWerbungProHaushalt: old.onlineshopWerbungProHaushalt ?? 0, pluscardWerbungProHaushalt: old.pluscardWerbungProHaushalt ?? 0, umsatzZusatzProHaushalt: old.umsatzZusatzProHaushalt ?? 0, raZusatzProHaushalt: old.raZusatzProHaushalt ?? 0, onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0, pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0, werbeAnteil: old.werbeAnteil ?? 0 };
+  });
+  this.filteredKennwerte = newFilteredKennwerte;
+  this.filteredPLZWerte  = newFilteredPLZWerte;
+}
+
+toggleNLSelection(nl) {
+  if (!this._selectedNLs) this._selectedNLs = new Set();
+  if (this._selectedNLs.has(nl)) this._selectedNLs.delete(nl);
+  else this._selectedNLs.add(nl);
+  if (this._selectedNLs.size === this.allNLs.length) this._selectedNLs = new Set(this.allNLs);
+  this.updateNLSelectionUI();
+  this.applyNLFilter([...this._selectedNLs]);
+  const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+  this.applyRadiusFilter(radius);
+  this.updateGeoLayer();
+  this.renderDataTable(this.filteredKennwerte);
+  this.prepareUmsatzPLZWerte();
+}
+
+initRadiusSlider() {
+  const slider = this._shadowRoot.getElementById("radius-slider");
+  const valueLabel = this._shadowRoot.getElementById("radius-value");
+  if (!slider) return;
+  valueLabel.textContent = slider.value;
+
+  // Track-Fill initial setzen
+  const updateFill = () => {
+    const min = +slider.min, max = +slider.max, val = +slider.value;
+    const pct = ((val - min) / (max - min)) * 100;
+    slider.style.background = `linear-gradient(90deg, #b41821 ${pct}%, #dee2e6 ${pct}%)`;
+  };
+  updateFill();
+
+  let debounceTimer = null;
+  slider.addEventListener("input", () => {
+    const radius = Number(slider.value);
+    valueLabel.textContent = radius;
+    updateFill();
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      this.applyRadiusFilter(radius);
+      this.renderDataTable(this.filteredKennwerte);
+    }, 80);
+  });
+}
+
+onCustomWidgetEvent(event) {
+  if (event.name === "toggleTiles") this.toggleMapTiles();
+}
+
+set myDataSource(dataBinding) {
+  this._myDataSource = dataBinding;
+  if (!this.map) {
+    const waitForMap = setInterval(() => {
+      if (this.map) { clearInterval(waitForMap); this.render(); }
+    }, 100);
+    return;
+  }
+  this.render();
+}
+}
 
     if (!customElements.get('geo-map-widget')) {
       customElements.define('geo-map-widget', GeoMapWidget);
