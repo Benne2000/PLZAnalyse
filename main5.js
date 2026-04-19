@@ -272,14 +272,15 @@ let neighbours = true;
       #radius-slider::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 2px 6px var(--red-shadow); }
       #radius-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--white); border: 2.5px solid var(--red); cursor: pointer; }
 
-      /* FIX 4: Buttons & Legende links unten, Map-Kachel-Button links neben Panel */
+      /* Fix 2: Map-Tile-Button links neben dem Map-Control-Panel (beide im :host-Kontext) */
       #map-tile-toggle-btn {
         position: absolute;
-        /* Neben dem Panel: Panel ist 26% breit, also right = 26% + kleine Lücke */
+        /* Panel: right:0, width:26%, so tile-btn: right=26%+14px */
         bottom: 24px; right: calc(26% + 14px);
         width: 40px; height: 40px;
         background: var(--white); border-radius: 50%;
-        box-shadow: var(--shadow-md); cursor: pointer; z-index: 9999;
+        box-shadow: var(--shadow-md); cursor: pointer;
+        z-index: 50;
         border: 1.5px solid var(--gray-200);
         transition: transform 0.18s var(--ease-out), box-shadow 0.18s, border-color 0.18s;
         background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
@@ -470,19 +471,10 @@ let neighbours = true;
       .category-toggle:hover:not(.active) { border-color: var(--red-border); background: var(--red-bg); color: var(--red); }
       .category-toggle.active { background: var(--red-bg); border-color: var(--red); color: var(--red); font-weight: 700; box-shadow: 0 0 0 3px var(--red-shadow); }
 
-      /* ═══════════════════════════════════════════════════
-         FIX 9: DOPPELBESTREUUNGS-PULSIEREN
-      ═══════════════════════════════════════════════════ */
+      /* FIX 3: Doppelbestreuung – ⚠️ pulsiert scale, kein Ring */
       @keyframes criticalPulse {
-        0%, 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; }
-        50%       { transform: translate(-50%,-50%) scale(1.5); opacity: 0.4; }
-      }
-      .critical-marker-pulse {
-        position: absolute; top: 50%; left: 50%;
-        width: 22px; height: 22px; border-radius: 50%;
-        border: 2px solid #f0a500;
-        animation: criticalPulse 1.6s ease-in-out infinite;
-        pointer-events: none;
+        0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 0px rgba(240,165,0,0)); }
+        50%       { transform: scale(1.6);  filter: drop-shadow(0 0 6px rgba(240,165,0,0.7)); }
       }
 
       /* ═══════════════════════════════════════════════════
@@ -606,7 +598,6 @@ let neighbours = true;
           <input type="range" id="radius-slider" min="10" max="100" value="40" step="5">
         </div>
         <!-- FIX 4: tile-btn ist jetzt neben dem Panel, nicht rechts unten -->
-        <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
         <div id="map"></div>
         <div id="legend-toggle-btn" title="Legende"></div>
         <div id="heatmap-legend" class="heatmap-legend hidden"></div>
@@ -617,6 +608,8 @@ let neighbours = true;
       <div id="side-popup-umsatz" class="side-popup hidden"></div>
     </div>
 
+    <!-- FIX 2: tile-btn als Geschwister des Map-Panels, damit Positionierung stimmt -->
+    <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
     <div id="map-control-panel">
       <div class="panel-card">
         <div class="panel-title">Analyse-Modus</div>
@@ -801,6 +794,36 @@ class GeoMapWidget extends HTMLElement {
     container.style.cssText = 'display:flex;flex-direction:column;height:100%;min-height:0;';
     entries = entries.filter(([plz]) => plz !== "00000");
     if (this.plzImRadius && this.plzImRadius.size > 0) entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
+
+    // FIX 9: Wenn noch keine Erhebung geladen → Bedienungsanleitung zeigen
+    if (!this._activeFilter) {
+      const guide = document.createElement('div');
+      guide.style.cssText = 'padding:20px 14px;flex:1;display:flex;flex-direction:column;gap:14px;';
+      guide.innerHTML = `
+        <div style="text-align:center;padding:14px 0 8px;">
+          <div style="font-size:2rem;margin-bottom:8px;">🗺️</div>
+          <div style="font-size:0.88rem;font-weight:700;color:var(--gray-700);margin-bottom:4px;">Analyse starten</div>
+          <div style="font-size:0.78rem;color:var(--gray-500);line-height:1.5;">Wähle oben eine Erhebung aus und klicke auf <strong style="color:var(--red)">Anzeigen</strong>.</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          ${[
+            ['📊','WK-Analyse','Werbekosten-Anteile je PLZ visualisieren'],
+            ['💶','Umsatz','Umsatzverteilung nach Kategorien und Region'],
+            ['📍','NL-Filter','Niederlassungen in der Erhebungsübersicht filtern'],
+            ['🔴','Radius','Einzugsgebiet per Slider anpassen'],
+          ].map(([icon, title, desc]) => `
+            <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 10px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100);">
+              <div style="font-size:1.1rem;flex-shrink:0;margin-top:1px;">${icon}</div>
+              <div>
+                <div style="font-size:0.78rem;font-weight:700;color:var(--gray-700);">${title}</div>
+                <div style="font-size:0.72rem;color:var(--gray-500);margin-top:2px;">${desc}</div>
+              </div>
+            </div>`).join('')}
+        </div>`;
+      container.appendChild(guide);
+      return;
+    }
+
     if (!entries.length) {
       const empty = document.createElement('div');
       empty.style.cssText = 'padding:24px;text-align:center;color:#adb5bd;font-size:0.85rem;';
@@ -809,13 +832,18 @@ class GeoMapWidget extends HTMLElement {
       const footer = document.createElement("div"); footer.id = "streuverlust-box"; container.appendChild(footer);
       return;
     }
+
     const scrollWrapper = document.createElement("div"); scrollWrapper.classList.add("table-scroll");
     const table = document.createElement('table');
     table.style.cssText = 'width:100%;border-collapse:collapse;table-layout:fixed;';
+
+    // FIX 7: Im Umsatz-Modus andere letzte Spalte
+    const isUmsatzMode = this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil";
+    const lastColLabel = isUmsatzMode ? 'Umsatz-\nAnteil' : 'WK (%)';
     const headers = [
       { label: 'PLZ', width: '44px' }, { label: 'Gemeinde', width: '88px' },
       { label: 'HZ', width: '22px' }, { label: 'Netto-Umsatz\n(Jahr)', width: '58px' },
-      { label: 'WK (%)', width: '46px' }
+      { label: lastColLabel, width: '46px' }
     ];
     const thead = document.createElement('thead'); const headerRow = document.createElement('tr');
     headers.forEach(({ label, width }, i) => {
@@ -826,6 +854,12 @@ class GeoMapWidget extends HTMLElement {
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow); table.appendChild(thead);
+
+    // Gesamtumsatz aller PLZs für Anteilsberechnung
+    const totalUmsatz = isUmsatzMode
+      ? Object.values(this.filteredPLZWerte || {}).reduce((s, v) => s + this.getUmsatzSumForPLZ(v), 0)
+      : 0;
+
     const tbody = document.createElement('tbody');
     entries.forEach(([plz, kennwerte], idx) => {
       const tr = document.createElement('tr');
@@ -833,7 +867,6 @@ class GeoMapWidget extends HTMLElement {
       tr.style.animationDelay = `${Math.min(idx * 18, 200)}ms`;
       tr.style.cursor = "pointer";
       tr.dataset.plz = plz;
-      // FIX 12: korrekt highlighten beim Klick
       tr.addEventListener("click", () => {
         this.highlightMapArea(plz);
         this.openPopupFromTable(plz);
@@ -842,14 +875,26 @@ class GeoMapWidget extends HTMLElement {
       let note = (this.geoNotes?.[plz] || "").replace(/^\d{4,5}\s*[-–]?\s*/, "").trim() || "—";
       let symbol = "●", symbolColor = "#dee2e6";
       if (this.filteredKennwerte[plz]?.isCritical) { symbol = "▲"; symbolColor = "#f0a500"; }
-      else if (this.filteredKennwerte[plz]?.isHZ) { symbol = "●"; symbolColor = "#33a02c"; }
+      else if (this.filteredKennwerte[plz]?.isHZ)  { symbol = "●"; symbolColor = "#33a02c"; }
+
       const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
-      const wk = kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–';
-      [[plz,'font-variant-numeric:tabular-nums;font-size:0.78rem;color:#495057;'],
-       [note,'color:#6c757d;'],
-       [null,`text-align:center;`],
+
+      // FIX 7: letzte Spalte je nach Modus
+      let lastColVal;
+      if (isUmsatzMode) {
+        const plzUmsatz = this.getUmsatzSumForPLZ(this.filteredPLZWerte?.[plz] || {});
+        lastColVal = totalUmsatz > 0
+          ? (plzUmsatz / totalUmsatz * 100).toFixed(1) + ' %'
+          : '–';
+      } else {
+        lastColVal = (kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–') + ' %';
+      }
+
+      [[plz,  'font-variant-numeric:tabular-nums;font-size:0.78rem;color:#495057;'],
+       [note, 'color:#6c757d;'],
+       [null,  'text-align:center;'],
        [umsatz,'text-align:right;font-variant-numeric:tabular-nums;'],
-       [wk + ' %','text-align:right;font-variant-numeric:tabular-nums;']
+       [lastColVal,'text-align:right;font-variant-numeric:tabular-nums;']
       ].forEach(([text, style], i) => {
         const td = document.createElement('td');
         if (i === 2) td.innerHTML = `<span style="color:${symbolColor};font-size:10px">${symbol}</span>`;
@@ -867,8 +912,6 @@ class GeoMapWidget extends HTMLElement {
     const footer = document.createElement("div"); footer.id = "streuverlust-box"; container.appendChild(footer);
     if (this._sortState?.column != null) this.updateSortIcons(this._sortState.column);
     this.updateStreuverlustFooter();
-
-    // FIX 12: ausgewählte PLZ wiederherstellen nach Re-Render
     if (this._activePopupPLZ) {
       const rows = container.querySelectorAll('tbody tr');
       rows.forEach(row => { if (row.dataset.plz === this._activePopupPLZ) this.highlightTableRow(row); });
@@ -1091,6 +1134,8 @@ class GeoMapWidget extends HTMLElement {
   /* FIX 15: Bestreuung als pulsierende Kontur-SVG auf der Karte */
   updateBestreuungMarkers() {
     this.bestreuungGroup.clearLayers();
+    // FIX 5: Im WK-Modus Bestreuung grundsätzlich ausblenden
+    if (this.currentMapMode === "wk") return;
     if (!this.showBestreuung || !this._layerByPLZ) return;
     Object.keys(this._layerByPLZ).forEach(plz => {
       const daten = this.filteredKennwerte?.[plz];
@@ -1233,199 +1278,130 @@ class GeoMapWidget extends HTMLElement {
     panel.classList.remove("panel-large"); panel.classList.add("panel-medium");
 
     const isWerbungMode = this.umsatzMainMode === "werbung";
-    const useWerbe = this.useWerbeUmsatz === true, useZusatz = this.useZusatzUmsatz === true;
-    const note = this.geoNotes?.[plz] || "Keine Notiz";
+    const useWerbe  = this.useWerbeUmsatz  === true;
+    const useZusatz = this.useZusatzUmsatz === true;
+    const note = this.geoNotes?.[plz] || plz;
 
-    const pickPair = (base,werb,zusatz,baseHH,werbHH,zusatzHH) => {
+    // Werte berechnen je nach Modus
+    const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
       if (!isWerbungMode) return { abs: base, hh: baseHH };
-      let abs=0,hh=0;
-      if(useWerbe){abs+=werb;hh+=werbHH;}
-      if(useZusatz){abs+=zusatz;hh+=zusatzHH;}
-      return{abs,hh};
+      let abs = 0, hh = 0;
+      if (useWerbe)  { abs += werb;   hh += werbHH;  }
+      if (useZusatz) { abs += zusatz; hh += zusatzHH; }
+      return { abs, hh };
     };
 
-    const st=pickPair(values.umsatz,values.umsatzWerbung,values.umsatzZusatz,values.umsatzProHaushalt,values.umsatzWerbungProHaushalt,values.umsatzZusatzProHaushalt);
-    const pc=pickPair(values.pluscard,values.pluscardWerbung,values.pluscardZusatz,values.pluscardProHaushalt,values.pluscardWerbungProHaushalt,values.pluscardZusatzProHaushalt);
-    const ra=pickPair(values.ra,values.raWerbung,values.raZusatz,values.raProHaushalt,values.raWerbungProHaushalt,values.raZusatzProHaushalt);
-    const os=pickPair(values.onlineshop,values.onlineshopWerbung,values.onlineshopZusatz,values.onlineshopProHaushalt,values.onlineshopWerbungProHaushalt,values.onlineshopZusatzProHaushalt);
+    const st = pick(values.umsatz,    values.umsatzWerbung,    values.umsatzZusatz,    values.umsatzProHaushalt,    values.umsatzWerbungProHaushalt,    values.umsatzZusatzProHaushalt);
+    const pc = pick(values.pluscard,  values.pluscardWerbung,  values.pluscardZusatz,  values.pluscardProHaushalt,  values.pluscardWerbungProHaushalt,  values.pluscardZusatzProHaushalt);
+    const ra = pick(values.ra,        values.raWerbung,        values.raZusatz,        values.raProHaushalt,        values.raWerbungProHaushalt,        values.raZusatzProHaushalt);
+    const os = pick(values.onlineshop,values.onlineshopWerbung,values.onlineshopZusatz,values.onlineshopProHaushalt,values.onlineshopWerbungProHaushalt,values.onlineshopZusatzProHaushalt);
 
-    const active={
-      stationaer:this.activeCategories.has("stationaer"),
-      pluscard:this.activeCategories.has("pluscard"),
-      ra:this.activeCategories.has("ra"),
-      online:this.activeCategories.has("online")
+    const active = {
+      stationaer: this.activeCategories.has("stationaer"),
+      pluscard:   this.activeCategories.has("pluscard"),
+      ra:         this.activeCategories.has("ra"),
+      online:     this.activeCategories.has("online"),
     };
 
-    const totalAbs=(active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
-    const totalHH=(active.stationaer?st.hh:0)+(active.pluscard?pc.hh:0)+(active.ra?ra.hh:0)+(active.online?os.hh:0);
-    const hh=values.haushalte||0;
-    const tN=values.umsatz+values.pluscard+values.ra+values.onlineshop;
-    const tW=values.umsatzWerbung+values.pluscardWerbung+values.raWerbung+values.onlineshopWerbung;
-    const tZ=values.umsatzZusatz+values.pluscardZusatz+values.raZusatz+values.onlineshopZusatz;
-    const antWA=tN>0?((tW/tN)*100).toFixed(1):"–";
-    const fA=x=>Number(x||0).toLocaleString("de-DE"),fH=x=>Number(x||0).toFixed(2),pct=(x,t)=>t>0?(x/t)*100:0;
-    const hl=!isWerbungMode?"Gesamtumsatz":useWerbe&&useZusatz?"Werbeumsatz + Mitgekauft":useWerbe?"Werbeumsatz":"Mitgekauft";
+    const totalAbs = (active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
+    const totalHH  = (active.stationaer?st.hh:0) +(active.pluscard?pc.hh:0) +(active.ra?ra.hh:0) +(active.online?os.hh:0);
 
-    // FIX 14: Tab-Auswahl für verschiedene Datensichten
-    // Bestimme verfügbare Tabs basierend auf Modus
-    const tabs = [];
-    tabs.push({ id: 'umsatz', label: 'Umsatz' });
-    if (isWerbungMode && useWerbe) tabs.push({ id: 'werbung', label: 'Werbung' });
-    if (isWerbungMode && useZusatz) tabs.push({ id: 'zusatz', label: 'Mitgekauft' });
-    tabs.push({ id: 'kennzahlen', label: 'Kennzahlen' });
+    const tN = values.umsatz    + values.pluscard    + values.ra    + values.onlineshop;
+    const tW = values.umsatzWerbung + values.pluscardWerbung + values.raWerbung + values.onlineshopWerbung;
+    const tZ = values.umsatzZusatz  + values.pluscardZusatz  + values.raZusatz  + values.onlineshopZusatz;
+    const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : "–";
 
-    const tabsHtml = tabs.length > 1 ? `
-      <div id="umsatz-popup-tabs" style="display:flex;gap:0;border-bottom:1px solid var(--gray-200);background:var(--gray-50);flex-shrink:0;">
-        ${tabs.map((t,i)=>`<button data-tab="${t.id}" style="flex:1;padding:7px 6px;font-size:0.72rem;font-weight:700;font-family:var(--font);border:none;border-bottom:2px solid ${i===0?'var(--red)':'transparent'};background:${i===0?'var(--white)':'transparent'};color:${i===0?'var(--red)':'var(--gray-500)'};cursor:pointer;transition:all .15s;letter-spacing:.03em;text-transform:uppercase;">${t.label}</button>`).join('')}
-      </div>` : '';
+    const fA  = x => Number(x||0).toLocaleString("de-DE");
+    const fH  = x => Number(x||0).toFixed(2);
+    const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
 
-    // Kategorien-Tabelle: nur aktive anzeigen
-    const catRows = (showAbs=true, showHH=true) => {
-      const pairs = [
-        { key:'stationaer', label:'🏬 Stationär', data: st },
-        { key:'pluscard',   label:'💳 Pluscard',   data: pc },
-        { key:'ra',         label:'📦 R&A',        data: ra },
-        { key:'online',     label:'🛒 KUBE OS',    data: os },
-      ];
-      return pairs.map(({key,label,data}) => {
-        const isActive = this.activeCategories.has(key);
-        const dis = !isActive ? 'opacity:0.3;filter:grayscale(1)' : '';
-        const absVal = showAbs ? `<div class="value" style="${dis}">${fA(data.abs)} €</div>` : '';
-        const hhVal  = showHH  ? `<div class="value" style="${dis}">${fH(data.hh)} €</div>` : '';
-        return `<div class="label" style="${dis}">${label}</div>${absVal}${hhVal}`;
-      }).join('');
-    };
+    const hl = !isWerbungMode ? "Gesamtumsatz"
+             : useWerbe && useZusatz ? "Werbeumsatz + Mitgekauft"
+             : useWerbe ? "Werbeumsatz"
+             : "Mitgekauft";
 
-    // FIX 10: Kennzahlen-Bereich mit Werbeverweigerer + Kaufkraftindex
-    const wv = values.werbeverweigerer||0;
-    const kki = values.kaufkraftIndex||0; // ggf. nicht immer vorhanden
-    const kennzahlenHtml = `
-      <div class="section-title" style="margin-top:0">Haushaltsdaten</div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:4px 10px;padding:8px 14px;font-size:0.82rem;">
-        <div style="color:var(--gray-600);font-weight:500">Haushalte</div>
-        <div style="text-align:right;font-weight:700;color:var(--gray-800)">${hh.toLocaleString("de-DE")}</div>
-        <div style="color:var(--gray-600);font-weight:500">Werbeverweigerer</div>
-        <div style="text-align:right;font-weight:700;color:var(--gray-800)">${wv > 0 ? wv.toLocaleString("de-DE") + ' %' : '–'}</div>
-        ${kki > 0 ? `<div style="color:var(--gray-600);font-weight:500">Kaufkraft-Index</div><div style="text-align:right;font-weight:700;color:var(--gray-800)">${kki.toLocaleString("de-DE")}</div>` : ''}
-      </div>
-      <div class="section-title">Umsatz Gesamt</div>
-      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:4px 10px;padding:8px 14px;font-size:0.82rem;">
-        <div style="color:var(--gray-600);font-weight:500">Stationär</div>
-        <div style="text-align:right;font-weight:700">${fA(values.umsatz)} €</div>
-        <div style="text-align:right;color:var(--gray-500)">${fH(values.umsatzProHaushalt)} €</div>
-        <div style="color:var(--gray-600);font-weight:500">Pluscard</div>
-        <div style="text-align:right;font-weight:700">${fA(values.pluscard)} €</div>
-        <div style="text-align:right;color:var(--gray-500)">${fH(values.pluscardProHaushalt)} €</div>
-        <div style="color:var(--gray-600);font-weight:500">R&A</div>
-        <div style="text-align:right;font-weight:700">${fA(values.ra)} €</div>
-        <div style="text-align:right;color:var(--gray-500)">${fH(values.raProHaushalt)} €</div>
-        <div style="color:var(--gray-600);font-weight:500">KUBE OS</div>
-        <div style="text-align:right;font-weight:700">${fA(values.onlineshop)} €</div>
-        <div style="text-align:right;color:var(--gray-500)">${fH(values.onlineshopProHaushalt)} €</div>
-        <div style="color:var(--gray-800);font-weight:700">Gesamt</div>
-        <div style="text-align:right;font-weight:700;color:var(--red)">${fA(tN)} €</div>
-        <div style="text-align:right;color:var(--gray-500)">${fH(tN/Math.max(hh,1))} €</div>
-      </div>`;
+    const dis = (key) => !active[key] ? 'opacity:0.3;filter:grayscale(1)' : '';
 
-    // Haupt-Tab-Inhalte
-    const tabContents = {
-      umsatz: `
-        <div class="umsatz-subheader"><span class="strong">${hl}: ${fA(totalAbs)} €</span><br>
-        <span style="font-size:0.8rem;color:#6c757d">${fH(totalHH)} € / HH &nbsp;·&nbsp; Werbeanteil: ${antWA}%</span></div>
-        <div class="umsatz-bar" style="margin:6px 14px">
-          <div style="background:#b41821;width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
-          <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
-          <div style="background:#ffb000;width:${pct(tZ,tN+tW+tZ)}%;transition:width .5s ease"></div>
-        </div>
-        <div class="umsatz-legend" style="padding:0 14px 6px"><span><span style="color:#b41821">⬤</span> Normal</span><span><span style="color:#1f78b4">⬤</span> Werbung</span><span><span style="color:#ffb000">⬤</span> Mitgekauft</span></div>
-        <div class="section-title">Nach Kategorien</div>
-        <div class="umsatz-grid" style="padding:6px 14px">
-          <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
-          <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
-          <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
-          ${catRows()}
-        </div>
-        <div class="section-title">Umsatzanteile</div>
-        <div class="umsatz-bar" style="margin:6px 14px">
-          <div class="share-stationaer" style="width:${pct(values.umsatz,tN)}%"></div>
-          <div class="share-pluscard" style="width:${pct(values.pluscard,tN)}%"></div>
-          <div class="share-ra" style="width:${pct(values.ra,tN)}%"></div>
-          <div class="share-online" style="width:${pct(values.onlineshop,tN)}%"></div>
-        </div>
-        <div class="umsatz-legend" style="padding:0 14px 10px">
-          <span><span style="color:#b41821">⬤</span> Stationär</span>
-          <span><span style="color:#1f78b4">⬤</span> Pluscard</span>
-          <span><span style="color:#33a02c">⬤</span> R&A</span>
-          <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
-        </div>`,
-      werbung: `
-        <div class="umsatz-subheader"><span class="strong">Werbeumsatz: ${fA(totalAbs)} €</span><br>
-        <span style="font-size:0.8rem;color:#6c757d">${fH(totalHH)} € / HH</span></div>
-        <div class="section-title">Nach Kategorien (Werbung)</div>
-        <div class="umsatz-grid" style="padding:6px 14px">
-          <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
-          <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
-          <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
-          ${[
-            {key:'stationaer',label:'🏬 Stationär',abs:values.umsatzWerbung,hh:values.umsatzWerbungProHaushalt},
-            {key:'pluscard',label:'💳 Pluscard',abs:values.pluscardWerbung,hh:values.pluscardWerbungProHaushalt},
-            {key:'ra',label:'📦 R&A',abs:values.raWerbung,hh:values.raWerbungProHaushalt},
-            {key:'online',label:'🛒 KUBE OS',abs:values.onlineshopWerbung,hh:values.onlineshopWerbungProHaushalt},
-          ].map(({key,label,abs,hh:h})=>{
-            const isActive=this.activeCategories.has(key);
-            const d=isActive?'':'opacity:0.3;filter:grayscale(1)';
-            return `<div class="label" style="${d}">${label}</div><div class="value" style="${d}">${fA(abs)} €</div><div class="value" style="${d}">${fH(h)} €</div>`;
-          }).join('')}
-        </div>`,
-      zusatz: `
-        <div class="umsatz-subheader"><span class="strong">Mitgekauft: ${fA(totalAbs)} €</span><br>
-        <span style="font-size:0.8rem;color:#6c757d">${fH(totalHH)} € / HH</span></div>
-        <div class="section-title">Nach Kategorien (Mitgekauft)</div>
-        <div class="umsatz-grid" style="padding:6px 14px">
-          <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
-          <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
-          <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
-          ${[
-            {key:'stationaer',label:'🏬 Stationär',abs:values.umsatzZusatz,hh:values.umsatzZusatzProHaushalt},
-            {key:'pluscard',label:'💳 Pluscard',abs:values.pluscardZusatz,hh:values.pluscardZusatzProHaushalt},
-            {key:'ra',label:'📦 R&A',abs:values.raZusatz,hh:values.raZusatzProHaushalt},
-            {key:'online',label:'🛒 KUBE OS',abs:values.onlineshopZusatz,hh:values.onlineshopZusatzProHaushalt},
-          ].map(({key,label,abs,hh:h})=>{
-            const isActive=this.activeCategories.has(key);
-            const d=isActive?'':'opacity:0.3;filter:grayscale(1)';
-            return `<div class="label" style="${d}">${label}</div><div class="value" style="${d}">${fA(abs)} €</div><div class="value" style="${d}">${fH(h)} €</div>`;
-          }).join('')}
-        </div>`,
-      kennzahlen: kennzahlenHtml
-    };
-
+    // FIX 4: Lineare Struktur ohne Tabs
     popup.innerHTML = `
       <div class="popup-header" style="flex-shrink:0">
         <span title="${note}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span>
         <button class="close-btn" style="flex-shrink:0">✕</button>
       </div>
-      ${tabsHtml}
-      <div id="umsatz-popup-content" style="overflow-y:auto;flex:1;min-height:0;">
-        ${tabContents[tabs[0].id]}
-      </div>`;
 
-    // Tab-Interaktion
-    if (tabs.length > 1) {
-      popup.querySelectorAll('#umsatz-popup-tabs button').forEach((btn, i) => {
-        btn.addEventListener('click', () => {
-          popup.querySelectorAll('#umsatz-popup-tabs button').forEach(b => {
-            b.style.borderBottomColor = 'transparent';
-            b.style.background = 'transparent';
-            b.style.color = 'var(--gray-500)';
-          });
-          btn.style.borderBottomColor = 'var(--red)';
-          btn.style.background = 'var(--white)';
-          btn.style.color = 'var(--red)';
-          const tabId = btn.dataset.tab;
-          popup.querySelector('#umsatz-popup-content').innerHTML = tabContents[tabId] || '';
-        });
-      });
-    }
+      <div style="overflow-y:auto;flex:1;min-height:0;">
+
+        <!-- Kopfzeile: Gesamtumsatz im aktuellen Modus -->
+        <div class="umsatz-subheader">
+          <span class="strong">${hl}: ${fA(totalAbs)} €</span><br>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${fH(totalHH)} € / HH &nbsp;·&nbsp; Werbeanteil: ${antWA} %</span>
+        </div>
+
+        <!-- Werbeumsatz-Bar: Normal vs. Werbung vs. Mitgekauft -->
+        <div class="umsatz-bar" style="margin:8px 14px 2px">
+          <div style="background:var(--red);width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
+          <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
+          <div style="background:#ffb000;width:${pct(tZ,tN+tW+tZ)}%;transition:width .5s ease"></div>
+        </div>
+        <div class="umsatz-legend" style="padding:2px 14px 8px">
+          <span><span style="color:var(--red)">⬤</span> Normal</span>
+          <span><span style="color:#1f78b4">⬤</span> Werbung</span>
+          <span><span style="color:#ffb000">⬤</span> Mitgekauft</span>
+        </div>
+
+        <!-- Nach Kategorien -->
+        <div class="section-title">Nach Kategorien</div>
+        <div class="umsatz-grid" style="padding:6px 14px">
+          <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
+
+          <div class="label" style="${dis('stationaer')}">🏬 Stationär</div>
+          <div class="value" style="${dis('stationaer')}">${fA(st.abs)} €</div>
+          <div class="value" style="${dis('stationaer')}">${fH(st.hh)} €</div>
+
+          <div class="label" style="${dis('pluscard')}">💳 Pluscard</div>
+          <div class="value" style="${dis('pluscard')}">${fA(pc.abs)} €</div>
+          <div class="value" style="${dis('pluscard')}">${fH(pc.hh)} €</div>
+
+          <div class="label" style="${dis('ra')}">📦 R&amp;A</div>
+          <div class="value" style="${dis('ra')}">${fA(ra.abs)} €</div>
+          <div class="value" style="${dis('ra')}">${fH(ra.hh)} €</div>
+
+          <div class="label" style="${dis('online')}">🛒 KUBE OS</div>
+          <div class="value" style="${dis('online')}">${fA(os.abs)} €</div>
+          <div class="value" style="${dis('online')}">${fH(os.hh)} €</div>
+        </div>
+
+        <!-- Umsatzanteile-Bar -->
+        <div class="section-title">Umsatzanteile (Gesamt)</div>
+        <div class="umsatz-bar" style="margin:8px 14px 2px">
+          <div class="share-stationaer" style="width:${pct(values.umsatz,tN)}%;transition:width .5s ease"></div>
+          <div class="share-pluscard"   style="width:${pct(values.pluscard,tN)}%;transition:width .5s ease"></div>
+          <div class="share-ra"         style="width:${pct(values.ra,tN)}%;transition:width .5s ease"></div>
+          <div class="share-online"     style="width:${pct(values.onlineshop,tN)}%;transition:width .5s ease"></div>
+        </div>
+        <div class="umsatz-legend" style="padding:2px 14px 8px">
+          <span><span style="color:var(--red)">⬤</span> Stationär</span>
+          <span><span style="color:#1f78b4">⬤</span> Pluscard</span>
+          <span><span style="color:#33a02c">⬤</span> R&amp;A</span>
+          <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
+        </div>
+
+        <!-- PLZ-Daten -->
+        <div class="section-title">PLZ-Daten</div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px 14px;font-size:0.82rem;">
+          <div style="color:var(--gray-600);font-weight:500">Haushalte</div>
+          <div style="text-align:right;font-weight:700;color:var(--gray-800)">${Number(values.haushalte||0).toLocaleString("de-DE")}</div>
+
+          <div style="color:var(--gray-600);font-weight:500">Werbeverweigerer</div>
+          <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.werbeverweigerer > 0 ? Number(values.werbeverweigerer).toLocaleString("de-DE") + ' %' : '–'}</div>
+
+          <div style="color:var(--gray-600);font-weight:500">Kaufkraft-Index</div>
+          <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.kaufkraftIndex > 0 ? Number(values.kaufkraftIndex).toLocaleString("de-DE") : '–'}</div>
+        </div>
+
+      </div>`;
 
     popup.style.display = 'flex';
     popup.style.flexDirection = 'column';
@@ -1433,7 +1409,11 @@ class GeoMapWidget extends HTMLElement {
     popup.querySelector(".close-btn").onclick = () => {
       popup.classList.remove("show"); popup.classList.add("hidden");
       this._activePopupPLZ = null; this._activePopupType = null;
-      if (this._highlightedPLZ) { const l=this._layerByPLZ?.[this._highlightedPLZ]; if(l) this.applyStyleToLayer(l); this._highlightedPLZ=null; }
+      if (this._highlightedPLZ) {
+        const l = this._layerByPLZ?.[this._highlightedPLZ];
+        if (l) this.applyStyleToLayer(l);
+        this._highlightedPLZ = null;
+      }
     };
   }
 
@@ -1561,10 +1541,8 @@ class GeoMapWidget extends HTMLElement {
     if(!this.criticalMarkers[plz]) {
       const center=layer.getBounds().getCenter();
       const icon=L.divIcon({
-        html:`<div style="position:relative;width:22px;height:22px">
-          <div style="position:absolute;inset:0;border-radius:50%;border:2px solid #f0a500;animation:criticalPulse 1.6s ease-in-out infinite;"></div>
-          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px">⚠</div>
-        </div>`,
+        // FIX 3: Nur ⚠️-Emoji pulsiert (scale), kein Ring
+        html:`<div style="font-size:18px;line-height:1;animation:criticalPulse 1.8s ease-in-out infinite;display:block;transform-origin:center;cursor:default;">⚠️</div>`,
         className:"",iconSize:[22,22],iconAnchor:[11,11]
       });
       this.criticalMarkers[plz]=L.marker(center,{icon,interactive:false}).addTo(this.map);
@@ -1991,11 +1969,11 @@ class GeoMapWidget extends HTMLElement {
     loader.classList.add("fade-out"); setTimeout(()=>loader.remove(),380);
   }
 
-  /* FIX 2: Preview-Animation auf der leeren Karte – NL-Marker mit Ping-Effekt + Radius-Kreise
-     Iteriert über alle ErhebungsIDs aus _erhData, zeigt jeweils 5 Sekunden die NLs */
+  /* FIX 1+2: Preview-Animation – Marker an RICHTIGER Kartenposition via Leaflet latLngToContainerPoint */
   _startPreviewAnimation() {
-    if (this._activeFilter) return; // Bereits geladen → kein Preview
+    if (this._activeFilter) return;
     if (!this._erhData || Object.keys(this._erhData).length === 0) return;
+    if (!this.map) return;
 
     const overlay = this._shadowRoot.getElementById("map-preview-overlay");
     if (!overlay) return;
@@ -2006,30 +1984,17 @@ class GeoMapWidget extends HTMLElement {
     const rawData = this._myDataSource?.data || [];
     let currentIdx = 0;
 
-    // Alle NL-Koordinaten aus dem Datensatz sammeln
+    // NL-Koordinaten je ErhebungsID sammeln
     const nlByErh = {};
     rawData.forEach(row => {
       const erhID = row["dimension_erhebung_0"]?.id?.trim();
-      const nl = row["dimension_niederlassung_0"]?.id?.trim();
-      const lat = parseFloat(row["dimension_Lat_0"]?.label);
-      const lon = parseFloat(row["dimension_lon_0"]?.label);
+      const nl    = row["dimension_niederlassung_0"]?.id?.trim();
+      const lat   = parseFloat(row["dimension_Lat_0"]?.label);
+      const lon   = parseFloat(row["dimension_lon_0"]?.label);
       if (!erhID || !nl || isNaN(lat) || isNaN(lon)) return;
       if (!nlByErh[erhID]) nlByErh[erhID] = {};
       nlByErh[erhID][nl] = { lat, lon };
     });
-
-    const mapContainer = this._shadowRoot.querySelector(".map-container");
-    if (!mapContainer) return;
-    const W = mapContainer.offsetWidth, H = mapContainer.offsetHeight;
-
-    // Hilfsfunktion: geo → pixel (grob, ohne Projektion – nur für Visualisierung)
-    const latLonToXY = (lat, lon) => {
-      // Bounding box: Deutschland ca. 47-55°N, 6-15°E
-      const minLat=47, maxLat=55, minLon=6, maxLon=15;
-      const x = ((lon - minLon) / (maxLon - minLon)) * W;
-      const y = ((maxLat - lat) / (maxLat - minLat)) * H;
-      return { x, y };
-    };
 
     const showErhebung = (erhID) => {
       overlay.innerHTML = '';
@@ -2037,38 +2002,66 @@ class GeoMapWidget extends HTMLElement {
       const nlList = Object.entries(nls);
       if (nlList.length === 0) return;
 
-      // Zeige nach und nach NL-Marker mit Ping-Animation
+      // ErhebungsID als kleinen Label anzeigen
+      const label = document.createElement('div');
+      label.style.cssText = `position:absolute;top:14px;left:50%;transform:translateX(-50%);
+        background:rgba(255,255,255,0.9);border:1px solid var(--gray-200);border-radius:100px;
+        padding:4px 14px;font-size:0.72rem;font-weight:700;color:var(--gray-500);
+        letter-spacing:.06em;text-transform:uppercase;pointer-events:none;
+        box-shadow:var(--shadow-sm);animation:rowFadeIn 0.4s ease both;`;
+      label.textContent = `Vorschau: ${erhID}`;
+      overlay.appendChild(label);
+
       nlList.forEach(([nl, { lat, lon }], i) => {
-        const { x, y } = latLonToXY(lat, lon);
         setTimeout(() => {
-          if (this._activeFilter) return; // Abbrechen wenn geladen
+          if (this._activeFilter) return;
+
+          // FIX 1: echte Leaflet-Projektion nutzen
+          const point = this.map.latLngToContainerPoint(L.latLng(lat, lon));
+          const x = point.x, y = point.y;
 
           // Ping-Ring
           const ping = document.createElement('div');
-          ping.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:40px;height:40px;border-radius:50%;border:2px solid rgba(180,24,33,0.6);transform:translate(-50%,-50%) scale(0);animation:markerPing 1s ease-out forwards;pointer-events:none;`;
+          ping.style.cssText = `position:absolute;left:${x}px;top:${y}px;
+            width:44px;height:44px;border-radius:50%;
+            border:2px solid rgba(180,24,33,0.55);
+            transform:translate(-50%,-50%) scale(0);
+            animation:markerPing 1s ease-out forwards;pointer-events:none;`;
           overlay.appendChild(ping);
 
-          // Marker-Pin
+          // Marker-Pin (Leaflet-style Teardrop)
           const pin = document.createElement('div');
-          pin.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:24px;height:24px;background:#b41821;border-radius:50% 50% 50% 0;box-shadow:-1px 2px 8px rgba(180,24,33,0.5);transform:translate(-50%,-80%) rotate(-45deg) scale(0);animation:markerAppear 0.4s var(--ease-out) forwards;display:flex;align-items:center;justify-content:center;pointer-events:none;`;
-          const label = document.createElement('div');
-          label.style.cssText = `transform:rotate(45deg);font-size:8px;font-weight:700;color:white;font-family:system-ui;`;
-          label.textContent = nl;
-          pin.appendChild(label);
+          pin.style.cssText = `position:absolute;left:${x}px;top:${y}px;
+            width:26px;height:26px;background:#b41821;
+            border-radius:50% 50% 50% 0;
+            box-shadow:-1px 2px 8px rgba(180,24,33,0.5);
+            transform:translate(-50%,-85%) rotate(-45deg) scale(0);
+            animation:markerAppear 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+            display:flex;align-items:center;justify-content:center;pointer-events:none;`;
+          const pinLabel = document.createElement('div');
+          pinLabel.style.cssText = `transform:rotate(45deg);font-size:8px;font-weight:700;color:white;font-family:system-ui;max-width:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`;
+          pinLabel.textContent = nl;
+          pin.appendChild(pinLabel);
           overlay.appendChild(pin);
 
-          // Radius-Kreis nach Marker-Erscheinen
+          // Radius-Kreis – Größe via Leaflet-Projektion (40km)
           setTimeout(() => {
             if (this._activeFilter) return;
-            const radiusKm = 40;
-            // 40km ≈ 0.36° Breite ≈ 0.52° Länge → pixel grob
-            const radiusPx = (radiusKm / 111) * (H / (55 - 47));
+            // 40km in Pixel: Differenz zwischen Ursprungspunkt und Punkt 40km nördlich
+            const p1 = this.map.latLngToContainerPoint(L.latLng(lat, lon));
+            const p2 = this.map.latLngToContainerPoint(L.latLng(lat + (40/111), lon));
+            const radiusPx = Math.abs(p2.y - p1.y);
             const circle = document.createElement('div');
-            circle.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${radiusPx*2}px;height:${radiusPx*2}px;border-radius:50%;border:1.5px solid rgba(180,24,33,0.35);background:rgba(180,24,33,0.04);transform:translate(-50%,-50%) scale(0);animation:radiusExpand 1.2s ease-out 0.3s forwards;pointer-events:none;`;
+            circle.style.cssText = `position:absolute;left:${x}px;top:${y}px;
+              width:${radiusPx*2}px;height:${radiusPx*2}px;border-radius:50%;
+              border:1.5px solid rgba(180,24,33,0.3);
+              background:rgba(180,24,33,0.04);
+              transform:translate(-50%,-50%) scale(0);
+              animation:radiusExpand 1.4s ease-out 0.2s forwards;pointer-events:none;`;
             overlay.appendChild(circle);
-          }, 400);
+          }, 350);
 
-        }, i * 320);
+        }, i * 300);
       });
     };
 
@@ -2083,16 +2076,20 @@ class GeoMapWidget extends HTMLElement {
     this._previewInterval = setInterval(() => {
       if (this._activeFilter) {
         clearInterval(this._previewInterval);
+        overlay.style.transition = 'opacity 0.4s';
         overlay.style.opacity = '0';
-        setTimeout(() => { overlay.innerHTML = ''; overlay.style.opacity = '1'; }, 400);
+        setTimeout(() => { overlay.innerHTML = ''; overlay.style.opacity = '1'; overlay.style.transition = ''; }, 420);
         return;
       }
+      overlay.style.transition = 'opacity 0.35s';
       overlay.style.opacity = '0';
       setTimeout(() => {
+        overlay.innerHTML = '';
         overlay.style.opacity = '1';
+        overlay.style.transition = '';
         runCycle();
-      }, 400);
-    }, 5000);
+      }, 380);
+    }, 5500);
   }
 
   /* FIX 8: Sweep-Animation beim Einfärben der PLZs */
