@@ -276,34 +276,34 @@ let neighbours = true;
       #map-tile-toggle-btn {
         position: absolute;
         /* Panel: right:0, width:26%, so tile-btn: right=26%+14px */
-        bottom: 24px; right: calc(26% + 14px);
-        width: 40px; height: 40px;
+        bottom: 20px; right: calc(26% + 14px);
+        width: 48px; height: 48px;
         background: var(--white); border-radius: 50%;
         box-shadow: var(--shadow-md); cursor: pointer;
         z-index: 50;
         border: 1.5px solid var(--gray-200);
         transition: transform 0.18s var(--ease-out), box-shadow 0.18s, border-color 0.18s;
         background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"><path d="M3 6.5l6-2 6 2 6-2v13l-6 2-6-2-6 2v-13zm6 0v11l4 1.3v-11l-4-1.3zm10 0l-4 1.3v11l4-1.3v-11zm-14 0v11l4-1.3v-11l-4 1.3z"/></svg>');
-        background-size: 55%; background-repeat: no-repeat; background-position: center;
+        background-size: 52%; background-repeat: no-repeat; background-position: center;
       }
       #map-tile-toggle-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-lg); border-color: var(--red); }
 
       /* Legende und Legenden-Button links unten */
       #legend-toggle-btn {
-        position: absolute; bottom: 24px; left: 14px;
-        width: 40px; height: 40px;
+        position: absolute; bottom: 20px; left: 14px;
+        width: 48px; height: 48px;
         background: var(--white); border-radius: 50%;
         box-shadow: var(--shadow-md); cursor: pointer; z-index: 9999;
         border: 1.5px solid var(--gray-200);
         transition: transform 0.18s var(--ease-out), box-shadow 0.18s, border-color 0.18s;
         background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" fill="%23b41821" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="2" rx="1"/><rect x="4" y="11" width="12" height="2" rx="1"/><rect x="4" y="17" width="8" height="2" rx="1"/></svg>');
-        background-size: 55%; background-repeat: no-repeat; background-position: center;
+        background-size: 52%; background-repeat: no-repeat; background-position: center;
       }
       #legend-toggle-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-lg); border-color: var(--red); }
 
-      /* FIX 13: Legende immer so groß wie nötig – kein Scrollbalken */
+      /* FIX 13: Legende direkt über dem Button */
       #heatmap-legend {
-        position: absolute; bottom: 74px; left: 14px;
+        position: absolute; bottom: 78px; left: 14px;
         background: rgba(255,255,255,0.97); border: 1.5px solid var(--gray-200);
         border-radius: var(--radius-lg); padding: 12px 14px; width: 210px;
         max-height: none; overflow: visible; font-size: 11.5px; font-family: var(--font);
@@ -1044,14 +1044,16 @@ class GeoMapWidget extends HTMLElement {
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
-      // FIX 11: Bestreuung im WK-Modus NICHT anzeigen
+      // Bestreuung im WK-Modus NICHT anzeigen
       this.bestreuungGroup?.clearLayers();
       if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
       this.updateGeoLayer(); this.updateHeatmapLegend();
+      // Fix 2: Tabelle neu rendern damit WK%-Spalte erscheint
+      if (this._activeFilter) this.renderDataTable(this.filteredKennwerte);
     });
 
     btnUmsatz?.addEventListener("click", () => {
-      // FIX 12: typeSwitch korrekt zurücksetzen – nur active-left, nicht beides
+      // typeSwitch korrekt zurücksetzen – nur active-left, nicht beides
       typeSwitch.classList.remove("active-right");
       typeSwitch.classList.add("active-left");
       btnUmsatz.classList.add("active"); btnWK.classList.remove("active");
@@ -1062,9 +1064,10 @@ class GeoMapWidget extends HTMLElement {
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
-      // FIX 11: Bestreuung im WK-Modus ausblenden
       if (!this.showBestreuung) this.bestreuungGroup?.clearLayers();
       this.updateGeoLayer(); this.updateHeatmapLegend();
+      // Fix 2: Tabelle neu rendern damit Umsatzanteil-Spalte erscheint
+      if (this._activeFilter) this.renderDataTable(this.filteredKennwerte);
     });
 
     typeSwitch?.addEventListener("click", () => {
@@ -1856,10 +1859,13 @@ class GeoMapWidget extends HTMLElement {
     await this.loadGeoJson(); this.updateGeoLayer(); this.createAllMarkers();
     const filteredPLZs=isFiltered?filteredData.map(d=>d["dimension_plz_0"]?.id?.trim()).filter(plz=>plz&&plz!=="@NullMember"):Object.keys(this.allMarkers||{});
     this.updateMarkers(filteredPLZs); this.renderDataTable(this.filteredKennwerte);
-    // FIX 1: Loader nach initialem Laden schließen und Preview starten (wenn keine Erhebung)
+    // Loader nach initialem Laden schließen und Preview starten (wenn keine Erhebung)
     if (!isFiltered) {
       this._hideCinematicLoader();
       setTimeout(() => this._startPreviewAnimation(), 200);
+    } else {
+      // Preview aufräumen falls schon Erhebung vorhanden
+      this._stopPreview?.();
     }
     this.hideSpinner();
   }
@@ -1910,10 +1916,10 @@ class GeoMapWidget extends HTMLElement {
   async loadErhebung(erhID, jahr, nummer) {
     const legend=this._shadowRoot.getElementById("heatmap-legend"); legend?.classList.add("hidden");
     this.closeNLTable?.();
-    // FIX 2: Preview-Animation stoppen
-    if (this._previewInterval) { clearInterval(this._previewInterval); this._previewInterval = null; }
+    // Preview stoppen
+    this._stopPreview?.();
     const overlay = this._shadowRoot.getElementById("map-preview-overlay");
-    if (overlay) { overlay.style.opacity = '0'; setTimeout(() => { overlay.innerHTML = ''; overlay.style.opacity = '1'; }, 300); }
+    if (overlay) overlay.innerHTML = '';
     // FIX 3: Interaktions-Block entfernen nachdem Erhebung geladen
     this._showCinematicLoader();
     try {
@@ -1969,22 +1975,47 @@ class GeoMapWidget extends HTMLElement {
     loader.classList.add("fade-out"); setTimeout(()=>loader.remove(),380);
   }
 
-  /* FIX 1+2: Preview-Animation – Marker an RICHTIGER Kartenposition via Leaflet latLngToContainerPoint */
+  /* FIX 1: Preview-Animation – echte Leaflet-Marker in eigener LayerGroup,
+     damit sie auf der tatsächlichen Karte erscheinen und nicht auf einem Overlay-Div */
   _startPreviewAnimation() {
     if (this._activeFilter) return;
     if (!this._erhData || Object.keys(this._erhData).length === 0) return;
     if (!this.map) return;
 
-    const overlay = this._shadowRoot.getElementById("map-preview-overlay");
-    if (!overlay) return;
-
     const allErhIDs = Object.keys(this._erhData);
     if (allErhIDs.length === 0) return;
+
+    // Dedizierte Preview-LayerGroup anlegen (einmalig)
+    if (!this._previewGroup) {
+      this._previewGroup = L.layerGroup().addTo(this.map);
+    }
+
+    // CSS für Ping-Animation ins Shadow-DOM injizieren (falls noch nicht vorhanden)
+    if (!this._shadowRoot.getElementById('preview-anim-style')) {
+      const style = document.createElement('style');
+      style.id = 'preview-anim-style';
+      style.textContent = `
+        @keyframes previewPing {
+          0%   { transform: translate(-50%,-50%) scale(0.2); opacity: 0.9; }
+          100% { transform: translate(-50%,-50%) scale(2.5); opacity: 0; }
+        }
+        @keyframes previewRadius {
+          0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.6; }
+          70%  { opacity: 0.25; }
+          100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+        }
+        @keyframes previewFadeIn {
+          from { opacity: 0; transform: translate(-50%,-80%) rotate(-45deg) scale(0.3); }
+          to   { opacity: 1; transform: translate(-50%,-80%) rotate(-45deg) scale(1); }
+        }
+      `;
+      this._shadowRoot.appendChild(style);
+    }
 
     const rawData = this._myDataSource?.data || [];
     let currentIdx = 0;
 
-    // NL-Koordinaten je ErhebungsID sammeln
+    // NL-Koordinaten je ErhebungsID sammeln (dedupliziert)
     const nlByErh = {};
     rawData.forEach(row => {
       const erhID = row["dimension_erhebung_0"]?.id?.trim();
@@ -1996,69 +2027,90 @@ class GeoMapWidget extends HTMLElement {
       nlByErh[erhID][nl] = { lat, lon };
     });
 
+    // Info-Label über der Karte (im map-container, nicht im Leaflet-Pane)
+    const getOrCreateLabel = () => {
+      let lbl = this._shadowRoot.getElementById('preview-erh-label');
+      if (!lbl) {
+        lbl = document.createElement('div');
+        lbl.id = 'preview-erh-label';
+        lbl.style.cssText = `
+          position:absolute;top:58px;left:50%;transform:translateX(-50%);
+          background:rgba(255,255,255,0.93);border:1px solid var(--gray-200);
+          border-radius:100px;padding:5px 16px;font-size:0.72rem;font-weight:700;
+          color:var(--gray-500);letter-spacing:.06em;text-transform:uppercase;
+          pointer-events:none;box-shadow:var(--shadow-sm);z-index:9000;
+          transition:opacity 0.3s ease;`;
+        this._shadowRoot.querySelector('.map-container')?.appendChild(lbl);
+      }
+      return lbl;
+    };
+
     const showErhebung = (erhID) => {
-      overlay.innerHTML = '';
+      this._previewGroup.clearLayers();
+
+      // Label aktualisieren
+      const lbl = getOrCreateLabel();
+      lbl.style.opacity = '0';
+      setTimeout(() => { lbl.textContent = `Vorschau · ${erhID}`; lbl.style.opacity = '1'; }, 150);
+
       const nls = nlByErh[erhID] || {};
       const nlList = Object.entries(nls);
       if (nlList.length === 0) return;
-
-      // ErhebungsID als kleinen Label anzeigen
-      const label = document.createElement('div');
-      label.style.cssText = `position:absolute;top:14px;left:50%;transform:translateX(-50%);
-        background:rgba(255,255,255,0.9);border:1px solid var(--gray-200);border-radius:100px;
-        padding:4px 14px;font-size:0.72rem;font-weight:700;color:var(--gray-500);
-        letter-spacing:.06em;text-transform:uppercase;pointer-events:none;
-        box-shadow:var(--shadow-sm);animation:rowFadeIn 0.4s ease both;`;
-      label.textContent = `Vorschau: ${erhID}`;
-      overlay.appendChild(label);
 
       nlList.forEach(([nl, { lat, lon }], i) => {
         setTimeout(() => {
           if (this._activeFilter) return;
 
-          // FIX 1: echte Leaflet-Projektion nutzen
-          const point = this.map.latLngToContainerPoint(L.latLng(lat, lon));
-          const x = point.x, y = point.y;
+          // ── Ping-Ring via DivIcon auf der Karte ──
+          const pingIcon = L.divIcon({
+            html: `<div style="
+              width:44px;height:44px;border-radius:50%;
+              border:2px solid rgba(180,24,33,0.55);
+              animation:previewPing 1s ease-out forwards;
+              pointer-events:none;"></div>`,
+            className: '',
+            iconSize: [44, 44],
+            iconAnchor: [22, 22]
+          });
+          const pingMarker = L.marker([lat, lon], { icon: pingIcon, interactive: false, zIndexOffset: 500 });
+          this._previewGroup.addLayer(pingMarker);
+          // Ping nach Animation entfernen
+          setTimeout(() => { try { this._previewGroup.removeLayer(pingMarker); } catch(e){} }, 1050);
 
-          // Ping-Ring
-          const ping = document.createElement('div');
-          ping.style.cssText = `position:absolute;left:${x}px;top:${y}px;
-            width:44px;height:44px;border-radius:50%;
-            border:2px solid rgba(180,24,33,0.55);
-            transform:translate(-50%,-50%) scale(0);
-            animation:markerPing 1s ease-out forwards;pointer-events:none;`;
-          overlay.appendChild(ping);
+          // ── Echter NL-Pin ──
+          const pinIcon = L.divIcon({
+            html: `<div style="
+              width:30px;height:30px;background:#b41821;
+              border-radius:50% 50% 50% 0;
+              box-shadow:-1px 2px 8px rgba(180,24,33,0.5);
+              transform:translate(-50%,-80%) rotate(-45deg) scale(0);
+              animation:previewFadeIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
+              display:flex;align-items:center;justify-content:center;pointer-events:none;">
+              <div style="transform:rotate(45deg);font-size:9px;font-weight:700;color:white;
+                font-family:system-ui;max-width:24px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">
+                ${nl}
+              </div>
+            </div>`,
+            className: '',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+          });
+          const pinMarker = L.marker([lat, lon], { icon: pinIcon, interactive: false, zIndexOffset: 1000 });
+          this._previewGroup.addLayer(pinMarker);
 
-          // Marker-Pin (Leaflet-style Teardrop)
-          const pin = document.createElement('div');
-          pin.style.cssText = `position:absolute;left:${x}px;top:${y}px;
-            width:26px;height:26px;background:#b41821;
-            border-radius:50% 50% 50% 0;
-            box-shadow:-1px 2px 8px rgba(180,24,33,0.5);
-            transform:translate(-50%,-85%) rotate(-45deg) scale(0);
-            animation:markerAppear 0.4s cubic-bezier(0.16,1,0.3,1) forwards;
-            display:flex;align-items:center;justify-content:center;pointer-events:none;`;
-          const pinLabel = document.createElement('div');
-          pinLabel.style.cssText = `transform:rotate(45deg);font-size:8px;font-weight:700;color:white;font-family:system-ui;max-width:20px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;`;
-          pinLabel.textContent = nl;
-          pin.appendChild(pinLabel);
-          overlay.appendChild(pin);
-
-          // Radius-Kreis – Größe via Leaflet-Projektion (40km)
+          // ── Radius-Kreis (L.circle) ──
           setTimeout(() => {
             if (this._activeFilter) return;
-            // 40km in Pixel: Differenz zwischen Ursprungspunkt und Punkt 40km nördlich
-            const p1 = this.map.latLngToContainerPoint(L.latLng(lat, lon));
-            const p2 = this.map.latLngToContainerPoint(L.latLng(lat + (40/111), lon));
-            const radiusPx = Math.abs(p2.y - p1.y);
-            const circle = document.createElement('div');
-            circle.style.cssText = `position:absolute;left:${x}px;top:${y}px;
-              width:${radiusPx*2}px;height:${radiusPx*2}px;border-radius:50%;
-              border:1.5px solid rgba(180,24,33,0.3);
-              background:rgba(180,24,33,0.04);
-              transform:translate(-50%,-50%) scale(0);
-              animation:radiusExpand 1.4s ease-out 0.2s forwards;pointer-events:none;`;
-            overlay.appendChild(circle);
+            const radiusCircle = L.circle([lat, lon], {
+              radius: 40000,          // 40 km in Meter
+              color: 'rgba(180,24,33,0.35)',
+              fillColor: 'rgba(180,24,33,0.04)',
+              fillOpacity: 1,
+              weight: 1.5,
+              interactive: false,
+              className: 'preview-radius-circle'
+            });
+            this._previewGroup.addLayer(radiusCircle);
           }, 350);
 
         }, i * 300);
@@ -2066,7 +2118,7 @@ class GeoMapWidget extends HTMLElement {
     };
 
     const runCycle = () => {
-      if (this._activeFilter) { overlay.innerHTML = ''; return; }
+      if (this._activeFilter) { this._stopPreview(); return; }
       const erhID = allErhIDs[currentIdx % allErhIDs.length];
       showErhebung(erhID);
       currentIdx++;
@@ -2074,22 +2126,16 @@ class GeoMapWidget extends HTMLElement {
 
     runCycle();
     this._previewInterval = setInterval(() => {
-      if (this._activeFilter) {
-        clearInterval(this._previewInterval);
-        overlay.style.transition = 'opacity 0.4s';
-        overlay.style.opacity = '0';
-        setTimeout(() => { overlay.innerHTML = ''; overlay.style.opacity = '1'; overlay.style.transition = ''; }, 420);
-        return;
-      }
-      overlay.style.transition = 'opacity 0.35s';
-      overlay.style.opacity = '0';
-      setTimeout(() => {
-        overlay.innerHTML = '';
-        overlay.style.opacity = '1';
-        overlay.style.transition = '';
-        runCycle();
-      }, 380);
+      if (this._activeFilter) { this._stopPreview(); return; }
+      runCycle();
     }, 5500);
+  }
+
+  _stopPreview() {
+    if (this._previewInterval) { clearInterval(this._previewInterval); this._previewInterval = null; }
+    if (this._previewGroup)    { this._previewGroup.clearLayers(); }
+    const lbl = this._shadowRoot.getElementById('preview-erh-label');
+    if (lbl) lbl.remove();
   }
 
   /* FIX 8: Sweep-Animation beim Einfärben der PLZs */
