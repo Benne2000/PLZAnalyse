@@ -2098,7 +2098,7 @@ class GeoMapWidget extends HTMLElement {
           const pinMarker = L.marker([lat, lon], { icon: pinIcon, interactive: false, zIndexOffset: 1000 });
           this._previewGroup.addLayer(pinMarker);
 
-}, 350);
+
 
         }, i * 300);
       });
