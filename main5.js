@@ -154,11 +154,10 @@ let neighbours = true;
       .table-container tbody tr { transition: background 0.12s; cursor: pointer; }
       .table-container tbody tr:hover td { background: var(--red-bg); color: var(--gray-900); }
 
-      /* FIX 10: Nur linke Border bei selectedRow, keine Borders zwischen Zellen */
+      /* FIX 6: Nur linke Border beim ersten td der selektierten Zeile */
       .table-row-selected td {
         background: #fff3f3 !important;
         border-left: none !important;
-        border-right: none !important;
       }
       .table-row-selected td:first-child {
         border-left: 3px solid var(--red) !important;
@@ -277,7 +276,7 @@ let neighbours = true;
       #map-tile-toggle-btn {
         position: absolute;
         /* Neben dem Panel: Panel ist 26% breit, also right = 26% + kleine Lücke */
-        bottom: 24px; right: calc(26% + 10px);
+        bottom: 24px; right: calc(26% + 14px);
         width: 40px; height: 40px;
         background: var(--white); border-radius: 50%;
         box-shadow: var(--shadow-md); cursor: pointer; z-index: 9999;
@@ -301,12 +300,12 @@ let neighbours = true;
       }
       #legend-toggle-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-lg); border-color: var(--red); }
 
-      /* FIX 4: Legende links unten */
+      /* FIX 13: Legende immer so groß wie nötig – kein Scrollbalken */
       #heatmap-legend {
         position: absolute; bottom: 74px; left: 14px;
         background: rgba(255,255,255,0.97); border: 1.5px solid var(--gray-200);
-        border-radius: var(--radius-lg); padding: 12px 14px; width: 200px;
-        max-height: 290px; overflow-y: auto; font-size: 11.5px; font-family: var(--font);
+        border-radius: var(--radius-lg); padding: 12px 14px; width: 210px;
+        max-height: none; overflow: visible; font-size: 11.5px; font-family: var(--font);
         z-index: 9998; box-shadow: var(--shadow-lg); pointer-events: none;
         transform-origin: bottom left;
         transition: opacity 0.22s ease, transform 0.22s var(--ease-out), visibility 0.22s;
@@ -323,7 +322,11 @@ let neighbours = true;
          POPUPS
       ═══════════════════════════════════════════════════ */
       .side-popup {
-        position: absolute; right: 0; top: 0; width: 26%; height: 72%;
+        position: absolute; right: 0; top: 0;
+        width: 26%;
+        /* FIX 9: Höhe so dass Panel nicht überlappt – Panel startet bei 75% von unten */
+        height: calc(100% - 26% - 10px);
+        max-height: 68%;
         background: var(--white); border-left: 3px solid var(--red);
         border-top-left-radius: var(--radius-xl); border-bottom-left-radius: var(--radius-xl);
         padding: 0; font-family: var(--font); box-sizing: border-box;
@@ -362,7 +365,10 @@ let neighbours = true;
 
       /* UMSATZ POPUP */
       #side-popup-umsatz {
-        position: absolute; right: 0; top: 0; width: 26%; height: 72%;
+        position: absolute; right: 0; top: 0;
+        width: 26%;
+        height: calc(100% - 26% - 10px);
+        max-height: 68%;
         background: var(--white); border-left: 3px solid var(--red);
         border-top-left-radius: var(--radius-xl); border-bottom-left-radius: var(--radius-xl);
         box-sizing: border-box; overflow-y: auto; z-index: 99999;
@@ -534,6 +540,34 @@ let neighbours = true;
         100% { opacity: 1; }
       }
 
+      /* ═══════════════════════════════════════════════════
+         FIX 8: Sweep-Animation beim Einfärben der PLZs
+      ═══════════════════════════════════════════════════ */
+      @keyframes plzSweepIn {
+        from { opacity: 0; }
+        to   { opacity: 1; }
+      }
+      .geo-layer-animating path {
+        animation: plzSweepIn 0.4s var(--ease-out) both;
+      }
+
+      /* ═══════════════════════════════════════════════════
+         FIX 2: Preview-Animation Ping-Effekt
+      ═══════════════════════════════════════════════════ */
+      @keyframes markerPing {
+        0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
+        100% { transform: translate(-50%,-50%) scale(2.2); opacity: 0; }
+      }
+      @keyframes markerAppear {
+        from { transform: rotate(-45deg) scale(0); opacity: 0; }
+        to   { transform: rotate(-45deg) scale(1); opacity: 1; }
+      }
+      @keyframes radiusExpand {
+        0%   { transform: translate(-50%,-50%) scale(0); opacity: 0.7; }
+        70%  { opacity: 0.3; }
+        100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
+      }
+
       .hidden { display: none; }
 
       @keyframes rowFadeIn {
@@ -564,6 +598,8 @@ let neighbours = true;
       <div class="map-container">
         <!-- FIX 3: Interaktions-Block vor Erhebungsauswahl -->
         <div id="map-interaction-block"></div>
+        <!-- FIX 2: Preview-Overlay für Karten-Preview -->
+        <div id="map-preview-overlay" style="position:absolute;inset:0;z-index:400;pointer-events:none;overflow:hidden;"></div>
         <div id="loading-spinner" class="spinner hidden"></div>
         <div id="radius-slider-container">
           <label>Radius: <span id="radius-value">40</span> km</label>
@@ -641,13 +677,21 @@ class GeoMapWidget extends HTMLElement {
   }
 
   connectedCallback() {
-    this.showSpinner();
+    // FIX 1: Cinematic Loader statt simpler Spinner beim initialen Laden
+    this._showCinematicLoader();
+    this._updateLoaderPhase(1, "Leaflet wird geladen…");
     if (!window.L) {
       const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
       const script = document.createElement('script'); script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      script.onload = () => this.initializeMapBase();
+      script.onload = () => {
+        this._updateLoaderPhase(2, "Karte wird initialisiert…");
+        this.initializeMapBase();
+      };
       this._shadowRoot.appendChild(link); this._shadowRoot.appendChild(script);
-    } else { this.initializeMapBase(); }
+    } else {
+      this._updateLoaderPhase(2, "Karte wird initialisiert…");
+      this.initializeMapBase();
+    }
   }
 
   showSpinner() { const s = this._shadowRoot.getElementById('loading-spinner'); if (s) s.classList.remove('hidden'); }
@@ -913,6 +957,13 @@ class GeoMapWidget extends HTMLElement {
     this.activeCategories = new Set(["stationaer"]); this.showBestreuung = false; this.useRadiusFilter = true;
     this.filteredGroup = L.layerGroup().addTo(this.map); this.neighbourGroup = L.layerGroup().addTo(this.map);
     this.radiusGroup = L.layerGroup().addTo(this.map); this.bestreuungGroup = L.layerGroup().addTo(this.map);
+
+    // FIX 1: Nach Map-Init den Loader ausblenden und Preview starten
+    setTimeout(() => {
+      this._hideCinematicLoader();
+      this._startPreviewAnimation();
+    }, 300);
+
     this.render(); this.initRadiusSlider();
 
     const panel=$("map-control-panel"),btnWK=$("btn-wk"),btnUmsatz=$("btn-umsatz"),umsatzPanel=$("umsatz-panel");
@@ -955,7 +1006,10 @@ class GeoMapWidget extends HTMLElement {
     });
 
     btnUmsatz?.addEventListener("click", () => {
-      typeSwitch.classList.add("active-left"); btnUmsatz.classList.add("active"); btnWK.classList.remove("active");
+      // FIX 12: typeSwitch korrekt zurücksetzen – nur active-left, nicht beides
+      typeSwitch.classList.remove("active-right");
+      typeSwitch.classList.add("active-left");
+      btnUmsatz.classList.add("active"); btnWK.classList.remove("active");
       this.closeAllPopups(); this.currentMapMode = "umsatz-multi"; this.activePopupType = "umsatz";
       if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
       wkExtra.style.display = "none"; umsatzOptionsRow.classList.remove("hidden");
@@ -963,6 +1017,8 @@ class GeoMapWidget extends HTMLElement {
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
+      // FIX 11: Bestreuung im WK-Modus ausblenden
+      if (!this.showBestreuung) this.bestreuungGroup?.clearLayers();
       this.updateGeoLayer(); this.updateHeatmapLegend();
     });
 
