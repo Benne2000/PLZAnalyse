@@ -379,7 +379,7 @@ let neighbours = true;
       }
       #side-popup-umsatz::-webkit-scrollbar { width: 5px; }
       #side-popup-umsatz::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
-      #side-popup-umsatz.show { opacity: 1; transform: translateX(0); }
+      #side-popup-umsatz.show { opacity: 1; transform: translateX(0); display: flex; flex-direction: column; }
       #side-popup-umsatz .popup-header {
         background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
         color: white; padding: 12px 14px 10px; font-size: 0.97rem; font-weight: 700;
@@ -1001,6 +1001,8 @@ class GeoMapWidget extends HTMLElement {
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
+      // FIX 11: Bestreuung im WK-Modus NICHT anzeigen
+      this.bestreuungGroup?.clearLayers();
       if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
       this.updateGeoLayer(); this.updateHeatmapLegend();
     });
@@ -1225,23 +1227,35 @@ class GeoMapWidget extends HTMLElement {
     const popup = this._shadowRoot.getElementById("side-popup-umsatz");
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) { popupWK.classList.remove("show"); popupWK.classList.add("hidden"); }
-    // FIX 14: aktives Popup tracken
     this._activePopupPLZ = plz; this._activePopupType = 'umsatz';
 
     const panel = this._shadowRoot.getElementById("map-control-panel");
     panel.classList.remove("panel-large"); panel.classList.add("panel-medium");
+
     const isWerbungMode = this.umsatzMainMode === "werbung";
     const useWerbe = this.useWerbeUmsatz === true, useZusatz = this.useZusatzUmsatz === true;
     const note = this.geoNotes?.[plz] || "Keine Notiz";
+
     const pickPair = (base,werb,zusatz,baseHH,werbHH,zusatzHH) => {
       if (!isWerbungMode) return { abs: base, hh: baseHH };
-      let abs=0,hh=0; if(useWerbe){abs+=werb;hh+=werbHH;} if(useZusatz){abs+=zusatz;hh+=zusatzHH;} return{abs,hh};
+      let abs=0,hh=0;
+      if(useWerbe){abs+=werb;hh+=werbHH;}
+      if(useZusatz){abs+=zusatz;hh+=zusatzHH;}
+      return{abs,hh};
     };
+
     const st=pickPair(values.umsatz,values.umsatzWerbung,values.umsatzZusatz,values.umsatzProHaushalt,values.umsatzWerbungProHaushalt,values.umsatzZusatzProHaushalt);
     const pc=pickPair(values.pluscard,values.pluscardWerbung,values.pluscardZusatz,values.pluscardProHaushalt,values.pluscardWerbungProHaushalt,values.pluscardZusatzProHaushalt);
     const ra=pickPair(values.ra,values.raWerbung,values.raZusatz,values.raProHaushalt,values.raWerbungProHaushalt,values.raZusatzProHaushalt);
     const os=pickPair(values.onlineshop,values.onlineshopWerbung,values.onlineshopZusatz,values.onlineshopProHaushalt,values.onlineshopWerbungProHaushalt,values.onlineshopZusatzProHaushalt);
-    const active={stationaer:this.activeCategories.has("stationaer"),pluscard:this.activeCategories.has("pluscard"),ra:this.activeCategories.has("ra"),online:this.activeCategories.has("online")};
+
+    const active={
+      stationaer:this.activeCategories.has("stationaer"),
+      pluscard:this.activeCategories.has("pluscard"),
+      ra:this.activeCategories.has("ra"),
+      online:this.activeCategories.has("online")
+    };
+
     const totalAbs=(active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
     const totalHH=(active.stationaer?st.hh:0)+(active.pluscard?pc.hh:0)+(active.ra?ra.hh:0)+(active.online?os.hh:0);
     const hh=values.haushalte||0;
@@ -1251,33 +1265,170 @@ class GeoMapWidget extends HTMLElement {
     const antWA=tN>0?((tW/tN)*100).toFixed(1):"–";
     const fA=x=>Number(x||0).toLocaleString("de-DE"),fH=x=>Number(x||0).toFixed(2),pct=(x,t)=>t>0?(x/t)*100:0;
     const hl=!isWerbungMode?"Gesamtumsatz":useWerbe&&useZusatz?"Werbeumsatz + Mitgekauft":useWerbe?"Werbeumsatz":"Mitgekauft";
+
+    // FIX 14: Tab-Auswahl für verschiedene Datensichten
+    // Bestimme verfügbare Tabs basierend auf Modus
+    const tabs = [];
+    tabs.push({ id: 'umsatz', label: 'Umsatz' });
+    if (isWerbungMode && useWerbe) tabs.push({ id: 'werbung', label: 'Werbung' });
+    if (isWerbungMode && useZusatz) tabs.push({ id: 'zusatz', label: 'Mitgekauft' });
+    tabs.push({ id: 'kennzahlen', label: 'Kennzahlen' });
+
+    const tabsHtml = tabs.length > 1 ? `
+      <div id="umsatz-popup-tabs" style="display:flex;gap:0;border-bottom:1px solid var(--gray-200);background:var(--gray-50);flex-shrink:0;">
+        ${tabs.map((t,i)=>`<button data-tab="${t.id}" style="flex:1;padding:7px 6px;font-size:0.72rem;font-weight:700;font-family:var(--font);border:none;border-bottom:2px solid ${i===0?'var(--red)':'transparent'};background:${i===0?'var(--white)':'transparent'};color:${i===0?'var(--red)':'var(--gray-500)'};cursor:pointer;transition:all .15s;letter-spacing:.03em;text-transform:uppercase;">${t.label}</button>`).join('')}
+      </div>` : '';
+
+    // Kategorien-Tabelle: nur aktive anzeigen
+    const catRows = (showAbs=true, showHH=true) => {
+      const pairs = [
+        { key:'stationaer', label:'🏬 Stationär', data: st },
+        { key:'pluscard',   label:'💳 Pluscard',   data: pc },
+        { key:'ra',         label:'📦 R&A',        data: ra },
+        { key:'online',     label:'🛒 KUBE OS',    data: os },
+      ];
+      return pairs.map(({key,label,data}) => {
+        const isActive = this.activeCategories.has(key);
+        const dis = !isActive ? 'opacity:0.3;filter:grayscale(1)' : '';
+        const absVal = showAbs ? `<div class="value" style="${dis}">${fA(data.abs)} €</div>` : '';
+        const hhVal  = showHH  ? `<div class="value" style="${dis}">${fH(data.hh)} €</div>` : '';
+        return `<div class="label" style="${dis}">${label}</div>${absVal}${hhVal}`;
+      }).join('');
+    };
+
+    // FIX 10: Kennzahlen-Bereich mit Werbeverweigerer + Kaufkraftindex
+    const wv = values.werbeverweigerer||0;
+    const kki = values.kaufkraftIndex||0; // ggf. nicht immer vorhanden
+    const kennzahlenHtml = `
+      <div class="section-title" style="margin-top:0">Haushaltsdaten</div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:4px 10px;padding:8px 14px;font-size:0.82rem;">
+        <div style="color:var(--gray-600);font-weight:500">Haushalte</div>
+        <div style="text-align:right;font-weight:700;color:var(--gray-800)">${hh.toLocaleString("de-DE")}</div>
+        <div style="color:var(--gray-600);font-weight:500">Werbeverweigerer</div>
+        <div style="text-align:right;font-weight:700;color:var(--gray-800)">${wv > 0 ? wv.toLocaleString("de-DE") + ' %' : '–'}</div>
+        ${kki > 0 ? `<div style="color:var(--gray-600);font-weight:500">Kaufkraft-Index</div><div style="text-align:right;font-weight:700;color:var(--gray-800)">${kki.toLocaleString("de-DE")}</div>` : ''}
+      </div>
+      <div class="section-title">Umsatz Gesamt</div>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:4px 10px;padding:8px 14px;font-size:0.82rem;">
+        <div style="color:var(--gray-600);font-weight:500">Stationär</div>
+        <div style="text-align:right;font-weight:700">${fA(values.umsatz)} €</div>
+        <div style="text-align:right;color:var(--gray-500)">${fH(values.umsatzProHaushalt)} €</div>
+        <div style="color:var(--gray-600);font-weight:500">Pluscard</div>
+        <div style="text-align:right;font-weight:700">${fA(values.pluscard)} €</div>
+        <div style="text-align:right;color:var(--gray-500)">${fH(values.pluscardProHaushalt)} €</div>
+        <div style="color:var(--gray-600);font-weight:500">R&A</div>
+        <div style="text-align:right;font-weight:700">${fA(values.ra)} €</div>
+        <div style="text-align:right;color:var(--gray-500)">${fH(values.raProHaushalt)} €</div>
+        <div style="color:var(--gray-600);font-weight:500">KUBE OS</div>
+        <div style="text-align:right;font-weight:700">${fA(values.onlineshop)} €</div>
+        <div style="text-align:right;color:var(--gray-500)">${fH(values.onlineshopProHaushalt)} €</div>
+        <div style="color:var(--gray-800);font-weight:700">Gesamt</div>
+        <div style="text-align:right;font-weight:700;color:var(--red)">${fA(tN)} €</div>
+        <div style="text-align:right;color:var(--gray-500)">${fH(tN/Math.max(hh,1))} €</div>
+      </div>`;
+
+    // Haupt-Tab-Inhalte
+    const tabContents = {
+      umsatz: `
+        <div class="umsatz-subheader"><span class="strong">${hl}: ${fA(totalAbs)} €</span><br>
+        <span style="font-size:0.8rem;color:#6c757d">${fH(totalHH)} € / HH &nbsp;·&nbsp; Werbeanteil: ${antWA}%</span></div>
+        <div class="umsatz-bar" style="margin:6px 14px">
+          <div style="background:#b41821;width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
+          <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
+          <div style="background:#ffb000;width:${pct(tZ,tN+tW+tZ)}%;transition:width .5s ease"></div>
+        </div>
+        <div class="umsatz-legend" style="padding:0 14px 6px"><span><span style="color:#b41821">⬤</span> Normal</span><span><span style="color:#1f78b4">⬤</span> Werbung</span><span><span style="color:#ffb000">⬤</span> Mitgekauft</span></div>
+        <div class="section-title">Nach Kategorien</div>
+        <div class="umsatz-grid" style="padding:6px 14px">
+          <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
+          ${catRows()}
+        </div>
+        <div class="section-title">Umsatzanteile</div>
+        <div class="umsatz-bar" style="margin:6px 14px">
+          <div class="share-stationaer" style="width:${pct(values.umsatz,tN)}%"></div>
+          <div class="share-pluscard" style="width:${pct(values.pluscard,tN)}%"></div>
+          <div class="share-ra" style="width:${pct(values.ra,tN)}%"></div>
+          <div class="share-online" style="width:${pct(values.onlineshop,tN)}%"></div>
+        </div>
+        <div class="umsatz-legend" style="padding:0 14px 10px">
+          <span><span style="color:#b41821">⬤</span> Stationär</span>
+          <span><span style="color:#1f78b4">⬤</span> Pluscard</span>
+          <span><span style="color:#33a02c">⬤</span> R&A</span>
+          <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
+        </div>`,
+      werbung: `
+        <div class="umsatz-subheader"><span class="strong">Werbeumsatz: ${fA(totalAbs)} €</span><br>
+        <span style="font-size:0.8rem;color:#6c757d">${fH(totalHH)} € / HH</span></div>
+        <div class="section-title">Nach Kategorien (Werbung)</div>
+        <div class="umsatz-grid" style="padding:6px 14px">
+          <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
+          ${[
+            {key:'stationaer',label:'🏬 Stationär',abs:values.umsatzWerbung,hh:values.umsatzWerbungProHaushalt},
+            {key:'pluscard',label:'💳 Pluscard',abs:values.pluscardWerbung,hh:values.pluscardWerbungProHaushalt},
+            {key:'ra',label:'📦 R&A',abs:values.raWerbung,hh:values.raWerbungProHaushalt},
+            {key:'online',label:'🛒 KUBE OS',abs:values.onlineshopWerbung,hh:values.onlineshopWerbungProHaushalt},
+          ].map(({key,label,abs,hh:h})=>{
+            const isActive=this.activeCategories.has(key);
+            const d=isActive?'':'opacity:0.3;filter:grayscale(1)';
+            return `<div class="label" style="${d}">${label}</div><div class="value" style="${d}">${fA(abs)} €</div><div class="value" style="${d}">${fH(h)} €</div>`;
+          }).join('')}
+        </div>`,
+      zusatz: `
+        <div class="umsatz-subheader"><span class="strong">Mitgekauft: ${fA(totalAbs)} €</span><br>
+        <span style="font-size:0.8rem;color:#6c757d">${fH(totalHH)} € / HH</span></div>
+        <div class="section-title">Nach Kategorien (Mitgekauft)</div>
+        <div class="umsatz-grid" style="padding:6px 14px">
+          <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
+          ${[
+            {key:'stationaer',label:'🏬 Stationär',abs:values.umsatzZusatz,hh:values.umsatzZusatzProHaushalt},
+            {key:'pluscard',label:'💳 Pluscard',abs:values.pluscardZusatz,hh:values.pluscardZusatzProHaushalt},
+            {key:'ra',label:'📦 R&A',abs:values.raZusatz,hh:values.raZusatzProHaushalt},
+            {key:'online',label:'🛒 KUBE OS',abs:values.onlineshopZusatz,hh:values.onlineshopZusatzProHaushalt},
+          ].map(({key,label,abs,hh:h})=>{
+            const isActive=this.activeCategories.has(key);
+            const d=isActive?'':'opacity:0.3;filter:grayscale(1)';
+            return `<div class="label" style="${d}">${label}</div><div class="value" style="${d}">${fA(abs)} €</div><div class="value" style="${d}">${fH(h)} €</div>`;
+          }).join('')}
+        </div>`,
+      kennzahlen: kennzahlenHtml
+    };
+
     popup.innerHTML = `
-      <div class="popup-header"><span title="${note}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span><button class="close-btn" style="flex-shrink:0">✕</button></div>
-      <div class="umsatz-subheader"><span class="strong">${hl}: ${fA(totalAbs)} €</span><br><span style="font-size:0.8rem;color:#6c757d">${fH(totalHH)} € pro HH &nbsp;·&nbsp; Werbeanteil: ${antWA}%</span></div>
-      <div class="umsatz-bar" style="margin:6px 14px">
-        <div style="background:#b41821;width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
-        <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
-        <div style="background:#ffb000;width:${pct(tZ,tN+tW+tZ)}%;transition:width .5s ease"></div>
+      <div class="popup-header" style="flex-shrink:0">
+        <span title="${note}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span>
+        <button class="close-btn" style="flex-shrink:0">✕</button>
       </div>
-      <div class="umsatz-legend" style="padding:0 14px 8px"><span><span style="color:#b41821">⬤</span> Normal</span><span><span style="color:#1f78b4">⬤</span> Werbung</span><span><span style="color:#ffb000">⬤</span> Mitgekauft</span></div>
-      <div class="section-title">Haushalte</div>
-      <div class="umsatz-grid" style="padding:8px 14px"><div class="label">Haushalte</div><div class="value">${hh.toLocaleString("de-DE")}</div><div class="value"></div></div>
-      <div class="section-title">Umsatz nach Kategorien</div>
-      <div class="umsatz-grid" style="padding:6px 14px">
-        <div class="label" style="font-weight:700;color:#343a40">Kategorie</div><div class="value" style="font-weight:700;color:#343a40">Absolut</div><div class="value" style="font-weight:700;color:#343a40">pro HH</div>
-        <div class="label ${!active.stationaer?"disabled-cell":""}">🏬 Stationär</div><div class="value ${!active.stationaer?"disabled-cell":""}">${fA(st.abs)} €</div><div class="value ${!active.stationaer?"disabled-cell":""}">${fH(st.hh)} €</div>
-        <div class="label ${!active.pluscard?"disabled-cell":""}">💳 Pluscard</div><div class="value ${!active.pluscard?"disabled-cell":""}">${fA(pc.abs)} €</div><div class="value ${!active.pluscard?"disabled-cell":""}">${fH(pc.hh)} €</div>
-        <div class="label ${!active.ra?"disabled-cell":""}">📦 R&amp;A</div><div class="value ${!active.ra?"disabled-cell":""}">${fA(ra.abs)} €</div><div class="value ${!active.ra?"disabled-cell":""}">${fH(ra.hh)} €</div>
-        <div class="label ${!active.online?"disabled-cell":""}">🛒 KUBE OS</div><div class="value ${!active.online?"disabled-cell":""}">${fA(os.abs)} €</div><div class="value ${!active.online?"disabled-cell":""}">${fH(os.hh)} €</div>
-      </div>
-      <div class="section-title">Umsatzanteile</div>
-      <div class="umsatz-bar" style="margin:6px 14px">
-        <div class="share-stationaer" style="width:${pct(values.umsatz,tN)}%"></div>
-        <div class="share-pluscard" style="width:${pct(values.pluscard,tN)}%"></div>
-        <div class="share-ra" style="width:${pct(values.ra,tN)}%"></div>
-        <div class="share-online" style="width:${pct(values.onlineshop,tN)}%"></div>
-      </div>
-      <div class="umsatz-legend" style="padding:0 14px 12px"><span><span style="color:#b41821">⬤</span> Stationär</span><span><span style="color:#1f78b4">⬤</span> Pluscard</span><span><span style="color:#33a02c">⬤</span> R&amp;A</span><span><span style="color:#ffb000">⬤</span> KUBE OS</span></div>`;
+      ${tabsHtml}
+      <div id="umsatz-popup-content" style="overflow-y:auto;flex:1;min-height:0;">
+        ${tabContents[tabs[0].id]}
+      </div>`;
+
+    // Tab-Interaktion
+    if (tabs.length > 1) {
+      popup.querySelectorAll('#umsatz-popup-tabs button').forEach((btn, i) => {
+        btn.addEventListener('click', () => {
+          popup.querySelectorAll('#umsatz-popup-tabs button').forEach(b => {
+            b.style.borderBottomColor = 'transparent';
+            b.style.background = 'transparent';
+            b.style.color = 'var(--gray-500)';
+          });
+          btn.style.borderBottomColor = 'var(--red)';
+          btn.style.background = 'var(--white)';
+          btn.style.color = 'var(--red)';
+          const tabId = btn.dataset.tab;
+          popup.querySelector('#umsatz-popup-content').innerHTML = tabContents[tabId] || '';
+        });
+      });
+    }
+
+    popup.style.display = 'flex';
+    popup.style.flexDirection = 'column';
     popup.classList.remove("hidden"); void popup.offsetWidth; popup.classList.add("show");
     popup.querySelector(".close-btn").onclick = () => {
       popup.classList.remove("show"); popup.classList.add("hidden");
@@ -1333,6 +1484,8 @@ class GeoMapWidget extends HTMLElement {
   updateGeoLayer() {
     if (!this._geoLayer) return;
     this.computeMaxValue();
+    // FIX 8: Sweep-Animation vor dem Einfärben
+    this._triggerSweepAnimation();
     const index = this._layerByPLZ;
     if (index) { const plzList=Object.keys(index); for(let i=0;i<plzList.length;i++) this.applyStyleToLayer(index[plzList[i]]); }
     else this._geoLayer.eachLayer(layer => this.applyStyleToLayer(layer));
@@ -1611,17 +1764,19 @@ class GeoMapWidget extends HTMLElement {
       const rawPLZ=row["dimension_plz_0"]?.id??row["dimension_plz_0"]?.raw;
       if(!rawPLZ||rawPLZ==="@NullMember") return;
       const plz=String(rawPLZ).padStart(5,"0"); if(plz==="00000") return;
-      if(!aggregated[plz]) aggregated[plz]={_hhValues:[],umsatz:0,ra:0,onlineshop:0,pluscard:0,umsatzWerbung:0,raWerbung:0,onlineshopWerbung:0,pluscardWerbung:0,umsatzZusatz:0,raZusatz:0,onlineshopZusatz:0,pluscardZusatz:0,umsatzErhebung:0,kdErhebung:0,auflage:0,werbeverweigerer:0};
+      if(!aggregated[plz]) aggregated[plz]={_hhValues:[],_kkValues:[],umsatz:0,ra:0,onlineshop:0,pluscard:0,umsatzWerbung:0,raWerbung:0,onlineshopWerbung:0,pluscardWerbung:0,umsatzZusatz:0,raZusatz:0,onlineshopZusatz:0,pluscardZusatz:0,umsatzErhebung:0,kdErhebung:0,auflage:0,werbeverweigerer:0,kaufkraftIdx:0};
       const v=aggregated[plz];
       const hh=parseHH(row["value_haushalte_0"]?.raw); if(hh>0) v._hhValues.push(hh);
-      v.umsatzErhebung+=safe(row["value_ums_erhebung_0"]?.raw);v.kdErhebung+=safe(row["value_kd_erhebung_0"]?.raw);v.auflage+=safe(row["value_auflage_0"]?.raw);v.werbeverweigerer+=safe(row["value_werbeverweigerer_0"]?.raw);
+      v.umsatzErhebung+=safe(row["value_ums_erhebung_0"]?.raw);v.kdErhebung+=safe(row["value_kd_erhebung_0"]?.raw);v.auflage+=safe(row["value_auflage_0"]?.raw);v.werbeverweigerer=Math.max(v.werbeverweigerer,safe(row["value_werbeverweigerer_0"]?.raw));
+      const kk=safe(row["value_kaufkraft_0"]?.raw);if(kk>0)v._kkValues.push(kk);
       v.umsatz+=safe(row["value_umsatz_stationaer_0"]?.raw);v.ra+=safe(row["value_umsatz_ra_0"]?.raw);v.onlineshop+=safe(row["value_umsatz_online_0"]?.raw);v.pluscard+=safe(row["value_umsatz_grosskunden_0"]?.raw);
       v.umsatzWerbung+=safe(row["value_umsatz_stationaer_werbung_0"]?.raw);v.raWerbung+=safe(row["value_umsatz_ra_werbung_0"]?.raw);v.onlineshopWerbung+=safe(row["value_umsatz_online_werbung_0"]?.raw);v.pluscardWerbung+=safe(row["value_umsatz_grosskunden_werbung_0"]?.raw);
       v.umsatzZusatz+=safe(row["value_umsatz_stationaer_zusatz_0"]?.raw);v.raZusatz+=safe(row["value_umsatz_ra_zusatz_0"]?.raw);v.onlineshopZusatz+=safe(row["value_umsatz_online_zusatz_0"]?.raw);v.pluscardZusatz+=safe(row["value_umsatz_grosskunden_zusatz_0"]?.raw);
     });
     Object.entries(aggregated).forEach(([plz,v])=>{
       v.haushalte=v._hhValues.length>0?v._hhValues.reduce((a,b)=>a+b,0)/v._hhValues.length:0;
-      delete v._hhValues;
+      v.kaufkraftIndex=v._kkValues.length>0?v._kkValues.reduce((a,b)=>a+b,0)/v._kkValues.length:0;
+      delete v._hhValues; delete v._kkValues;
       const hh=v.haushalte,perHH=val=>hh>0?val/hh:0;
       v.umsatzProHaushalt=perHH(v.umsatz);v.raProHaushalt=perHH(v.ra);v.onlineshopProHaushalt=perHH(v.onlineshop);v.pluscardProHaushalt=perHH(v.pluscard);
       v.umsatzWerbungProHaushalt=perHH(v.umsatzWerbung);v.raWerbungProHaushalt=perHH(v.raWerbung);v.onlineshopWerbungProHaushalt=perHH(v.onlineshopWerbung);v.pluscardWerbungProHaushalt=perHH(v.pluscardWerbung);
@@ -1713,7 +1868,6 @@ class GeoMapWidget extends HTMLElement {
 
   async render() {
     if(!this.map||!this._myDataSource||this._myDataSource.state!=="success") return;
-    this.showSpinner();
     const rawData=this._myDataSource.data;
     this._erhData=this.buildErhebungsStruktur(rawData);
     this.setupFilterDropdowns();
@@ -1723,27 +1877,46 @@ class GeoMapWidget extends HTMLElement {
     this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
     await this.loadGeoJson(); this.updateGeoLayer(); this.createAllMarkers();
     const filteredPLZs=isFiltered?filteredData.map(d=>d["dimension_plz_0"]?.id?.trim()).filter(plz=>plz&&plz!=="@NullMember"):Object.keys(this.allMarkers||{});
-    this.updateMarkers(filteredPLZs); this.renderDataTable(this.filteredKennwerte); this.hideSpinner();
+    this.updateMarkers(filteredPLZs); this.renderDataTable(this.filteredKennwerte);
+    // FIX 1: Loader nach initialem Laden schließen und Preview starten (wenn keine Erhebung)
+    if (!isFiltered) {
+      this._hideCinematicLoader();
+      setTimeout(() => this._startPreviewAnimation(), 200);
+    }
+    this.hideSpinner();
   }
 
   updateHeatmapLegend() {
     const legend=this._shadowRoot.getElementById("heatmap-legend"); if(!legend) return;
     if(!this._activeFilter||!this.filteredPLZWerte||Object.keys(this.filteredPLZWerte).length===0){legend.classList.add("hidden");return;}
     if(!this.currentMapMode){legend.classList.add("hidden");return;}
-    const mkRow=(bg,label)=>`<div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:${bg}"></div>${label}</div>`;
+    // FIX 7: > und < Zeichen in der Legende
+    const mkRow=(bg,label)=>`<div class="heatmap-legend-row"><div class="heatmap-legend-color" style="background:${bg}"></div><span>${label}</span></div>`;
     if(this.currentMapMode==="wk"){
-      legend.innerHTML=`<strong>Werbekosten</strong><div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.04em">Bestreut</div>${mkRow('#e31a1c','> 25 %')}${mkRow('#fd8d3c','15–25 %')}${mkRow('#ffffb2','10–15 %')}${mkRow('#78c679','5–10 %')}${mkRow('#41ab5d','2–5 %')}${mkRow('#006837','0–2 %')}<div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:8px 0 3px;text-transform:uppercase;letter-spacing:.04em">Nicht bestreut</div>${mkRow('#cfd4da','> 50 %')}${mkRow('#bdbdbd','25–50 %')}${mkRow('#969696','15–25 %')}${mkRow('#6baed6','10–15 %')}${mkRow('#2171b5','5–10 %')}${mkRow('#08306b','0–5 %')}`;
+      legend.innerHTML=`<strong>Werbekosten</strong>
+        <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.04em">Bestreut (% WK)</div>
+        ${mkRow('#e31a1c','&gt; 25 %')}${mkRow('#fd8d3c','15 – 25 %')}${mkRow('#ffffb2','10 – 15 %')}${mkRow('#78c679','5 – 10 %')}${mkRow('#41ab5d','2 – 5 %')}${mkRow('#006837','0 – 2 %')}
+        <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:8px 0 3px;text-transform:uppercase;letter-spacing:.04em">Nicht bestreut (% pot. WK)</div>
+        ${mkRow('#cfd4da','&gt; 50 %')}${mkRow('#bdbdbd','25 – 50 %')}${mkRow('#969696','15 – 25 %')}${mkRow('#6baed6','10 – 15 %')}${mkRow('#2171b5','5 – 10 %')}${mkRow('#08306b','&lt; 5 %')}`;
       legend.classList.remove("hidden");return;
     }
     if(this.currentMapMode==="umsatz-multi"){
       const values=Object.values(this.filteredPLZWerte).map(v=>this.getUmsatzSumForPLZ(v)).filter(v=>v>0),max=values.length>0?Math.max(...values):0;
-      const steps=[max,max*.85,max*.75,max*.65,max*.55,max*.45,max*.35,max*.20,0];
-      const fmt=n=>n.toLocaleString("de-DE",{maximumFractionDigits:0})+" €";
-      legend.innerHTML=`<strong>Umsatz (absolut)</strong>`+steps.map(v=>mkRow(this.getDynamicHeatColor(v,max),fmt(v))).join("");
+      if(max===0){legend.classList.add("hidden");return;}
+      const steps=[
+        {v:max,      label:`&gt; ${(max*0.95).toLocaleString("de-DE",{maximumFractionDigits:0})} €`},
+        {v:max*.85,  label:`${(max*0.75).toLocaleString("de-DE",{maximumFractionDigits:0})} – ${(max*0.85).toLocaleString("de-DE",{maximumFractionDigits:0})} €`},
+        {v:max*.65,  label:`${(max*0.55).toLocaleString("de-DE",{maximumFractionDigits:0})} – ${(max*0.65).toLocaleString("de-DE",{maximumFractionDigits:0})} €`},
+        {v:max*.45,  label:`${(max*0.35).toLocaleString("de-DE",{maximumFractionDigits:0})} – ${(max*0.45).toLocaleString("de-DE",{maximumFractionDigits:0})} €`},
+        {v:max*.20,  label:`${(max*0.10).toLocaleString("de-DE",{maximumFractionDigits:0})} – ${(max*0.20).toLocaleString("de-DE",{maximumFractionDigits:0})} €`},
+        {v:0,        label:`&lt; ${(max*0.10).toLocaleString("de-DE",{maximumFractionDigits:0})} €`},
+      ];
+      legend.innerHTML=`<strong>Umsatz</strong>`+steps.map(s=>mkRow(this.getDynamicHeatColor(s.v,max),s.label)).join("");
       legend.classList.remove("hidden");return;
     }
     if(this.currentMapMode==="werbeanteil"){
-      legend.innerHTML=`<strong>Werbeanteil</strong>`+[['#7a0f17','>80%'],['#b41821','60–80%'],['#e96a3a','40–60%'],['#f6b65b','20–40%'],['#f7d77a','10–20%'],['#fce9b2','<10%']].map(([bg,l])=>mkRow(bg,l)).join("");
+      legend.innerHTML=`<strong>Werbeanteil</strong>`+
+        [['#7a0f17','&gt; 80 %'],['#b41821','60 – 80 %'],['#e96a3a','40 – 60 %'],['#f6b65b','20 – 40 %'],['#f7d77a','10 – 20 %'],['#fce9b2','&lt; 10 %']].map(([bg,l])=>mkRow(bg,l)).join("");
       legend.classList.remove("hidden");return;
     }
     legend.classList.add("hidden");
@@ -1759,6 +1932,10 @@ class GeoMapWidget extends HTMLElement {
   async loadErhebung(erhID, jahr, nummer) {
     const legend=this._shadowRoot.getElementById("heatmap-legend"); legend?.classList.add("hidden");
     this.closeNLTable?.();
+    // FIX 2: Preview-Animation stoppen
+    if (this._previewInterval) { clearInterval(this._previewInterval); this._previewInterval = null; }
+    const overlay = this._shadowRoot.getElementById("map-preview-overlay");
+    if (overlay) { overlay.style.opacity = '0'; setTimeout(() => { overlay.innerHTML = ''; overlay.style.opacity = '1'; }, 300); }
     // FIX 3: Interaktions-Block entfernen nachdem Erhebung geladen
     this._showCinematicLoader();
     try {
@@ -1812,6 +1989,126 @@ class GeoMapWidget extends HTMLElement {
     const loader=this._shadowRoot.getElementById("cinematic-loader"); if(!loader) return;
     if(immediate){loader.remove();return;}
     loader.classList.add("fade-out"); setTimeout(()=>loader.remove(),380);
+  }
+
+  /* FIX 2: Preview-Animation auf der leeren Karte – NL-Marker mit Ping-Effekt + Radius-Kreise
+     Iteriert über alle ErhebungsIDs aus _erhData, zeigt jeweils 5 Sekunden die NLs */
+  _startPreviewAnimation() {
+    if (this._activeFilter) return; // Bereits geladen → kein Preview
+    if (!this._erhData || Object.keys(this._erhData).length === 0) return;
+
+    const overlay = this._shadowRoot.getElementById("map-preview-overlay");
+    if (!overlay) return;
+
+    const allErhIDs = Object.keys(this._erhData);
+    if (allErhIDs.length === 0) return;
+
+    const rawData = this._myDataSource?.data || [];
+    let currentIdx = 0;
+
+    // Alle NL-Koordinaten aus dem Datensatz sammeln
+    const nlByErh = {};
+    rawData.forEach(row => {
+      const erhID = row["dimension_erhebung_0"]?.id?.trim();
+      const nl = row["dimension_niederlassung_0"]?.id?.trim();
+      const lat = parseFloat(row["dimension_Lat_0"]?.label);
+      const lon = parseFloat(row["dimension_lon_0"]?.label);
+      if (!erhID || !nl || isNaN(lat) || isNaN(lon)) return;
+      if (!nlByErh[erhID]) nlByErh[erhID] = {};
+      nlByErh[erhID][nl] = { lat, lon };
+    });
+
+    const mapContainer = this._shadowRoot.querySelector(".map-container");
+    if (!mapContainer) return;
+    const W = mapContainer.offsetWidth, H = mapContainer.offsetHeight;
+
+    // Hilfsfunktion: geo → pixel (grob, ohne Projektion – nur für Visualisierung)
+    const latLonToXY = (lat, lon) => {
+      // Bounding box: Deutschland ca. 47-55°N, 6-15°E
+      const minLat=47, maxLat=55, minLon=6, maxLon=15;
+      const x = ((lon - minLon) / (maxLon - minLon)) * W;
+      const y = ((maxLat - lat) / (maxLat - minLat)) * H;
+      return { x, y };
+    };
+
+    const showErhebung = (erhID) => {
+      overlay.innerHTML = '';
+      const nls = nlByErh[erhID] || {};
+      const nlList = Object.entries(nls);
+      if (nlList.length === 0) return;
+
+      // Zeige nach und nach NL-Marker mit Ping-Animation
+      nlList.forEach(([nl, { lat, lon }], i) => {
+        const { x, y } = latLonToXY(lat, lon);
+        setTimeout(() => {
+          if (this._activeFilter) return; // Abbrechen wenn geladen
+
+          // Ping-Ring
+          const ping = document.createElement('div');
+          ping.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:40px;height:40px;border-radius:50%;border:2px solid rgba(180,24,33,0.6);transform:translate(-50%,-50%) scale(0);animation:markerPing 1s ease-out forwards;pointer-events:none;`;
+          overlay.appendChild(ping);
+
+          // Marker-Pin
+          const pin = document.createElement('div');
+          pin.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:24px;height:24px;background:#b41821;border-radius:50% 50% 50% 0;box-shadow:-1px 2px 8px rgba(180,24,33,0.5);transform:translate(-50%,-80%) rotate(-45deg) scale(0);animation:markerAppear 0.4s var(--ease-out) forwards;display:flex;align-items:center;justify-content:center;pointer-events:none;`;
+          const label = document.createElement('div');
+          label.style.cssText = `transform:rotate(45deg);font-size:8px;font-weight:700;color:white;font-family:system-ui;`;
+          label.textContent = nl;
+          pin.appendChild(label);
+          overlay.appendChild(pin);
+
+          // Radius-Kreis nach Marker-Erscheinen
+          setTimeout(() => {
+            if (this._activeFilter) return;
+            const radiusKm = 40;
+            // 40km ≈ 0.36° Breite ≈ 0.52° Länge → pixel grob
+            const radiusPx = (radiusKm / 111) * (H / (55 - 47));
+            const circle = document.createElement('div');
+            circle.style.cssText = `position:absolute;left:${x}px;top:${y}px;width:${radiusPx*2}px;height:${radiusPx*2}px;border-radius:50%;border:1.5px solid rgba(180,24,33,0.35);background:rgba(180,24,33,0.04);transform:translate(-50%,-50%) scale(0);animation:radiusExpand 1.2s ease-out 0.3s forwards;pointer-events:none;`;
+            overlay.appendChild(circle);
+          }, 400);
+
+        }, i * 320);
+      });
+    };
+
+    const runCycle = () => {
+      if (this._activeFilter) { overlay.innerHTML = ''; return; }
+      const erhID = allErhIDs[currentIdx % allErhIDs.length];
+      showErhebung(erhID);
+      currentIdx++;
+    };
+
+    runCycle();
+    this._previewInterval = setInterval(() => {
+      if (this._activeFilter) {
+        clearInterval(this._previewInterval);
+        overlay.style.opacity = '0';
+        setTimeout(() => { overlay.innerHTML = ''; overlay.style.opacity = '1'; }, 400);
+        return;
+      }
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.opacity = '1';
+        runCycle();
+      }, 400);
+    }, 5000);
+  }
+
+  /* FIX 8: Sweep-Animation beim Einfärben der PLZs */
+  _triggerSweepAnimation() {
+    if (!this._geoLayer) return;
+    // Kurzes opacity-Fade auf dem gesamten GeoLayer
+    const container = this._geoLayer.getPane?.() || this._geoLayer._map?.getPanes?.()?.overlayPane;
+    if (!container) return;
+    container.style.transition = 'opacity 0.05s';
+    container.style.opacity = '0.1';
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        container.style.transition = 'opacity 0.35s var(--ease-out)';
+        container.style.opacity = '1';
+      }, 50);
+    });
   }
 
   showLoadingOverlay() { const o=this._shadowRoot.getElementById("loading-spinner"); if(!o)return; o.classList.remove("hidden");o.style.opacity="1";o.style.pointerEvents="auto"; }
@@ -1895,14 +2192,41 @@ class GeoMapWidget extends HTMLElement {
     this.filteredKennwerte=newFilteredKennwerte;this.filteredPLZWerte=newFilteredPLZWerte;
   }
 
+  /* FIX 4: NL-Filter Logik:
+     - Alle NLs aktiv am Anfang
+     - Klick auf eine NL → nur diese NL aktiv (alle anderen Phantome)
+     - Weitere Klicks fügen NLs hinzu / entfernen sie
+     - Letzte aktive NL wird erneut geklickt → alle wieder aktiv */
   toggleNLSelection(nl) {
-    if(!this._selectedNLs) this._selectedNLs=new Set();
-    if(this._selectedNLs.has(nl)) this._selectedNLs.delete(nl); else this._selectedNLs.add(nl);
-    if(this._selectedNLs.size===this.allNLs.length) this._selectedNLs=new Set(this.allNLs);
+    if (!this._selectedNLs) this._selectedNLs = new Set();
+    const allCount = this.allNLs?.length || 0;
+
+    if (this._selectedNLs.size === allCount) {
+      // Alle aktiv → Klick selektiert nur diese eine
+      this._selectedNLs = new Set([nl]);
+    } else if (this._selectedNLs.has(nl)) {
+      // NL ist aktiv → deselektieren
+      this._selectedNLs.delete(nl);
+      // Letzte übrig? → alle zurück
+      if (this._selectedNLs.size === 0) {
+        this._selectedNLs = new Set(this.allNLs);
+      }
+    } else {
+      // NL ist inaktiv → hinzufügen
+      this._selectedNLs.add(nl);
+      // Alle selektiert? → alle zurück (kein Phantommodus)
+      if (this._selectedNLs.size === allCount) {
+        this._selectedNLs = new Set(this.allNLs);
+      }
+    }
+
     this.updateNLSelectionUI();
     this.applyNLFilter([...this._selectedNLs]);
-    const radius=Number(this._shadowRoot.getElementById("radius-slider").value);
-    this.applyRadiusFilter(radius); this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte); this.prepareUmsatzPLZWerte();
+    const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
+    this.applyRadiusFilter(radius);
+    this.updateGeoLayer();
+    this.renderDataTable(this.filteredKennwerte);
+    this.prepareUmsatzPLZWerte();
   }
 
   initRadiusSlider() {
