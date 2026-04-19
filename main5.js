@@ -2099,19 +2099,29 @@ class GeoMapWidget extends HTMLElement {
           this._previewGroup.addLayer(pinMarker);
 
           // ── Radius-Kreis (L.circle) ──
-          setTimeout(() => {
-            if (this._activeFilter) return;
-            const radiusCircle = L.circle([lat, lon], {
-              radius: 40000,          // 40 km in Meter
-              color: 'rgba(180,24,33,0.35)',
-              fillColor: 'rgba(180,24,33,0.04)',
-              fillOpacity: 1,
-              weight: 1.5,
-              interactive: false,
-              className: 'preview-radius-circle'
-            });
-            this._previewGroup.addLayer(radiusCircle);
-          }, 350);
+// ── Radius-Kreis (L.circle) mit automatischem Fade-out ──
+setTimeout(() => {
+  if (this._activeFilter) return;
+  
+  const radiusCircle = L.circle([lat, lon], {
+    radius: 40000,
+    color: 'rgba(180,24,33,0.35)',
+    fillColor: 'rgba(180,24,33,0.04)',
+    fillOpacity: 1,
+    weight: 1.5,
+    interactive: false,
+    className: 'preview-radius-circle'
+  });
+  this._previewGroup.addLayer(radiusCircle);
+  
+  // ✨ NEU: Circle nach Animation entfernen (1.2s Fade + 350ms Delay)
+  setTimeout(() => {
+    try {
+      this._previewGroup.removeLayer(radiusCircle);
+    } catch(e) {}
+  }, 1550);  // Gesamtdauer: 350ms Delay + 1200ms Animation
+  
+}, 350);
 
         }, i * 300);
       });
