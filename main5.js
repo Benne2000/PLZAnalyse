@@ -1952,7 +1952,7 @@ restoreDropdownSelections() {
     nummerSelect.value = nummer;
     // kein dispatchEvent nötig
   }
-},
+}
 
   prepareErhebungsInfo() {
     this.erhebungsInfo={};
