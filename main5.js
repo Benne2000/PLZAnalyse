@@ -855,7 +855,7 @@ sortTableByColumn(columnIndex) {
     // FIX 9: Wenn noch keine Erhebung geladen → Bedienungsanleitung zeigen
     if (!this._activeFilter) {
       const guide = document.createElement('div');
-      guide.style.cssText = 'padding:20px 14px;flex:1;display:flex;flex-direction:column;gap:14px;';
+guide.style.cssText = 'padding:20px 14px;flex:1;display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--red) var(--gray-100);';
 guide.innerHTML = `
         <div style="text-align:center;padding:12px 0 6px;">
           <div style="font-size:2.2rem;margin-bottom:6px;">🗺️</div>
@@ -916,21 +916,6 @@ guide.innerHTML = `
             </div>`).join('')}
         </div>
 
-        <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-400);margin-top:2px;margin-bottom:2px;">
-          Farb-Legende (WK-Modus)
-        </div>
-        <div style="background:var(--gray-50);border:1px solid var(--gray-100);border-radius:var(--radius-md);padding:8px 10px;font-size:0.7rem;color:var(--gray-600);line-height:1.6;">
-          <div style="margin-bottom:4px;font-weight:600;color:var(--gray-500)">Bestreut (HZ)</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;">
-            ${[['#e31a1c','> 25%'],['#fd8d3c','15–25%'],['#ffffb2','10–15%'],['#78c679','5–10%'],['#41ab5d','2–5%'],['#006837','< 2%']]
-              .map(([c,l])=>`<span style="display:inline-flex;align-items:center;gap:3px"><span style="width:12px;height:10px;background:${c};border-radius:2px;display:inline-block;border:1px solid rgba(0,0,0,0.1)"></span>${l}</span>`).join(' ')}
-          </div>
-          <div style="margin-bottom:4px;font-weight:600;color:var(--gray-500)">Nicht bestreut (potentiell)</div>
-          <div style="display:flex;flex-wrap:wrap;gap:4px;">
-            ${[['#cfd4da','> 50%'],['#bdbdbd','25–50%'],['#969696','15–25%'],['#6baed6','10–15%'],['#2171b5','5–10%'],['#08306b','< 5%']]
-              .map(([c,l])=>`<span style="display:inline-flex;align-items:center;gap:3px"><span style="width:12px;height:10px;background:${c};border-radius:2px;display:inline-block;border:1px solid rgba(0,0,0,0.1)"></span>${l}</span>`).join(' ')}
-          </div>
-        </div>
 
         <div style="padding:8px 10px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100);font-size:0.7rem;color:var(--gray-500);line-height:1.5;margin-top:2px;">
           💡 <strong style="color:var(--gray-600)">Tipp:</strong> Nach dem Laden einer Erhebung erscheint oben links der
@@ -2482,29 +2467,17 @@ const crossInfo = this._crossErhebungPLZ?.[plz] || {};
       });
     }
 
-    // NL-Farben (pro ErhebungsID eine Farbe)
-    const colors = ["#b41821","#1f78b4","#33a02c","#ff7f00","#6a3d9a","#e6ab02","#a6761d"];
-    const erhIDs = Object.keys(crossInfo);
-    const colorMap = {};
-    erhIDs.forEach((id, i) => { colorMap[id] = colors[i % colors.length]; });
+// Alle NLs über alle Erhebungen sammeln (dedupliziert)
+    const allNLs = [...new Set(Object.values(crossInfo).flatMap(s => [...s]))].join(", ") || "—";
 
     // Tooltip bauen
     const el = document.createElement("div");
     el.className = "doppel-tooltip";
     el.innerHTML = `
-      <div class="doppel-tooltip-title">⚠️ Doppelbestreuung · ${note}</div>
-      ${erhIDs.map(eid => {
-        const nls = [...(crossInfo[eid] || [])].join(", ") || "—";
-        const isAkt = eid === aktErhID;
-        return `<div class="doppel-tooltip-row">
-          <div class="doppel-tooltip-dot" style="background:${colorMap[eid]}"></div>
-          <div>
-            <span style="font-weight:700;color:${colorMap[eid]}">${eid}</span>
-            ${isAkt ? '<span style="font-size:0.65rem;color:var(--gray-400);margin-left:3px">(aktiv)</span>' : ''}
-            <div style="color:var(--gray-500);font-size:0.72rem;margin-top:1px">NL: ${nls}</div>
-          </div>
-        </div>`;
-      }).join("")}
+      <div class="doppel-tooltip-title">⚠️ Doppelbestreuung · PLZ ${plz}</div>
+      <div class="doppel-tooltip-row">
+        <div style="color:var(--gray-500);font-size:0.76rem">Durch NLs: <strong style="color:var(--gray-800)">${allNLs}</strong></div>
+      </div>
     `;
     el.style.position = "absolute";
     el.style.pointerEvents = "none";
