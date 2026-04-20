@@ -1300,16 +1300,27 @@ $("map-tile-toggle-btn")?.addEventListener("click", () => this.toggleMapTiles())
       if (rNL) this._crossErhebungPLZ[plz][rErhID].add(rNL);
     });
 
-    // 4. Zusätzlich: NLs der aktuellen Erhebung je PLZ hinzufügen
+// 4. NLs der aktuellen Erhebung je PLZ hinzufügen –
+    //    sowohl für Cross-Erhebungs-Treffer als auch für interne Doppelbestreuung
+    //    (isCritical = hzCount > 1 in filteredKennwerte)
     if (this.filteredData) {
       this.filteredData.forEach(row => {
         const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
         if (!rawPLZ || rawPLZ === "@NullMember") return;
         const plz = String(rawPLZ).padStart(5, "0");
-        if (!this._crossErhebungPLZ[plz]) return; // nur wenn Doppelbestreuung
         const isHZ = row["dimension_hzflag_0"]?.id?.trim() === "X";
         if (!isHZ) return;
         const nl = row["dimension_niederlassung_0"]?.id?.trim();
+
+        // Interne Doppelbestreuung: PLZ in filteredKennwerte als isCritical markiert
+        const isInternalCritical = this.filteredKennwerte?.[plz]?.isCritical;
+        // Cross-Erhebungs-Treffer: PLZ bereits in _crossErhebungPLZ eingetragen
+        const hasCrossEntry = !!this._crossErhebungPLZ[plz];
+
+        if (!isInternalCritical && !hasCrossEntry) return;
+
+        // Eintrag für aktive Erhebung anlegen falls noch nicht vorhanden
+        if (!this._crossErhebungPLZ[plz]) this._crossErhebungPLZ[plz] = {};
         if (!this._crossErhebungPLZ[plz][aktErhID]) {
           this._crossErhebungPLZ[plz][aktErhID] = new Set();
         }
@@ -1733,12 +1744,11 @@ if(!this.criticalMarkers) this.criticalMarkers={};
     if(!this.criticalMarkers[plz]) {
       const center=layer.getBounds().getCenter();
       // Feature 1+2: isCritical kann jetzt AUCH durch Cross-Erhebungs-Doppel ausgelöst werden
-      const crossInfo = this._crossErhebungPLZ?.[plz];
+const crossInfo = this._crossErhebungPLZ?.[plz];
       const isCrossErhebung = crossInfo && Object.keys(crossInfo).length > 0;
-      const tooltipLabel = isCrossErhebung ? "⚠️" : "⚠";
 
       const icon=L.divIcon({
-        html:`<div style="font-size:18px;line-height:1;animation:criticalPulse 1.8s ease-in-out infinite;display:block;transform-origin:center;cursor:pointer;" title="">${tooltipLabel}</div>`,
+        html:`<div style="font-size:18px;line-height:1;animation:criticalPulse 1.8s ease-in-out infinite;display:block;transform-origin:center;cursor:pointer;" title="">⚠️</div>`,
         className:"",iconSize:[22,22],iconAnchor:[11,11]
       });
       const marker = L.marker(center,{icon,interactive:true,zIndexOffset:2000}).addTo(this.map);
@@ -2445,14 +2455,32 @@ restoreDropdownSelections() {
     const box = this._shadowRoot.getElementById("streuverlust-box");
     if (box) box.innerHTML = "";
     // Zoom zurücksetzen
+// Zoom zurücksetzen
     this.map?.setView([49.4, 8.7], 7);
+    // Karte wieder sperren (Interaktions-Block reaktivieren)
+    const block = this._shadowRoot.getElementById("map-interaction-block");
+    if (block) block.classList.remove("hidden");
   }
+  
 /* Feature 2: Tooltip anzeigen */
   _showDoppelTooltip(plz, event, container) {
     this._hideDoppelTooltip();
-    const crossInfo = this._crossErhebungPLZ?.[plz] || {};
+const crossInfo = this._crossErhebungPLZ?.[plz] || {};
     const { erhID: aktErhID } = this._activeFilter || {};
     const note = this.geoNotes?.[plz] || `PLZ ${plz}`;
+
+    // Fallback: wenn crossInfo leer → interne NLs aus filteredData direkt lesen
+    if (Object.keys(crossInfo).length === 0 && aktErhID && this.filteredData) {
+      crossInfo[aktErhID] = new Set();
+      this.filteredData.forEach(row => {
+        const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
+        const p = String(rawPLZ || "").padStart(5, "0");
+        if (p !== plz) return;
+        if (row["dimension_hzflag_0"]?.id?.trim() !== "X") return;
+        const nl = row["dimension_niederlassung_0"]?.id?.trim();
+        if (nl) crossInfo[aktErhID].add(nl);
+      });
+    }
 
     // NL-Farben (pro ErhebungsID eine Farbe)
     const colors = ["#b41821","#1f78b4","#33a02c","#ff7f00","#6a3d9a","#e6ab02","#a6761d"];
