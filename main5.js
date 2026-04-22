@@ -1,3 +1,6 @@
+
+Kopieren
+
 let neighbours = true;
   let hasTriggeredClick = false;
   (function () {
@@ -529,11 +532,11 @@ let neighbours = true;
       }
  
       #overview-toggle-btn {
-        position: absolute; top: 12px; right: calc(26% + 14px);
+        position: absolute; top: 12px; right: 14px;
         background: var(--white); border: 1.5px solid var(--gray-200);
         border-radius: 100px; padding: 6px 14px 6px 10px;
         font-size: 0.78rem; font-weight: 600; color: var(--gray-600);
-        cursor: pointer; z-index: 20; display: none;
+        cursor: pointer; z-index: 99990; display: none;
         align-items: center; gap: 6px;
         box-shadow: var(--shadow-sm);
         transition: border-color 0.18s, background 0.18s, color 0.18s, transform 0.15s;
@@ -2717,8 +2720,6 @@ class GeoMapWidget extends HTMLElement {
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(totalUmsatzHR)} €</div>
           <div style="color:var(--gray-600);font-weight:500">HZ-Werbekosten</div>
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(totalHZKosten)} €</div>
-          <div style="color:var(--gray-600);font-weight:500">Werbekosten (%)</div>
-          <div style="text-align:right;font-weight:700;color:var(--gray-800)">${wkGesamt} %</div>
           <div style="color:var(--gray-600);font-weight:500">Haushalte</div>
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(Math.round(totalHaushalteWK))}</div>
         </div>
@@ -2975,3 +2976,4 @@ class GeoMapWidget extends HTMLElement {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
+ 
