@@ -1,6 +1,3 @@
-
-Kopieren
-
 let neighbours = true;
   let hasTriggeredClick = false;
   (function () {
