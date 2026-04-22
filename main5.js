@@ -848,7 +848,7 @@ class GeoMapWidget extends HTMLElement {
         }
       });
     }
-    box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Ges.: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
+    box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Umsatz Gesamt: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
   }
 
   computeStreuverlust() {
