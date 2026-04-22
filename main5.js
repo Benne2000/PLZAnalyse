@@ -366,7 +366,7 @@ let neighbours = true;
       .umsatz-subheader { padding: 12px 14px 6px; font-size: 0.87rem; line-height: 1.55; background: var(--red-bg); border-bottom: 1px solid var(--red-border); }
       .umsatz-subheader .strong { font-weight: 700; color: var(--gray-900); }
       .section-title { margin: 0; padding: 6px 14px; background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); font-weight: 700; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-500); }
-      .umsatz-grid { display: grid; grid-template-columns: 1.1fr 0.85fr 0.85fr 0.85fr; gap: 5px 8px; padding: 8px 14px; align-items: center; }
+      .umsatz-grid { display: grid; grid-template-columns: 1.3fr 0.9fr 0.9fr; gap: 5px 10px; padding: 8px 14px; align-items: center; }
       .umsatz-grid .label { font-weight: 500; color: var(--gray-600); font-size: 0.82rem; }
       .umsatz-grid .value { text-align: right; font-weight: 700; color: var(--gray-800); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
       .umsatz-bar { height: 10px; border-radius: 5px; overflow: hidden; display: flex; margin: 6px 14px; background: var(--gray-100); }
@@ -528,6 +528,20 @@ let neighbours = true;
         100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
       }
  
+      #overview-toggle-btn {
+        position: absolute; top: 12px; right: calc(26% + 14px);
+        background: var(--white); border: 1.5px solid var(--gray-200);
+        border-radius: 100px; padding: 6px 14px 6px 10px;
+        font-size: 0.78rem; font-weight: 600; color: var(--gray-600);
+        cursor: pointer; z-index: 20; display: none;
+        align-items: center; gap: 6px;
+        box-shadow: var(--shadow-sm);
+        transition: border-color 0.18s, background 0.18s, color 0.18s, transform 0.15s;
+        font-family: var(--font);
+      }
+      #overview-toggle-btn:hover { border-color: var(--red); background: var(--red-bg); color: var(--red); }
+      #overview-toggle-btn.visible { display: flex; }
+ 
       #back-to-home-btn {
         position: absolute; top: 12px; left: 14px;
         background: var(--white); border: 1.5px solid var(--gray-200);
@@ -600,6 +614,9 @@ let neighbours = true;
       <div id="map-interaction-block"></div>
         <button id="back-to-home-btn" title="Zurück zum Hauptmenü">
           ← Hauptmenü
+        </button>
+        <button id="overview-toggle-btn" title="Gesamt-Übersicht">
+          📊 Übersicht
         </button>
         <div id="map-preview-overlay" style="position:absolute;inset:0;z-index:400;pointer-events:none;overflow:hidden;"></div>
         <div id="loading-spinner" class="spinner hidden"></div>
@@ -1198,6 +1215,7 @@ class GeoMapWidget extends HTMLElement {
     $("map-tile-toggle-btn")?.addEventListener("click", () => this.toggleMapTiles());
     $("legend-toggle-btn")?.addEventListener("click", () => $("heatmap-legend").classList.toggle("hidden"));
     $("back-to-home-btn")?.addEventListener("click", () => this._resetToHome());
+    $("overview-toggle-btn")?.addEventListener("click", () => this.showOverviewPopup());
     btnWA?.classList.add("disabled");
  
     const updateSliderFill = (slider) => {
@@ -1225,7 +1243,7 @@ class GeoMapWidget extends HTMLElement {
       this.bestreuungGroup?.clearLayers();
       if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
       this.updateGeoLayer(); this.updateHeatmapLegend();
-      if (this._activeFilter) this.renderDataTable(this.filteredKennwerte);
+      if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); }
     });
  
     btnUmsatz?.addEventListener("click", () => {
@@ -1241,7 +1259,7 @@ class GeoMapWidget extends HTMLElement {
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
       if (!this.showBestreuung) this.bestreuungGroup?.clearLayers();
       this.updateGeoLayer(); this.updateHeatmapLegend();
-      if (this._activeFilter) this.renderDataTable(this.filteredKennwerte);
+      if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); }
     });
  
     typeSwitch?.addEventListener("click", () => {
@@ -1593,27 +1611,22 @@ class GeoMapWidget extends HTMLElement {
         <div class="umsatz-grid" style="padding:6px 14px">
           <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
           <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
-          <div class="value" style="font-weight:700;color:var(--gray-800)">Roh</div>
           <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
  
           <div class="label" style="${dis('stationaer')}">🏬 Stationär</div>
           <div class="value" style="${dis('stationaer')}">${fA(st.abs)} €</div>
-          <div class="value" style="${dis('stationaer')}">${fA(values.umsatzErhebung || 0)} €</div>
           <div class="value" style="${dis('stationaer')}">${fH(st.hh)} €</div>
  
           <div class="label" style="${dis('pluscard')}">💳 Pluscard</div>
           <div class="value" style="${dis('pluscard')}">${fA(pc.abs)} €</div>
-          <div class="value" style="${dis('pluscard')}">–</div>
           <div class="value" style="${dis('pluscard')}">${fH(pc.hh)} €</div>
  
           <div class="label" style="${dis('ra')}">📦 R&amp;A</div>
           <div class="value" style="${dis('ra')}">${fA(ra.abs)} €</div>
-          <div class="value" style="${dis('ra')}">–</div>
           <div class="value" style="${dis('ra')}">${fH(ra.hh)} €</div>
  
           <div class="label" style="${dis('online')}">🛒 KUBE OS</div>
           <div class="value" style="${dis('online')}">${fA(os.abs)} €</div>
-          <div class="value" style="${dis('online')}">–</div>
           <div class="value" style="${dis('online')}">${fH(os.hh)} €</div>
         </div>
  
@@ -2255,6 +2268,7 @@ class GeoMapWidget extends HTMLElement {
       const block = this._shadowRoot.getElementById("map-interaction-block");
       if (block) block.classList.add("hidden");
       this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
+      this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
       this.showOverviewPopup();
     } finally {
       this._hideCinematicLoader();
@@ -2502,6 +2516,7 @@ class GeoMapWidget extends HTMLElement {
       Object.keys(this.criticalMarkers).forEach(plz => this._removeCriticalMarker(plz));
     }
     this._shadowRoot.getElementById("back-to-home-btn")?.classList.remove("visible");
+    this._shadowRoot.getElementById("overview-toggle-btn")?.classList.remove("visible");
     this._startPreviewAnimation();
     this.renderDataTableFromEntries([]);
     const box = this._shadowRoot.getElementById("streuverlust-box");
@@ -2587,10 +2602,11 @@ class GeoMapWidget extends HTMLElement {
   }
  
   showOverviewPopup() {
+    if (!this._activeFilter) return;
     const popup = this._shadowRoot.getElementById("side-popup-overview");
     if (!popup) return;
  
-    // Alle anderen Popups schließen
+    // Andere Popups schließen
     this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
     this._shadowRoot.getElementById("side-popup")?.classList.add("hidden");
     this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
@@ -2609,126 +2625,138 @@ class GeoMapWidget extends HTMLElement {
     const panel = this._shadowRoot.getElementById("map-control-panel");
     panel?.classList.remove("panel-large"); panel?.classList.add("panel-medium");
  
-    const isUmsatzMode = this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil";
+    // ── Gemeinsame Aggregation ──
+    const isWerbungMode = this.umsatzMainMode === "werbung";
+    const useWerbe  = this.useWerbeUmsatz === true;
+    const useZusatz = this.useZusatzUmsatz === true;
  
-    if (isUmsatzMode) {
-      // Umsatz-Gesamt-Popup
-      const isWerbungMode = this.umsatzMainMode === "werbung";
-      const useWerbe  = this.useWerbeUmsatz === true;
-      const useZusatz = this.useZusatzUmsatz === true;
-      const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
-        if (!isWerbungMode) return { abs: base, hh: baseHH };
-        let abs = 0, hh = 0;
-        if (useWerbe)  { abs += werb;   hh += werbHH;  }
-        if (useZusatz) { abs += zusatz; hh += zusatzHH; }
-        return { abs, hh };
-      };
-      const fA = x => Number(x||0).toLocaleString("de-DE");
-      const fH = x => Number(x||0).toFixed(2);
-      const dis = (key) => !this.activeCategories.has(key) ? 'opacity:0.3;filter:grayscale(1)' : '';
+    const aggKeys = ['umsatz','ra','onlineshop','pluscard',
+      'umsatzWerbung','raWerbung','onlineshopWerbung','pluscardWerbung',
+      'umsatzZusatz','raZusatz','onlineshopZusatz','pluscardZusatz',
+      'umsatzErhebung','haushalte',
+      'umsatzProHaushalt','raProHaushalt','onlineshopProHaushalt','pluscardProHaushalt',
+      'umsatzWerbungProHaushalt','raWerbungProHaushalt','onlineshopWerbungProHaushalt','pluscardWerbungProHaushalt',
+      'umsatzZusatzProHaushalt','raZusatzProHaushalt','onlineshopZusatzProHaushalt','pluscardZusatzProHaushalt'];
+    const agg = Object.fromEntries(aggKeys.map(k => [k, 0]));
+    let totalUmsatzHR = 0, totalHZKosten = 0, totalHaushalteWK = 0, plzCount = 0;
  
-      // Aggregiere alle PLZ-Werte
-      const agg = { umsatz:0, ra:0, onlineshop:0, pluscard:0,
-        umsatzWerbung:0, raWerbung:0, onlineshopWerbung:0, pluscardWerbung:0,
-        umsatzZusatz:0, raZusatz:0, onlineshopZusatz:0, pluscardZusatz:0,
-        umsatzErhebung:0, haushalte:0,
-        umsatzProHaushalt:0, raProHaushalt:0, onlineshopProHaushalt:0, pluscardProHaushalt:0,
-        umsatzWerbungProHaushalt:0, raWerbungProHaushalt:0, onlineshopWerbungProHaushalt:0, pluscardWerbungProHaushalt:0,
-        umsatzZusatzProHaushalt:0, raZusatzProHaushalt:0, onlineshopZusatzProHaushalt:0, pluscardZusatzProHaushalt:0,
-      };
-      Object.entries(this.filteredPLZWerte || {}).forEach(([plz, v]) => {
-        if (this.plzImRadius && this.plzImRadius.size > 0 && !this.plzImRadius.has(plz)) return;
-        for (const key of Object.keys(agg)) { agg[key] = (agg[key]||0) + (v[key]||0); }
-      });
+    Object.entries(this.filteredPLZWerte || {}).forEach(([plz, v]) => {
+      if (this.plzImRadius && this.plzImRadius.size > 0 && !this.plzImRadius.has(plz)) return;
+      for (const key of aggKeys) { agg[key] += v[key] || 0; }
+    });
+    Object.entries(this.filteredKennwerte || {}).forEach(([plz, k]) => {
+      if (this.plzImRadius && this.plzImRadius.size > 0 && !this.plzImRadius.has(plz)) return;
+      totalUmsatzHR  += k["value_hr_n_umsatz_0"]?.raw ?? 0;
+      totalHZKosten  += k["value_hz_kosten_0"]?.raw   ?? 0;
+      totalHaushalteWK += this.filteredPLZWerte?.[plz]?.haushalte ?? 0;
+      plzCount++;
+    });
  
-      const st = pick(agg.umsatz, agg.umsatzWerbung, agg.umsatzZusatz, agg.umsatzProHaushalt, agg.umsatzWerbungProHaushalt, agg.umsatzZusatzProHaushalt);
-      const pc = pick(agg.pluscard, agg.pluscardWerbung, agg.pluscardZusatz, agg.pluscardProHaushalt, agg.pluscardWerbungProHaushalt, agg.pluscardZusatzProHaushalt);
-      const ra = pick(agg.ra, agg.raWerbung, agg.raZusatz, agg.raProHaushalt, agg.raWerbungProHaushalt, agg.raZusatzProHaushalt);
-      const os = pick(agg.onlineshop, agg.onlineshopWerbung, agg.onlineshopZusatz, agg.onlineshopProHaushalt, agg.onlineshopWerbungProHaushalt, agg.onlineshopZusatzProHaushalt);
-      const active = { stationaer: this.activeCategories.has("stationaer"), pluscard: this.activeCategories.has("pluscard"), ra: this.activeCategories.has("ra"), online: this.activeCategories.has("online") };
-      const totalAbs = (active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
-      const totalHH  = (active.stationaer?st.hh:0) +(active.pluscard?pc.hh:0) +(active.ra?ra.hh:0) +(active.online?os.hh:0);
-      const tN = agg.umsatz + agg.pluscard + agg.ra + agg.onlineshop;
-      const tW = agg.umsatzWerbung + agg.pluscardWerbung + agg.raWerbung + agg.onlineshopWerbung;
-      const tZ = agg.umsatzZusatz + agg.pluscardZusatz + agg.raZusatz + agg.onlineshopZusatz;
-      const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : "–";
-      const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
-      const hl = !isWerbungMode ? "Gesamtumsatz" : useWerbe && useZusatz ? "Werbeumsatz + Mitgekauft" : useWerbe ? "Werbeumsatz" : "Mitgekauft";
+    const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
+      if (!isWerbungMode) return { abs: base, hh: baseHH };
+      let abs = 0, hh = 0;
+      if (useWerbe)  { abs += werb;   hh += werbHH;  }
+      if (useZusatz) { abs += zusatz; hh += zusatzHH; }
+      return { abs, hh };
+    };
+    const st = pick(agg.umsatz,    agg.umsatzWerbung,    agg.umsatzZusatz,    agg.umsatzProHaushalt,    agg.umsatzWerbungProHaushalt,    agg.umsatzZusatzProHaushalt);
+    const pc = pick(agg.pluscard,  agg.pluscardWerbung,  agg.pluscardZusatz,  agg.pluscardProHaushalt,  agg.pluscardWerbungProHaushalt,  agg.pluscardZusatzProHaushalt);
+    const ra = pick(agg.ra,        agg.raWerbung,        agg.raZusatz,        agg.raProHaushalt,        agg.raWerbungProHaushalt,        agg.raZusatzProHaushalt);
+    const os = pick(agg.onlineshop,agg.onlineshopWerbung,agg.onlineshopZusatz,agg.onlineshopProHaushalt,agg.onlineshopWerbungProHaushalt,agg.onlineshopZusatzProHaushalt);
  
-      popup.innerHTML = `
-        <div class="popup-header" style="flex-shrink:0;background:linear-gradient(135deg,var(--red) 0%,var(--red-light) 100%);color:white;padding:12px 14px 10px;font-size:0.97rem;font-weight:700;display:flex;justify-content:space-between;align-items:flex-start;border-radius:var(--radius-xl) 0 0 0;line-height:1.3;">
-          <div style="overflow:hidden"><div style="font-size:0.68rem;opacity:0.8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;">Gesamt-Ansicht</div><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px" title="${headerTitle}">${headerTitle}</div></div>
-          <button class="close-btn" style="position:static;flex-shrink:0;width:26px;height:26px;background:rgba(255,255,255,0.2);color:white;border:1.5px solid rgba(255,255,255,0.35);border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:8px;margin-top:2px;">✕</button>
+    const active = {
+      stationaer: this.activeCategories.has("stationaer"),
+      pluscard:   this.activeCategories.has("pluscard"),
+      ra:         this.activeCategories.has("ra"),
+      online:     this.activeCategories.has("online"),
+    };
+    const totalAbs = (active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
+    const totalHH  = (active.stationaer?st.hh:0) +(active.pluscard?pc.hh:0) +(active.ra?ra.hh:0) +(active.online?os.hh:0);
+    const tN = agg.umsatz + agg.pluscard + agg.ra + agg.onlineshop;
+    const tW = agg.umsatzWerbung + agg.pluscardWerbung + agg.raWerbung + agg.onlineshopWerbung;
+    const tZ = agg.umsatzZusatz  + agg.pluscardZusatz  + agg.raZusatz  + agg.onlineshopZusatz;
+    const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : "–";
+    const wkGesamt = totalUmsatzHR > 0 ? ((totalHZKosten / totalUmsatzHR) * 100).toFixed(1) : "–";
+ 
+    const fA  = x => Number(x||0).toLocaleString("de-DE");
+    const fH  = x => Number(x||0).toFixed(2);
+    const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
+    const dis = (key) => !active[key] ? 'opacity:0.3;filter:grayscale(1)' : '';
+    const hl = !isWerbungMode ? "Gesamtumsatz" : useWerbe && useZusatz ? "Werbeumsatz + Mitgekauft" : useWerbe ? "Werbeumsatz" : "Mitgekauft";
+ 
+    popup.innerHTML = `
+      <div style="flex-shrink:0;background:linear-gradient(135deg,var(--red) 0%,var(--red-light) 100%);color:white;padding:12px 14px 10px;display:flex;justify-content:space-between;align-items:flex-start;border-radius:var(--radius-xl) 0 0 0;line-height:1.3;">
+        <div style="overflow:hidden;min-width:0">
+          <div style="font-size:0.68rem;opacity:0.8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;">Gesamt-Ansicht · ${plzCount} PLZs</div>
+          <div style="font-size:0.97rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:6px" title="${headerTitle}">${headerTitle}</div>
         </div>
-        <div style="overflow-y:auto;flex:1;min-height:0;">
-          <div class="umsatz-subheader">
-            <span class="strong">${hl}: ${fA(totalAbs)} €</span><br>
-            <span style="font-size:0.78rem;color:var(--gray-500)">${fH(totalHH)} € / HH &nbsp;·&nbsp; Werbeanteil: ${antWA} %</span>
-          </div>
-          <div class="umsatz-bar" style="margin:8px 14px 2px">
-            <div style="background:var(--red);width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
-            <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
-            <div style="background:#ffb000;width:${pct(tZ,tN+tW+tZ)}%;transition:width .5s ease"></div>
-          </div>
-          <div class="umsatz-legend" style="padding:2px 14px 8px">
-            <span><span style="color:var(--red)">⬤</span> Normal</span>
-            <span><span style="color:#1f78b4">⬤</span> Werbung</span>
-            <span><span style="color:#ffb000">⬤</span> Mitgekauft</span>
-          </div>
-          <div class="section-title">Nach Kategorien</div>
-          <div class="umsatz-grid" style="padding:6px 14px">
-            <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
-            <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
-            <div class="value" style="font-weight:700;color:var(--gray-800)">Roh</div>
-            <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
-            <div class="label" style="${dis('stationaer')}">🏬 Stationär</div>
-            <div class="value" style="${dis('stationaer')}">${fA(st.abs)} €</div>
-            <div class="value" style="${dis('stationaer')}">${fA(agg.umsatzErhebung||0)} €</div>
-            <div class="value" style="${dis('stationaer')}">${fH(st.hh)} €</div>
-            <div class="label" style="${dis('pluscard')}">💳 Pluscard</div>
-            <div class="value" style="${dis('pluscard')}">${fA(pc.abs)} €</div>
-            <div class="value" style="${dis('pluscard')}">–</div>
-            <div class="value" style="${dis('pluscard')}">${fH(pc.hh)} €</div>
-            <div class="label" style="${dis('ra')}">📦 R&amp;A</div>
-            <div class="value" style="${dis('ra')}">${fA(ra.abs)} €</div>
-            <div class="value" style="${dis('ra')}">–</div>
-            <div class="value" style="${dis('ra')}">${fH(ra.hh)} €</div>
-            <div class="label" style="${dis('online')}">🛒 KUBE OS</div>
-            <div class="value" style="${dis('online')}">${fA(os.abs)} €</div>
-            <div class="value" style="${dis('online')}">–</div>
-            <div class="value" style="${dis('online')}">${fH(os.hh)} €</div>
-          </div>
-        </div>`;
-    } else {
-      // WK-Gesamt-Popup
-      const fN = x => Number(x||0).toLocaleString("de-DE");
-      let totalUmsatz = 0, totalHZKosten = 0, totalHaushalte = 0, plzCount = 0;
-      Object.entries(this.filteredKennwerte || {}).forEach(([plz, k]) => {
-        if (this.plzImRadius && this.plzImRadius.size > 0 && !this.plzImRadius.has(plz)) return;
-        totalUmsatz    += k["value_hr_n_umsatz_0"]?.raw  ?? 0;
-        totalHZKosten  += k["value_hz_kosten_0"]?.raw    ?? 0;
-        totalHaushalte += this.filteredPLZWerte?.[plz]?.haushalte ?? 0;
-        plzCount++;
-      });
-      const wkGesamt = totalUmsatz > 0 ? ((totalHZKosten / totalUmsatz) * 100).toFixed(1) : "–";
-      let totalErhUmsatz = 0;
-      Object.values(this.filteredPLZWerte || {}).forEach(v => { totalErhUmsatz += v.umsatzErhebung || 0; });
+        <button class="close-btn" style="position:static;flex-shrink:0;width:26px;height:26px;background:rgba(255,255,255,0.2);color:white;border:1.5px solid rgba(255,255,255,0.35);border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:8px;margin-top:2px;transition:background .15s,transform .15s">✕</button>
+      </div>
  
-      popup.innerHTML = `
-        <div class="popup-header-strip" style="background:linear-gradient(135deg,var(--red) 0%,var(--red-light) 100%);color:white;padding:12px 14px 10px;border-radius:var(--radius-xl) 0 0 0;position:relative;">
-          <div class="popup-location">Gesamt-Ansicht · ${plzCount} PLZs</div>
-          <div class="popup-title" style="padding-right:32px" title="${headerTitle}">${headerTitle}</div>
-          <button class="close-btn">✕</button>
+      <div style="overflow-y:auto;flex:1;min-height:0;">
+ 
+        <div class="umsatz-subheader">
+          <span class="strong">${hl}: ${fA(totalAbs)} €</span><br>
+          <span style="font-size:0.78rem;color:var(--gray-500)">${fH(totalHH)} € / HH &nbsp;·&nbsp; Werbeanteil: ${antWA} %</span>
         </div>
-        <table><thead><tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr (Gesamt)</th></tr></thead>
-        <tbody>
-          <tr><td class="label-cell">Netto-Umsatz (Jahr)</td><td class="value-cell">${fN(totalUmsatz)} €</td></tr>
-          <tr><td class="label-cell">Umsatz (Erhebung)</td><td class="value-cell">${fN(totalErhUmsatz)} €</td></tr>
-          <tr><td class="label-cell">HZ-Werbekosten</td><td class="value-cell">${fN(totalHZKosten)} €</td></tr>
-          <tr><td class="label-cell">Werbekosten (%)</td><td class="value-cell">${wkGesamt} %</td></tr>
-          <tr><td class="label-cell">Haushalte</td><td class="value-cell">${fN(Math.round(totalHaushalte))}</td></tr>
-        </tbody></table>`;
-    }
+ 
+        <div class="umsatz-bar" style="margin:8px 14px 2px">
+          <div style="background:var(--red);width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
+          <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
+          <div style="background:#ffb000;width:${pct(tZ,tN+tW+tZ)}%;transition:width .5s ease"></div>
+        </div>
+        <div class="umsatz-legend" style="padding:2px 14px 8px">
+          <span><span style="color:var(--red)">⬤</span> Normal</span>
+          <span><span style="color:#1f78b4">⬤</span> Werbung</span>
+          <span><span style="color:#ffb000">⬤</span> Mitgekauft</span>
+        </div>
+ 
+        <div class="section-title">WK-Kennwerte</div>
+        <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px;font-size:0.82rem;">
+          <div style="color:var(--gray-600);font-weight:500">Netto-Umsatz (HR)</div>
+          <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(totalUmsatzHR)} €</div>
+          <div style="color:var(--gray-600);font-weight:500">HZ-Werbekosten</div>
+          <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(totalHZKosten)} €</div>
+          <div style="color:var(--gray-600);font-weight:500">Werbekosten (%)</div>
+          <div style="text-align:right;font-weight:700;color:var(--gray-800)">${wkGesamt} %</div>
+          <div style="color:var(--gray-600);font-weight:500">Haushalte</div>
+          <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(Math.round(totalHaushalteWK))}</div>
+        </div>
+ 
+        <div class="section-title">Umsatzanteile (Kategorien)</div>
+        <div class="umsatz-bar" style="margin:8px 14px 2px">
+          <div class="share-stationaer" style="width:${pct(agg.umsatz,tN)}%;transition:width .5s ease"></div>
+          <div class="share-pluscard"   style="width:${pct(agg.pluscard,tN)}%;transition:width .5s ease"></div>
+          <div class="share-ra"         style="width:${pct(agg.ra,tN)}%;transition:width .5s ease"></div>
+          <div class="share-online"     style="width:${pct(agg.onlineshop,tN)}%;transition:width .5s ease"></div>
+        </div>
+        <div class="umsatz-legend" style="padding:2px 14px 8px">
+          <span><span style="color:var(--red)">⬤</span> Stationär</span>
+          <span><span style="color:#1f78b4">⬤</span> Pluscard</span>
+          <span><span style="color:#33a02c">⬤</span> R&amp;A</span>
+          <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
+        </div>
+ 
+        <div class="section-title">Nach Kategorien</div>
+        <div class="umsatz-grid" style="padding:6px 14px">
+          <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
+          <div class="label" style="${dis('stationaer')}">🏬 Stationär</div>
+          <div class="value" style="${dis('stationaer')}">${fA(st.abs)} €</div>
+          <div class="value" style="${dis('stationaer')}">${fH(st.hh)} €</div>
+          <div class="label" style="${dis('pluscard')}">💳 Pluscard</div>
+          <div class="value" style="${dis('pluscard')}">${fA(pc.abs)} €</div>
+          <div class="value" style="${dis('pluscard')}">${fH(pc.hh)} €</div>
+          <div class="label" style="${dis('ra')}">📦 R&amp;A</div>
+          <div class="value" style="${dis('ra')}">${fA(ra.abs)} €</div>
+          <div class="value" style="${dis('ra')}">${fH(ra.hh)} €</div>
+          <div class="label" style="${dis('online')}">🛒 KUBE OS</div>
+          <div class="value" style="${dis('online')}">${fA(os.abs)} €</div>
+          <div class="value" style="${dis('online')}">${fH(os.hh)} €</div>
+        </div>
+ 
+      </div>`;
  
     popup.classList.remove("hidden"); void popup.offsetWidth; popup.classList.add("show");
     popup.querySelector(".close-btn").onclick = () => {
