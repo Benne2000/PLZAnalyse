@@ -2418,22 +2418,22 @@ class GeoMapWidget extends HTMLElement {
       if (nlList.length === 0) return;
 
       // Smooth zoom auf das Gebiet der Erhebung
+      // Padding rechts berücksichtigt das Control-Panel (26% der Kartenbreite)
       if (this.map && !this._activeFilter) {
         const lats = nlList.map(([, c]) => c.lat);
         const lons = nlList.map(([, c]) => c.lon);
         const minLat = Math.min(...lats), maxLat = Math.max(...lats);
         const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-        // Etwas padding damit die Marker nicht am Rand kleben
-        const pad = 0.8;
-        const bounds = L.latLngBounds(
-          [minLat - pad, minLon - pad],
-          [maxLat + pad, maxLon + pad]
-        );
+        const bounds = L.latLngBounds([minLat, minLon], [maxLat, maxLon]);
+        // Pixel-Padding: links/oben/unten 60px, rechts 80px extra für das Control-Panel
+        const mapSize = this.map.getSize();
+        const rightPad = Math.round(mapSize.x * 0.28) + 20;
         this.map.flyToBounds(bounds, {
           duration: 1.4,
           easeLinearity: 0.25,
           maxZoom: 9,
-          padding: [40, 40]
+          paddingTopLeft:     [60, 70],
+          paddingBottomRight: [rightPad, 60]
         });
       }
 
