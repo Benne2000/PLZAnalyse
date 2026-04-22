@@ -804,8 +804,9 @@ class GeoMapWidget extends HTMLElement {
         const p = features[i].properties;
         if (p?.plz && p?.note) this.geoNotes[p.plz.trim()] = p.note.trim();
       }
-      // GeoJSON rendern ohne Style-Funktion (updateGeoLayer übernimmt das sofort danach)
+      // GeoJSON mit Canvas-Renderer – kein SVG-DOM-Overhead beim Zoomen
       this._geoLayer = L.geoJSON(this._geoData, {
+        renderer: this._canvasRenderer,
         style: () => ({ fillColor: "#e9ecef", weight: 0.8, opacity: 1, color: "white", fillOpacity: 0.35 }),
       }).addTo(this.map);
       // layerByPLZ Index aufbauen
@@ -848,7 +849,7 @@ class GeoMapWidget extends HTMLElement {
         }
       });
     }
-    box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Umsatz Gesamt: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
+    box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Gesamt: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
   }
 
   computeStreuverlust() {
@@ -1185,7 +1186,15 @@ class GeoMapWidget extends HTMLElement {
   initializeMapBase() {
     const $ = id => this._shadowRoot.getElementById(id);
     const mapContainer = $("map"); if (!mapContainer) return;
-    this.map = L.map(mapContainer).setView([49.4, 8.7], 7);
+    // Canvas-Renderer: alle ~8000 PLZ-Polygone in einem einzigen GPU-Paint statt
+    // tausenden einzelner SVG-DOM-Elemente – eliminiert den Zoom-Lag
+    this._canvasRenderer = L.canvas({ padding: 0.5 });
+    this.map = L.map(mapContainer, {
+      preferCanvas: true,
+      renderer: this._canvasRenderer,
+      zoomAnimation: true,
+      markerZoomAnimation: true,
+    }).setView([49.4, 8.7], 7);
     this.currentMapMode = "wk"; this.activePopupType = "wk"; this.umsatzDarstellung = "abs";
     this.umsatzMainMode = "gesamt"; this.useWerbeUmsatz = true; this.useZusatzUmsatz = false;
     this.activeCategories = new Set(["stationaer"]); this.showBestreuung = false; this.useRadiusFilter = true;
@@ -1404,6 +1413,7 @@ class GeoMapWidget extends HTMLElement {
       if (!daten?.isHZ) return;
       const layer = this._layerByPLZ[plz];
       const pulseLayer = L.geoJSON(layer.feature, {
+        renderer: this._canvasRenderer,
         style: {
           fillColor: 'transparent', fill: false,
           color: '#1565c0', weight: 2.5,
