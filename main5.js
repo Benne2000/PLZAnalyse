@@ -1887,6 +1887,9 @@ class GeoMapWidget extends HTMLElement {
     this.applyRadiusFilter(radius); this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte);
   }
 
+  // Einheitliche Formatierung: "5" → "GF-Bereich 5"
+  _fmtGF(id) { return id ? `GF-Bereich ${id}` : id; }
+
   setupFilterDropdowns() {
     if (this._dropdownsInitialized) {
       const erhSelect = this._shadowRoot.getElementById("erhebung-select");
@@ -1901,7 +1904,7 @@ class GeoMapWidget extends HTMLElement {
         Object.keys(this._erhData).forEach(erhID => {
           if (erhID !== "@NullMember") {
             const opt = document.createElement("option");
-            opt.value = erhID; opt.textContent = erhID;
+            opt.value = erhID; opt.textContent = this._fmtGF(erhID);
             erhSelect.appendChild(opt);
           }
         });
@@ -1918,7 +1921,7 @@ class GeoMapWidget extends HTMLElement {
 
     const createPlaceholder=(text)=>{ const opt=document.createElement("option"); opt.value="";opt.textContent=text;opt.disabled=true;opt.selected=true; return opt; };
     erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
-    Object.keys(this._erhData).forEach(erhID=>{ if(erhID!=="@NullMember"){const opt=document.createElement("option");opt.value=erhID;opt.textContent=erhID;erhSelect.appendChild(opt);}});
+    Object.keys(this._erhData).forEach(erhID=>{ if(erhID!=="@NullMember"){const opt=document.createElement("option");opt.value=erhID;opt.textContent=this._fmtGF(erhID);erhSelect.appendChild(opt);}});
 
     const filterBtn = this._shadowRoot.getElementById("filter-button");
     const updateBtnState = () => {
@@ -1980,7 +1983,7 @@ class GeoMapWidget extends HTMLElement {
     const tbody=document.createElement("tbody");
     Object.values(this.erhebungsInfo).forEach(info=>{
       const tr=document.createElement("tr");tr.classList.add("nl-info-row");tr.dataset.nl=info.nl;
-      [info.nl,Math.round(info.jahresumsatz).toLocaleString("de-DE"),Math.round(info.erfasst_total).toLocaleString("de-DE"),(info.pct_erfassung*100).toFixed(1)+"%",Math.round(info.erfasst_valid).toLocaleString("de-DE"),(info.pct_hochrechnung*100).toFixed(1)+"%"]
+      [this._fmtGF(info.nl),Math.round(info.jahresumsatz).toLocaleString("de-DE"),Math.round(info.erfasst_total).toLocaleString("de-DE"),(info.pct_erfassung*100).toFixed(1)+"%",Math.round(info.erfasst_valid).toLocaleString("de-DE"),(info.pct_hochrechnung*100).toFixed(1)+"%"]
         .forEach((val,i)=>{const td=document.createElement("td");td.textContent=val;td.classList.add(headers[i].class);tr.appendChild(td);});
       tr.addEventListener("click",()=>{
         this._nlSelectionInitialized = true;
@@ -2408,11 +2411,31 @@ class GeoMapWidget extends HTMLElement {
 
       const lbl = getOrCreateLabel();
       lbl.style.opacity = '0';
-      setTimeout(() => { lbl.textContent = `Vorschau · ${erhID}`; lbl.style.opacity = '1'; }, 150);
+      setTimeout(() => { lbl.textContent = `Vorschau · ${this._fmtGF(erhID)}`; lbl.style.opacity = '1'; }, 150);
 
       const nls = nlByErh[erhID] || {};
       const nlList = Object.entries(nls);
       if (nlList.length === 0) return;
+
+      // Smooth zoom auf das Gebiet der Erhebung
+      if (this.map && !this._activeFilter) {
+        const lats = nlList.map(([, c]) => c.lat);
+        const lons = nlList.map(([, c]) => c.lon);
+        const minLat = Math.min(...lats), maxLat = Math.max(...lats);
+        const minLon = Math.min(...lons), maxLon = Math.max(...lons);
+        // Etwas padding damit die Marker nicht am Rand kleben
+        const pad = 0.8;
+        const bounds = L.latLngBounds(
+          [minLat - pad, minLon - pad],
+          [maxLat + pad, maxLon + pad]
+        );
+        this.map.flyToBounds(bounds, {
+          duration: 1.4,
+          easeLinearity: 0.25,
+          maxZoom: 9,
+          padding: [40, 40]
+        });
+      }
 
       nlList.forEach(([nl, { lat, lon }], i) => {
         setTimeout(() => {
@@ -2634,9 +2657,9 @@ class GeoMapWidget extends HTMLElement {
     const { erhID } = this._activeFilter || {};
     const selNLs = this._selectedNLs;
     const allNLs = this.allNLs || [];
-    let headerTitle = erhID || "Übersicht";
+    let headerTitle = this._fmtGF(erhID) || "Übersicht";
     if (selNLs && selNLs.size > 0 && selNLs.size < allNLs.length) {
-      headerTitle = [...selNLs].join(", ");
+      headerTitle = [...selNLs].map(nl => this._fmtGF(nl)).join(", ");
     }
 
     const panel = this._shadowRoot.getElementById("map-control-panel");
