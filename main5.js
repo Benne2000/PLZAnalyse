@@ -155,6 +155,7 @@ let neighbours = true;
       #streuverlust-box {
         flex-shrink: 0; background: var(--red-bg); border-top: 2px solid var(--red);
         padding: 8px 12px; font-size: 0.8rem; color: var(--gray-700);
+        display: flex; justify-content: space-between; align-items: center; gap: 8px;
       }
       #streuverlust-box strong { color: var(--red); }
 
@@ -195,7 +196,7 @@ let neighbours = true;
       .nl-col-pct1 { width: 30px; } .nl-col-val  { width: 55px; } .nl-col-pct2 { width: 30px; } .nl-col-abd  { width: 55px; }
       .filter-container.nl-info-active .table-wrapper { transform: translateY(-100%); }
 
-      .map-container { width: 70%; height: 100%; position: relative; z-index: 10; }
+      .map-container { width: 70%; height: 100%; position: relative; z-index: 10; isolation: isolate; }
       #map { height: 100%; width: 100%; background: #e8ecf0; }
 
       #map-interaction-block {
@@ -334,26 +335,14 @@ let neighbours = true;
       .side-popup .section-title { background: var(--gray-50); color: var(--gray-500); font-weight: 700; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 12px; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); }
 
       #side-popup-umsatz {
-        position: absolute; right: 0; top: 0;
-        width: 26%;
-        height: calc(100% - 26% - 10px);
-        max-height: 68%;
-        background: var(--white); border-left: 3px solid var(--red);
-        border-top-left-radius: var(--radius-xl); border-bottom-left-radius: var(--radius-xl);
-        box-sizing: border-box; overflow-y: auto; z-index: 99999;
-        box-shadow: -4px 0 24px rgba(0,0,0,0.12);
-        scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
-        opacity: 0; transform: translateX(16px);
-        transition: opacity 0.28s ease, transform 0.28s var(--ease-out);
+        display: flex; flex-direction: column;
       }
-      #side-popup-umsatz::-webkit-scrollbar { width: 5px; }
-      #side-popup-umsatz::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
-      #side-popup-umsatz.show { opacity: 1; transform: translateX(0); display: flex; flex-direction: column; }
+      #side-popup-umsatz.show { display: flex; flex-direction: column; }
       #side-popup-umsatz .popup-header {
         background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
         color: white; padding: 12px 14px 10px; font-size: 0.97rem; font-weight: 700;
         display: flex; justify-content: space-between; align-items: flex-start;
-        border-radius: var(--radius-xl) 0 0 0; line-height: 1.3;
+        border-radius: var(--radius-xl) 0 0 0; line-height: 1.3; flex-shrink: 0;
       }
       #side-popup-umsatz .popup-header .close-btn {
         position: static; flex-shrink: 0; width: 26px; height: 26px;
@@ -377,23 +366,8 @@ let neighbours = true;
       .disabled-cell { opacity: 0.3; filter: grayscale(1); }
 
       #side-popup-overview {
-        position: absolute; right: 0; top: 0;
-        width: 26%;
-        height: calc(100% - 26% - 10px);
-        max-height: 68%;
-        background: var(--white); border-left: 3px solid var(--red);
-        border-top-left-radius: var(--radius-xl); border-bottom-left-radius: var(--radius-xl);
-        box-sizing: border-box; overflow-y: auto; z-index: 99998;
-        box-shadow: -4px 0 24px rgba(0,0,0,0.12);
-        scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
-        opacity: 0; transform: translateX(16px);
-        transition: opacity 0.28s ease, transform 0.28s var(--ease-out);
         display: flex; flex-direction: column;
       }
-      #side-popup-overview::-webkit-scrollbar { width: 5px; }
-      #side-popup-overview::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
-      #side-popup-overview.show { opacity: 1; transform: translateX(0); }
-      #side-popup-overview.hidden { opacity: 0; transform: translateX(16px); pointer-events: none; }
 
       #map-control-panel {
         position: absolute; right: 0; bottom: 0; width: 26%; height: 25%; max-height: 58%;
@@ -632,7 +606,7 @@ let neighbours = true;
 
       <div id="side-popup" class="side-popup hidden"></div>
       <div id="side-popup-umsatz" class="side-popup hidden"></div>
-      <div id="side-popup-overview" class="hidden"></div>
+      <div id="side-popup-overview" class="side-popup hidden"></div>
     </div>
 
     <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
@@ -857,11 +831,6 @@ class GeoMapWidget extends HTMLElement {
     const box = this._shadowRoot.getElementById("streuverlust-box");
     if (!box) return;
     if (!this.streuverlust) { box.innerHTML = ""; return; }
-    // Gesamtumsatz aller angeschauten PLZs (im Radius)
-    const gesamtUmsatz = Object.values(this.filteredKennwerte || {})
-      .filter(k => !this.plzImRadius || this.plzImRadius.size === 0 || (() => false)()) // use all in radius
-      .reduce((s, k) => s + (k["value_hr_n_umsatz_0"]?.raw ?? 0), 0);
-    // Tatsächlicher Gesamtumsatz = alle PLZs im Radius
     let totalInRadius = 0;
     if (this.filteredKennwerte) {
       Object.entries(this.filteredKennwerte).forEach(([plz, k]) => {
@@ -870,7 +839,6 @@ class GeoMapWidget extends HTMLElement {
         }
       });
     }
-    box.style.cssText = "flex-shrink:0;background:var(--red-bg);border-top:2px solid var(--red);padding:8px 12px;font-size:0.8rem;color:var(--gray-700);display:flex;justify-content:space-between;align-items:center;gap:8px;";
     box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Ges.: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
   }
 
@@ -1118,9 +1086,11 @@ class GeoMapWidget extends HTMLElement {
     const targetLayer = this._layerByPLZ[plz]; if (!targetLayer) return;
     const popupWK = this._shadowRoot.getElementById("side-popup");
     const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
+    const popupOV = this._shadowRoot.getElementById("side-popup-overview");
     popupWK?.classList.remove("show"); popupWK?.classList.add("hidden");
     popupUmsatz?.classList.remove("show"); popupUmsatz?.classList.add("hidden");
-    if (this.currentMapMode === "umsatz-multi") {
+    if (popupOV) { popupOV.classList.remove("show"); popupOV.classList.add("hidden"); }
+    if (this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil") {
       const values = this.filteredPLZWerte?.[plz];
       values ? this.showUmsatzPopup(plz, values) : this.showEmptyUmsatzPopup(plz);
       return;
@@ -1477,7 +1447,7 @@ class GeoMapWidget extends HTMLElement {
     this.updateMarkers(); this.computeWKKennwerte();
     const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
     this.currentRadius = radius; this.applyRadiusFilter(radius); this.prepareUmsatzPLZWerte(); this.computeStreuverlust();
-    this._rerenderActivePopup();
+    // Kein _rerenderActivePopup hier – toggleNLSelection/showOverviewPopup übernimmt das
   }
 
   createMarkerIcon(nl, isPhantom = false) {
@@ -1514,14 +1484,16 @@ class GeoMapWidget extends HTMLElement {
       value_ums_erhebung_0:"Umsatz",value_kd_erhebung_0:"Anzahl Kunden",
       value_bon_erhebung_0:"Ø-Bon",value_auflage_0:"Auflage"
     };
-    daten.value_umsatz_p_hh_0 = { raw: umsatz.umsatzProHaushalt ?? 0 };
-    daten.value_haushalte_0   = { raw: umsatz.haushalte ?? 0 };
-    daten.value_kaufkraft_0   = { raw: umsatz.kaufkraftIndex ?? 0 };
-    const kd = daten.value_kd_erhebung_0?.raw ?? 0, ue = daten.value_ums_erhebung_0?.raw ?? 0;
-    daten.value_bon_erhebung_0 = { raw: kd > 0 ? Number((ue / kd).toFixed(2)) : 0 };
+    // Bug-Fix: lokale Kopie statt direkter Mutation von filteredKennwerte
+    const d = { ...daten };
+    d.value_umsatz_p_hh_0 = { raw: umsatz.umsatzProHaushalt ?? 0 };
+    d.value_haushalte_0   = { raw: umsatz.haushalte ?? 0 };
+    d.value_kaufkraft_0   = { raw: umsatz.kaufkraftIndex ?? 0 };
+    const kd = d.value_kd_erhebung_0?.raw ?? 0, ue = d.value_ums_erhebung_0?.raw ?? 0;
+    d.value_bon_erhebung_0 = { raw: kd > 0 ? Number((ue / kd).toFixed(2)) : 0 };
     let rows = "";
     Object.entries(beschreibungen).forEach(([id, label], index) => {
-      const rawValue=daten?.[id]?.raw, wert=typeof rawValue==="number"?rawValue.toLocaleString("de-DE"):"–";
+      const rawValue=d?.[id]?.raw, wert=typeof rawValue==="number"?rawValue.toLocaleString("de-DE"):"–";
       if (index===8) rows += `<tr><td colspan="2" class="section-title">Erhebungsdaten</td></tr>`;
       rows += `<tr><td class="label-cell">${label}</td><td class="value-cell">${wert}</td></tr>`;
     });
@@ -1670,8 +1642,6 @@ class GeoMapWidget extends HTMLElement {
 
       </div>`;
 
-    popup.style.display = 'flex';
-    popup.style.flexDirection = 'column';
     popup.classList.remove("hidden"); void popup.offsetWidth; popup.classList.add("show");
     popup.querySelector(".close-btn").onclick = () => {
       popup.classList.remove("show"); popup.classList.add("hidden");
