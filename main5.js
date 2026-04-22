@@ -849,7 +849,7 @@ class GeoMapWidget extends HTMLElement {
         }
       });
     }
-    box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Gesamt: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
+    box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Ges.: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
   }
 
   computeStreuverlust() {
@@ -2426,26 +2426,6 @@ class GeoMapWidget extends HTMLElement {
       const nls = nlByErh[erhID] || {};
       const nlList = Object.entries(nls);
       if (nlList.length === 0) return;
-
-      // Smooth zoom auf das Gebiet der Erhebung
-      // Padding rechts berücksichtigt das Control-Panel (26% der Kartenbreite)
-      if (this.map && !this._activeFilter) {
-        const lats = nlList.map(([, c]) => c.lat);
-        const lons = nlList.map(([, c]) => c.lon);
-        const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-        const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-        const bounds = L.latLngBounds([minLat, minLon], [maxLat, maxLon]);
-        // Pixel-Padding: links/oben/unten 60px, rechts 80px extra für das Control-Panel
-        const mapSize = this.map.getSize();
-        const rightPad = Math.round(mapSize.x * 0.28) + 20;
-        this.map.flyToBounds(bounds, {
-          duration: 1.4,
-          easeLinearity: 0.25,
-          maxZoom: 9,
-          paddingTopLeft:     [60, 70],
-          paddingBottomRight: [rightPad, 60]
-        });
-      }
 
       nlList.forEach(([nl, { lat, lon }], i) => {
         setTimeout(() => {
