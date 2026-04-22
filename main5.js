@@ -42,9 +42,9 @@ let neighbours = true;
         font-family: var(--font);
       }
       *, *::before, *::after { box-sizing: border-box; }
- 
+
       .layout { display: flex; height: 100%; width: 100%; background: var(--gray-50); }
- 
+
       .filter-container {
         width: 30%; padding: 14px 12px; box-sizing: border-box;
         font-family: var(--font); background: var(--white);
@@ -76,7 +76,7 @@ let neighbours = true;
       .filter-container select:hover:not(:disabled) { border-color: var(--red-border); background-color: var(--white); }
       .filter-container select:focus { border-color: var(--red); box-shadow: 0 0 0 3px var(--red-shadow); background-color: var(--white); }
       .filter-container select:disabled { opacity: 0.45; cursor: not-allowed; }
- 
+
       #filter-button {
         width: 100%; margin-top: 10px; padding: 9px 16px; font-size: 0.87rem;
         font-family: var(--font); font-weight: 600; color: var(--white);
@@ -95,7 +95,7 @@ let neighbours = true;
       }
       #filter-button.ready:hover { background: var(--red-light); box-shadow: var(--shadow-red); transform: translateY(-1px); }
       #filter-button.ready:active { transform: translateY(0); box-shadow: none; }
- 
+
       .info-toggle-btn {
         width: 100%; margin-top: 8px; padding: 7px 12px; font-size: 0.8rem;
         font-family: var(--font); font-weight: 600; color: var(--red);
@@ -105,7 +105,7 @@ let neighbours = true;
         display: flex; align-items: center; justify-content: center; gap: 6px;
       }
       .info-toggle-btn:hover { background: var(--red-bg); border-color: var(--red); }
- 
+
       .table-container {
         margin-top: 10px; background: var(--white); border-radius: var(--radius-lg);
         border: 1px solid var(--gray-200); box-shadow: var(--shadow-xs);
@@ -143,7 +143,7 @@ let neighbours = true;
       }
       .table-container tbody tr { transition: background 0.12s; cursor: pointer; }
       .table-container tbody tr:hover td { background: var(--red-bg); color: var(--gray-900); }
- 
+
       .table-row-selected td {
         background: #fff3f3 !important;
         border-left: none !important;
@@ -151,13 +151,13 @@ let neighbours = true;
       .table-row-selected td:first-child {
         border-left: 3px solid var(--red) !important;
       }
- 
+
       #streuverlust-box {
         flex-shrink: 0; background: var(--red-bg); border-top: 2px solid var(--red);
         padding: 8px 12px; font-size: 0.8rem; color: var(--gray-700);
       }
       #streuverlust-box strong { color: var(--red); }
- 
+
       #nl-info-container {
         position: absolute; left: 0; right: 0; bottom: 0;
         height: 100%; max-height: 100%;
@@ -194,16 +194,16 @@ let neighbours = true;
       .nl-col-nl   { width: 30px; } .nl-col-jahr { width: 70px; } .nl-col-erf  { width: 58px; }
       .nl-col-pct1 { width: 30px; } .nl-col-val  { width: 55px; } .nl-col-pct2 { width: 30px; } .nl-col-abd  { width: 55px; }
       .filter-container.nl-info-active .table-wrapper { transform: translateY(-100%); }
- 
+
       .map-container { width: 70%; height: 100%; position: relative; z-index: 10; }
       #map { height: 100%; width: 100%; background: #e8ecf0; }
- 
+
       #map-interaction-block {
         position: absolute; inset: 0; z-index: 500;
         cursor: default; pointer-events: all;
       }
       #map-interaction-block.hidden { display: none; }
- 
+
       .spinner {
         width: 42px; height: 42px;
         border: 3px solid rgba(180,24,33,0.15);
@@ -215,13 +215,13 @@ let neighbours = true;
       }
       @keyframes spin { 0% { transform: translate(-50%,-50%) rotate(0deg); } 100% { transform: translate(-50%,-50%) rotate(360deg); } }
       #loading-spinner.hidden { display: none; }
- 
+
       .note-label {
         background: rgba(255,255,255,0.92); border: 1px solid var(--gray-300);
         padding: 2px 7px; font-size: 10px; color: var(--gray-700); border-radius: 4px;
         font-family: var(--font); box-shadow: var(--shadow-xs); backdrop-filter: blur(4px);
       }
- 
+
       #radius-slider-container {
         position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
         background: var(--white); padding: 7px 14px; border-radius: 100px;
@@ -248,7 +248,7 @@ let neighbours = true;
       }
       #radius-slider::-webkit-slider-thumb:hover { transform: scale(1.15); box-shadow: 0 2px 6px var(--red-shadow); }
       #radius-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--white); border: 2.5px solid var(--red); cursor: pointer; }
- 
+
       #map-tile-toggle-btn {
         position: absolute;
         bottom: 20px; right: calc(26% + 14px);
@@ -262,7 +262,7 @@ let neighbours = true;
         background-size: 52%; background-repeat: no-repeat; background-position: center;
       }
       #map-tile-toggle-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-lg); border-color: var(--red); }
- 
+
       #legend-toggle-btn {
         position: absolute; bottom: 20px; left: 14px;
         width: 48px; height: 48px;
@@ -274,7 +274,7 @@ let neighbours = true;
         background-size: 52%; background-repeat: no-repeat; background-position: center;
       }
       #legend-toggle-btn:hover { transform: scale(1.1); box-shadow: var(--shadow-lg); border-color: var(--red); }
- 
+
       #heatmap-legend {
         position: absolute; bottom: 78px; left: 14px;
         background: rgba(255,255,255,0.97); border: 1.5px solid var(--gray-200);
@@ -291,7 +291,7 @@ let neighbours = true;
       }
       .heatmap-legend-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; color: var(--gray-700); }
       .heatmap-legend-color { width: 18px; height: 11px; border-radius: 3px; border: 1px solid rgba(0,0,0,0.08); flex-shrink: 0; }
- 
+
       .side-popup {
         position: absolute; right: 0; top: 0;
         width: 26%;
@@ -332,7 +332,7 @@ let neighbours = true;
       .side-popup td.label-cell { width: 62%; text-align: left; color: var(--gray-600); font-weight: 500; }
       .side-popup td.value-cell { width: 38%; text-align: right; font-weight: 700; color: var(--gray-800); font-variant-numeric: tabular-nums; }
       .side-popup .section-title { background: var(--gray-50); color: var(--gray-500); font-weight: 700; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 6px 12px; border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); }
- 
+
       #side-popup-umsatz {
         position: absolute; right: 0; top: 0;
         width: 26%;
@@ -375,7 +375,7 @@ let neighbours = true;
       .umsatz-legend { display: flex; gap: 10px; flex-wrap: wrap; padding: 4px 14px 10px; font-size: 0.78rem; color: var(--gray-600); }
       .umsatz-legend > span { display: flex; align-items: center; gap: 4px; }
       .disabled-cell { opacity: 0.3; filter: grayscale(1); }
- 
+
       #side-popup-overview {
         position: absolute; right: 0; top: 0;
         width: 26%;
@@ -394,7 +394,7 @@ let neighbours = true;
       #side-popup-overview::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
       #side-popup-overview.show { opacity: 1; transform: translateX(0); }
       #side-popup-overview.hidden { opacity: 0; transform: translateX(16px); pointer-events: none; }
- 
+
       #map-control-panel {
         position: absolute; right: 0; bottom: 0; width: 26%; height: 25%; max-height: 58%;
         overflow-y: auto; background: rgba(255,255,255,0.97); backdrop-filter: blur(8px);
@@ -454,12 +454,12 @@ let neighbours = true;
       .category-toggle { padding: 7px 8px; border-radius: var(--radius-md); border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600); font-size: 0.78rem; font-weight: 600; font-family: var(--font); text-align: center; cursor: pointer; transition: all 0.18s var(--ease-in-out); }
       .category-toggle:hover:not(.active) { border-color: var(--red-border); background: var(--red-bg); color: var(--red); }
       .category-toggle.active { background: var(--red-bg); border-color: var(--red); color: var(--red); font-weight: 700; box-shadow: 0 0 0 3px var(--red-shadow); }
- 
+
       @keyframes criticalPulse {
         0%, 100% { transform: scale(1);    filter: drop-shadow(0 0 0px rgba(240,165,0,0)); }
         50%       { transform: scale(1.6);  filter: drop-shadow(0 0 6px rgba(240,165,0,0.7)); }
       }
- 
+
       @keyframes bestreuungPulse {
         0%   { opacity: 0.9; stroke-width: 2.5; }
         50%  { opacity: 0.35; stroke-width: 1.5; }
@@ -473,7 +473,7 @@ let neighbours = true;
         animation: bestreuungPulse 2s ease-in-out infinite;
         pointer-events: none;
       }
- 
+
       #cinematic-loader {
         position: absolute; inset: 0; z-index: 99999;
         background: rgba(255,255,255,0.96); backdrop-filter: blur(6px);
@@ -499,13 +499,13 @@ let neighbours = true;
       #cinematic-loader .dot-label { font-size: 0.62rem; color: var(--gray-400); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
       #cinematic-loader.fade-out { animation: loaderFadeOut 0.35s ease forwards; }
       @keyframes loaderFadeOut { to { opacity: 0; pointer-events: none; } }
- 
+
       @keyframes plzHighlightPulse {
         0%   { opacity: 1; }
         50%  { opacity: 0.7; }
         100% { opacity: 1; }
       }
- 
+
       @keyframes plzSweepIn {
         from { opacity: 0; }
         to   { opacity: 1; }
@@ -513,7 +513,7 @@ let neighbours = true;
       .geo-layer-animating path {
         animation: plzSweepIn 0.4s var(--ease-out) both;
       }
- 
+
       @keyframes markerPing {
         0%   { transform: translate(-50%,-50%) scale(0.3); opacity: 1; }
         100% { transform: translate(-50%,-50%) scale(2.2); opacity: 0; }
@@ -527,7 +527,7 @@ let neighbours = true;
         70%  { opacity: 0.3; }
         100% { transform: translate(-50%,-50%) scale(1); opacity: 0; }
       }
- 
+
       #overview-toggle-btn {
         position: absolute; top: 12px; right: 14px;
         background: var(--white); border: 1.5px solid var(--gray-200);
@@ -541,7 +541,7 @@ let neighbours = true;
       }
       #overview-toggle-btn:hover { border-color: var(--red); background: var(--red-bg); color: var(--red); }
       #overview-toggle-btn.visible { display: flex; }
- 
+
       #back-to-home-btn {
         position: absolute; top: 12px; left: 14px;
         background: var(--white); border: 1.5px solid var(--gray-200);
@@ -555,7 +555,7 @@ let neighbours = true;
       }
       #back-to-home-btn:hover { border-color: var(--red); background: var(--red-bg); color: var(--red); transform: translateX(-2px); }
       #back-to-home-btn.visible { display: flex; }
- 
+
       .doppel-tooltip {
         position: absolute; z-index: 99999;
         background: var(--white); border: 1.5px solid var(--red-border);
@@ -584,16 +584,16 @@ let neighbours = true;
         width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
       }
       .hidden { display: none; }
- 
+
       @keyframes rowFadeIn {
         from { opacity: 0; transform: translateX(-6px); }
         to   { opacity: 1; transform: translateX(0); }
       }
       .table-row-animated { animation: rowFadeIn 0.2s var(--ease-out) both; }
     </style>
- 
+
     <div class="layout">
- 
+
       <div class="filter-container">
         <label for="erhebung-select">ErhebungsID</label>
         <select id="erhebung-select"></select>
@@ -609,7 +609,7 @@ let neighbours = true;
           <div id="nl-info-container"></div>
         </div>
       </div>
- 
+
       <div class="map-container">
       <div id="map-interaction-block"></div>
         <button id="back-to-home-btn" title="Zurück zum Hauptmenü">
@@ -629,12 +629,12 @@ let neighbours = true;
         <div id="heatmap-legend" class="heatmap-legend hidden"></div>
         <div id="umsatz-overview" class="hidden"></div>
       </div>
- 
+
       <div id="side-popup" class="side-popup hidden"></div>
       <div id="side-popup-umsatz" class="side-popup hidden"></div>
       <div id="side-popup-overview" class="hidden"></div>
     </div>
- 
+
     <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
     <div id="map-control-panel">
       <div class="panel-card">
@@ -675,7 +675,7 @@ let neighbours = true;
       </div>
     </div>
     `;
- 
+
 class GeoMapWidget extends HTMLElement {
   constructor() {
     super();
@@ -695,7 +695,7 @@ class GeoMapWidget extends HTMLElement {
     this._activePopupPLZ = null;
     this._activePopupType = null;
   }
- 
+
   // ═══════════════════════════════════════════════════════════════
   // FIX 2: Zentrale PLZ-Normalisierung
   // BW liefert char(10) z.B. "0000069151" → letzte 5 Stellen = "69151"
@@ -732,7 +732,7 @@ class GeoMapWidget extends HTMLElement {
     this._plzNormCache.set(key, result);
     return result;
   }
- 
+
   // ═══════════════════════════════════════════════════════════════
   // PERF: Erhebungs-Index aufbauen – ein einziger Scan über alle
   // Rohdaten beim ersten Zugriff. Alle nachfolgenden Methoden
@@ -761,12 +761,12 @@ class GeoMapWidget extends HTMLElement {
     }
     this._erhebungIndex = idx;
   }
- 
+
   _getErhebungRows(erhID, jahr, nummer) {
     if (!this._erhebungIndex) this._buildErhebungIndex();
     return this._erhebungIndex[erhID + "|" + jahr + "|" + nummer] || [];
   }
- 
+
   connectedCallback() {
     // Loader sofort zeigen – bleibt bis render() fertig ist (FIX 1)
     this._showCinematicLoader();
@@ -784,10 +784,10 @@ class GeoMapWidget extends HTMLElement {
       this.initializeMapBase();
     }
   }
- 
+
   showSpinner() { const s = this._shadowRoot.getElementById('loading-spinner'); if (s) s.classList.remove('hidden'); }
   hideSpinner() { const s = this._shadowRoot.getElementById('loading-spinner'); if (s) s.classList.add('hidden'); }
- 
+
   buildErhebungsStruktur(data) {
     // PERF: _erhebungIndex bereits aufgebaut – direkt daraus ableiten
     // statt nochmal über alle Rohdaten zu iterieren
@@ -816,7 +816,7 @@ class GeoMapWidget extends HTMLElement {
     }
     return struktur;
   }
- 
+
   async loadGeoJson() {
     if (this._geoLayer) return;
     try {
@@ -833,26 +833,26 @@ class GeoMapWidget extends HTMLElement {
       this._geoLayer.eachLayer(layer => { const plz=String(layer.feature?.properties?.plz??"").padStart(5,"0"); this._layerByPLZ[plz]=layer; });
     } catch (err) { console.error("GeoJSON Fehler:", err); }
   }
- 
+
   applyMapMode(mode) { this.currentMapMode = mode; this.updateGeoLayer(); }
- 
+
   renderDataTable(data) {
     let entries = Object.entries(data || {})
       .map(([plz, v]) => [String(plz).padStart(5, "0"), v])
       .filter(([plz]) => plz !== "00000");
- 
+
     if (this.plzImRadius && this.plzImRadius.size > 0) {
       entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
     }
- 
+
     if (!this._sortState || this._sortState.column == null) {
       entries = entries.sort(([a], [b]) => a.localeCompare(b));
     }
- 
+
     this.renderDataTableFromEntries(entries);
     this.updateStreuverlustFooter();
   }
- 
+
   updateStreuverlustFooter() {
     const box = this._shadowRoot.getElementById("streuverlust-box");
     if (!box) return;
@@ -873,7 +873,7 @@ class GeoMapWidget extends HTMLElement {
     box.style.cssText = "flex-shrink:0;background:var(--red-bg);border-top:2px solid var(--red);padding:8px 12px;font-size:0.8rem;color:var(--gray-700);display:flex;justify-content:space-between;align-items:center;gap:8px;";
     box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Ges.: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
   }
- 
+
   computeStreuverlust() {
     if (!this.filteredData) return;
     let streuverlustUmsatz = 0, totalErhebungUmsatz = 0;
@@ -899,10 +899,10 @@ class GeoMapWidget extends HTMLElement {
       anteil: totalErhebungUmsatz > 0 ? streuverlustUmsatz / totalErhebungUmsatz : 0
     };
   }
- 
+
   sortTableByColumn(columnIndex) {
     if (!this.filteredKennwerte) return;
- 
+
     if (this._sortState.column === columnIndex) {
       this._sortState.direction = this._sortState.direction === "asc" ? "desc" : "asc";
     } else {
@@ -929,14 +929,14 @@ class GeoMapWidget extends HTMLElement {
     });
     this.renderDataTableFromEntries(sorted);
   }
- 
+
   renderDataTableFromEntries(entries) {
     const container = this._shadowRoot.getElementById('table-container');
     container.innerHTML = '';
     container.style.cssText = 'display:flex;flex-direction:column;height:100%;min-height:0;';
     entries = entries.filter(([plz]) => plz !== "00000");
     if (this.plzImRadius && this.plzImRadius.size > 0) entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
- 
+
     if (!this._activeFilter) {
       const guide = document.createElement('div');
       guide.style.cssText = 'padding:20px 14px;flex:1;display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--red) var(--gray-100);';
@@ -949,7 +949,7 @@ class GeoMapWidget extends HTMLElement {
             und klicke auf <strong style="color:var(--red)">Anzeigen</strong> um zu starten.
           </div>
         </div>
- 
+
         <div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius-md);padding:8px 11px;font-size:0.74rem;color:var(--gray-600);line-height:1.6;">
           <strong style="color:var(--red);display:block;margin-bottom:3px;">⚡ Schnellstart</strong>
           <ol style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:2px;">
@@ -959,11 +959,11 @@ class GeoMapWidget extends HTMLElement {
             <li>PLZ auf der Karte oder in der Tabelle anklicken</li>
           </ol>
         </div>
- 
+
         <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-400);margin-top:2px;margin-bottom:2px;">
           Analyse-Modi
         </div>
- 
+
         <div style="display:flex;flex-direction:column;gap:6px;">
           ${[
             ['📊','WK-Analyse','Werbekosten-Anteile je PLZ. Grün = HZ-bestreut (gut), Blau = potentiell nicht bestreut. Klicke auf eine PLZ für Detailwerte wie Umsatz, WK%, Haushalte und Auflage.'],
@@ -979,11 +979,11 @@ class GeoMapWidget extends HTMLElement {
               </div>
             </div>`).join('')}
         </div>
- 
+
         <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-400);margin-top:2px;margin-bottom:2px;">
           Werkzeuge
         </div>
- 
+
         <div style="display:flex;flex-direction:column;gap:6px;">
           ${[
             ['🔴','Radius-Slider','Oben in der Mitte: Einzugsgebiet in km festlegen. Nur PLZs im Radius werden ausgewertet. Der Streuverlust (unten) zeigt den Anteil außerhalb.'],
@@ -999,7 +999,7 @@ class GeoMapWidget extends HTMLElement {
               </div>
             </div>`).join('')}
         </div>
- 
+
         <div style="padding:8px 10px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100);font-size:0.7rem;color:var(--gray-500);line-height:1.5;margin-top:2px;">
           💡 <strong style="color:var(--gray-600)">Tipp:</strong> Nach dem Laden einer Erhebung erscheint oben links der
           <strong style="color:var(--gray-600)">← Hauptmenü</strong>-Button, um jederzeit zurückzukehren.
@@ -1007,7 +1007,7 @@ class GeoMapWidget extends HTMLElement {
       container.appendChild(guide);
       return;
     }
- 
+
     if (!entries.length) {
       const empty = document.createElement('div');
       empty.style.cssText = 'padding:24px;text-align:center;color:#adb5bd;font-size:0.85rem;';
@@ -1016,11 +1016,11 @@ class GeoMapWidget extends HTMLElement {
       const footer = document.createElement("div"); footer.id = "streuverlust-box"; container.appendChild(footer);
       return;
     }
- 
+
     const scrollWrapper = document.createElement("div"); scrollWrapper.classList.add("table-scroll");
     const table = document.createElement('table');
     table.style.cssText = 'width:100%;border-collapse:collapse;table-layout:fixed;';
- 
+
     const isUmsatzMode = this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil";
     const lastColLabel = isUmsatzMode ? 'Umsatz-\nAnteil' : 'WK (%)';
     const headers = [
@@ -1037,11 +1037,11 @@ class GeoMapWidget extends HTMLElement {
       headerRow.appendChild(th);
     });
     thead.appendChild(headerRow); table.appendChild(thead);
- 
+
     const totalUmsatz = isUmsatzMode
       ? Object.values(this.filteredPLZWerte || {}).reduce((s, v) => s + this.getUmsatzSumForPLZ(v), 0)
       : 0;
- 
+
     const tbody = document.createElement('tbody');
     entries.forEach(([plz, kennwerte], idx) => {
       const tr = document.createElement('tr');
@@ -1060,9 +1060,9 @@ class GeoMapWidget extends HTMLElement {
       let symbol = "●", symbolColor = "#dee2e6";
       if (this.filteredKennwerte[plz]?.isCritical) { symbol = "▲"; symbolColor = "#f0a500"; }
       else if (this.filteredKennwerte[plz]?.isHZ)  { symbol = "●"; symbolColor = "#33a02c"; }
- 
+
       const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
- 
+
       let lastColVal;
       if (isUmsatzMode) {
         const plzUmsatz = this.getUmsatzSumForPLZ(this.filteredPLZWerte?.[plz] || {});
@@ -1072,7 +1072,7 @@ class GeoMapWidget extends HTMLElement {
       } else {
         lastColVal = (kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–') + ' %';
       }
- 
+
       [[plz,  'font-variant-numeric:tabular-nums;font-size:0.78rem;color:#495057;'],
        [note, 'color:#6c757d;'],
        [null,  'text-align:center;'],
@@ -1100,19 +1100,19 @@ class GeoMapWidget extends HTMLElement {
       rows.forEach(row => { if (row.dataset.plz === this._activePopupPLZ) this.highlightTableRow(row); });
     }
   }
- 
+
   highlightTableRow(rowElement) {
     if (this._lastHighlightedRow) this._lastHighlightedRow.classList.remove("table-row-selected");
     rowElement.classList.add("table-row-selected");
     this._lastHighlightedRow = rowElement;
   }
- 
+
   highlightTableRowByPLZ(plz) {
     const container = this._shadowRoot.getElementById("table-container");
     const rows = container.querySelectorAll("tbody tr");
     rows.forEach(row => { if (row.dataset.plz === plz || row.children[0]?.textContent?.trim() === plz) this.highlightTableRow(row); });
   }
- 
+
   openPopupFromTable(plz) {
     if (!this._layerByPLZ) return;
     const targetLayer = this._layerByPLZ[plz]; if (!targetLayer) return;
@@ -1128,10 +1128,10 @@ class GeoMapWidget extends HTMLElement {
     const kennwerte = this.filteredKennwerte?.[plz] || {};
     this.showPopup(targetLayer.feature, kennwerte);
   }
- 
+
   _buildDistanceCache() {
     if (!this._layerByPLZ || !this.nlMarkers || this.nlMarkers.length === 0) return;
- 
+
     // PERF: NL-Fingerprint berechnen – Cache nur neu bauen wenn sich
     // die NL-Positionen tatsächlich geändert haben
     const nlFingerprint = this.nlMarkers.map(m => m.lat.toFixed(4) + "," + m.lng.toFixed(4)).join("|");
@@ -1140,11 +1140,11 @@ class GeoMapWidget extends HTMLElement {
     }
     this._distanceCacheNLKey = nlFingerprint;
     this._distanceCache = {};
- 
+
     // PERF: PLZ-Center einmalig cachen (getBounds().getCenter() ist teuer)
     // und nur berechnen wenn noch nicht gecacht
     if (!this._plzCenterCache) this._plzCenterCache = {};
- 
+
     const plzList = Object.keys(this._layerByPLZ);
     const nlLen   = this.nlMarkers.length;
     for (let i = 0, len = plzList.length; i < len; i++) {
@@ -1162,7 +1162,7 @@ class GeoMapWidget extends HTMLElement {
       this._distanceCache[plz] = minDist;
     }
   }
- 
+
   highlightMapArea(plz) {
     if (!this._layerByPLZ) return;
     const targetLayer = this._layerByPLZ[plz];
@@ -1174,12 +1174,12 @@ class GeoMapWidget extends HTMLElement {
     targetLayer.setStyle({ weight: 3, color: "#f0a500", fillOpacity: 0.72 });
     this._lastHighlightedLayer = targetLayer;
   }
- 
+
   updateSortIcons(activeIndex) {
     const headerCells = this._shadowRoot.querySelectorAll("th .sort-icon");
     headerCells.forEach((icon, i) => { icon.textContent = i===activeIndex ? (this._sortState.direction==="asc"?"▲":"▼") : ""; });
   }
- 
+
   zoomToFilteredPLZ() {
     if (!this._geoLayer || !this.plzImRadius || this.plzImRadius.size === 0) return;
     const bounds = L.latLngBounds([]);
@@ -1189,7 +1189,7 @@ class GeoMapWidget extends HTMLElement {
     });
     if (bounds.isValid()) this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
   }
- 
+
   initializeMapBase() {
     const $ = id => this._shadowRoot.getElementById(id);
     const mapContainer = $("map"); if (!mapContainer) return;
@@ -1199,11 +1199,23 @@ class GeoMapWidget extends HTMLElement {
     this.activeCategories = new Set(["stationaer"]); this.showBestreuung = false; this.useRadiusFilter = true;
     this.filteredGroup = L.layerGroup().addTo(this.map); this.neighbourGroup = L.layerGroup().addTo(this.map);
     this.radiusGroup = L.layerGroup().addTo(this.map); this.bestreuungGroup = L.layerGroup().addTo(this.map);
- 
-    // FIX 1: Loader hier NICHT verstecken – render() übernimmt das nach vollständigem Datenladen
-    this.render();
+
+    // Karte ist jetzt bereit. Wenn Daten bereits vorlagen (_pendingRender),
+    // sofort render() aufrufen – sonst normaler render()-Aufruf (der bei
+    // fehlendem dataSource nichts tut).
+    if (this._pendingRender) {
+      this._pendingRender = false;
+      if (this._myDataSource?.state === "success") {
+        this.render();
+      } else if (this._myDataSource) {
+        this._scheduleDataPoll();
+      }
+      // Falls noch kein myDataSource gesetzt wurde: render() wird vom Setter ausgelöst
+    } else {
+      this.render();
+    }
     this.initRadiusSlider();
- 
+
     const panel=$("map-control-panel"),btnWK=$("btn-wk"),btnUmsatz=$("btn-umsatz"),umsatzPanel=$("umsatz-panel");
     const wkExtra=$("wk-extra"),umsatzOptionsRow=$("umsatz-options-row"),typeSwitch=$("umsatz-type-switch");
     const darstellungSwitch=$("umsatz-analysis-switch");
@@ -1211,25 +1223,25 @@ class GeoMapWidget extends HTMLElement {
     const werbeRow=$("werbe-options-row"),chkWerbe=$("chk-werbeumsatz"),chkMit=$("chk-mitgekauft");
     const chkBestreuung=$("chk-bestreuung"),chkDoppel=$("chk-doppelbestreuung");
     this.showCritical = chkDoppel.checked;
- 
+
     $("map-tile-toggle-btn")?.addEventListener("click", () => this.toggleMapTiles());
     $("legend-toggle-btn")?.addEventListener("click", () => $("heatmap-legend").classList.toggle("hidden"));
     $("back-to-home-btn")?.addEventListener("click", () => this._resetToHome());
     $("overview-toggle-btn")?.addEventListener("click", () => this.showOverviewPopup());
     btnWA?.classList.add("disabled");
- 
+
     const updateSliderFill = (slider) => {
       if (!slider) return;
       const pct = ((+slider.value - +slider.min) / (+slider.max - +slider.min)) * 100;
       slider.style.background = `linear-gradient(90deg, var(--red) ${pct}%, var(--gray-200) ${pct}%)`;
     };
     updateSliderFill($("radius-slider"));
- 
+
     const refreshMapAndPopup = () => {
       this._refreshAll();
       this._rerenderActivePopup();
     };
- 
+
     btnWK?.addEventListener("click", () => {
       this.closeAllPopups();
       btnWK.classList.add("active"); btnUmsatz.classList.remove("active");
@@ -1245,7 +1257,7 @@ class GeoMapWidget extends HTMLElement {
       this.updateGeoLayer(); this.updateHeatmapLegend();
       if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); }
     });
- 
+
     btnUmsatz?.addEventListener("click", () => {
       typeSwitch.classList.remove("active-right");
       typeSwitch.classList.add("active-left");
@@ -1261,7 +1273,7 @@ class GeoMapWidget extends HTMLElement {
       this.updateGeoLayer(); this.updateHeatmapLegend();
       if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); }
     });
- 
+
     typeSwitch?.addEventListener("click", () => {
       const isWerbung = this.umsatzMainMode === "gesamt"; this.umsatzMainMode = isWerbung ? "werbung" : "gesamt";
       typeSwitch.classList.toggle("active-right", isWerbung); typeSwitch.classList.toggle("active-left", !isWerbung);
@@ -1270,7 +1282,7 @@ class GeoMapWidget extends HTMLElement {
       else { btnWA.classList.add("disabled"); this.umsatzDarstellung="abs"; darstellungSwitch.querySelectorAll("span").forEach(s=>s.classList.remove("active")); btnAbs.classList.add("active"); }
       refreshMapAndPopup();
     });
- 
+
     chkWerbe?.addEventListener("change", () => {
       this.useWerbeUmsatz = chkWerbe.checked;
       if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) { this.useWerbeUmsatz=true; chkWerbe.checked=true; }
@@ -1281,7 +1293,7 @@ class GeoMapWidget extends HTMLElement {
       if (!this.useWerbeUmsatz && !this.useZusatzUmsatz) { this.useWerbeUmsatz=true; chkWerbe.checked=true; }
       refreshMapAndPopup();
     });
- 
+
     const setDarst = (modus, mapMode, btn) => {
       this.umsatzDarstellung=modus; this.currentMapMode=mapMode; this.activePopupType="umsatz";
       darstellungSwitch.querySelectorAll("span").forEach(s=>s.classList.remove("active")); btn.classList.add("active");
@@ -1294,7 +1306,7 @@ class GeoMapWidget extends HTMLElement {
       chkWerbe.checked=true; this.useWerbeUmsatz=true; chkMit.checked=false; chkMit.disabled=true; this.useZusatzUmsatz=false;
       refreshMapAndPopup();
     });
- 
+
     this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
       toggle.addEventListener("click", () => {
         const cat = toggle.dataset.cat; if (!cat) return;
@@ -1304,11 +1316,11 @@ class GeoMapWidget extends HTMLElement {
         refreshMapAndPopup();
       });
     });
- 
+
     chkDoppel?.addEventListener("change", () => { this.showCritical=chkDoppel.checked; this.updateGeoLayer(); this.updateHeatmapLegend(); });
     chkBestreuung?.addEventListener("change", () => { this.showBestreuung=chkBestreuung.checked; this.updateBestreuungMarkers(); this.updateHeatmapLegend(); });
   }
- 
+
   _rerenderActivePopup() {
     if (!this._activePopupPLZ) return;
     const plz = this._activePopupPLZ;
@@ -1324,19 +1336,19 @@ class GeoMapWidget extends HTMLElement {
       }
     }
   }
- 
+
   _computeCrossErhebungDoppel() {
     this._crossErhebungPLZ = {};
     if (!this._activeFilter || !this._myDataSource?.data) return;
     const { erhID: aktErhID, jahr, nummer } = this._activeFilter;
- 
+
     const aktHZPLZs = new Set(
       Object.entries(this.filteredKennwerte || {})
         .filter(([, k]) => k.isHZ)
         .map(([plz]) => plz)
     );
     if (aktHZPLZs.size === 0) return;
- 
+
     // PERF: Index nutzen – alle Erhebungen mit gleichem Jahr+Nummer direkt abrufen
     // statt linearen Scan über alle Rohdaten
     const allKeys = Object.keys(this._erhebungIndex || {});
@@ -1349,24 +1361,24 @@ class GeoMapWidget extends HTMLElement {
         if (rows[i]["dimension_hzflag_0"]?.id?.trim() === "X") fremdRows.push(rows[i]);
       }
     }
- 
+
     fremdRows.forEach(row => {
       const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
       // FIX 2: _normalizePLZ verwenden
       const plz = this._normalizePLZ(rawPLZ);
       if (!plz) return;
       if (!aktHZPLZs.has(plz)) return;
- 
+
       const rErhID = row["dimension_erhebung_0"]?.id?.trim();
       const rNL    = row["dimension_niederlassung_0"]?.id?.trim();
- 
+
       if (!this._crossErhebungPLZ[plz]) this._crossErhebungPLZ[plz] = {};
       if (!this._crossErhebungPLZ[plz][rErhID]) {
         this._crossErhebungPLZ[plz][rErhID] = new Set();
       }
       if (rNL) this._crossErhebungPLZ[plz][rErhID].add(rNL);
     });
- 
+
     if (this.filteredData) {
       this.filteredData.forEach(row => {
         const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
@@ -1376,12 +1388,12 @@ class GeoMapWidget extends HTMLElement {
         const isHZ = row["dimension_hzflag_0"]?.id?.trim() === "X";
         if (!isHZ) return;
         const nl = row["dimension_niederlassung_0"]?.id?.trim();
- 
+
         const isInternalCritical = this.filteredKennwerte?.[plz]?.isCritical;
         const hasCrossEntry = !!this._crossErhebungPLZ[plz];
- 
+
         if (!isInternalCritical && !hasCrossEntry) return;
- 
+
         if (!this._crossErhebungPLZ[plz]) this._crossErhebungPLZ[plz] = {};
         if (!this._crossErhebungPLZ[plz][aktErhID]) {
           this._crossErhebungPLZ[plz][aktErhID] = new Set();
@@ -1390,7 +1402,7 @@ class GeoMapWidget extends HTMLElement {
       });
     }
   }
- 
+
   updateBestreuungMarkers() {
     this.bestreuungGroup.clearLayers();
     if (this.currentMapMode === "wk") return;
@@ -1411,12 +1423,12 @@ class GeoMapWidget extends HTMLElement {
       this.bestreuungGroup.addLayer(pulseLayer);
     });
   }
- 
+
   initializeMapTiles() { if (!this.map) return; this._tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 19 }).addTo(this.map); }
   removeMapTiles() { if (this.map && this._tileLayer) { this.map.removeLayer(this._tileLayer); this._tileLayer = null; } }
   toggleMapTiles() { if (this._tilesVisible) { this.removeMapTiles(); this._tilesVisible=false; } else { this.initializeMapTiles(); this._tilesVisible=true; } }
   toggleNeighbours() { if (this.map.hasLayer(this.neighbourGroup)) this.map.removeLayer(this.neighbourGroup); else this.map.addLayer(this.neighbourGroup); }
- 
+
   createAllMarkers() {
     if (!this.filteredGroup) return;
     this.filteredGroup.clearLayers(); this.neighbourGroup?.clearLayers(); this.radiusGroup?.clearLayers();
@@ -1440,12 +1452,12 @@ class GeoMapWidget extends HTMLElement {
     this.allNLs = [...Object.keys(this.Niederlassung), ...(this.extraNLs?.map(e=>e.nl)??[])];
     this._selectedNLs = new Set(this.allNLs);
     this._nlSelectionInitialized = false;
- 
+
     this.applyNLFilter([...this._selectedNLs]);
     const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value??0);
     this.applyRadiusFilter(radius); this.updateGeoLayer(); this.updateNLSelectionUI?.(); this._buildDistanceCache();
   }
- 
+
   applyNLFilter(selectedNLs) {
     if (!this._selectedNLs) this._selectedNLs = new Set();
     this._selectedNLs = new Set(selectedNLs);
@@ -1467,7 +1479,7 @@ class GeoMapWidget extends HTMLElement {
     this.currentRadius = radius; this.applyRadiusFilter(radius); this.prepareUmsatzPLZWerte(); this.computeStreuverlust();
     this._rerenderActivePopup();
   }
- 
+
   createMarkerIcon(nl, isPhantom = false) {
     if (!this.iconCache) this.iconCache = {};
     const key = nl + (isPhantom ? "_phantom" : "_active");
@@ -1481,12 +1493,12 @@ class GeoMapWidget extends HTMLElement {
     }
     return this.iconCache[key];
   }
- 
+
   showPopup(feature, daten) {
     const plz = String(feature.properties?.plz??"").padStart(5,"0").trim();
     const note = feature.properties?.note || "Keine Notiz";
     this._activePopupPLZ = plz; this._activePopupType = 'wk';
- 
+
     const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
     if (popupUmsatz) { popupUmsatz.classList.remove("show"); popupUmsatz.classList.add("hidden"); }
     const panel = this._shadowRoot.getElementById("map-control-panel");
@@ -1529,21 +1541,21 @@ class GeoMapWidget extends HTMLElement {
       if (this._highlightedPLZ) { const l = this._layerByPLZ?.[this._highlightedPLZ]; if (l) this.applyStyleToLayer(l); this._highlightedPLZ = null; }
     };
   }
- 
+
   showUmsatzPopup(plz, values) {
     const popup = this._shadowRoot.getElementById("side-popup-umsatz");
     const popupWK = this._shadowRoot.getElementById("side-popup");
     if (popupWK) { popupWK.classList.remove("show"); popupWK.classList.add("hidden"); }
     this._activePopupPLZ = plz; this._activePopupType = 'umsatz';
- 
+
     const panel = this._shadowRoot.getElementById("map-control-panel");
     panel.classList.remove("panel-large"); panel.classList.add("panel-medium");
- 
+
     const isWerbungMode = this.umsatzMainMode === "werbung";
     const useWerbe  = this.useWerbeUmsatz  === true;
     const useZusatz = this.useZusatzUmsatz === true;
     const note = this.geoNotes?.[plz] || plz;
- 
+
     const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
       if (!isWerbungMode) return { abs: base, hh: baseHH };
       let abs = 0, hh = 0;
@@ -1551,51 +1563,51 @@ class GeoMapWidget extends HTMLElement {
       if (useZusatz) { abs += zusatz; hh += zusatzHH; }
       return { abs, hh };
     };
- 
+
     const st = pick(values.umsatz,    values.umsatzWerbung,    values.umsatzZusatz,    values.umsatzProHaushalt,    values.umsatzWerbungProHaushalt,    values.umsatzZusatzProHaushalt);
     const pc = pick(values.pluscard,  values.pluscardWerbung,  values.pluscardZusatz,  values.pluscardProHaushalt,  values.pluscardWerbungProHaushalt,  values.pluscardZusatzProHaushalt);
     const ra = pick(values.ra,        values.raWerbung,        values.raZusatz,        values.raProHaushalt,        values.raWerbungProHaushalt,        values.raZusatzProHaushalt);
     const os = pick(values.onlineshop,values.onlineshopWerbung,values.onlineshopZusatz,values.onlineshopProHaushalt,values.onlineshopWerbungProHaushalt,values.onlineshopZusatzProHaushalt);
- 
+
     const active = {
       stationaer: this.activeCategories.has("stationaer"),
       pluscard:   this.activeCategories.has("pluscard"),
       ra:         this.activeCategories.has("ra"),
       online:     this.activeCategories.has("online"),
     };
- 
+
     const totalAbs = (active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
     const totalHH  = (active.stationaer?st.hh:0) +(active.pluscard?pc.hh:0) +(active.ra?ra.hh:0) +(active.online?os.hh:0);
- 
+
     const tN = values.umsatz    + values.pluscard    + values.ra    + values.onlineshop;
     const tW = values.umsatzWerbung + values.pluscardWerbung + values.raWerbung + values.onlineshopWerbung;
     const tZ = values.umsatzZusatz  + values.pluscardZusatz  + values.raZusatz  + values.onlineshopZusatz;
     const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : "–";
- 
+
     const fA  = x => Number(x||0).toLocaleString("de-DE");
     const fH  = x => Number(x||0).toFixed(2);
     const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
- 
+
     const hl = !isWerbungMode ? "Gesamtumsatz"
              : useWerbe && useZusatz ? "Werbeumsatz + Mitgekauft"
              : useWerbe ? "Werbeumsatz"
              : "Mitgekauft";
- 
+
     const dis = (key) => !active[key] ? 'opacity:0.3;filter:grayscale(1)' : '';
- 
+
     popup.innerHTML = `
       <div class="popup-header" style="flex-shrink:0">
         <span title="${note}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span>
         <button class="close-btn" style="flex-shrink:0">✕</button>
       </div>
- 
+
       <div style="overflow-y:auto;flex:1;min-height:0;">
- 
+
         <div class="umsatz-subheader">
           <span class="strong">${hl}: ${fA(totalAbs)} €</span><br>
           <span style="font-size:0.78rem;color:var(--gray-500)">${fH(totalHH)} € / HH &nbsp;·&nbsp; Werbeanteil: ${antWA} %</span>
         </div>
- 
+
         <div class="umsatz-bar" style="margin:8px 14px 2px">
           <div style="background:var(--red);width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
           <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
@@ -1606,30 +1618,30 @@ class GeoMapWidget extends HTMLElement {
           <span><span style="color:#1f78b4">⬤</span> Werbung</span>
           <span><span style="color:#ffb000">⬤</span> Mitgekauft</span>
         </div>
- 
+
         <div class="section-title">Nach Kategorien</div>
         <div class="umsatz-grid" style="padding:6px 14px">
           <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
           <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
           <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
- 
+
           <div class="label" style="${dis('stationaer')}">🏬 Stationär</div>
           <div class="value" style="${dis('stationaer')}">${fA(st.abs)} €</div>
           <div class="value" style="${dis('stationaer')}">${fH(st.hh)} €</div>
- 
+
           <div class="label" style="${dis('pluscard')}">💳 Pluscard</div>
           <div class="value" style="${dis('pluscard')}">${fA(pc.abs)} €</div>
           <div class="value" style="${dis('pluscard')}">${fH(pc.hh)} €</div>
- 
+
           <div class="label" style="${dis('ra')}">📦 R&amp;A</div>
           <div class="value" style="${dis('ra')}">${fA(ra.abs)} €</div>
           <div class="value" style="${dis('ra')}">${fH(ra.hh)} €</div>
- 
+
           <div class="label" style="${dis('online')}">🛒 KUBE OS</div>
           <div class="value" style="${dis('online')}">${fA(os.abs)} €</div>
           <div class="value" style="${dis('online')}">${fH(os.hh)} €</div>
         </div>
- 
+
         <div class="section-title">Umsatzanteile (Gesamt)</div>
         <div class="umsatz-bar" style="margin:8px 14px 2px">
           <div class="share-stationaer" style="width:${pct(values.umsatz,tN)}%;transition:width .5s ease"></div>
@@ -1643,21 +1655,21 @@ class GeoMapWidget extends HTMLElement {
           <span><span style="color:#33a02c">⬤</span> R&amp;A</span>
           <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
         </div>
- 
+
         <div class="section-title">PLZ-Daten</div>
         <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px 14px;font-size:0.82rem;">
           <div style="color:var(--gray-600);font-weight:500">Haushalte</div>
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${Number(values.haushalte||0).toLocaleString("de-DE")}</div>
- 
+
           <div style="color:var(--gray-600);font-weight:500">Werbeverweigerer</div>
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.werbeverweigerer > 0 ? Number(values.werbeverweigerer).toLocaleString("de-DE") + ' %' : '–'}</div>
- 
+
           <div style="color:var(--gray-600);font-weight:500">Kaufkraft-Index</div>
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.kaufkraftIndex > 0 ? Number(values.kaufkraftIndex).toLocaleString("de-DE") : '–'}</div>
         </div>
- 
+
       </div>`;
- 
+
     popup.style.display = 'flex';
     popup.style.flexDirection = 'column';
     popup.classList.remove("hidden"); void popup.offsetWidth; popup.classList.add("show");
@@ -1671,7 +1683,7 @@ class GeoMapWidget extends HTMLElement {
       }
     };
   }
- 
+
   getUmsatzSumForPLZ(v) {
     const safe=x=>Number.isFinite(x)?x:0,isW=this.umsatzMainMode==="werbung",useHH=this.umsatzDarstellung==="hh";
     const pick=(b,w,z,bH,wH,zH)=>{ if(!isW)return safe(useHH?bH:b); let s=0; if(this.useWerbeUmsatz)s+=safe(useHH?wH:w); if(this.useZusatzUmsatz)s+=safe(useHH?zH:z); return s; };
@@ -1682,9 +1694,9 @@ class GeoMapWidget extends HTMLElement {
     if(this.activeCategories.has("online"))    s+=pick(v.onlineshop,v.onlineshopWerbung,v.onlineshopZusatz,v.onlineshopProHaushalt,v.onlineshopWerbungProHaushalt,v.onlineshopZusatzProHaushalt);
     return s;
   }
- 
+
   updateNeighbours(filteredData) {}
- 
+
   extractPLZWerte(data) {
     const plzWerte = {};
     // PERF: for-loop statt forEach
@@ -1702,7 +1714,7 @@ class GeoMapWidget extends HTMLElement {
     }
     return plzWerte;
   }
- 
+
   getFilteredData() {
     if (!this._myDataSource||this._myDataSource.state!=="success") return [];
     const {erhID,jahr,nummer}=this._activeFilter||{};
@@ -1718,13 +1730,13 @@ class GeoMapWidget extends HTMLElement {
     this.filteredKennwerte=filteredKennwerte;
     return filtered;
   }
- 
+
   getColor(value, isHZ) {
     const v=typeof value==="number"&&!isNaN(value)?value:0;
     if(isHZ) return v>25?"#e31a1c":v>15?"#fd8d3c":v>10?"#ffffb2":v>5?"#78c679":v>2?"#41ab5d":v>0?"#006837":"#cfd4da";
     return v>50?"#cfd4da":v>25?"#bdbdbd":v>15?"#969696":v>10?"#6baed6":v>5?"#2171b5":v>0?"#08306b":"#cfd4da";
   }
- 
+
   updateGeoLayer() {
     if (!this._geoLayer) return;
     this.computeMaxValue();
@@ -1742,7 +1754,7 @@ class GeoMapWidget extends HTMLElement {
       if (layer) layer.setStyle({ weight: 3, color: "#f0a500", fillOpacity: layer.options.fillOpacity });
     }
   }
- 
+
   computeFillColor(plz) {
     const v=this.filteredPLZWerte?.[plz]; if(!v) return "#cfd4da";
     if(this.currentMapMode==="wk") return this.getColor(v.hz?v.wk:v.wkPot,v.hz);
@@ -1750,7 +1762,7 @@ class GeoMapWidget extends HTMLElement {
     if(this.currentMapMode==="werbeanteil") return this.getWerbeAnteilColor(v.werbeAnteil??0);
     return "#cfd4da";
   }
- 
+
   computeMaxValue() {
     const plzWerte=this.filteredPLZWerte||{}; let maxValue=0;
     if(this.currentMapMode==="wk") Object.values(plzWerte).forEach(v=>{ const val=v.hz?v.wk:v.wkPot; if(Number.isFinite(val)&&val>maxValue) maxValue=val; });
@@ -1758,7 +1770,7 @@ class GeoMapWidget extends HTMLElement {
     if(this.currentMapMode==="werbeanteil"){this._maxValueCache=1;return 1;}
     this._maxValueCache=maxValue||1; return this._maxValueCache;
   }
- 
+
   applyStyleToLayer(layer) {
     const plz=String(layer.feature?.properties?.plz??"").padStart(5,"0");
     const v=this.filteredPLZWerte?.[plz];
@@ -1800,7 +1812,7 @@ class GeoMapWidget extends HTMLElement {
       }
       this.activePopupType="wk";this.showPopup(layer.feature,this.filteredKennwerte?.[plz]||{});
     });
- 
+
     const showCritical=this.currentMapMode==="wk"&&this.showCritical;
     const isCriticalIntern = this.filteredKennwerte?.[plz]?.isCritical;
     const isCriticalCross  = !!(this._crossErhebungPLZ?.[plz] && Object.keys(this._crossErhebungPLZ[plz]).length > 0);
@@ -1811,13 +1823,13 @@ class GeoMapWidget extends HTMLElement {
       const center=layer.getBounds().getCenter();
       const crossInfo = this._crossErhebungPLZ?.[plz];
       const isCrossErhebung = crossInfo && Object.keys(crossInfo).length > 0;
- 
+
       const icon=L.divIcon({
         html:`<div style="font-size:18px;line-height:1;animation:criticalPulse 1.8s ease-in-out infinite;display:block;transform-origin:center;cursor:pointer;" title="">⚠️</div>`,
         className:"",iconSize:[22,22],iconAnchor:[11,11]
       });
       const marker = L.marker(center,{icon,interactive:true,zIndexOffset:2000}).addTo(this.map);
- 
+
       if (isCrossErhebung || true) {
         const mapContainer = this._shadowRoot.querySelector(".map-container");
         marker.on("mouseover", (e) => {
@@ -1830,15 +1842,15 @@ class GeoMapWidget extends HTMLElement {
           this._moveDoppelTooltip(e.originalEvent, mapContainer);
         });
       }
- 
+
       this.criticalMarkers[plz]=marker;
     }
   }
- 
+
   _removeCriticalMarker(plz) {
     if(this.criticalMarkers?.[plz]){this.map.removeLayer(this.criticalMarkers[plz]);delete this.criticalMarkers[plz];}
   }
- 
+
   getDynamicHeatColor(value, max) {
     value=Number(value);max=Number(max);
     if(!Number.isFinite(value)||value<=0||!Number.isFinite(max)||max<=0) return "#cfd4da";
@@ -1849,7 +1861,7 @@ class GeoMapWidget extends HTMLElement {
     if(!Number.isFinite(ratio)||ratio<=0) return "#cfd4da";
     return ratio>.80?"#7a0f17":ratio>.60?"#b41821":ratio>.40?"#e96a3a":ratio>.20?"#f6b65b":ratio>.10?"#f7d77a":"#fce9b2";
   }
- 
+
   updateMarkers() {
     if(!this.filteredGroup||!this.allMarkers) return;
     this.filteredGroup.clearLayers();
@@ -1875,14 +1887,14 @@ class GeoMapWidget extends HTMLElement {
     });
     this.nlMarkers=activeMarkers.map(m=>({lat:m.getLatLng().lat,lng:m.getLatLng().lng,marker:m}));
   }
- 
+
   onMarkerClick(nl) {
     if(this._selectedNLs.has(nl)) this._selectedNLs.delete(nl); else this._selectedNLs.add(nl);
     this.updateNLSelectionUI(); this.applyNLFilter([...this._selectedNLs]);
     const radius=Number(this._shadowRoot.getElementById("radius-slider").value);
     this.applyRadiusFilter(radius); this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte);
   }
- 
+
   setupFilterDropdowns() {
     if (this._dropdownsInitialized) {
       const erhSelect = this._shadowRoot.getElementById("erhebung-select");
@@ -1911,18 +1923,18 @@ class GeoMapWidget extends HTMLElement {
     if(!erhSelect||!jahrSelect||!nummerSelect) return;
     erhSelect.innerHTML="";jahrSelect.innerHTML="";nummerSelect.innerHTML="";
     jahrSelect.disabled=true;nummerSelect.disabled=true;
- 
+
     const createPlaceholder=(text)=>{ const opt=document.createElement("option"); opt.value="";opt.textContent=text;opt.disabled=true;opt.selected=true; return opt; };
     erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
     Object.keys(this._erhData).forEach(erhID=>{ if(erhID!=="@NullMember"){const opt=document.createElement("option");opt.value=erhID;opt.textContent=erhID;erhSelect.appendChild(opt);}});
- 
+
     const filterBtn = this._shadowRoot.getElementById("filter-button");
     const updateBtnState = () => {
       const allSelected = erhSelect.value && jahrSelect.value && nummerSelect.value;
       if (allSelected) filterBtn?.classList.add("ready");
       else filterBtn?.classList.remove("ready");
     };
- 
+
     erhSelect.addEventListener("change",()=>{
       jahrSelect.innerHTML="";nummerSelect.innerHTML="";jahrSelect.disabled=false;nummerSelect.disabled=true;
       jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
@@ -1936,7 +1948,7 @@ class GeoMapWidget extends HTMLElement {
       updateBtnState();
     });
     nummerSelect.addEventListener("change", updateBtnState);
- 
+
     const filterButton=this._shadowRoot.getElementById("filter-button");
     if(filterButton){
       filterButton.addEventListener("click",()=>{
@@ -1945,7 +1957,7 @@ class GeoMapWidget extends HTMLElement {
         if(sID&&sJ&&sN) this.loadErhebung(sID,sJ,sN);
       });
     }
- 
+
     let existingBtn=this._shadowRoot.getElementById("info-toggle-btn");
     if(!existingBtn){
       const infoBtn=document.createElement("button"); infoBtn.id="info-toggle-btn"; infoBtn.className="info-toggle-btn";
@@ -1959,12 +1971,12 @@ class GeoMapWidget extends HTMLElement {
       this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
     }
   }
- 
+
   restoreFilterUI() {
     const container=this._shadowRoot.querySelector(".filter-container"); if(!container) return;
     container.innerHTML=`<label for="erhebung-select">ErhebungsID</label><select id="erhebung-select"></select><label for="jahr-select">Jahr</label><select id="jahr-select" disabled></select><label for="nummer-select">Erhebungsnummer</label><select id="nummer-select" disabled></select><button id="filter-button">Anzeigen</button><div class="table-container"><div class="table-wrapper" id="table-container"></div><div id="streuverlust-box"></div></div>`;
   }
- 
+
   renderErhebungsInfoTable() {
     const container=this._shadowRoot.getElementById("nl-info-container"); container.innerHTML="";
     const scroll=document.createElement("div"); scroll.classList.add("nl-info-scroll");
@@ -1987,7 +1999,7 @@ class GeoMapWidget extends HTMLElement {
     table.appendChild(tbody);scroll.appendChild(table);container.appendChild(scroll);
     this.updateNLSelectionUI();
   }
- 
+
   updateNLSelectionUI() {
     const rows=this._shadowRoot.querySelectorAll(".nl-info-row");
     rows.forEach(row=>{
@@ -1997,14 +2009,14 @@ class GeoMapWidget extends HTMLElement {
       else row.classList.remove("table-row-selected");
     });
   }
- 
+
   restoreDropdownSelections() {
     const { erhID, jahr, nummer } = this._activeFilter || {};
     const erhSelect    = this._shadowRoot.getElementById("erhebung-select");
     const jahrSelect   = this._shadowRoot.getElementById("jahr-select");
     const nummerSelect = this._shadowRoot.getElementById("nummer-select");
     if (!erhSelect || !jahrSelect || !nummerSelect) return;
- 
+
     if (erhID) {
       erhSelect.value = erhID;
       erhSelect.dispatchEvent(new Event("change"));
@@ -2017,7 +2029,7 @@ class GeoMapWidget extends HTMLElement {
       nummerSelect.value = nummer;
     }
   }
- 
+
   prepareErhebungsInfo() {
     this.erhebungsInfo={};
     const{erhID,jahr,nummer}=this._activeFilter||{}; if(!erhID) return;
@@ -2039,7 +2051,7 @@ class GeoMapWidget extends HTMLElement {
       this.erhebungsInfo[nl]={nl,jahresumsatz:j,erfasst_total:t,erfasst_valid:v,pct_erfassung:j>0?t/j:0,pct_valid:t>0?v/t:0,pct_hochrechnung:j>0?v/j:0};
     });
   }
- 
+
   prepareUmsatzPLZWerte() {
     const{erhID,jahr,nummer}=this._activeFilter||{}; if(!erhID||!jahr||!nummer) return;
     // PERF: Index-Lookup statt Full-Scan
@@ -2083,18 +2095,18 @@ class GeoMapWidget extends HTMLElement {
     });
     this.filteredPLZWerte=result;
   }
- 
+
   _refreshAll() {
     this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
     this.updateGeoLayer(); this.updateHeatmapLegend();
     this.renderDataTable(this.filteredKennwerte);
   }
- 
+
   getColorForPLZ(plz) {
     const data=this.filteredPLZWerte?.[plz]; if(!data) return "#cfd4da";
     return this.getColor(data.hz===true?data.wk??0:data.wkPot??0,data.hz===true);
   }
- 
+
   getFilteredDataWithRadius() {
     if(!this.filteredData) return [];
     const result=[],aggregated={},unfilteredUmsatzByPLZ={};
@@ -2139,9 +2151,9 @@ class GeoMapWidget extends HTMLElement {
     this.streuverlust={umsatz:streuverlust.sum.umsatzNetto,anteil:totalErhebungUmsatz>0?streuverlust.sum.umsatzNetto/totalErhebungUmsatz:0};
     return result;
   }
- 
+
   closeNLTable() { this._shadowRoot.getElementById("nl-info-container")?.classList.remove("show"); this._shadowRoot.querySelector(".filter-container")?.classList.remove("nl-info-active"); }
- 
+
   showEmptyUmsatzPopup(plz) {
     const popup=this._shadowRoot.getElementById("side-popup-umsatz"); if(!popup) return;
     const note=this.geoNotes?.[plz]||"—";
@@ -2150,7 +2162,7 @@ class GeoMapWidget extends HTMLElement {
     popup.classList.remove("hidden");void popup.offsetWidth;popup.classList.add("show");
     popup.querySelector(".close-btn").onclick=()=>{popup.classList.remove("show");popup.classList.add("hidden");this._activePopupPLZ=null;this._activePopupType=null;};
   }
- 
+
   prepareDropdownData(data) {
     const erhSelect=this._shadowRoot.getElementById("erhebung-select"),jahrSelect=this._shadowRoot.getElementById("jahr-select"),nummerSelect=this._shadowRoot.getElementById("nummer-select");
     if(!erhSelect||!jahrSelect||!nummerSelect) return;
@@ -2163,11 +2175,12 @@ class GeoMapWidget extends HTMLElement {
     const filterButton=this._shadowRoot.getElementById("filter-button");
     if(filterButton){filterButton.addEventListener("click",()=>this.loadErhebung(erhSelect.value,jahrSelect.value,nummerSelect.value));}
   }
- 
+
   async render() {
-    if(!this.map||!this._myDataSource||this._myDataSource.state!=="success") {
-      // FIX 1: Wenn Daten noch nicht da → Loader updaten und warten
+    if(!this.map) return; // Karte noch nicht bereit – myDataSource-Setter wird render() triggern
+    if(!this._myDataSource || this._myDataSource.state!=="success") {
       this._updateLoaderPhase(1, "Warte auf Daten…");
+      this._scheduleDataPoll(); // aktiv auf success warten statt stumm abbrechen
       return;
     }
     const rawData=this._myDataSource.data;
@@ -2185,7 +2198,7 @@ class GeoMapWidget extends HTMLElement {
       return this._normalizePLZ(rawPLZ);
     }).filter(p=>p!==null):Object.keys(this.allMarkers||{});
     this.updateMarkers(filteredPLZs); this.renderDataTable(this.filteredKennwerte);
- 
+
     // FIX 1: Loader erst HIER verstecken – alle Daten und GeoJSON sind geladen
     this._hideCinematicLoader();
     if (!isFiltered) {
@@ -2195,7 +2208,7 @@ class GeoMapWidget extends HTMLElement {
     }
     this.hideSpinner();
   }
- 
+
   updateHeatmapLegend() {
     const legend=this._shadowRoot.getElementById("heatmap-legend"); if(!legend) return;
     if(!this._activeFilter||!this.filteredPLZWerte||Object.keys(this.filteredPLZWerte).length===0){legend.classList.add("hidden");return;}
@@ -2230,14 +2243,14 @@ class GeoMapWidget extends HTMLElement {
     }
     legend.classList.add("hidden");
   }
- 
+
   getUmsatzValueForLegend(v) {
     let sum=0; for(const cat of this.activeCategories){if(v[cat]!=null)sum+=v[cat];}
     if(this.umsatzMainMode==="werbung"){sum=0;if(this.useWerbeUmsatz)sum+=v.werbung??0;if(this.useZusatzUmsatz)sum+=v.zusatz??0;}
     if(this.umsatzDarstellung==="hh"){const hh=v.haushalte||1;sum=sum/hh;}
     return sum;
   }
- 
+
   async loadErhebung(erhID, jahr, nummer) {
     const legend=this._shadowRoot.getElementById("heatmap-legend"); legend?.classList.add("hidden");
     this.closeNLTable?.();
@@ -2264,7 +2277,7 @@ class GeoMapWidget extends HTMLElement {
       this.updateGeoLayer(); this.prepareErhebungsInfo(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
       this._updateLoaderPhase(5,"Fertig!");
       await new Promise(r=>setTimeout(r,500));
- 
+
       const block = this._shadowRoot.getElementById("map-interaction-block");
       if (block) block.classList.add("hidden");
       this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
@@ -2274,7 +2287,7 @@ class GeoMapWidget extends HTMLElement {
       this._hideCinematicLoader();
     }
   }
- 
+
   _showCinematicLoader() {
     this._hideCinematicLoader(true);
     const overlay=document.createElement("div"); overlay.id="cinematic-loader";
@@ -2282,7 +2295,7 @@ class GeoMapWidget extends HTMLElement {
     const mc=this._shadowRoot.querySelector(".map-container");
     if(mc) mc.appendChild(overlay); else this._shadowRoot.appendChild(overlay);
   }
- 
+
   _updateLoaderPhase(phase, text) {
     const loader=this._shadowRoot.getElementById("cinematic-loader"); if(!loader) return;
     const phaseText=loader.querySelector("#loader-phase-text");
@@ -2294,25 +2307,25 @@ class GeoMapWidget extends HTMLElement {
       if(p===phase)dot.classList.add("active");else if(p<phase)dot.classList.add("done");
     });
   }
- 
+
   _hideCinematicLoader(immediate=false) {
     const loader=this._shadowRoot.getElementById("cinematic-loader"); if(!loader) return;
     if(immediate){loader.remove();return;}
     loader.classList.add("fade-out"); setTimeout(()=>loader.remove(),380);
   }
- 
+
   _startPreviewAnimation() {
     if (this._activeFilter) return;
     if (!this._erhData || Object.keys(this._erhData).length === 0) return;
     if (!this.map) return;
- 
+
     const allErhIDs = Object.keys(this._erhData);
     if (allErhIDs.length === 0) return;
- 
+
     if (!this._previewGroup) {
       this._previewGroup = L.layerGroup().addTo(this.map);
     }
- 
+
     if (!this._shadowRoot.getElementById('preview-anim-style')) {
       const style = document.createElement('style');
       style.id = 'preview-anim-style';
@@ -2333,9 +2346,9 @@ class GeoMapWidget extends HTMLElement {
       `;
       this._shadowRoot.appendChild(style);
     }
- 
+
     let currentIdx = 0;
- 
+
     // PERF: NL-Koordinaten direkt aus dem Erhebungs-Index ableiten
     // statt erneut über alle Rohdaten zu iterieren
     const nlByErh = {};
@@ -2368,7 +2381,7 @@ class GeoMapWidget extends HTMLElement {
         if (!nlByErh[erhID][nl]) nlByErh[erhID][nl] = { lat, lon };
       }
     }
- 
+
     const getOrCreateLabel = () => {
       let lbl = this._shadowRoot.getElementById('preview-erh-label');
       if (!lbl) {
@@ -2385,22 +2398,22 @@ class GeoMapWidget extends HTMLElement {
       }
       return lbl;
     };
- 
+
     const showErhebung = (erhID) => {
       this._previewGroup.clearLayers();
- 
+
       const lbl = getOrCreateLabel();
       lbl.style.opacity = '0';
       setTimeout(() => { lbl.textContent = `Vorschau · ${erhID}`; lbl.style.opacity = '1'; }, 150);
- 
+
       const nls = nlByErh[erhID] || {};
       const nlList = Object.entries(nls);
       if (nlList.length === 0) return;
- 
+
       nlList.forEach(([nl, { lat, lon }], i) => {
         setTimeout(() => {
           if (this._activeFilter) return;
- 
+
           const pingIcon = L.divIcon({
             html: `<div style="
               width:44px;height:44px;border-radius:50%;
@@ -2414,7 +2427,7 @@ class GeoMapWidget extends HTMLElement {
           const pingMarker = L.marker([lat, lon], { icon: pingIcon, interactive: false, zIndexOffset: 500 });
           this._previewGroup.addLayer(pingMarker);
           setTimeout(() => { try { this._previewGroup.removeLayer(pingMarker); } catch(e){} }, 1050);
- 
+
           const pinIcon = L.divIcon({
             html: `<div style="
               width:30px;height:30px;background:#b41821;
@@ -2434,32 +2447,32 @@ class GeoMapWidget extends HTMLElement {
           });
           const pinMarker = L.marker([lat, lon], { icon: pinIcon, interactive: false, zIndexOffset: 1000 });
           this._previewGroup.addLayer(pinMarker);
- 
+
         }, i * 300);
       });
     };
- 
+
     const runCycle = () => {
       if (this._activeFilter) { this._stopPreview(); return; }
       const erhID = allErhIDs[currentIdx % allErhIDs.length];
       showErhebung(erhID);
       currentIdx++;
     };
- 
+
     runCycle();
     this._previewInterval = setInterval(() => {
       if (this._activeFilter) { this._stopPreview(); return; }
       runCycle();
     }, 5500);
   }
- 
+
   _stopPreview() {
     if (this._previewInterval) { clearInterval(this._previewInterval); this._previewInterval = null; }
     if (this._previewGroup)    { this._previewGroup.clearLayers(); }
     const lbl = this._shadowRoot.getElementById('preview-erh-label');
     if (lbl) lbl.remove();
   }
- 
+
   _triggerSweepAnimation() {
     if (!this._geoLayer) return;
     const container = this._geoLayer.getPane?.() || this._geoLayer._map?.getPanes?.()?.overlayPane;
@@ -2473,15 +2486,15 @@ class GeoMapWidget extends HTMLElement {
       }, 50);
     });
   }
- 
+
   showLoadingOverlay() { const o=this._shadowRoot.getElementById("loading-spinner"); if(!o)return; o.classList.remove("hidden");o.style.opacity="1";o.style.pointerEvents="auto"; }
   hideLoadingOverlay() { const o=this._shadowRoot.getElementById("loading-spinner"); if(!o)return; o.style.transition="opacity 0.25s ease";o.style.opacity="0";o.style.pointerEvents="none";setTimeout(()=>o.classList.add("hidden"),250); }
- 
+
   async queryErhebungFromBW(erhID, jahr, nummer) {
     // PERF: Index-Lookup statt Full-Scan über alle Rohdaten
     return this._getErhebungRows(erhID, jahr, nummer);
   }
- 
+
   _resetToHome() {
     this._activeFilter = null;
     this.filteredData = null;
@@ -2495,7 +2508,7 @@ class GeoMapWidget extends HTMLElement {
     this._activePopupType = null;
     this._highlightedPLZ = null;
     this._nlSelectionInitialized = false;
- 
+
     this.closeAllPopups();
     this.closeNLTable?.();
     this._shadowRoot.getElementById("heatmap-legend")?.classList.add("hidden");
@@ -2525,13 +2538,13 @@ class GeoMapWidget extends HTMLElement {
     const block = this._shadowRoot.getElementById("map-interaction-block");
     if (block) block.classList.remove("hidden");
   }
- 
+
   _showDoppelTooltip(plz, event, container) {
     this._hideDoppelTooltip();
     const crossInfo = this._crossErhebungPLZ?.[plz] || {};
     const { erhID: aktErhID } = this._activeFilter || {};
     const note = this.geoNotes?.[plz] || `PLZ ${plz}`;
- 
+
     if (Object.keys(crossInfo).length === 0 && aktErhID && this.filteredData) {
       crossInfo[aktErhID] = new Set();
       this.filteredData.forEach(row => {
@@ -2544,9 +2557,9 @@ class GeoMapWidget extends HTMLElement {
         if (nl) crossInfo[aktErhID].add(nl);
       });
     }
- 
+
     const allNLs = [...new Set(Object.values(crossInfo).flatMap(s => [...s]))].join(", ") || "—";
- 
+
     const el = document.createElement("div");
     el.className = "doppel-tooltip";
     el.innerHTML = `
@@ -2561,7 +2574,7 @@ class GeoMapWidget extends HTMLElement {
     this._doppelTooltipEl = el;
     this._moveDoppelTooltip(event, container);
   }
- 
+
   _moveDoppelTooltip(event, container) {
     if (!this._doppelTooltipEl || !container) return;
     const rect = container.getBoundingClientRect();
@@ -2574,14 +2587,14 @@ class GeoMapWidget extends HTMLElement {
     this._doppelTooltipEl.style.left = x + "px";
     this._doppelTooltipEl.style.top  = y + "px";
   }
- 
+
   _hideDoppelTooltip() {
     if (this._doppelTooltipEl) {
       this._doppelTooltipEl.remove();
       this._doppelTooltipEl = null;
     }
   }
- 
+
   _clearDoppelMarkers() {
     if (this.criticalMarkers) {
       Object.keys(this.criticalMarkers).forEach(plz => this._removeCriticalMarker(plz));
@@ -2592,7 +2605,7 @@ class GeoMapWidget extends HTMLElement {
       this._doppelTooltipEl = null;
     }
   }
- 
+
   closeAllPopups() {
     this._shadowRoot.getElementById("side-popup-umsatz")?.classList.add("hidden");
     this._shadowRoot.getElementById("side-popup")?.classList.add("hidden");
@@ -2600,19 +2613,19 @@ class GeoMapWidget extends HTMLElement {
     if (ov) { ov.classList.remove("show"); ov.classList.add("hidden"); }
     this._activePopupPLZ=null; this._activePopupType=null;
   }
- 
+
   showOverviewPopup() {
     if (!this._activeFilter) return;
     const popup = this._shadowRoot.getElementById("side-popup-overview");
     if (!popup) return;
- 
+
     // Andere Popups schließen
     this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
     this._shadowRoot.getElementById("side-popup")?.classList.add("hidden");
     this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
     this._shadowRoot.getElementById("side-popup-umsatz")?.classList.add("hidden");
     this._activePopupPLZ = null; this._activePopupType = null;
- 
+
     // Header-Titel: Erhebungsname oder gefilterte NLs
     const { erhID } = this._activeFilter || {};
     const selNLs = this._selectedNLs;
@@ -2621,15 +2634,15 @@ class GeoMapWidget extends HTMLElement {
     if (selNLs && selNLs.size > 0 && selNLs.size < allNLs.length) {
       headerTitle = [...selNLs].join(", ");
     }
- 
+
     const panel = this._shadowRoot.getElementById("map-control-panel");
     panel?.classList.remove("panel-large"); panel?.classList.add("panel-medium");
- 
+
     // ── Gemeinsame Aggregation ──
     const isWerbungMode = this.umsatzMainMode === "werbung";
     const useWerbe  = this.useWerbeUmsatz === true;
     const useZusatz = this.useZusatzUmsatz === true;
- 
+
     const aggKeys = ['umsatz','ra','onlineshop','pluscard',
       'umsatzWerbung','raWerbung','onlineshopWerbung','pluscardWerbung',
       'umsatzZusatz','raZusatz','onlineshopZusatz','pluscardZusatz',
@@ -2639,7 +2652,7 @@ class GeoMapWidget extends HTMLElement {
       'umsatzZusatzProHaushalt','raZusatzProHaushalt','onlineshopZusatzProHaushalt','pluscardZusatzProHaushalt'];
     const agg = Object.fromEntries(aggKeys.map(k => [k, 0]));
     let totalUmsatzHR = 0, totalHZKosten = 0, totalHaushalteWK = 0, plzCount = 0;
- 
+
     Object.entries(this.filteredPLZWerte || {}).forEach(([plz, v]) => {
       if (this.plzImRadius && this.plzImRadius.size > 0 && !this.plzImRadius.has(plz)) return;
       for (const key of aggKeys) { agg[key] += v[key] || 0; }
@@ -2651,7 +2664,7 @@ class GeoMapWidget extends HTMLElement {
       totalHaushalteWK += this.filteredPLZWerte?.[plz]?.haushalte ?? 0;
       plzCount++;
     });
- 
+
     const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
       if (!isWerbungMode) return { abs: base, hh: baseHH };
       let abs = 0, hh = 0;
@@ -2663,7 +2676,7 @@ class GeoMapWidget extends HTMLElement {
     const pc = pick(agg.pluscard,  agg.pluscardWerbung,  agg.pluscardZusatz,  agg.pluscardProHaushalt,  agg.pluscardWerbungProHaushalt,  agg.pluscardZusatzProHaushalt);
     const ra = pick(agg.ra,        agg.raWerbung,        agg.raZusatz,        agg.raProHaushalt,        agg.raWerbungProHaushalt,        agg.raZusatzProHaushalt);
     const os = pick(agg.onlineshop,agg.onlineshopWerbung,agg.onlineshopZusatz,agg.onlineshopProHaushalt,agg.onlineshopWerbungProHaushalt,agg.onlineshopZusatzProHaushalt);
- 
+
     const active = {
       stationaer: this.activeCategories.has("stationaer"),
       pluscard:   this.activeCategories.has("pluscard"),
@@ -2677,13 +2690,13 @@ class GeoMapWidget extends HTMLElement {
     const tZ = agg.umsatzZusatz  + agg.pluscardZusatz  + agg.raZusatz  + agg.onlineshopZusatz;
     const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : "–";
     const wkGesamt = totalUmsatzHR > 0 ? ((totalHZKosten / totalUmsatzHR) * 100).toFixed(1) : "–";
- 
+
     const fA  = x => Number(x||0).toLocaleString("de-DE");
     const fH  = x => Number(x||0).toFixed(2);
     const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
     const dis = (key) => !active[key] ? 'opacity:0.3;filter:grayscale(1)' : '';
     const hl = !isWerbungMode ? "Gesamtumsatz" : useWerbe && useZusatz ? "Werbeumsatz + Mitgekauft" : useWerbe ? "Werbeumsatz" : "Mitgekauft";
- 
+
     popup.innerHTML = `
       <div style="flex-shrink:0;background:linear-gradient(135deg,var(--red) 0%,var(--red-light) 100%);color:white;padding:12px 14px 10px;display:flex;justify-content:space-between;align-items:flex-start;border-radius:var(--radius-xl) 0 0 0;line-height:1.3;">
         <div style="overflow:hidden;min-width:0">
@@ -2692,14 +2705,14 @@ class GeoMapWidget extends HTMLElement {
         </div>
         <button class="close-btn" style="position:static;flex-shrink:0;width:26px;height:26px;background:rgba(255,255,255,0.2);color:white;border:1.5px solid rgba(255,255,255,0.35);border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:8px;margin-top:2px;transition:background .15s,transform .15s">✕</button>
       </div>
- 
+
       <div style="overflow-y:auto;flex:1;min-height:0;">
- 
+
         <div class="umsatz-subheader">
           <span class="strong">${hl}: ${fA(totalAbs)} €</span><br>
           <span style="font-size:0.78rem;color:var(--gray-500)">${fH(totalHH)} € / HH &nbsp;·&nbsp; Werbeanteil: ${antWA} %</span>
         </div>
- 
+
         <div class="umsatz-bar" style="margin:8px 14px 2px">
           <div style="background:var(--red);width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
           <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
@@ -2710,7 +2723,7 @@ class GeoMapWidget extends HTMLElement {
           <span><span style="color:#1f78b4">⬤</span> Werbung</span>
           <span><span style="color:#ffb000">⬤</span> Mitgekauft</span>
         </div>
- 
+
         <div class="section-title">WK-Kennwerte</div>
         <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px;font-size:0.82rem;">
           <div style="color:var(--gray-600);font-weight:500">Netto-Umsatz (HR)</div>
@@ -2720,7 +2733,7 @@ class GeoMapWidget extends HTMLElement {
           <div style="color:var(--gray-600);font-weight:500">Haushalte</div>
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(Math.round(totalHaushalteWK))}</div>
         </div>
- 
+
         <div class="section-title">Umsatzanteile (Kategorien)</div>
         <div class="umsatz-bar" style="margin:8px 14px 2px">
           <div class="share-stationaer" style="width:${pct(agg.umsatz,tN)}%;transition:width .5s ease"></div>
@@ -2734,7 +2747,7 @@ class GeoMapWidget extends HTMLElement {
           <span><span style="color:#33a02c">⬤</span> R&amp;A</span>
           <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
         </div>
- 
+
         <div class="section-title">Nach Kategorien</div>
         <div class="umsatz-grid" style="padding:6px 14px">
           <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
@@ -2753,15 +2766,15 @@ class GeoMapWidget extends HTMLElement {
           <div class="value" style="${dis('online')}">${fA(os.abs)} €</div>
           <div class="value" style="${dis('online')}">${fH(os.hh)} €</div>
         </div>
- 
+
       </div>`;
- 
+
     popup.classList.remove("hidden"); void popup.offsetWidth; popup.classList.add("show");
     popup.querySelector(".close-btn").onclick = () => {
       popup.classList.remove("show"); popup.classList.add("hidden");
     };
   }
- 
+
   showNotesOnMap() {
     if(!this._geoLayer) return;
     const zoomLevel=this.map.getZoom(),bounds=this.map.getBounds();
@@ -2771,7 +2784,7 @@ class GeoMapWidget extends HTMLElement {
       else{if(layer.getTooltip())layer.closeTooltip();}
     });
   }
- 
+
   prepareMapData(filteredData) {
     this.Niederlassung={};this.nlKoordinaten={};this.hzFlags={};this.extraNLs=[];
     // PERF: for-loop + lokale Refs auf this-Properties reduzieren Property-Lookup-Overhead
@@ -2795,14 +2808,14 @@ class GeoMapWidget extends HTMLElement {
       if (plz) hzF[plz] = hz;
     }
   }
- 
+
   getDistanceKm(lat1,lon1,lat2,lon2) {
     const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
     const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
     return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   }
   getPolygonCenter(layer){return layer.getBounds().getCenter();}
- 
+
   applyRadiusFilter(radiusKm) {
     if(!this._layerByPLZ) return;
     if(!this._distanceCache||Object.keys(this._distanceCache).length===0) this._buildDistanceCache();
@@ -2813,7 +2826,7 @@ class GeoMapWidget extends HTMLElement {
     this.computeWKKennwerte();this.computeStreuverlust();this.updateGeoLayer();this.renderDataTable(this.filteredKennwerte);
     this._rerenderActivePopup();
   }
- 
+
   computeWKKennwerte() {
     if (!this.filteredData) return;
     const aggregated = {}, unfilteredUmsatzByPLZ = {};
@@ -2843,11 +2856,11 @@ class GeoMapWidget extends HTMLElement {
       const potHz = row["value_hz_potentiell_0"]?.raw;
       if (typeof potHz === "number") entry.potHzKosten.push(potHz);
     }
- 
+
     const base = this.filteredKennwerte || {},
           newFilteredKennwerte = {},
           newFilteredPLZWerte  = {};
- 
+
     Object.entries(aggregated).forEach(([plz, entry]) => {
       const umsatzNetto  = entry.umsatzNetto,
             hzKosten     = entry.hzKosten,
@@ -2862,7 +2875,7 @@ class GeoMapWidget extends HTMLElement {
             isCritical   = entry.hzCount > 1,
             baseEntry    = base[plz] || {},
             old          = this.filteredPLZWerte?.[plz] || {};
- 
+
       newFilteredKennwerte[plz] = {
         ...baseEntry,
         isHZ, isCritical,
@@ -2878,7 +2891,7 @@ class GeoMapWidget extends HTMLElement {
         value_kaufkraft_0:        { raw: old.kaufkraftIndex   ?? 0 },
         value_werbeverweigerer_0: { raw: old.werbeverweigerer ?? 0 },
       };
- 
+
       newFilteredPLZWerte[plz] = {
         wk: wkPercent, wkPot: potHzPercent, hz: isHZ,
         umsatz:        old.umsatz        ?? 0,
@@ -2911,15 +2924,15 @@ class GeoMapWidget extends HTMLElement {
         werbeAnteil: old.werbeAnteil ?? 0,
       };
     });
- 
+
     this.filteredKennwerte = newFilteredKennwerte;
     this.filteredPLZWerte  = newFilteredPLZWerte;
   }
- 
+
   toggleNLSelection(nl) {
     if (!this._selectedNLs) this._selectedNLs = new Set();
     const allCount = this.allNLs?.length || 0;
- 
+
     if (this._selectedNLs.size === allCount) {
       this._selectedNLs = new Set([nl]);
     } else if (this._selectedNLs.has(nl)) {
@@ -2933,7 +2946,7 @@ class GeoMapWidget extends HTMLElement {
         this._selectedNLs = new Set(this.allNLs);
       }
     }
- 
+
     this.updateNLSelectionUI();
     this.applyNLFilter([...this._selectedNLs]);
     const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
@@ -2943,7 +2956,7 @@ class GeoMapWidget extends HTMLElement {
     this.prepareUmsatzPLZWerte();
     this.showOverviewPopup();
   }
- 
+
   initRadiusSlider() {
     const slider=this._shadowRoot.getElementById("radius-slider"),valueLabel=this._shadowRoot.getElementById("radius-value");
     if(!slider) return;
@@ -2956,21 +2969,48 @@ class GeoMapWidget extends HTMLElement {
       clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{this.applyRadiusFilter(radius);this.renderDataTable(this.filteredKennwerte);},80);
     });
   }
- 
+
   onCustomWidgetEvent(event) { if(event.name==="toggleTiles") this.toggleMapTiles(); }
- 
+
   set myDataSource(dataBinding) {
-    this._myDataSource=dataBinding;
-    // PERF: Index bei neuen Daten invalidieren + PLZ-Cache leeren
+    this._myDataSource = dataBinding;
+    // Index + Cache invalidieren bei neuen Daten
     this._erhebungIndex = null;
     this._plzNormCache = null;
-    if(!this.map){const wait=setInterval(()=>{if(this.map){clearInterval(wait);this.render();}},100);return;}
+
+    // Sofort versuchen zu rendern – wenn Karte noch nicht bereit, einmaligen
+    // Map-ready-Callback registrieren statt polling-Loop
+    if (!this.map) {
+      this._pendingRender = true; // render() wird von initializeMapBase() aufgerufen
+      return;
+    }
+    // Daten noch nicht bereit (z.B. state === "loading")
+    if (!this._myDataSource || this._myDataSource.state !== "success") {
+      this._scheduleDataPoll();
+      return;
+    }
     this.render();
   }
+
+  _scheduleDataPoll() {
+    if (this._dataPollTimer) return; // läuft bereits, kein zweiter starten
+    this._updateLoaderPhase(1, "Warte auf Daten…");
+    const start = Date.now();
+    this._dataPollTimer = setInterval(() => {
+      if (this._myDataSource?.state === "success") {
+        clearInterval(this._dataPollTimer);
+        this._dataPollTimer = null;
+        this.render();
+      } else {
+        // Fortschritt anzeigen damit User sieht dass etwas passiert
+        const secs = ((Date.now() - start) / 1000).toFixed(0);
+        this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
+      }
+    }, 50);
+  }
 }
- 
+
     if (!customElements.get('geo-map-widget')) {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
- 
