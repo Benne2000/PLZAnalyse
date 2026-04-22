@@ -366,7 +366,7 @@ let neighbours = true;
       .umsatz-subheader { padding: 12px 14px 6px; font-size: 0.87rem; line-height: 1.55; background: var(--red-bg); border-bottom: 1px solid var(--red-border); }
       .umsatz-subheader .strong { font-weight: 700; color: var(--gray-900); }
       .section-title { margin: 0; padding: 6px 14px; background: var(--gray-50); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200); font-weight: 700; font-size: 0.68rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gray-500); }
-      .umsatz-grid { display: grid; grid-template-columns: 1.3fr 0.9fr 0.9fr; gap: 5px 10px; padding: 8px 14px; align-items: center; }
+      .umsatz-grid { display: grid; grid-template-columns: 1.1fr 0.85fr 0.85fr 0.85fr; gap: 5px 8px; padding: 8px 14px; align-items: center; }
       .umsatz-grid .label { font-weight: 500; color: var(--gray-600); font-size: 0.82rem; }
       .umsatz-grid .value { text-align: right; font-weight: 700; color: var(--gray-800); font-size: 0.82rem; font-variant-numeric: tabular-nums; }
       .umsatz-bar { height: 10px; border-radius: 5px; overflow: hidden; display: flex; margin: 6px 14px; background: var(--gray-100); }
@@ -375,6 +375,25 @@ let neighbours = true;
       .umsatz-legend { display: flex; gap: 10px; flex-wrap: wrap; padding: 4px 14px 10px; font-size: 0.78rem; color: var(--gray-600); }
       .umsatz-legend > span { display: flex; align-items: center; gap: 4px; }
       .disabled-cell { opacity: 0.3; filter: grayscale(1); }
+ 
+      #side-popup-overview {
+        position: absolute; right: 0; top: 0;
+        width: 26%;
+        height: calc(100% - 26% - 10px);
+        max-height: 68%;
+        background: var(--white); border-left: 3px solid var(--red);
+        border-top-left-radius: var(--radius-xl); border-bottom-left-radius: var(--radius-xl);
+        box-sizing: border-box; overflow-y: auto; z-index: 99998;
+        box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+        scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
+        opacity: 0; transform: translateX(16px);
+        transition: opacity 0.28s ease, transform 0.28s var(--ease-out);
+        display: flex; flex-direction: column;
+      }
+      #side-popup-overview::-webkit-scrollbar { width: 5px; }
+      #side-popup-overview::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+      #side-popup-overview.show { opacity: 1; transform: translateX(0); }
+      #side-popup-overview.hidden { opacity: 0; transform: translateX(16px); pointer-events: none; }
  
       #map-control-panel {
         position: absolute; right: 0; bottom: 0; width: 26%; height: 25%; max-height: 58%;
@@ -596,6 +615,7 @@ let neighbours = true;
  
       <div id="side-popup" class="side-popup hidden"></div>
       <div id="side-popup-umsatz" class="side-popup hidden"></div>
+      <div id="side-popup-overview" class="hidden"></div>
     </div>
  
     <div id="map-tile-toggle-btn" title="Kartenstil wechseln"></div>
@@ -820,7 +840,21 @@ class GeoMapWidget extends HTMLElement {
     const box = this._shadowRoot.getElementById("streuverlust-box");
     if (!box) return;
     if (!this.streuverlust) { box.innerHTML = ""; return; }
-    box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span>`;
+    // Gesamtumsatz aller angeschauten PLZs (im Radius)
+    const gesamtUmsatz = Object.values(this.filteredKennwerte || {})
+      .filter(k => !this.plzImRadius || this.plzImRadius.size === 0 || (() => false)()) // use all in radius
+      .reduce((s, k) => s + (k["value_hr_n_umsatz_0"]?.raw ?? 0), 0);
+    // Tatsächlicher Gesamtumsatz = alle PLZs im Radius
+    let totalInRadius = 0;
+    if (this.filteredKennwerte) {
+      Object.entries(this.filteredKennwerte).forEach(([plz, k]) => {
+        if (!this.plzImRadius || this.plzImRadius.size === 0 || this.plzImRadius.has(plz)) {
+          totalInRadius += k["value_hr_n_umsatz_0"]?.raw ?? 0;
+        }
+      });
+    }
+    box.style.cssText = "flex-shrink:0;background:var(--red-bg);border-top:2px solid var(--red);padding:8px 12px;font-size:0.8rem;color:var(--gray-700);display:flex;justify-content:space-between;align-items:center;gap:8px;";
+    box.innerHTML = `<span><strong>Streuverlust:</strong> ${this.streuverlust.umsatz.toLocaleString("de-DE")} € &nbsp;·&nbsp; ${(this.streuverlust.anteil*100).toFixed(1)} %</span><span style="font-weight:700;color:var(--red);white-space:nowrap">Ges.: ${totalInRadius.toLocaleString("de-DE")} €</span>`;
   }
  
   computeStreuverlust() {
@@ -999,6 +1033,8 @@ class GeoMapWidget extends HTMLElement {
       tr.style.cursor = "pointer";
       tr.dataset.plz = plz;
       tr.addEventListener("click", () => {
+        const popupOV=this._shadowRoot.getElementById("side-popup-overview");
+        if(popupOV){popupOV.classList.remove("show");popupOV.classList.add("hidden");}
         this.highlightMapArea(plz);
         this.openPopupFromTable(plz);
         this.highlightTableRow(tr);
@@ -1557,22 +1593,27 @@ class GeoMapWidget extends HTMLElement {
         <div class="umsatz-grid" style="padding:6px 14px">
           <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
           <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
+          <div class="value" style="font-weight:700;color:var(--gray-800)">Roh</div>
           <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
  
           <div class="label" style="${dis('stationaer')}">🏬 Stationär</div>
           <div class="value" style="${dis('stationaer')}">${fA(st.abs)} €</div>
+          <div class="value" style="${dis('stationaer')}">${fA(values.umsatzErhebung || 0)} €</div>
           <div class="value" style="${dis('stationaer')}">${fH(st.hh)} €</div>
  
           <div class="label" style="${dis('pluscard')}">💳 Pluscard</div>
           <div class="value" style="${dis('pluscard')}">${fA(pc.abs)} €</div>
+          <div class="value" style="${dis('pluscard')}">–</div>
           <div class="value" style="${dis('pluscard')}">${fH(pc.hh)} €</div>
  
           <div class="label" style="${dis('ra')}">📦 R&amp;A</div>
           <div class="value" style="${dis('ra')}">${fA(ra.abs)} €</div>
+          <div class="value" style="${dis('ra')}">–</div>
           <div class="value" style="${dis('ra')}">${fH(ra.hh)} €</div>
  
           <div class="label" style="${dis('online')}">🛒 KUBE OS</div>
           <div class="value" style="${dis('online')}">${fA(os.abs)} €</div>
+          <div class="value" style="${dis('online')}">–</div>
           <div class="value" style="${dis('online')}">${fH(os.hh)} €</div>
         </div>
  
@@ -1721,7 +1762,9 @@ class GeoMapWidget extends HTMLElement {
       layer.off("click");
       layer.on("click",()=>{
         const popupWK=this._shadowRoot.getElementById("side-popup"),popupU=this._shadowRoot.getElementById("side-popup-umsatz");
+        const popupOV=this._shadowRoot.getElementById("side-popup-overview");
         popupWK?.classList.remove("show");popupWK?.classList.add("hidden");popupU?.classList.remove("show");popupU?.classList.add("hidden");
+        if(popupOV){popupOV.classList.remove("show");popupOV.classList.add("hidden");}
         if(this.currentMapMode==="umsatz-multi"||this.currentMapMode==="werbeanteil"){this.activePopupType="umsatz";this.showEmptyUmsatzPopup(plz);return;}
         this.activePopupType="wk";this.showPopup(layer.feature,{});
       });
@@ -1735,7 +1778,9 @@ class GeoMapWidget extends HTMLElement {
     layer.on("click",()=>{
       const values=this.filteredPLZWerte?.[plz];
       const popupWK=this._shadowRoot.getElementById("side-popup"),popupU=this._shadowRoot.getElementById("side-popup-umsatz");
+      const popupOV=this._shadowRoot.getElementById("side-popup-overview");
       popupWK?.classList.remove("show");popupWK?.classList.add("hidden");popupU?.classList.remove("show");popupU?.classList.add("hidden");
+      if(popupOV){popupOV.classList.remove("show");popupOV.classList.add("hidden");}
       this.highlightMapArea(plz); this.highlightTableRowByPLZ(plz);
       if(this.currentMapMode==="umsatz-multi"||this.currentMapMode==="werbeanteil"){
         this.activePopupType="umsatz"; values?this.showUmsatzPopup(plz,values):this.showEmptyUmsatzPopup(plz); return;
@@ -2210,6 +2255,7 @@ class GeoMapWidget extends HTMLElement {
       const block = this._shadowRoot.getElementById("map-interaction-block");
       if (block) block.classList.add("hidden");
       this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
+      this.showOverviewPopup();
     } finally {
       this._hideCinematicLoader();
     }
@@ -2535,7 +2581,159 @@ class GeoMapWidget extends HTMLElement {
   closeAllPopups() {
     this._shadowRoot.getElementById("side-popup-umsatz")?.classList.add("hidden");
     this._shadowRoot.getElementById("side-popup")?.classList.add("hidden");
+    const ov = this._shadowRoot.getElementById("side-popup-overview");
+    if (ov) { ov.classList.remove("show"); ov.classList.add("hidden"); }
     this._activePopupPLZ=null; this._activePopupType=null;
+  }
+ 
+  showOverviewPopup() {
+    const popup = this._shadowRoot.getElementById("side-popup-overview");
+    if (!popup) return;
+ 
+    // Alle anderen Popups schließen
+    this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
+    this._shadowRoot.getElementById("side-popup")?.classList.add("hidden");
+    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
+    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.add("hidden");
+    this._activePopupPLZ = null; this._activePopupType = null;
+ 
+    // Header-Titel: Erhebungsname oder gefilterte NLs
+    const { erhID } = this._activeFilter || {};
+    const selNLs = this._selectedNLs;
+    const allNLs = this.allNLs || [];
+    let headerTitle = erhID || "Übersicht";
+    if (selNLs && selNLs.size > 0 && selNLs.size < allNLs.length) {
+      headerTitle = [...selNLs].join(", ");
+    }
+ 
+    const panel = this._shadowRoot.getElementById("map-control-panel");
+    panel?.classList.remove("panel-large"); panel?.classList.add("panel-medium");
+ 
+    const isUmsatzMode = this.currentMapMode === "umsatz-multi" || this.currentMapMode === "werbeanteil";
+ 
+    if (isUmsatzMode) {
+      // Umsatz-Gesamt-Popup
+      const isWerbungMode = this.umsatzMainMode === "werbung";
+      const useWerbe  = this.useWerbeUmsatz === true;
+      const useZusatz = this.useZusatzUmsatz === true;
+      const pick = (base, werb, zusatz, baseHH, werbHH, zusatzHH) => {
+        if (!isWerbungMode) return { abs: base, hh: baseHH };
+        let abs = 0, hh = 0;
+        if (useWerbe)  { abs += werb;   hh += werbHH;  }
+        if (useZusatz) { abs += zusatz; hh += zusatzHH; }
+        return { abs, hh };
+      };
+      const fA = x => Number(x||0).toLocaleString("de-DE");
+      const fH = x => Number(x||0).toFixed(2);
+      const dis = (key) => !this.activeCategories.has(key) ? 'opacity:0.3;filter:grayscale(1)' : '';
+ 
+      // Aggregiere alle PLZ-Werte
+      const agg = { umsatz:0, ra:0, onlineshop:0, pluscard:0,
+        umsatzWerbung:0, raWerbung:0, onlineshopWerbung:0, pluscardWerbung:0,
+        umsatzZusatz:0, raZusatz:0, onlineshopZusatz:0, pluscardZusatz:0,
+        umsatzErhebung:0, haushalte:0,
+        umsatzProHaushalt:0, raProHaushalt:0, onlineshopProHaushalt:0, pluscardProHaushalt:0,
+        umsatzWerbungProHaushalt:0, raWerbungProHaushalt:0, onlineshopWerbungProHaushalt:0, pluscardWerbungProHaushalt:0,
+        umsatzZusatzProHaushalt:0, raZusatzProHaushalt:0, onlineshopZusatzProHaushalt:0, pluscardZusatzProHaushalt:0,
+      };
+      Object.entries(this.filteredPLZWerte || {}).forEach(([plz, v]) => {
+        if (this.plzImRadius && this.plzImRadius.size > 0 && !this.plzImRadius.has(plz)) return;
+        for (const key of Object.keys(agg)) { agg[key] = (agg[key]||0) + (v[key]||0); }
+      });
+ 
+      const st = pick(agg.umsatz, agg.umsatzWerbung, agg.umsatzZusatz, agg.umsatzProHaushalt, agg.umsatzWerbungProHaushalt, agg.umsatzZusatzProHaushalt);
+      const pc = pick(agg.pluscard, agg.pluscardWerbung, agg.pluscardZusatz, agg.pluscardProHaushalt, agg.pluscardWerbungProHaushalt, agg.pluscardZusatzProHaushalt);
+      const ra = pick(agg.ra, agg.raWerbung, agg.raZusatz, agg.raProHaushalt, agg.raWerbungProHaushalt, agg.raZusatzProHaushalt);
+      const os = pick(agg.onlineshop, agg.onlineshopWerbung, agg.onlineshopZusatz, agg.onlineshopProHaushalt, agg.onlineshopWerbungProHaushalt, agg.onlineshopZusatzProHaushalt);
+      const active = { stationaer: this.activeCategories.has("stationaer"), pluscard: this.activeCategories.has("pluscard"), ra: this.activeCategories.has("ra"), online: this.activeCategories.has("online") };
+      const totalAbs = (active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
+      const totalHH  = (active.stationaer?st.hh:0) +(active.pluscard?pc.hh:0) +(active.ra?ra.hh:0) +(active.online?os.hh:0);
+      const tN = agg.umsatz + agg.pluscard + agg.ra + agg.onlineshop;
+      const tW = agg.umsatzWerbung + agg.pluscardWerbung + agg.raWerbung + agg.onlineshopWerbung;
+      const tZ = agg.umsatzZusatz + agg.pluscardZusatz + agg.raZusatz + agg.onlineshopZusatz;
+      const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : "–";
+      const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
+      const hl = !isWerbungMode ? "Gesamtumsatz" : useWerbe && useZusatz ? "Werbeumsatz + Mitgekauft" : useWerbe ? "Werbeumsatz" : "Mitgekauft";
+ 
+      popup.innerHTML = `
+        <div class="popup-header" style="flex-shrink:0;background:linear-gradient(135deg,var(--red) 0%,var(--red-light) 100%);color:white;padding:12px 14px 10px;font-size:0.97rem;font-weight:700;display:flex;justify-content:space-between;align-items:flex-start;border-radius:var(--radius-xl) 0 0 0;line-height:1.3;">
+          <div style="overflow:hidden"><div style="font-size:0.68rem;opacity:0.8;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px;">Gesamt-Ansicht</div><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px" title="${headerTitle}">${headerTitle}</div></div>
+          <button class="close-btn" style="position:static;flex-shrink:0;width:26px;height:26px;background:rgba(255,255,255,0.2);color:white;border:1.5px solid rgba(255,255,255,0.35);border-radius:50%;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-left:8px;margin-top:2px;">✕</button>
+        </div>
+        <div style="overflow-y:auto;flex:1;min-height:0;">
+          <div class="umsatz-subheader">
+            <span class="strong">${hl}: ${fA(totalAbs)} €</span><br>
+            <span style="font-size:0.78rem;color:var(--gray-500)">${fH(totalHH)} € / HH &nbsp;·&nbsp; Werbeanteil: ${antWA} %</span>
+          </div>
+          <div class="umsatz-bar" style="margin:8px 14px 2px">
+            <div style="background:var(--red);width:${pct(tN,tN+tW+tZ)}%;transition:width .5s ease"></div>
+            <div style="background:#1f78b4;width:${pct(tW,tN+tW+tZ)}%;transition:width .5s ease"></div>
+            <div style="background:#ffb000;width:${pct(tZ,tN+tW+tZ)}%;transition:width .5s ease"></div>
+          </div>
+          <div class="umsatz-legend" style="padding:2px 14px 8px">
+            <span><span style="color:var(--red)">⬤</span> Normal</span>
+            <span><span style="color:#1f78b4">⬤</span> Werbung</span>
+            <span><span style="color:#ffb000">⬤</span> Mitgekauft</span>
+          </div>
+          <div class="section-title">Nach Kategorien</div>
+          <div class="umsatz-grid" style="padding:6px 14px">
+            <div class="label" style="font-weight:700;color:var(--gray-800)">Kategorie</div>
+            <div class="value" style="font-weight:700;color:var(--gray-800)">Absolut</div>
+            <div class="value" style="font-weight:700;color:var(--gray-800)">Roh</div>
+            <div class="value" style="font-weight:700;color:var(--gray-800)">/ HH</div>
+            <div class="label" style="${dis('stationaer')}">🏬 Stationär</div>
+            <div class="value" style="${dis('stationaer')}">${fA(st.abs)} €</div>
+            <div class="value" style="${dis('stationaer')}">${fA(agg.umsatzErhebung||0)} €</div>
+            <div class="value" style="${dis('stationaer')}">${fH(st.hh)} €</div>
+            <div class="label" style="${dis('pluscard')}">💳 Pluscard</div>
+            <div class="value" style="${dis('pluscard')}">${fA(pc.abs)} €</div>
+            <div class="value" style="${dis('pluscard')}">–</div>
+            <div class="value" style="${dis('pluscard')}">${fH(pc.hh)} €</div>
+            <div class="label" style="${dis('ra')}">📦 R&amp;A</div>
+            <div class="value" style="${dis('ra')}">${fA(ra.abs)} €</div>
+            <div class="value" style="${dis('ra')}">–</div>
+            <div class="value" style="${dis('ra')}">${fH(ra.hh)} €</div>
+            <div class="label" style="${dis('online')}">🛒 KUBE OS</div>
+            <div class="value" style="${dis('online')}">${fA(os.abs)} €</div>
+            <div class="value" style="${dis('online')}">–</div>
+            <div class="value" style="${dis('online')}">${fH(os.hh)} €</div>
+          </div>
+        </div>`;
+    } else {
+      // WK-Gesamt-Popup
+      const fN = x => Number(x||0).toLocaleString("de-DE");
+      let totalUmsatz = 0, totalHZKosten = 0, totalHaushalte = 0, plzCount = 0;
+      Object.entries(this.filteredKennwerte || {}).forEach(([plz, k]) => {
+        if (this.plzImRadius && this.plzImRadius.size > 0 && !this.plzImRadius.has(plz)) return;
+        totalUmsatz    += k["value_hr_n_umsatz_0"]?.raw  ?? 0;
+        totalHZKosten  += k["value_hz_kosten_0"]?.raw    ?? 0;
+        totalHaushalte += this.filteredPLZWerte?.[plz]?.haushalte ?? 0;
+        plzCount++;
+      });
+      const wkGesamt = totalUmsatz > 0 ? ((totalHZKosten / totalUmsatz) * 100).toFixed(1) : "–";
+      let totalErhUmsatz = 0;
+      Object.values(this.filteredPLZWerte || {}).forEach(v => { totalErhUmsatz += v.umsatzErhebung || 0; });
+ 
+      popup.innerHTML = `
+        <div class="popup-header-strip" style="background:linear-gradient(135deg,var(--red) 0%,var(--red-light) 100%);color:white;padding:12px 14px 10px;border-radius:var(--radius-xl) 0 0 0;position:relative;">
+          <div class="popup-location">Gesamt-Ansicht · ${plzCount} PLZs</div>
+          <div class="popup-title" style="padding-right:32px" title="${headerTitle}">${headerTitle}</div>
+          <button class="close-btn">✕</button>
+        </div>
+        <table><thead><tr><th colspan="2" class="subtitle-cell">Hochrechnung Jahr (Gesamt)</th></tr></thead>
+        <tbody>
+          <tr><td class="label-cell">Netto-Umsatz (Jahr)</td><td class="value-cell">${fN(totalUmsatz)} €</td></tr>
+          <tr><td class="label-cell">Umsatz (Erhebung)</td><td class="value-cell">${fN(totalErhUmsatz)} €</td></tr>
+          <tr><td class="label-cell">HZ-Werbekosten</td><td class="value-cell">${fN(totalHZKosten)} €</td></tr>
+          <tr><td class="label-cell">Werbekosten (%)</td><td class="value-cell">${wkGesamt} %</td></tr>
+          <tr><td class="label-cell">Haushalte</td><td class="value-cell">${fN(Math.round(totalHaushalte))}</td></tr>
+        </tbody></table>`;
+    }
+ 
+    popup.classList.remove("hidden"); void popup.offsetWidth; popup.classList.add("show");
+    popup.querySelector(".close-btn").onclick = () => {
+      popup.classList.remove("show"); popup.classList.add("hidden");
+    };
   }
  
   showNotesOnMap() {
@@ -2717,6 +2915,7 @@ class GeoMapWidget extends HTMLElement {
     this.updateGeoLayer();
     this.renderDataTable(this.filteredKennwerte);
     this.prepareUmsatzPLZWerte();
+    this.showOverviewPopup();
   }
  
   initRadiusSlider() {
@@ -2748,4 +2947,3 @@ class GeoMapWidget extends HTMLElement {
       customElements.define('geo-map-widget', GeoMapWidget);
     }
   })();
- 
