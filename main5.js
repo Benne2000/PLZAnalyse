@@ -792,19 +792,28 @@ class GeoMapWidget extends HTMLElement {
   }
 
   async loadGeoJson() {
-    if (this._geoLayer) return;
+    if (this._geoLayer) return; // bereits geladen – sofort zurück
     try {
-      const response = await fetch("https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson");
+      // Cache-Control: max-age mitschicken damit der Browser das GeoJSON cached
+      const response = await fetch("https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson", { cache: "force-cache" });
       this._geoData = await response.json();
       this.geoNotes = {};
-      (this._geoData.features || []).forEach(f => { const plz=f.properties?.plz?.trim(),note=f.properties?.note?.trim(); if(plz&&note) this.geoNotes[plz]=note; });
-      const filteredData = this.getFilteredData();
-      const plzWerte = this.extractPLZWerte(filteredData);
+      const features = this._geoData.features || [];
+      // Einmalig alle Notes indexieren
+      for (let i = 0; i < features.length; i++) {
+        const p = features[i].properties;
+        if (p?.plz && p?.note) this.geoNotes[p.plz.trim()] = p.note.trim();
+      }
+      // GeoJSON rendern ohne Style-Funktion (updateGeoLayer übernimmt das sofort danach)
       this._geoLayer = L.geoJSON(this._geoData, {
-        style: feature => { const plz=feature.properties?.plz?.trim(),values=plzWerte[plz]||{wk:0,wkPot:0},isHZ=this.hzFlags?.[plz]??false,value=isHZ?values.wk:values.wkPot; return { fillColor: this.getColor(value, isHZ), weight: 1, opacity: 1, color: "white", fillOpacity: 0.5 }; },
+        style: () => ({ fillColor: "#e9ecef", weight: 0.8, opacity: 1, color: "white", fillOpacity: 0.35 }),
       }).addTo(this.map);
+      // layerByPLZ Index aufbauen
       this._layerByPLZ = {};
-      this._geoLayer.eachLayer(layer => { const plz=String(layer.feature?.properties?.plz??"").padStart(5,"0"); this._layerByPLZ[plz]=layer; });
+      this._geoLayer.eachLayer(layer => {
+        const plz = String(layer.feature?.properties?.plz ?? "").padStart(5, "0");
+        this._layerByPLZ[plz] = layer;
+      });
     } catch (err) { console.error("GeoJSON Fehler:", err); }
   }
 
@@ -1102,34 +1111,46 @@ class GeoMapWidget extends HTMLElement {
   _buildDistanceCache() {
     if (!this._layerByPLZ || !this.nlMarkers || this.nlMarkers.length === 0) return;
 
-    // PERF: NL-Fingerprint berechnen – Cache nur neu bauen wenn sich
-    // die NL-Positionen tatsächlich geändert haben
     const nlFingerprint = this.nlMarkers.map(m => m.lat.toFixed(4) + "," + m.lng.toFixed(4)).join("|");
     if (this._distanceCacheNLKey === nlFingerprint && this._distanceCache && Object.keys(this._distanceCache).length > 0) {
-      return; // Cache ist noch gültig
+      return;
     }
     this._distanceCacheNLKey = nlFingerprint;
     this._distanceCache = {};
-
-    // PERF: PLZ-Center einmalig cachen (getBounds().getCenter() ist teuer)
-    // und nur berechnen wenn noch nicht gecacht
     if (!this._plzCenterCache) this._plzCenterCache = {};
 
+    // Alle NL-Koordinaten als Array für schnellen Zugriff
+    const nls = this.nlMarkers.map(m => ({ lat: m.lat, lng: m.lng }));
+    const nlLen = nls.length;
     const plzList = Object.keys(this._layerByPLZ);
-    const nlLen   = this.nlMarkers.length;
+    const cache = this._distanceCache;
+    const centerCache = this._plzCenterCache;
+    const layerByPLZ = this._layerByPLZ;
+
+    // Haversine inline (kein this.getDistanceKm() Overhead)
+    const R = 6371;
+    const toRad = d => d * Math.PI / 180;
+
+    // Alles synchron aber mit gecachten Centern – keine Async nötig,
+    // getBounds().getCenter() war der eigentliche Flaschenhals
     for (let i = 0, len = plzList.length; i < len; i++) {
       const plz = plzList[i];
-      // PLZ-Center nur einmal berechnen (bleibt über Erhebungen gleich)
-      if (!this._plzCenterCache[plz]) {
-        this._plzCenterCache[plz] = this._layerByPLZ[plz].getBounds().getCenter();
+      if (!centerCache[plz]) {
+        const b = layerByPLZ[plz].getBounds();
+        centerCache[plz] = { lat: (b._southWest.lat + b._northEast.lat) / 2, lng: (b._southWest.lng + b._northEast.lng) / 2 };
       }
-      const center = this._plzCenterCache[plz];
+      const { lat: lat1, lng: lng1 } = centerCache[plz];
+      const rlat1 = toRad(lat1);
       let minDist = Infinity;
       for (let j = 0; j < nlLen; j++) {
-        const d = this.getDistanceKm(center.lat, center.lng, this.nlMarkers[j].lat, this.nlMarkers[j].lng);
+        const { lat: lat2, lng: lng2 } = nls[j];
+        const dLat = toRad(lat2 - lat1);
+        const dLon = toRad(lng2 - lng1);
+        const a = Math.sin(dLat/2)**2 + Math.cos(rlat1) * Math.cos(toRad(lat2)) * Math.sin(dLon/2)**2;
+        const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
         if (d < minDist) minDist = d;
       }
-      this._distanceCache[plz] = minDist;
+      cache[plz] = minDist;
     }
   }
 
@@ -1151,11 +1172,12 @@ class GeoMapWidget extends HTMLElement {
   }
 
   zoomToFilteredPLZ() {
-    if (!this._geoLayer || !this.plzImRadius || this.plzImRadius.size === 0) return;
+    if (!this._layerByPLZ || !this.plzImRadius || this.plzImRadius.size === 0) return;
     const bounds = L.latLngBounds([]);
-    this._geoLayer.eachLayer(layer => {
-      const plz = String(layer.feature?.properties?.plz??"").padStart(5,"0");
-      if (this.plzImRadius.has(plz)) { const lb = layer.getBounds?.(); if (lb) bounds.extend(lb); }
+    // layerByPLZ statt eachLayer – direkte O(radius) statt O(allPLZ) Iteration
+    this.plzImRadius.forEach(plz => {
+      const layer = this._layerByPLZ[plz];
+      if (layer) { const lb = layer.getBounds?.(); if (lb) bounds.extend(lb); }
     });
     if (bounds.isValid()) this.map.fitBounds(bounds, { padding: [30, 30], maxZoom: 12 });
   }
@@ -2147,29 +2169,32 @@ class GeoMapWidget extends HTMLElement {
   }
 
   async render() {
-    if(!this.map) return; // Karte noch nicht bereit – myDataSource-Setter wird render() triggern
+    if(!this.map) return;
     if(!this._myDataSource || this._myDataSource.state!=="success") {
       this._updateLoaderPhase(1, "Warte auf Daten…");
-      this._scheduleDataPoll(); // aktiv auf success warten statt stumm abbrechen
+      this._scheduleDataPoll();
       return;
     }
     const rawData=this._myDataSource.data;
-    // PERF: Erhebungs-Index einmalig aufbauen (alle späteren Methoden nutzen ihn)
     this._buildErhebungIndex();
     this._erhData=this.buildErhebungsStruktur(rawData);
     this.setupFilterDropdowns();
     const isFiltered=!!this._activeFilter;
     const filteredData=isFiltered?this.getFilteredData():rawData;
-    this.prepareMapData(filteredData);
-    this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
-    await this.loadGeoJson(); this.updateGeoLayer(); this.createAllMarkers();
+    // GeoJSON und Datenverarbeitung parallel
+    const [_] = await Promise.all([
+      this.loadGeoJson(),
+      Promise.resolve().then(() => {
+        this.prepareMapData(filteredData);
+        this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
+      })
+    ]);
+    this.updateGeoLayer(); this.createAllMarkers();
     const filteredPLZs=isFiltered?filteredData.map(d=>{
       const rawPLZ=d["dimension_plz_0"]?.id?.trim();
       return this._normalizePLZ(rawPLZ);
     }).filter(p=>p!==null):Object.keys(this.allMarkers||{});
     this.updateMarkers(filteredPLZs); this.renderDataTable(this.filteredKennwerte);
-
-    // FIX 1: Loader erst HIER verstecken – alle Daten und GeoJSON sind geladen
     this._hideCinematicLoader();
     if (!isFiltered) {
       setTimeout(() => this._startPreviewAnimation(), 200);
@@ -2232,27 +2257,36 @@ class GeoMapWidget extends HTMLElement {
     this._showCinematicLoader();
     try {
       this._updateLoaderPhase(1,"Erhebungsdaten werden geladen…");
-      const rawData=await this.queryErhebungFromBW(erhID,jahr,nummer);
+      // GeoJSON-Fetch und Datenaufbereitung PARALLEL starten
+      const [rawData] = await Promise.all([
+        this.queryErhebungFromBW(erhID, jahr, nummer),
+        this.loadGeoJson()  // bereits gecacht nach erstem Laden
+      ]);
       this._activeFilter={erhID,jahr,nummer}; this.filteredData=rawData;
+
       this._updateLoaderPhase(2,"Karte wird vorbereitet…");
-      this.prepareMapData(rawData); await this.loadGeoJson();
+      this.prepareMapData(rawData);
+
       this._updateLoaderPhase(3,"Niederlassungen werden gesetzt…");
       this.allNLs=[...Object.keys(this.Niederlassung),...(this.extraNLs?.map(e=>e.nl)??[])];
       this._selectedNLs=new Set(this.allNLs); this._nlSelectionInitialized=false;
       this.createAllMarkers();
+
+      this._updateLoaderPhase(4,"Kennwerte werden berechnet…");
       const radius=Number(this._shadowRoot.getElementById("radius-slider")?.value??40);
       this._buildDistanceCache(); this.applyRadiusFilter(radius);
-      this._updateLoaderPhase(4,"Kennwerte werden berechnet…");
       this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
-      this.updateGeoLayer(); this.prepareErhebungsInfo(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
-      this._updateLoaderPhase(5,"Fertig!");
-      await new Promise(r=>setTimeout(r,500));
+      this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
 
-      const block = this._shadowRoot.getElementById("map-interaction-block");
-      if (block) block.classList.add("hidden");
-      this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
-      this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
-      this.showOverviewPopup();
+      // Nicht-kritische Operationen nach dem ersten Paint ausführen
+      requestAnimationFrame(() => {
+        this.prepareErhebungsInfo();
+        const block = this._shadowRoot.getElementById("map-interaction-block");
+        if (block) block.classList.add("hidden");
+        this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
+        this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
+        this.showOverviewPopup();
+      });
     } finally {
       this._hideCinematicLoader();
     }
