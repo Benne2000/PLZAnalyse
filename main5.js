@@ -800,14 +800,21 @@ class GeoMapWidget extends HTMLElement {
   _switchToErhebungFilter(jahr, nummer) {
     const ds = this._getDataSource();
     if (!ds) return false;
-    try {
-      ds.removeDimensionFilter("dimension_plz");
-      console.warn("[PLZ-Widget] PLZ-Filter entfernt → BW liefert alle Erhebungsdaten");
-      return true;
-    } catch(e) {
-      console.warn("[PLZ-Widget] removeDimensionFilter fehlgeschlagen:", e);
-      return false;
+    // Versuche alle bekannten Key-Varianten – welche greift hängt von der
+    // SAC-Version und dem BW-Feldnamen ab.
+    const keysToTry = ["0POSTALCODE", "dimension_plz_0", "dimension_plz"];
+    for (const key of keysToTry) {
+      try {
+        ds.removeDimensionFilter(key);
+        console.warn("[PLZ-Widget] PLZ-Filter entfernt (Key: " + key + ") → BW liefert alle Erhebungsdaten");
+        this._plzFilterKey = key; // merken für _resetToHome
+        return true;
+      } catch(e) {
+        // Key hat nicht funktioniert → nächster versuchen
+      }
     }
+    console.warn("[PLZ-Widget] removeDimensionFilter fehlgeschlagen – alle Keys probiert");
+    return false;
   }
 
   // Phase 1: BW liefert nur PLZ 00000 Rows (SAC-Filter ist serverseitig gesetzt).
@@ -2943,9 +2950,11 @@ class GeoMapWidget extends HTMLElement {
     this._fullIndexReady = false;
     const ds = this._getDataSource();
     if (ds) {
+      // Denselben Key nutzen der beim removeDimensionFilter funktioniert hat
+      const key = this._plzFilterKey ?? "0POSTALCODE";
       try {
-        ds.setDimensionFilter("dimension_plz", ["00000"]);
-        console.warn("[PLZ-Widget] Home: PLZ=00000 Filter wiederhergestellt");
+        ds.setDimensionFilter(key, ["00000"]);
+        console.warn("[PLZ-Widget] Home: PLZ=00000 Filter wiederhergestellt (Key: " + key + ")");
       } catch(e) {
         console.warn("[PLZ-Widget] Home: Filter-Reset fehlgeschlagen:", e);
       }
