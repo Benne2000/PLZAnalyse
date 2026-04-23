@@ -474,6 +474,27 @@ let neighbours = true;
       #cinematic-loader.fade-out { animation: loaderFadeOut 0.35s ease forwards; }
       @keyframes loaderFadeOut { to { opacity: 0; pointer-events: none; } }
 
+      /* ── Daten-Fortschrittsanzeige ─────────────────────────────── */
+      #cinematic-loader .loader-data-progress {
+        width: 240px; margin-top: 14px; display: flex; flex-direction: column; gap: 5px;
+      }
+      #cinematic-loader .loader-data-bar-track {
+        width: 100%; height: 6px; background: var(--gray-200); border-radius: 3px; overflow: hidden;
+      }
+      #cinematic-loader .loader-data-bar-fill {
+        height: 100%; border-radius: 3px; width: 0%;
+        background: linear-gradient(90deg, var(--red), #e96a3a);
+        transition: width 0.35s var(--ease-in-out);
+      }
+      @keyframes indeterminate {
+        0%   { transform: translateX(-100%); width: 60%; }
+        100% { transform: translateX(260%);  width: 60%; }
+      }
+      #cinematic-loader .loader-data-label {
+        font-size: 0.72rem; color: var(--gray-500); font-weight: 600;
+        text-align: center; letter-spacing: 0.02em; font-variant-numeric: tabular-nums;
+      }
+
       @keyframes plzHighlightPulse {
         0%   { opacity: 1; }
         50%  { opacity: 0.7; }
@@ -773,36 +794,34 @@ class GeoMapWidget extends HTMLElement {
     }
   }
 
-  // Wechselt nach "Anzeigen"-Klick von PLZ=00000 auf Jahr+Nummer.
-  // Kein ErhebungsID-Filter → BW liefert alle Erhebungen des Zeitraums
-  // → CrossErhebDoppel-Erkennung funktioniert unverändert.
-  // Gibt true zurück wenn der Filter-Wechsel erfolgreich war.
+  // Entfernt den SAC-seitigen PLZ=00000 Filter nach "Anzeigen"-Klick.
+  // BW liefert dann alle Rows → render() filtert intern per _getErhebungRows.
+  // Gibt true zurück wenn der removeDimensionFilter-Aufruf geklappt hat.
   _switchToErhebungFilter(jahr, nummer) {
     const ds = this._getDataSource();
     if (!ds) return false;
     try {
       ds.removeDimensionFilter("dimension_plz");
-      ds.setDimensionFilter("dimension_jahr",            [jahr]);
-      ds.setDimensionFilter("dimension_erhebungsnummer", [nummer]);
-      console.warn("[PLZ-Widget] Filter → Jahr: " + jahr + " | Nummer: " + nummer);
-      // SAC löst bei setDimensionFilter automatisch einen Refresh aus
-      // → set myDataSource() wird erneut aufgerufen → render() (Phase 2)
+      console.warn("[PLZ-Widget] PLZ-Filter entfernt → BW liefert alle Erhebungsdaten");
       return true;
     } catch(e) {
-      console.warn("[PLZ-Widget] Filter-Wechsel fehlgeschlagen:", e);
+      console.warn("[PLZ-Widget] removeDimensionFilter fehlgeschlagen:", e);
       return false;
     }
   }
 
-  // Phase 1: Wird aufgerufen wenn BW nur PLZ 00000 Rows liefert (~8 Rows).
-  // Baut Dropdowns und Preview-Animation auf ohne auf alle 27k Rows zu warten.
+  // Phase 1: BW liefert nur PLZ 00000 Rows (SAC-Filter ist serverseitig gesetzt).
+  // Baut Dropdowns + Preview-Animation sofort auf, startet Hintergrund-Index.
   _bootstrapFromPLZ00000(rows) {
-    const t0 = performance.now();
-    console.warn("[PLZ-Widget] Bootstrap PLZ 00000 | Rows: " + rows.length);
+    if (this._bootstrapDone) return;
+    this._bootstrapDone = true;
 
-    // Leichtgewichtigen Index nur über 00000-Rows aufbauen
-    const idx = {};
+    const t0 = performance.now();
+    console.warn("[PLZ-Widget] Bootstrap | Rows: " + rows.length);
+
+    // ── Index über 00000-Rows aufbauen ────────────────────────────
     const _bad = v => !v || v === "@NullMember" || v === "@TotalMembers";
+    const idx = {};
     for (const row of rows) {
       const eID = row["dimension_erhebung_0"]?.id;
       const yr  = row["dimension_jahr_0"]?.id;
@@ -814,12 +833,11 @@ class GeoMapWidget extends HTMLElement {
     }
     this._erhebungIndex = idx;
 
-    // Dropdown-Struktur aufbauen und UI befüllen
+    // ── Dropdown-Struktur + UI ─────────────────────────────────────
     this._erhData = this.buildErhebungsStruktur(rows);
     this.setupFilterDropdowns();
 
-    // NL-Koordinaten für Preview-Animation aus PLZ 00000 Rows extrahieren
-    // (jede NL hat immer eine PLZ 00000 Row mit Lat/Lon)
+    // ── NL-Koordinaten für Preview extrahieren ─────────────────────
     this.Niederlassung = {};
     this.nlKoordinaten = {};
     for (const row of rows) {
@@ -831,14 +849,15 @@ class GeoMapWidget extends HTMLElement {
       this.nlKoordinaten[nl] = { lat, lon };
     }
 
-    // GeoJSON war per connectedCallback bereits prefetched – parallel fortsetzen
+    // ── GeoJSON + Preview + Loader weg ────────────────────────────
     this.loadGeoJson();
-
-    // Preview-Animation starten (zeigt NL-Pins für alle Erhebungen)
     this._startPreviewAnimation();
-
-    // Loader verstecken – Widget ist jetzt interaktiv
     this._hideCinematicLoader();
+
+    // Gesamtzahl für spätere Fortschrittsanzeige merken
+    // (nach removeDimensionFilter liefert BW wieder ~diese Anzahl Rows)
+    this._totalRowCount = rows.length;
+    this._fullIndexReady = true;
 
     console.warn("[PLZ-Widget] Bootstrap fertig in " + (performance.now() - t0).toFixed(0) + " ms – Widget bereit");
   }
@@ -1343,9 +1362,6 @@ class GeoMapWidget extends HTMLElement {
       this._scheduleDataPoll();
     }
     // Kein myDataSource: render() kommt vom Setter, kein Aufruf nötig
-
-    // Initialen PLZ=00000 Filter setzen damit BW nur ~8 Rows liefert
-    this._applyPLZ00000Filter();
     this.initRadiusSlider();
 
     const panel=$("map-control-panel"),btnWK=$("btn-wk"),btnUmsatz=$("btn-umsatz"),umsatzPanel=$("umsatz-panel");
@@ -2520,71 +2536,93 @@ class GeoMapWidget extends HTMLElement {
     // → BW liefert alle Erhebungen des Zeitraums → CrossErhebDoppel funktioniert
     const switched = this._switchToErhebungFilter(jahr, nummer);
 
-    if (!switched) {
-      // Fallback: DataSource-API nicht verfügbar → alter Weg über vorhandenen Index
-      console.warn("[PLZ-Widget] Fallback: Filter-Wechsel nicht möglich, nutze vorhandenen Index");
+    if (switched) {
+      // Sofort Fortschrittsanzeige auf 0 setzen – Poll-Timer aktualisiert sie
+      this._updateDataLoadProgress(0, this._totalRowCount ?? 0);
+      // _scheduleDataPoll übernimmt ab hier die Anzeige + ruft render() auf
+      this._scheduleDataPoll();
+    } else {
+      // Fallback: DataSource-API nicht verfügbar → Index-Lookup auf vorhandenen Daten.
+      // Wenn der Hintergrund-Index noch läuft, kurz warten.
+      console.warn("[PLZ-Widget] Fallback: nutze vorhandenen Index");
       this._fullDataLoaded = false;
-      try {
-        const _t = {};
-        const _mark = label => { _t[label] = performance.now(); };
-        const _fmt  = ms => ms < 1000 ? ms.toFixed(0) + " ms" : (ms/1000).toFixed(2) + " s";
-        const _diff = (a, b) => _fmt(_t[b] - _t[a]);
-        _mark("start");
 
-        this._updateLoaderPhase(1,"Erhebungsdaten werden geladen…");
-        _mark("queryStart");
-        const [rawData] = await Promise.all([
-          this.queryErhebungFromBW(erhID, jahr, nummer),
-          this.loadGeoJson()
-        ]);
-        _mark("queryEnd");
-        this.filteredData=rawData;
+      const doRender = async () => {
+        try {
+          const _t = {};
+          const _mark = label => { _t[label] = performance.now(); };
+          const _fmt  = ms => ms < 1000 ? ms.toFixed(0) + " ms" : (ms/1000).toFixed(2) + " s";
+          const _diff = (a, b) => _fmt(_t[b] - _t[a]);
+          _mark("start");
 
-        this._updateLoaderPhase(2,"Karte wird vorbereitet…");
-        _mark("mapDataStart");
-        this.prepareMapData(rawData);
-        _mark("mapDataEnd");
+          this._updateLoaderPhase(1,"Erhebungsdaten werden geladen…");
+          _mark("queryStart");
+          const [rawData] = await Promise.all([
+            this.queryErhebungFromBW(erhID, jahr, nummer),
+            this.loadGeoJson()
+          ]);
+          _mark("queryEnd");
+          this.filteredData=rawData;
 
-        this._updateLoaderPhase(3,"Niederlassungen werden gesetzt…");
-        _mark("markersStart");
-        this.allNLs=[...Object.keys(this.Niederlassung),...(this.extraNLs?.map(e=>e.nl)??[])];
-        this._selectedNLs=new Set(this.allNLs); this._nlSelectionInitialized=false;
-        this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
-        this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
-        this.createAllMarkers();
-        _mark("markersEnd");
+          this._updateLoaderPhase(2,"Karte wird vorbereitet…");
+          _mark("mapDataStart");
+          this.prepareMapData(rawData);
+          _mark("mapDataEnd");
 
-        this._updateLoaderPhase(4,"Kennwerte werden berechnet…");
-        _mark("kennwerteStart");
-        const radius=Number(this._shadowRoot.getElementById("radius-slider")?.value??40);
-        this._buildDistanceCache(); this.applyRadiusFilter(radius);
-        this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
-        _mark("kennwerteEnd");
+          this._updateLoaderPhase(3,"Niederlassungen werden gesetzt…");
+          _mark("markersStart");
+          this.allNLs=[...Object.keys(this.Niederlassung),...(this.extraNLs?.map(e=>e.nl)??[])];
+          this._selectedNLs=new Set(this.allNLs); this._nlSelectionInitialized=false;
+          this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
+          this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
+          this.createAllMarkers();
+          _mark("markersEnd");
 
-        _mark("renderStart");
-        this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
-        _mark("renderEnd");
+          this._updateLoaderPhase(4,"Kennwerte werden berechnet…");
+          _mark("kennwerteStart");
+          const radius=Number(this._shadowRoot.getElementById("radius-slider")?.value??40);
+          this._buildDistanceCache(); this.applyRadiusFilter(radius);
+          this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
+          _mark("kennwerteEnd");
 
-        requestAnimationFrame(() => {
-          this.prepareErhebungsInfo();
-          const block = this._shadowRoot.getElementById("map-interaction-block");
-          if (block) block.classList.add("hidden");
-          this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
-          this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
-          this.showOverviewPopup();
-        });
+          _mark("renderStart");
+          this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
+          _mark("renderEnd");
 
-        _mark("end");
-        console.group("[PLZ-Widget] Ladezeiten (Fallback): " + erhID + " | " + jahr + " | " + nummer);
-        console.warn("[1] Query:       " + _diff("queryStart","queryEnd"));
-        console.warn("[2] prepareMap:  " + _diff("mapDataStart","mapDataEnd"));
-        console.warn("[3] Marker:      " + _diff("markersStart","markersEnd"));
-        console.warn("[4] Kennwerte:   " + _diff("kennwerteStart","kennwerteEnd"));
-        console.warn("[5] GeoLayer:    " + _diff("renderStart","renderEnd"));
-        console.warn("    GESAMT:      " + _diff("start","end"));
-        console.groupEnd();
-      } finally {
-        this._hideCinematicLoader();
+          requestAnimationFrame(() => {
+            this.prepareErhebungsInfo();
+            const block = this._shadowRoot.getElementById("map-interaction-block");
+            if (block) block.classList.add("hidden");
+            this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
+            this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
+            this.showOverviewPopup();
+          });
+
+          _mark("end");
+          console.group("[PLZ-Widget] Ladezeiten (Fallback): " + erhID + " | " + jahr + " | " + nummer);
+          console.warn("[1] Query:       " + _diff("queryStart","queryEnd"));
+          console.warn("[2] prepareMap:  " + _diff("mapDataStart","mapDataEnd"));
+          console.warn("[3] Marker:      " + _diff("markersStart","markersEnd"));
+          console.warn("[4] Kennwerte:   " + _diff("kennwerteStart","kennwerteEnd"));
+          console.warn("[5] GeoLayer:    " + _diff("renderStart","renderEnd"));
+          console.warn("    GESAMT:      " + _diff("start","end"));
+          console.groupEnd();
+        } finally {
+          this._hideCinematicLoader();
+        }
+      };
+
+      // Auf vollständigen Hintergrund-Index warten (max 3s), dann rendern
+      if (this._fullIndexReady) {
+        doRender();
+      } else {
+        const waitStart = Date.now();
+        const waitInterval = setInterval(() => {
+          if (this._fullIndexReady || Date.now() - waitStart > 3000) {
+            clearInterval(waitInterval);
+            doRender();
+          }
+        }, 50);
       }
     }
     // Bei erfolgreichem Filter-Wechsel: SAC triggert set myDataSource() → render()
@@ -2593,9 +2631,57 @@ class GeoMapWidget extends HTMLElement {
   _showCinematicLoader() {
     this._hideCinematicLoader(true);
     const overlay=document.createElement("div"); overlay.id="cinematic-loader";
-    overlay.innerHTML=`<div class="loader-logo"><div class="loader-core"></div></div><div class="loader-phase" id="loader-phase-text">Wird geladen…</div><div class="loader-bar-track"><div class="loader-bar-fill" id="loader-bar"></div></div><div class="loader-dots"><div class="loader-dot" data-phase="1"><div class="dot-circle"></div><div class="dot-label">Daten</div></div><div class="loader-dot" data-phase="2"><div class="dot-circle"></div><div class="dot-label">Karte</div></div><div class="loader-dot" data-phase="3"><div class="dot-circle"></div><div class="dot-label">Standorte</div></div><div class="loader-dot" data-phase="4"><div class="dot-circle"></div><div class="dot-label">Kennzahlen</div></div></div>`;
+    overlay.innerHTML=`
+      <div class="loader-logo"><div class="loader-core"></div></div>
+      <div class="loader-phase" id="loader-phase-text">Wird geladen…</div>
+      <div class="loader-bar-track"><div class="loader-bar-fill" id="loader-bar"></div></div>
+      <div class="loader-data-progress" id="loader-data-progress" style="display:none">
+        <div class="loader-data-bar-track">
+          <div class="loader-data-bar-fill" id="loader-data-bar"></div>
+        </div>
+        <div class="loader-data-label" id="loader-data-label">0 von ? Datensätzen</div>
+      </div>
+      <div class="loader-dots">
+        <div class="loader-dot" data-phase="1"><div class="dot-circle"></div><div class="dot-label">Daten</div></div>
+        <div class="loader-dot" data-phase="2"><div class="dot-circle"></div><div class="dot-label">Karte</div></div>
+        <div class="loader-dot" data-phase="3"><div class="dot-circle"></div><div class="dot-label">Standorte</div></div>
+        <div class="loader-dot" data-phase="4"><div class="dot-circle"></div><div class="dot-label">Kennzahlen</div></div>
+      </div>`;
     const mc=this._shadowRoot.querySelector(".map-container");
     if(mc) mc.appendChild(overlay); else this._shadowRoot.appendChild(overlay);
+  }
+
+  // Zeigt Lade-Fortschritt während BW-Query läuft.
+  // current = aktuell geladene Rows, total = bekannte Gesamtzahl (aus Bootstrap)
+  _updateDataLoadProgress(current, total) {
+    const loader = this._shadowRoot.getElementById("cinematic-loader");
+    if (!loader) return;
+    const progressBox = loader.querySelector("#loader-data-progress");
+    const bar         = loader.querySelector("#loader-data-bar");
+    const label       = loader.querySelector("#loader-data-label");
+    if (!progressBox) return;
+
+    progressBox.style.display = "block";
+
+    if (total > 0) {
+      const pct = Math.min(100, Math.round((current / total) * 100));
+      if (bar)   bar.style.width = pct + "%";
+      if (label) label.textContent =
+        current.toLocaleString("de-DE") + " von " +
+        total.toLocaleString("de-DE") + " Datensätzen (" + pct + " %)";
+    } else {
+      // Gesamtzahl unbekannt → animierter indeterminate Balken
+      if (bar)   bar.style.width = "100%";
+      if (bar)   bar.style.animation = "indeterminate 1.4s ease-in-out infinite";
+      if (label) label.textContent = current.toLocaleString("de-DE") + " Datensätze geladen…";
+    }
+  }
+
+  _hideDataLoadProgress() {
+    const loader = this._shadowRoot.getElementById("cinematic-loader");
+    if (!loader) return;
+    const progressBox = loader.querySelector("#loader-data-progress");
+    if (progressBox) progressBox.style.display = "none";
   }
 
   _updateLoaderPhase(phase, text) {
@@ -2851,13 +2937,13 @@ class GeoMapWidget extends HTMLElement {
     const block = this._shadowRoot.getElementById("map-interaction-block");
     if (block) block.classList.remove("hidden");
 
-    // ── Filter zurück auf PLZ 00000 setzen ────────────────────────
+    // ── PLZ=00000 Filter wiederherstellen → BW liefert nur Bootstrap-Rows ──
     this._fullDataLoaded = false;
+    this._bootstrapDone = false;
+    this._fullIndexReady = false;
     const ds = this._getDataSource();
     if (ds) {
       try {
-        ds.removeDimensionFilter("dimension_jahr");
-        ds.removeDimensionFilter("dimension_erhebungsnummer");
         ds.setDimensionFilter("dimension_plz", ["00000"]);
         console.warn("[PLZ-Widget] Home: PLZ=00000 Filter wiederhergestellt");
       } catch(e) {
@@ -3325,10 +3411,13 @@ class GeoMapWidget extends HTMLElement {
     }
 
     // ── ZWEI-PHASEN-LOGIK ──────────────────────────────────────────
-    // Phase 1 (Bootstrap): BW liefert nur PLZ 00000 → Dropdowns + Preview
-    // Phase 2 (Render):    BW liefert Erhebungsdaten → vollständiges render()
+    // Phase 1 (Bootstrap): erste Daten da → Dropdowns + Preview sofort
+    // Phase 2 (Render):    nach "Anzeigen"-Klick → vollständiges render()
     if (!this._fullDataLoaded) {
-      this._bootstrapFromPLZ00000(this._myDataSource.data);
+      // _bootstrapDone verhindert doppelten Aufruf (Setter + Poll-Timer)
+      if (!this._bootstrapDone) {
+        this._bootstrapFromPLZ00000(this._myDataSource.data);
+      }
     } else {
       this._fullDataLoaded = false; // reset für nächsten Zyklus
       this.render();
@@ -3346,22 +3435,35 @@ class GeoMapWidget extends HTMLElement {
         this._dataPollTimer = null;
         const waited = ((Date.now() - start) / 1000).toFixed(1);
         console.warn("[PLZ-Widget] BW-Daten empfangen nach " + waited + "s | Rows: " + (this._myDataSource?.data?.length?.toLocaleString("de-DE") ?? "?"));
+
         // ── ZWEI-PHASEN-LOGIK ──────────────────────────────────────
         if (!this._fullDataLoaded) {
-          this._bootstrapFromPLZ00000(this._myDataSource.data);
+          if (!this._bootstrapDone) {
+            this._bootstrapFromPLZ00000(this._myDataSource.data);
+          }
         } else {
+          this._hideDataLoadProgress();
           this._fullDataLoaded = false;
           this.render();
         }
       } else {
-        // Fortschritt anzeigen damit User sieht dass etwas passiert
         const secs = Math.floor((Date.now() - start) / 1000);
         if (secs !== this._lastPollSecs) {
           this._lastPollSecs = secs;
-          this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
+          if (!this._fullDataLoaded) {
+            // Phase 1: normaler Warte-Text
+            this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
+          } else {
+            // Phase 2: Fortschrittsanzeige mit Row-Zähler
+            const currentRows = this._myDataSource?.data?.length ?? 0;
+            // _bootstrapRowCount wurde beim Bootstrap gespeichert (Gesamtzahl aus PLZ 00000 Query)
+            const totalRows = this._totalRowCount ?? 0;
+            this._updateLoaderPhase(1, "Erhebungsdaten werden geladen…");
+            this._updateDataLoadProgress(currentRows, totalRows);
+          }
         }
       }
-    }, 300); // schneller pollen – PLZ 00000 kommt in <1s
+    }, 300);
   }
 }
 
