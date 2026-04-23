@@ -728,7 +728,9 @@ class GeoMapWidget extends HTMLElement {
       const eID = row["dimension_erhebung_0"]?.id;
       const yr  = row["dimension_jahr_0"]?.id;
       const nr  = row["dimension_erhebungsnummer_0"]?.id;
-      if (!eID || eID === "@NullMember" || !yr || yr === "@NullMember" || !nr || nr === "@NullMember") continue;
+      if (!eID || eID === "@NullMember" || eID === "@TotalMembers" ||
+          !yr  || yr  === "@NullMember" || yr  === "@TotalMembers" ||
+          !nr  || nr  === "@NullMember" || nr  === "@TotalMembers") continue;
       const k = eID + "|" + yr + "|" + nr;
       if (!idx[k]) idx[k] = [];
       idx[k].push(row);
@@ -2173,7 +2175,8 @@ class GeoMapWidget extends HTMLElement {
     if(!erhSelect||!jahrSelect||!nummerSelect) return;
     erhSelect.innerHTML="";jahrSelect.innerHTML="";nummerSelect.innerHTML="";jahrSelect.disabled=true;nummerSelect.disabled=true;
     this._erhData={};
-    data.forEach(row=>{const erhID=row["dimension_erhebung_0"]?.id?.trim(),jahr=row["dimension_jahr_0"]?.id?.trim(),nummer=row["dimension_erhebungsnummer_0"]?.id?.trim();if(!erhID||!jahr||!nummer) return;this._erhData[erhID]=this._erhData[erhID]||{};this._erhData[erhID][jahr]=this._erhData[erhID][jahr]||new Set();this._erhData[erhID][jahr].add(nummer);});
+    const isBad=v=>!v||v==="@NullMember"||v==="@TotalMembers";
+    data.forEach(row=>{const erhID=row["dimension_erhebung_0"]?.id?.trim(),jahr=row["dimension_jahr_0"]?.id?.trim(),nummer=row["dimension_erhebungsnummer_0"]?.id?.trim();if(isBad(erhID)||isBad(jahr)||isBad(nummer)) return;this._erhData[erhID]=this._erhData[erhID]||{};this._erhData[erhID][jahr]=this._erhData[erhID][jahr]||new Set();this._erhData[erhID][jahr].add(nummer);});
     Object.keys(this._erhData).forEach(erhID=>{const opt=document.createElement("option");opt.value=erhID;opt.textContent=erhID;erhSelect.appendChild(opt);});
     erhSelect.addEventListener("change",()=>{jahrSelect.innerHTML="";nummerSelect.innerHTML="";jahrSelect.disabled=false;nummerSelect.disabled=true;Object.keys(this._erhData[erhSelect.value]||{}).forEach(j=>{const opt=document.createElement("option");opt.value=j;opt.textContent=j;jahrSelect.appendChild(opt);});});
     jahrSelect.addEventListener("change",()=>{nummerSelect.innerHTML="";nummerSelect.disabled=false;Array.from(this._erhData[erhSelect.value]?.[jahrSelect.value]||[]).forEach(n=>{const opt=document.createElement("option");opt.value=n;opt.textContent=n;nummerSelect.appendChild(opt);});});
@@ -2184,14 +2187,15 @@ class GeoMapWidget extends HTMLElement {
   async render() {
     if(!this.map) return;
     if(!this._myDataSource || this._myDataSource.state!=="success") {
-      this._updateLoaderPhase(1, "Warte auf Daten…");
-      this._scheduleDataPoll();
+      if (!this._dataPollTimer) {
+        this._updateLoaderPhase(1, "Warte auf Daten…");
+        this._scheduleDataPoll();
+      }
       return;
     }
     const rawData=this._myDataSource.data;
     this._buildErhebungIndex();
-    this._erhData=this.buildErhebungsStruktur(rawData);
-    this.setupFilterDropdowns();
+    this.prepareDropdownData(rawData);
     const isFiltered=!!this._activeFilter;
     const filteredData=isFiltered?this.getFilteredData():rawData;
     // GeoJSON und Datenverarbeitung parallel
@@ -3020,10 +3024,10 @@ class GeoMapWidget extends HTMLElement {
         this.render();
       } else {
         // Fortschritt anzeigen damit User sieht dass etwas passiert
-        const secs = ((Date.now() - start) / 1000).toFixed(0);
+        const secs = Math.floor((Date.now() - start) / 1000);
         this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
       }
-    }, 50);
+    }, 250);
   }
 }
 
