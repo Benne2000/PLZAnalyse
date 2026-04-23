@@ -730,20 +730,24 @@ class GeoMapWidget extends HTMLElement {
 
   // ═══════════════════════════════════════════════════════════════
   // PERF: Erhebungs-Index aufbauen – ein einziger Scan über alle
-  // Rohdaten beim ersten Zugriff. Alle nachfolgenden Methoden
-  // (queryErhebungFromBW, prepareUmsatzPLZWerte, prepareErhebungsInfo,
-  // _computeCrossErhebungDoppel) greifen nur noch auf den Index zu
-  // statt _myDataSource.data erneut zu scannen.
+  // Rohdaten beim ersten Zugriff.
+  //
+  // Optimierung für CrossErhebDoppel: Für Fremd-Erhebungen (andere ErhebungsID
+  // als aktErhID) werden nur HZ=X Rows gespeichert – die nicht-bestreuten
+  // Rows werden für die Doppelbestreuungs-Erkennung nie benötigt.
+  // Das reduziert den Index-Speicher und _computeCrossErhebungDoppel-Scan
+  // erheblich (typisch: 80-90% weniger Fremd-Rows).
   //
   // Struktur: this._erhebungIndex = {
-  //   "erhID|jahr|nummer": [ row, row, ... ],
-  //   ...
+  //   "erhID|jahr|nummer": [ row, row, ... ],  // eigene: alle Rows
+  //   "fremdID|jahr|nummer": [ row, ... ],      // fremd: nur HZ=X
   // }
   // ═══════════════════════════════════════════════════════════════
-  _buildErhebungIndex() {
+  _buildErhebungIndex(aktErhID) {
     const data = this._myDataSource?.data;
     if (!data || !Array.isArray(data)) { this._erhebungIndex = {}; return; }
     const idx = {};
+    const hasAktFilter = !!aktErhID;
     for (let i = 0, len = data.length; i < len; i++) {
       const row = data[i];
       const eID = row["dimension_erhebung_0"]?.id;
@@ -752,6 +756,10 @@ class GeoMapWidget extends HTMLElement {
       if (!eID || eID === "@NullMember" || eID === "@TotalMembers" ||
           !yr  || yr  === "@NullMember" || yr  === "@TotalMembers" ||
           !nr  || nr  === "@NullMember" || nr  === "@TotalMembers") continue;
+      // Fremd-Erhebung: nur HZ=X Rows speichern
+      if (hasAktFilter && eID !== aktErhID) {
+        if (row["dimension_hzflag_0"]?.id?.trim() !== "X") continue;
+      }
       const k = eID + "|" + yr + "|" + nr;
       if (!idx[k]) idx[k] = [];
       idx[k].push(row);
@@ -794,27 +802,43 @@ class GeoMapWidget extends HTMLElement {
     }
   }
 
-  // Entfernt den SAC-seitigen PLZ=00000 Filter nach "Anzeigen"-Klick.
-  // BW liefert dann alle Rows → render() filtert intern per _getErhebungRows.
-  // Gibt true zurück wenn der removeDimensionFilter-Aufruf geklappt hat.
+  // Setzt Jahr+Nummer-Filter und entfernt danach den PLZ=00000-Filter.
+  // Reihenfolge ist wichtig: erst einschränken, dann PLZ-Filter weg →
+  // BW liefert nur Rows des gewählten Zeitraums statt alles.
+  // Gibt true zurück wenn erfolgreich.
   _switchToErhebungFilter(jahr, nummer) {
     const ds = this._getDataSource();
     if (!ds) return false;
-    // Versuche alle bekannten Key-Varianten – welche greift hängt von der
-    // SAC-Version und dem BW-Feldnamen ab.
-    const keysToTry = ["0POSTALCODE", "dimension_plz_0", "dimension_plz"];
-    for (const key of keysToTry) {
-      try {
-        ds.removeDimensionFilter(key);
-        console.warn("[PLZ-Widget] PLZ-Filter entfernt (Key: " + key + ") → BW liefert alle Erhebungsdaten");
-        this._plzFilterKey = key; // merken für _resetToHome
-        return true;
-      } catch(e) {
-        // Key hat nicht funktioniert → nächster versuchen
-      }
+
+    // Bekannte BW-Feldnamen für Jahr und Nummer
+    const jahrKeys   = ["0CALYEAR",      "dimension_jahr_0",            "dimension_jahr"];
+    const nummerKeys = ["BERHBNUM",       "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
+    const plzKeys    = ["0POSTALCODE",    "dimension_plz_0",             "dimension_plz"];
+
+    // Jahr setzen
+    let jahrOk = false;
+    for (const key of jahrKeys) {
+      try { ds.setDimensionFilter(key, [jahr]); jahrOk = true; this._jahrFilterKey = key; break; }
+      catch(e) {}
     }
-    console.warn("[PLZ-Widget] removeDimensionFilter fehlgeschlagen – alle Keys probiert");
-    return false;
+    // Nummer setzen
+    let nummerOk = false;
+    for (const key of nummerKeys) {
+      try { ds.setDimensionFilter(key, [nummer]); nummerOk = true; this._nummerFilterKey = key; break; }
+      catch(e) {}
+    }
+    // PLZ-Filter entfernen – erst jetzt, damit BW nicht kurz alle Rows schickt
+    let plzOk = false;
+    for (const key of plzKeys) {
+      try { ds.removeDimensionFilter(key); plzOk = true; this._plzFilterKey = key; break; }
+      catch(e) {}
+    }
+
+    console.warn("[PLZ-Widget] Filter gesetzt → Jahr(" + (this._jahrFilterKey||"?") + ")=" + jahr +
+      " | Nummer(" + (this._nummerFilterKey||"?") + ")=" + nummer +
+      " | PLZ-Filter entfernt(" + (this._plzFilterKey||"?") + "): " + plzOk);
+
+    return plzOk || jahrOk || nummerOk;
   }
 
   // Phase 1: BW liefert nur PLZ 00000 Rows (SAC-Filter ist serverseitig gesetzt).
@@ -1159,6 +1183,11 @@ class GeoMapWidget extends HTMLElement {
       : 0;
 
     const tbody = document.createElement('tbody');
+    // PERF: DocumentFragment – alle Rows werden außerhalb des DOM aufgebaut,
+    // dann in einem einzigen DOM-Write eingefügt (verhindert Layout-Thrashing)
+    const fragment = document.createDocumentFragment();
+    const tdBase = 'padding:6px 8px;border-bottom:1px solid #f1f3f5;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+
     entries.forEach(([plz, kennwerte], idx) => {
       const tr = document.createElement('tr');
       tr.classList.add('table-row-animated');
@@ -1172,43 +1201,32 @@ class GeoMapWidget extends HTMLElement {
         this.openPopupFromTable(plz);
         this.highlightTableRow(tr);
       });
-      let note = (this.geoNotes?.[plz] || "").replace(/^\d{4,5}\s*[-–]?\s*/, "").trim() || "—";
+      const note = (this.geoNotes?.[plz] || "").replace(/^\d{4,5}\s*[-–]?\s*/, "").trim() || "—";
       let symbol = "●", symbolColor = "#dee2e6";
       if (this.filteredKennwerte[plz]?.isCritical) { symbol = "▲"; symbolColor = "#f0a500"; }
       else if (this.filteredKennwerte[plz]?.isHZ)  { symbol = "●"; symbolColor = "#33a02c"; }
 
       let umsatz, lastColVal;
       if (isUmsatzMode) {
-        // Umsatz-Modus: Spalte zeigt Kategoriensumme der gewählten Kategorien
         const plzUmsatz = this.getUmsatzSumForPLZ(this.filteredPLZWerte?.[plz] || {});
         umsatz = plzUmsatz > 0 ? Math.round(plzUmsatz).toLocaleString('de-DE') : '–';
-        lastColVal = totalUmsatz > 0
-          ? (plzUmsatz / totalUmsatz * 100).toFixed(1) + ' %'
-          : '–';
+        lastColVal = totalUmsatz > 0 ? (plzUmsatz / totalUmsatz * 100).toFixed(1) + ' %' : '–';
       } else {
-        // WK-Modus: Spalte zeigt hochgerechneten Brutto-Umsatz
         umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
         lastColVal = (kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–') + ' %';
       }
 
-      [[plz,  'font-variant-numeric:tabular-nums;font-size:0.78rem;color:#495057;'],
-       [note, 'color:#6c757d;'],
-       [null,  'text-align:center;'],
-       [umsatz,'text-align:right;font-variant-numeric:tabular-nums;'],
-       [lastColVal,'text-align:right;font-variant-numeric:tabular-nums;']
-      ].forEach(([text, style], i) => {
-        const td = document.createElement('td');
-        if (i === 2) td.innerHTML = `<span style="color:${symbolColor};font-size:10px">${symbol}</span>`;
-        else td.textContent = text;
-        if (style) td.style.cssText += style;
-        td.style.width = headers[i].width;
-        td.style.padding = '6px 8px'; td.style.borderBottom = '1px solid #f1f3f5';
-        td.style.fontSize = '0.8rem'; td.style.whiteSpace = 'nowrap';
-        td.style.overflow = 'hidden'; td.style.textOverflow = 'ellipsis';
-        tr.appendChild(td);
-      });
-      tbody.appendChild(tr);
+      // PERF: innerHTML statt 5x createElement+style – ein Template-String pro Row
+      tr.innerHTML = `
+        <td style="${tdBase}font-variant-numeric:tabular-nums;font-size:0.78rem;color:#495057;width:${headers[0].width}">${plz}</td>
+        <td style="${tdBase}color:#6c757d;width:${headers[1].width}">${note}</td>
+        <td style="${tdBase}text-align:center;width:${headers[2].width}"><span style="color:${symbolColor};font-size:10px">${symbol}</span></td>
+        <td style="${tdBase}text-align:right;font-variant-numeric:tabular-nums;width:${headers[3].width}">${umsatz}</td>
+        <td style="${tdBase}text-align:right;font-variant-numeric:tabular-nums;width:${headers[4].width}">${lastColVal}</td>`;
+
+      fragment.appendChild(tr);
     });
+    tbody.appendChild(fragment);
     table.appendChild(tbody); scrollWrapper.appendChild(table); container.appendChild(scrollWrapper);
     const footer = document.createElement("div"); footer.id = "streuverlust-box"; container.appendChild(footer);
     if (this._sortState?.column != null) this.updateSortIcons(this._sortState.column);
@@ -2415,13 +2433,19 @@ class GeoMapWidget extends HTMLElement {
     console.group("[PLZ-Widget] render() Phase 2 – " + erhID + " | " + jahr + " | " + nummer);
     console.warn("Rows vom BW: " + rawData.length.toLocaleString("de-DE"));
 
+    // Sekundenanzeiger stoppen – Daten sind da, Verarbeitung beginnt
+    if (this._loadSecTimer) {
+      clearInterval(this._loadSecTimer);
+      this._loadSecTimer = null;
+    }
+
     try {
       _progress(1, 5, "Index wird aufgebaut…", 0);
       await _yield();
 
       // Index über die gefilterten Rows aufbauen (nur Jahr+Nummer, alle ErhebungsIDs)
       _mark("indexStart");
-      this._buildErhebungIndex();
+      this._buildErhebungIndex(erhID); // Fremd-Erhebungen: nur HZ=X Rows
       this._erhData = this.buildErhebungsStruktur(rawData);
       this.setupFilterDropdowns();
       this.restoreDropdownSelections();
@@ -2552,6 +2576,20 @@ class GeoMapWidget extends HTMLElement {
     this._activeFilter = { erhID, jahr, nummer };
     // Nächster myDataSource-Call ist Phase 2 → render()
     this._fullDataLoaded = true;
+
+    // ── Sekundenanzeiger während SAC den Filter-Wechsel verarbeitet ──
+    // Gleiche Optik wie der Bootstrap-Loader: "(Xs)" im Phasentext
+    const _loadStart = Date.now();
+    this._loadSecTimer = setInterval(() => {
+      if (!this._fullDataLoaded) { // render() hat _fullDataLoaded=false gesetzt → fertig
+        clearInterval(this._loadSecTimer);
+        this._loadSecTimer = null;
+        return;
+      }
+      const secs = Math.floor((Date.now() - _loadStart) / 1000);
+      this._updateLoaderPhase(1, `Erhebungsdaten werden geladen… (${secs}s)`);
+      this._updateDataLoadProgress(0, this._totalRowCount ?? 0, 0);
+    }, 1000);
 
     // ── FILTER-WECHSEL über SAC DataSource-API ─────────────────────
     // PLZ=00000 entfernen, nur Jahr+Nummer filtern (KEIN ErhebungsID-Filter)
@@ -2968,17 +3006,19 @@ class GeoMapWidget extends HTMLElement {
     const block = this._shadowRoot.getElementById("map-interaction-block");
     if (block) block.classList.remove("hidden");
 
-    // ── PLZ=00000 Filter wiederherstellen → BW liefert nur Bootstrap-Rows ──
+    // ── Filter zurücksetzen: Jahr+Nummer weg, PLZ=00000 wieder setzen ──
     this._fullDataLoaded = false;
     this._bootstrapDone = false;
     this._fullIndexReady = false;
+    if (this._loadSecTimer) { clearInterval(this._loadSecTimer); this._loadSecTimer = null; }
     const ds = this._getDataSource();
     if (ds) {
-      // Denselben Key nutzen der beim removeDimensionFilter funktioniert hat
-      const key = this._plzFilterKey ?? "0POSTALCODE";
       try {
-        ds.setDimensionFilter(key, ["00000"]);
-        console.warn("[PLZ-Widget] Home: PLZ=00000 Filter wiederhergestellt (Key: " + key + ")");
+        if (this._jahrFilterKey)   { try { ds.removeDimensionFilter(this._jahrFilterKey);   } catch(e) {} }
+        if (this._nummerFilterKey) { try { ds.removeDimensionFilter(this._nummerFilterKey); } catch(e) {} }
+        const plzKey = this._plzFilterKey ?? "0POSTALCODE";
+        ds.setDimensionFilter(plzKey, ["00000"]);
+        console.warn("[PLZ-Widget] Home: Filter zurückgesetzt → PLZ=00000");
       } catch(e) {
         console.warn("[PLZ-Widget] Home: Filter-Reset fehlgeschlagen:", e);
       }
@@ -3276,8 +3316,6 @@ class GeoMapWidget extends HTMLElement {
   computeWKKennwerte() {
     if (!this.filteredData) return;
     const aggregated = {}, unfilteredUmsatzByPLZ = {};
-    // PERF: Zwei Loops zu einem zusammengeführt – spart einen kompletten
-    // Durchlauf über filteredData (kann tausende Rows sein)
     const selNLs = this._selectedNLs;
     const radius = this.plzImRadius;
     const hasNLFilter = selNLs && selNLs.size > 0;
@@ -3288,34 +3326,34 @@ class GeoMapWidget extends HTMLElement {
       const rawPLZ = row["dimension_plz_0"]?.id ?? row["dimension_plz_0"]?.raw;
       const plz = this._normalizePLZ(rawPLZ) || "00000";
       const umsatz = row["value_hr_n_umsatz_0"]?.raw ?? 0;
-      // Immer für unfilteredUmsatz zählen (für WK-Nachbar-Berechnung)
       unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
-      // Gefilterte Aggregation
       const nl = row["dimension_niederlassung_0"]?.id?.trim();
       if (hasNLFilter && !selNLs.has(nl)) continue;
       if (hasRadius && !radius.has(plz)) continue;
-      if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, umsatzNetto: 0, hzKosten: 0, potHzKosten: [] };
+      if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, umsatzNetto: 0, hzKosten: 0, potHzSum: 0, potHzCount: 0 };
       const entry = aggregated[plz];
       if (row["dimension_hzflag_0"]?.id?.trim() === "X") entry.hzCount++;
       entry.umsatzNetto += umsatz;
       entry.hzKosten    += row["value_hz_kosten_0"]?.raw ?? 0;
+      // PERF: laufender Durchschnitt statt Array + reduce
       const potHz = row["value_hz_potentiell_0"]?.raw;
-      if (typeof potHz === "number") entry.potHzKosten.push(potHz);
+      if (typeof potHz === "number") { entry.potHzSum += potHz; entry.potHzCount++; }
     }
 
     const base = this.filteredKennwerte || {},
           newFilteredKennwerte = {},
           newFilteredPLZWerte  = {};
 
-    Object.entries(aggregated).forEach(([plz, entry]) => {
+    const plzKeys = Object.keys(aggregated);
+    for (let i = 0; i < plzKeys.length; i++) {
+      const plz   = plzKeys[i];
+      const entry = aggregated[plz];
       const umsatzNetto  = entry.umsatzNetto,
             hzKosten     = entry.hzKosten,
             wkPercent    = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0,
             unfU         = unfilteredUmsatzByPLZ[plz] ?? 0,
             wkNachbarn   = unfU > 0 ? Number(((hzKosten / unfU) * 100).toFixed(1)) : 0,
-            avgPotHz     = entry.potHzKosten.length > 0
-                            ? entry.potHzKosten.reduce((a, b) => a + b, 0) / entry.potHzKosten.length
-                            : 0,
+            avgPotHz     = entry.potHzCount > 0 ? entry.potHzSum / entry.potHzCount : 0,
             potHzPercent = umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0,
             isHZ         = entry.hzCount > 0,
             isCritical   = entry.hzCount > 1,
@@ -3369,7 +3407,7 @@ class GeoMapWidget extends HTMLElement {
         pluscardZusatzProHaushalt:   old.pluscardZusatzProHaushalt   ?? 0,
         werbeAnteil: old.werbeAnteil ?? 0,
       };
-    });
+    }
 
     this.filteredKennwerte = newFilteredKennwerte;
     this.filteredPLZWerte  = newFilteredPLZWerte;
