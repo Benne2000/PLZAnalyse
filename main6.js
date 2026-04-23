@@ -1206,12 +1206,14 @@ class GeoMapWidget extends HTMLElement {
     // fehlendem dataSource nichts tut).
     if (this._pendingRender) {
       this._pendingRender = false;
-      if (this._myDataSource?.state === "success") {
+      const state   = this._myDataSource?.state;
+      const hasData = Array.isArray(this._myDataSource?.data) && this._myDataSource.data.length > 0;
+      const ready   = state === "success" || (hasData && state !== "error");
+      if (ready) {
         this.render();
       } else if (this._myDataSource) {
         this._scheduleDataPoll();
       }
-      // Falls noch kein myDataSource gesetzt wurde: render() wird vom Setter ausgelöst
     } else {
       this.render();
     }
@@ -2200,7 +2202,10 @@ class GeoMapWidget extends HTMLElement {
 
   async render() {
     if(!this.map) return;
-    if(!this._myDataSource || this._myDataSource.state!=="success") {
+    const dsState = this._myDataSource?.state;
+    const dsData  = this._myDataSource?.data;
+    const dsReady = dsState === "success" || (Array.isArray(dsData) && dsData.length > 0 && dsState !== "error");
+    if(!this._myDataSource || !dsReady) {
       this._updateLoaderPhase(1, "Warte auf Daten…");
       this._scheduleDataPoll();
       return;
@@ -2535,15 +2540,15 @@ class GeoMapWidget extends HTMLElement {
   hideLoadingOverlay() { const o=this._shadowRoot.getElementById("loading-spinner"); if(!o)return; o.style.transition="opacity 0.25s ease";o.style.opacity="0";o.style.pointerEvents="none";setTimeout(()=>o.classList.add("hidden"),250); }
 
   async queryErhebungFromBW(erhID, jahr, nummer) {
-    // STRATEGIE: Binding 2 (myDetailSource) enthält alle Kennzahlen,
-    // gefiltert auf die gewählte Erhebung durch SAC-Filter.
-    // Falls myDetailSource bereits geladen ist → direkt zurückgeben.
-    // Sonst warten wir per Poll bis state === "success".
-    if (this._myDetailSource?.state === "success") {
-      return this._myDetailSource.data || [];
+    const detailState   = this._myDetailSource?.state;
+    const detailData    = this._myDetailSource?.data;
+    const detailHasData = Array.isArray(detailData) && detailData.length > 0;
+    const detailReady   = detailState === "success" || (detailHasData && detailState !== "error");
+
+    if (detailReady) {
+      return detailData;
     }
-    // Fallback: Daten aus Binding 1 (nur Basis-Felder) via Index
-    // Falls kein Detail-Binding konfiguriert ist
+    // Fallback: Daten aus Binding 1 via Index wenn kein Detail-Binding konfiguriert
     if (!this._myDetailSource) {
       return this._getErhebungRows(erhID, jahr, nummer);
     }
@@ -3037,14 +3042,14 @@ class GeoMapWidget extends HTMLElement {
     this._erhebungIndex = null;
     this._plzNormCache = null;
 
-    // Sofort versuchen zu rendern – wenn Karte noch nicht bereit, einmaligen
-    // Map-ready-Callback registrieren statt polling-Loop
     if (!this.map) {
-      this._pendingRender = true; // render() wird von initializeMapBase() aufgerufen
+      this._pendingRender = true;
       return;
     }
-    // Daten noch nicht bereit (z.B. state === "loading")
-    if (!this._myDataSource || this._myDataSource.state !== "success") {
+    const state   = dataBinding?.state;
+    const hasData = Array.isArray(dataBinding?.data) && dataBinding.data.length > 0;
+    const ready   = state === "success" || (hasData && state !== "error");
+    if (!dataBinding || !ready) {
       this._scheduleDataPoll();
       return;
     }
@@ -3065,7 +3070,11 @@ class GeoMapWidget extends HTMLElement {
     const start = Date.now();
     let _lastSecs = -1;
     this._dataPollTimer = setInterval(() => {
-      if (this._myDataSource?.state === "success") {
+      const state = this._myDataSource?.state;
+      const hasData = Array.isArray(this._myDataSource?.data) && this._myDataSource.data.length > 0;
+      // SAC liefert manchmal state="loading" obwohl Daten bereits da sind
+      // → akzeptiere auch "loading" wenn Daten vorhanden
+      if (state === "success" || (hasData && state !== "error")) {
         clearInterval(this._dataPollTimer);
         this._dataPollTimer = null;
         this.render();
@@ -3075,6 +3084,11 @@ class GeoMapWidget extends HTMLElement {
         if (secs !== _lastSecs) {
           _lastSecs = secs;
           this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
+          // Debug: nach 5s den aktuellen State loggen
+          if (secs === 5) {
+            console.warn("[GeoMap] myDataSource state nach 5s:", state,
+              "| data length:", this._myDataSource?.data?.length ?? "n/a");
+          }
         }
       }
     }, 50);
@@ -3090,11 +3104,14 @@ class GeoMapWidget extends HTMLElement {
     let _lastSecs = -1;
     const TIMEOUT_MS = 180_000; // 3 Minuten Timeout
     this._detailPollTimer = setInterval(() => {
-      if (this._myDetailSource?.state === "success") {
+      const state   = this._myDetailSource?.state;
+      const hasData = Array.isArray(this._myDetailSource?.data) && this._myDetailSource.data.length > 0;
+      const ready   = state === "success" || (hasData && state !== "error");
+      if (ready) {
         clearInterval(this._detailPollTimer);
         this._detailPollTimer = null;
         resolve(this._myDetailSource.data);
-      } else if (this._myDetailSource?.state === "error") {
+      } else if (state === "error") {
         clearInterval(this._detailPollTimer);
         this._detailPollTimer = null;
         reject(new Error("Detail-DataSource Fehler"));
