@@ -1933,10 +1933,13 @@ class GeoMapWidget extends HTMLElement {
     erhSelect.innerHTML="";jahrSelect.innerHTML="";nummerSelect.innerHTML="";
     jahrSelect.disabled=true;nummerSelect.disabled=true;
 
-    const createPlaceholder=(text)=>{ const opt=document.createElement("option"); opt.value="";opt.textContent=text;opt.disabled=true;opt.selected=true; return opt; };
-    erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
+    const mkPlaceholder=(text)=>{ const opt=document.createElement("option"); opt.value="";opt.textContent=text;opt.disabled=true; return opt; };
+    const phErh=mkPlaceholder("– ErhebungsID wählen –"); phErh.selected=true; erhSelect.appendChild(phErh);
     const _badID2=v=>v==="@NullMember"||v==="@TotalMembers";
     Object.keys(this._erhData).forEach(erhID=>{ if(!_badID2(erhID)){const opt=document.createElement("option");opt.value=erhID;opt.textContent=this._fmtGF(erhID);erhSelect.appendChild(opt);}});
+
+    const phJahr=mkPlaceholder("– Jahr wählen –"); phJahr.selected=true; jahrSelect.appendChild(phJahr);
+    const phNr=mkPlaceholder("– Nummer wählen –"); phNr.selected=true; nummerSelect.appendChild(phNr);
 
     const filterBtn = this._shadowRoot.getElementById("filter-button");
     const updateBtnState = () => {
@@ -1946,14 +1949,16 @@ class GeoMapWidget extends HTMLElement {
     };
 
     erhSelect.addEventListener("change",()=>{
-      jahrSelect.innerHTML="";nummerSelect.innerHTML="";jahrSelect.disabled=false;nummerSelect.disabled=true;
-      jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
+      jahrSelect.innerHTML="";nummerSelect.innerHTML="";
+      jahrSelect.disabled=false;nummerSelect.disabled=true;
+      const phJ=mkPlaceholder("– Jahr wählen –"); phJ.selected=true; jahrSelect.appendChild(phJ);
       Object.keys(this._erhData[erhSelect.value]||{}).filter(j=>j!=="@NullMember"&&j!=="@TotalMembers").forEach(j=>{const opt=document.createElement("option");opt.value=j;opt.textContent=j;jahrSelect.appendChild(opt);});
+      const phN=mkPlaceholder("– Nummer wählen –"); phN.selected=true; nummerSelect.appendChild(phN);
       updateBtnState();
     });
     jahrSelect.addEventListener("change",()=>{
       nummerSelect.innerHTML="";nummerSelect.disabled=false;
-      nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
+      const phN=mkPlaceholder("– Nummer wählen –"); phN.selected=true; nummerSelect.appendChild(phN);
       Array.from(this._erhData[erhSelect.value]?.[jahrSelect.value]||[]).filter(n=>n!=="@NullMember"&&n!=="@TotalMembers").forEach(n=>{const opt=document.createElement("option");opt.value=n;opt.textContent=n;nummerSelect.appendChild(opt);});
       updateBtnState();
     });
@@ -2199,16 +2204,16 @@ class GeoMapWidget extends HTMLElement {
     const _rt={}, _rm=l=>{ _rt[l]=performance.now(); }, _rfmt=ms=>ms<1000?ms.toFixed(0)+" ms":(ms/1000).toFixed(2)+" s", _rd=(a,b)=>_rfmt(_rt[b]-_rt[a]);
     _rm("start");
     console.group("[PLZ-Widget] render() – Initialisierung");
-    console.log("Rohdaten gesamt: " + rawData.length.toLocaleString("de-DE") + " Rows");
+    console.warn("Rohdaten gesamt: " + rawData.length.toLocaleString("de-DE") + " Rows");
     this._buildErhebungIndex();
     _rm("indexDone");
-    console.log("[1] _buildErhebungIndex: " + _rd("start","indexDone") + " | Index-Keys: " + Object.keys(this._erhebungIndex||{}).length);
+    console.warn("[1] _buildErhebungIndex: " + _rd("start","indexDone") + " | Index-Keys: " + Object.keys(this._erhebungIndex||{}).length);
     this._erhData=this.buildErhebungsStruktur(rawData);
     _rm("strukturDone");
-    console.log("[2] buildErhebungsStruktur: " + _rd("indexDone","strukturDone") + " | Erhebungen: " + Object.keys(this._erhData||{}).length);
+    console.warn("[2] buildErhebungsStruktur: " + _rd("indexDone","strukturDone") + " | Erhebungen: " + Object.keys(this._erhData||{}).length);
     this.setupFilterDropdowns();
     _rm("dropdownDone");
-    console.log("[3] setupFilterDropdowns: " + _rd("strukturDone","dropdownDone"));
+    console.warn("[3] setupFilterDropdowns: " + _rd("strukturDone","dropdownDone"));
     const isFiltered=!!this._activeFilter;
     const filteredData=isFiltered?this.getFilteredData():rawData;
     // GeoJSON und Datenverarbeitung parallel
@@ -2221,7 +2226,7 @@ class GeoMapWidget extends HTMLElement {
       })
     ]);
     _rm("parallelEnd");
-    console.log("[4] loadGeoJson + prepareMap parallel: " + _rd("parallelStart","parallelEnd"));
+    console.warn("[4] loadGeoJson + prepareMap parallel: " + _rd("parallelStart","parallelEnd"));
     this.updateGeoLayer(); this.createAllMarkers();
     const filteredPLZs=isFiltered?filteredData.map(d=>{
       const rawPLZ=d["dimension_plz_0"]?.id?.trim();
@@ -2229,8 +2234,8 @@ class GeoMapWidget extends HTMLElement {
     }).filter(p=>p!==null):Object.keys(this.allMarkers||{});
     this.updateMarkers(filteredPLZs); this.renderDataTable(this.filteredKennwerte);
     _rm("end");
-    console.log("[5] updateGeoLayer + Marker + Tabelle: " + _rd("parallelEnd","end"));
-    console.log("--- GESAMT render(): " + _rd("start","end"));
+    console.warn("[5] updateGeoLayer + Marker + Tabelle: " + _rd("parallelEnd","end"));
+    console.warn("--- GESAMT render(): " + _rd("start","end"));
     console.groupEnd();
     this._hideCinematicLoader();
     if (!isFiltered) {
@@ -2348,18 +2353,18 @@ class GeoMapWidget extends HTMLElement {
       const plzCount  = Object.keys(this.filteredKennwerte || {}).length;
       const nlCount   = this.allNLs?.length ?? 0;
       console.group("[PLZ-Widget] Ladezeiten: " + erhID + " | " + jahr + " | " + nummer);
-      console.log("Datensaetze gesamt (BW): " + totalRows.toLocaleString("de-DE") + " Rows");
-      console.log("Datensaetze Erhebung:    " + erh_rows.toLocaleString("de-DE") + " Rows");
-      console.log("PLZs verarbeitet:        " + plzCount);
-      console.log("Niederlassungen:         " + nlCount);
-      console.log("---");
-      console.log("[1] Query (Index-Lookup): " + _diff("queryStart","queryEnd"));
-      console.log("[2] prepareMapData:       " + _diff("mapDataStart","mapDataEnd"));
-      console.log("[3] Marker erstellen:     " + _diff("markersStart","markersEnd"));
-      console.log("[4] Kennwerte/Distanzen:  " + _diff("kennwerteStart","kennwerteEnd"));
-      console.log("[5] GeoLayer/Tabelle:     " + _diff("renderStart","renderEnd"));
-      console.log("---");
-      console.log("    GESAMT:               " + _diff("start","end"));
+      console.warn("Datensaetze gesamt (BW): " + totalRows.toLocaleString("de-DE") + " Rows");
+      console.warn("Datensaetze Erhebung:    " + erh_rows.toLocaleString("de-DE") + " Rows");
+      console.warn("PLZs verarbeitet:        " + plzCount);
+      console.warn("Niederlassungen:         " + nlCount);
+      console.warn("---");
+      console.warn("[1] Query (Index-Lookup): " + _diff("queryStart","queryEnd"));
+      console.warn("[2] prepareMapData:       " + _diff("mapDataStart","mapDataEnd"));
+      console.warn("[3] Marker erstellen:     " + _diff("markersStart","markersEnd"));
+      console.warn("[4] Kennwerte/Distanzen:  " + _diff("kennwerteStart","kennwerteEnd"));
+      console.warn("[5] GeoLayer/Tabelle:     " + _diff("renderStart","renderEnd"));
+      console.warn("---");
+      console.warn("    GESAMT:               " + _diff("start","end"));
       console.groupEnd();
 
     } finally {
@@ -3075,13 +3080,13 @@ class GeoMapWidget extends HTMLElement {
     if (this._dataPollTimer) return; // läuft bereits, kein zweiter starten
     this._updateLoaderPhase(1, "Warte auf Daten…");
     const start = Date.now();
-    console.log("[PLZ-Widget] _scheduleDataPoll gestartet – warte auf BW-Daten…");
+    console.warn("[PLZ-Widget] _scheduleDataPoll gestartet – warte auf BW-Daten…");
     this._dataPollTimer = setInterval(() => {
       if (this._myDataSource?.state === "success") {
         clearInterval(this._dataPollTimer);
         this._dataPollTimer = null;
         const waited = ((Date.now() - start) / 1000).toFixed(1);
-        console.log("[PLZ-Widget] BW-Daten empfangen nach " + waited + "s | Rows: " + (this._myDataSource?.data?.length?.toLocaleString("de-DE") ?? "?"));
+        console.warn("[PLZ-Widget] BW-Daten empfangen nach " + waited + "s | Rows: " + (this._myDataSource?.data?.length?.toLocaleString("de-DE") ?? "?"));
         this.render();
       } else {
         // Fortschritt anzeigen damit User sieht dass etwas passiert
