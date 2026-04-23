@@ -694,7 +694,7 @@ class GeoMapWidget extends HTMLElement {
     // Whitespace nur entfernen wenn vorhanden (seltener Fall)
     if (s.includes(" ")) s = s.replace(/\s/g, "");
     let result;
-    if (!s || s === "@NullMember") {
+    if (!s || s === "@NullMember" || s === "@TotalMembers") {
       result = null;
     } else if (s.length > 5) {
       result = s.slice(-5);
@@ -785,7 +785,8 @@ class GeoMapWidget extends HTMLElement {
       const erhID = row["dimension_erhebung_0"]?.id?.trim();
       const jahr  = row["dimension_jahr_0"]?.id?.trim();
       const nummer= row["dimension_erhebungsnummer_0"]?.id?.trim();
-      if (!erhID||erhID==="@NullMember"||!jahr||jahr==="@NullMember"||!nummer||nummer==="@NullMember") continue;
+      const _bad=v=>!v||v==="@NullMember"||v==="@TotalMembers";
+      if (_bad(erhID)||_bad(jahr)||_bad(nummer)) continue;
       if (!struktur[erhID]) struktur[erhID] = {};
       if (!struktur[erhID][jahr]) struktur[erhID][jahr] = new Set();
       struktur[erhID][jahr].add(nummer);
@@ -1913,8 +1914,9 @@ class GeoMapWidget extends HTMLElement {
           return opt;
         };
         erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
+        const _badID=v=>v==="@NullMember"||v==="@TotalMembers";
         Object.keys(this._erhData).forEach(erhID => {
-          if (erhID !== "@NullMember") {
+          if (!_badID(erhID)) {
             const opt = document.createElement("option");
             opt.value = erhID; opt.textContent = this._fmtGF(erhID);
             erhSelect.appendChild(opt);
@@ -1933,7 +1935,8 @@ class GeoMapWidget extends HTMLElement {
 
     const createPlaceholder=(text)=>{ const opt=document.createElement("option"); opt.value="";opt.textContent=text;opt.disabled=true;opt.selected=true; return opt; };
     erhSelect.appendChild(createPlaceholder("Bitte auswählen"));
-    Object.keys(this._erhData).forEach(erhID=>{ if(erhID!=="@NullMember"){const opt=document.createElement("option");opt.value=erhID;opt.textContent=this._fmtGF(erhID);erhSelect.appendChild(opt);}});
+    const _badID2=v=>v==="@NullMember"||v==="@TotalMembers";
+    Object.keys(this._erhData).forEach(erhID=>{ if(!_badID2(erhID)){const opt=document.createElement("option");opt.value=erhID;opt.textContent=this._fmtGF(erhID);erhSelect.appendChild(opt);}});
 
     const filterBtn = this._shadowRoot.getElementById("filter-button");
     const updateBtnState = () => {
@@ -1945,13 +1948,13 @@ class GeoMapWidget extends HTMLElement {
     erhSelect.addEventListener("change",()=>{
       jahrSelect.innerHTML="";nummerSelect.innerHTML="";jahrSelect.disabled=false;nummerSelect.disabled=true;
       jahrSelect.appendChild(createPlaceholder("Bitte auswählen"));
-      Object.keys(this._erhData[erhSelect.value]||{}).filter(j=>j!=="@NullMember").forEach(j=>{const opt=document.createElement("option");opt.value=j;opt.textContent=j;jahrSelect.appendChild(opt);});
+      Object.keys(this._erhData[erhSelect.value]||{}).filter(j=>j!=="@NullMember"&&j!=="@TotalMembers").forEach(j=>{const opt=document.createElement("option");opt.value=j;opt.textContent=j;jahrSelect.appendChild(opt);});
       updateBtnState();
     });
     jahrSelect.addEventListener("change",()=>{
       nummerSelect.innerHTML="";nummerSelect.disabled=false;
       nummerSelect.appendChild(createPlaceholder("Bitte auswählen"));
-      Array.from(this._erhData[erhSelect.value]?.[jahrSelect.value]||[]).filter(n=>n!=="@NullMember").forEach(n=>{const opt=document.createElement("option");opt.value=n;opt.textContent=n;nummerSelect.appendChild(opt);});
+      Array.from(this._erhData[erhSelect.value]?.[jahrSelect.value]||[]).filter(n=>n!=="@NullMember"&&n!=="@TotalMembers").forEach(n=>{const opt=document.createElement("option");opt.value=n;opt.textContent=n;nummerSelect.appendChild(opt);});
       updateBtnState();
     });
     nummerSelect.addEventListener("change", updateBtnState);
@@ -2175,8 +2178,7 @@ class GeoMapWidget extends HTMLElement {
     if(!erhSelect||!jahrSelect||!nummerSelect) return;
     erhSelect.innerHTML="";jahrSelect.innerHTML="";nummerSelect.innerHTML="";jahrSelect.disabled=true;nummerSelect.disabled=true;
     this._erhData={};
-    const isBad=v=>!v||v==="@NullMember"||v==="@TotalMembers";
-    data.forEach(row=>{const erhID=row["dimension_erhebung_0"]?.id?.trim(),jahr=row["dimension_jahr_0"]?.id?.trim(),nummer=row["dimension_erhebungsnummer_0"]?.id?.trim();if(isBad(erhID)||isBad(jahr)||isBad(nummer)) return;this._erhData[erhID]=this._erhData[erhID]||{};this._erhData[erhID][jahr]=this._erhData[erhID][jahr]||new Set();this._erhData[erhID][jahr].add(nummer);});
+    data.forEach(row=>{const erhID=row["dimension_erhebung_0"]?.id?.trim(),jahr=row["dimension_jahr_0"]?.id?.trim(),nummer=row["dimension_erhebungsnummer_0"]?.id?.trim();if(!erhID||!jahr||!nummer) return;this._erhData[erhID]=this._erhData[erhID]||{};this._erhData[erhID][jahr]=this._erhData[erhID][jahr]||new Set();this._erhData[erhID][jahr].add(nummer);});
     Object.keys(this._erhData).forEach(erhID=>{const opt=document.createElement("option");opt.value=erhID;opt.textContent=erhID;erhSelect.appendChild(opt);});
     erhSelect.addEventListener("change",()=>{jahrSelect.innerHTML="";nummerSelect.innerHTML="";jahrSelect.disabled=false;nummerSelect.disabled=true;Object.keys(this._erhData[erhSelect.value]||{}).forEach(j=>{const opt=document.createElement("option");opt.value=j;opt.textContent=j;jahrSelect.appendChild(opt);});});
     jahrSelect.addEventListener("change",()=>{nummerSelect.innerHTML="";nummerSelect.disabled=false;Array.from(this._erhData[erhSelect.value]?.[jahrSelect.value]||[]).forEach(n=>{const opt=document.createElement("option");opt.value=n;opt.textContent=n;nummerSelect.appendChild(opt);});});
@@ -2194,11 +2196,23 @@ class GeoMapWidget extends HTMLElement {
       return;
     }
     const rawData=this._myDataSource.data;
+    const _rt={}, _rm=l=>{ _rt[l]=performance.now(); }, _rfmt=ms=>ms<1000?ms.toFixed(0)+" ms":(ms/1000).toFixed(2)+" s", _rd=(a,b)=>_rfmt(_rt[b]-_rt[a]);
+    _rm("start");
+    console.group("[PLZ-Widget] render() – Initialisierung");
+    console.log("Rohdaten gesamt: " + rawData.length.toLocaleString("de-DE") + " Rows");
     this._buildErhebungIndex();
-    this.prepareDropdownData(rawData);
+    _rm("indexDone");
+    console.log("[1] _buildErhebungIndex: " + _rd("start","indexDone") + " | Index-Keys: " + Object.keys(this._erhebungIndex||{}).length);
+    this._erhData=this.buildErhebungsStruktur(rawData);
+    _rm("strukturDone");
+    console.log("[2] buildErhebungsStruktur: " + _rd("indexDone","strukturDone") + " | Erhebungen: " + Object.keys(this._erhData||{}).length);
+    this.setupFilterDropdowns();
+    _rm("dropdownDone");
+    console.log("[3] setupFilterDropdowns: " + _rd("strukturDone","dropdownDone"));
     const isFiltered=!!this._activeFilter;
     const filteredData=isFiltered?this.getFilteredData():rawData;
     // GeoJSON und Datenverarbeitung parallel
+    _rm("parallelStart");
     const [_] = await Promise.all([
       this.loadGeoJson(),
       Promise.resolve().then(() => {
@@ -2206,12 +2220,18 @@ class GeoMapWidget extends HTMLElement {
         this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
       })
     ]);
+    _rm("parallelEnd");
+    console.log("[4] loadGeoJson + prepareMap parallel: " + _rd("parallelStart","parallelEnd"));
     this.updateGeoLayer(); this.createAllMarkers();
     const filteredPLZs=isFiltered?filteredData.map(d=>{
       const rawPLZ=d["dimension_plz_0"]?.id?.trim();
       return this._normalizePLZ(rawPLZ);
     }).filter(p=>p!==null):Object.keys(this.allMarkers||{});
     this.updateMarkers(filteredPLZs); this.renderDataTable(this.filteredKennwerte);
+    _rm("end");
+    console.log("[5] updateGeoLayer + Marker + Tabelle: " + _rd("parallelEnd","end"));
+    console.log("--- GESAMT render(): " + _rd("start","end"));
+    console.groupEnd();
     this._hideCinematicLoader();
     if (!isFiltered) {
       setTimeout(() => this._startPreviewAnimation(), 200);
@@ -2272,30 +2292,46 @@ class GeoMapWidget extends HTMLElement {
     this._rawPLZCache = {};
     this._crossErhebungPLZ = {};
     this._showCinematicLoader();
+    // Performance-Log
+    const _t = {};
+    const _mark = label => { _t[label] = performance.now(); };
+    const _fmt  = ms => ms < 1000 ? ms.toFixed(0) + " ms" : (ms/1000).toFixed(2) + " s";
+    const _diff = (a, b) => _fmt(_t[b] - _t[a]);
+    _mark("start");
+
     try {
       this._updateLoaderPhase(1,"Erhebungsdaten werden geladen…");
-      // GeoJSON-Fetch und Datenaufbereitung PARALLEL starten
+      _mark("queryStart");
       const [rawData] = await Promise.all([
         this.queryErhebungFromBW(erhID, jahr, nummer),
-        this.loadGeoJson()  // bereits gecacht nach erstem Laden
+        this.loadGeoJson()
       ]);
+      _mark("queryEnd");
       this._activeFilter={erhID,jahr,nummer}; this.filteredData=rawData;
 
       this._updateLoaderPhase(2,"Karte wird vorbereitet…");
+      _mark("mapDataStart");
       this.prepareMapData(rawData);
+      _mark("mapDataEnd");
 
       this._updateLoaderPhase(3,"Niederlassungen werden gesetzt…");
+      _mark("markersStart");
       this.allNLs=[...Object.keys(this.Niederlassung),...(this.extraNLs?.map(e=>e.nl)??[])];
       this._selectedNLs=new Set(this.allNLs); this._nlSelectionInitialized=false;
       this.createAllMarkers();
+      _mark("markersEnd");
 
       this._updateLoaderPhase(4,"Kennwerte werden berechnet…");
+      _mark("kennwerteStart");
       const radius=Number(this._shadowRoot.getElementById("radius-slider")?.value??40);
       this._buildDistanceCache(); this.applyRadiusFilter(radius);
       this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
-      this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
+      _mark("kennwerteEnd");
 
-      // Nicht-kritische Operationen nach dem ersten Paint ausführen
+      _mark("renderStart");
+      this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
+      _mark("renderEnd");
+
       requestAnimationFrame(() => {
         this.prepareErhebungsInfo();
         const block = this._shadowRoot.getElementById("map-interaction-block");
@@ -2304,6 +2340,28 @@ class GeoMapWidget extends HTMLElement {
         this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
         this.showOverviewPopup();
       });
+
+      // Ladezeit-Log in Browser-Konsole
+      _mark("end");
+      const totalRows = this._myDataSource?.data?.length ?? 0;
+      const erh_rows  = rawData.length;
+      const plzCount  = Object.keys(this.filteredKennwerte || {}).length;
+      const nlCount   = this.allNLs?.length ?? 0;
+      console.group("[PLZ-Widget] Ladezeiten: " + erhID + " | " + jahr + " | " + nummer);
+      console.log("Datensaetze gesamt (BW): " + totalRows.toLocaleString("de-DE") + " Rows");
+      console.log("Datensaetze Erhebung:    " + erh_rows.toLocaleString("de-DE") + " Rows");
+      console.log("PLZs verarbeitet:        " + plzCount);
+      console.log("Niederlassungen:         " + nlCount);
+      console.log("---");
+      console.log("[1] Query (Index-Lookup): " + _diff("queryStart","queryEnd"));
+      console.log("[2] prepareMapData:       " + _diff("mapDataStart","mapDataEnd"));
+      console.log("[3] Marker erstellen:     " + _diff("markersStart","markersEnd"));
+      console.log("[4] Kennwerte/Distanzen:  " + _diff("kennwerteStart","kennwerteEnd"));
+      console.log("[5] GeoLayer/Tabelle:     " + _diff("renderStart","renderEnd"));
+      console.log("---");
+      console.log("    GESAMT:               " + _diff("start","end"));
+      console.groupEnd();
+
     } finally {
       this._hideCinematicLoader();
     }
@@ -3017,17 +3075,23 @@ class GeoMapWidget extends HTMLElement {
     if (this._dataPollTimer) return; // läuft bereits, kein zweiter starten
     this._updateLoaderPhase(1, "Warte auf Daten…");
     const start = Date.now();
+    console.log("[PLZ-Widget] _scheduleDataPoll gestartet – warte auf BW-Daten…");
     this._dataPollTimer = setInterval(() => {
       if (this._myDataSource?.state === "success") {
         clearInterval(this._dataPollTimer);
         this._dataPollTimer = null;
+        const waited = ((Date.now() - start) / 1000).toFixed(1);
+        console.log("[PLZ-Widget] BW-Daten empfangen nach " + waited + "s | Rows: " + (this._myDataSource?.data?.length?.toLocaleString("de-DE") ?? "?"));
         this.render();
       } else {
         // Fortschritt anzeigen damit User sieht dass etwas passiert
         const secs = Math.floor((Date.now() - start) / 1000);
-        this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
+        if (secs !== this._lastPollSecs) {
+          this._lastPollSecs = secs;
+          this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
+        }
       }
-    }, 250);
+    }, 1000);
   }
 }
 
