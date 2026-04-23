@@ -2003,7 +2003,7 @@ class GeoMapWidget extends HTMLElement {
     const tbody=document.createElement("tbody");
     Object.values(this.erhebungsInfo).forEach(info=>{
       const tr=document.createElement("tr");tr.classList.add("nl-info-row");tr.dataset.nl=info.nl;
-      [this._fmtGF(info.nl),Math.round(info.jahresumsatz).toLocaleString("de-DE"),Math.round(info.erfasst_total).toLocaleString("de-DE"),(info.pct_erfassung*100).toFixed(1)+"%",Math.round(info.erfasst_valid).toLocaleString("de-DE"),(info.pct_hochrechnung*100).toFixed(1)+"%"]
+      [info.nl,Math.round(info.jahresumsatz).toLocaleString("de-DE"),Math.round(info.erfasst_total).toLocaleString("de-DE"),(info.pct_erfassung*100).toFixed(1)+"%",Math.round(info.erfasst_valid).toLocaleString("de-DE"),(info.pct_hochrechnung*100).toFixed(1)+"%"]
         .forEach((val,i)=>{const td=document.createElement("td");td.textContent=val;td.classList.add(headers[i].class);tr.appendChild(td);});
       tr.addEventListener("click",()=>{
         this._nlSelectionInitialized = true;
@@ -2716,7 +2716,7 @@ class GeoMapWidget extends HTMLElement {
     const allNLs = this.allNLs || [];
     let headerTitle = this._fmtGF(erhID) || "Übersicht";
     if (selNLs && selNLs.size > 0 && selNLs.size < allNLs.length) {
-      headerTitle = [...selNLs].map(nl => this._fmtGF(nl)).join(", ");
+      headerTitle = [...selNLs].join(", ");
     }
 
     const panel = this._shadowRoot.getElementById("map-control-panel");
