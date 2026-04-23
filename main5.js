@@ -642,9 +642,9 @@ let neighbours = true;
         </div>
         <div class="category-grid">
           <div class="category-toggle active" data-cat="stationaer">🏬 Stationär</div>
-          <div class="category-toggle" data-cat="pluscard">💳 Pluscard</div>
-          <div class="category-toggle" data-cat="ra">📦 R&amp;A</div>
-          <div class="category-toggle" data-cat="online">🛒 KUBE OS</div>
+          <div class="category-toggle active" data-cat="pluscard">💳 Pluscard</div>
+          <div class="category-toggle active" data-cat="ra">📦 R&amp;A</div>
+          <div class="category-toggle active" data-cat="online">🛒 KUBE OS</div>
         </div>
       </div>
     </div>
@@ -662,7 +662,7 @@ class GeoMapWidget extends HTMLElement {
     this.map = null; this._tileLayer = null; this._geoLayer = null; this._geoData = null;
     this._myDataSource = null; this._tilesVisible = false;
     this._sortState = { column: null, direction: "asc" };
-    this.currentMapMode = "wk"; this.activeCategories = new Set(["stationaer"]);
+    this.currentMapMode = "wk"; this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
     this.umsatzMainMode = "gesamt"; this.useWerbeUmsatz = true; this.useZusatzUmsatz = false;
     this.useRadiusFilter = true; this._selectedNLs = new Set();
     this._nlSelectionInitialized = false;
@@ -744,7 +744,12 @@ class GeoMapWidget extends HTMLElement {
   }
 
   connectedCallback() {
-    // Loader sofort zeigen – bleibt bis render() fertig ist (FIX 1)
+    // GeoJSON sofort prefetchen – läuft parallel zu Leaflet-Init und BW-Daten
+    this._geoJsonPromise = fetch("https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson", { cache: "force-cache" })
+      .then(r => r.json())
+      .catch(e => { console.error("GeoJSON prefetch Fehler:", e); return null; });
+
+    // Loader sofort zeigen
     this._showCinematicLoader();
     this._updateLoaderPhase(1, "Leaflet wird geladen…");
     if (!window.L) {
@@ -797,9 +802,13 @@ class GeoMapWidget extends HTMLElement {
   async loadGeoJson() {
     if (this._geoLayer) return; // bereits geladen – sofort zurück
     try {
-      // Cache-Control: max-age mitschicken damit der Browser das GeoJSON cached
-      const response = await fetch("https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson", { cache: "force-cache" });
-      this._geoData = await response.json();
+      // Prefetch-Promise aus connectedCallback nutzen, sonst neu laden
+      const geoData = this._geoJsonPromise
+        ? await this._geoJsonPromise
+        : await fetch("https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson", { cache: "force-cache" }).then(r => r.json());
+      this._geoJsonPromise = null; // Promise verbraucht
+      if (!geoData) return;
+      this._geoData = geoData;
       this.geoNotes = {};
       const features = this._geoData.features || [];
       // Einmalig alle Notes indexieren
@@ -1200,13 +1209,11 @@ class GeoMapWidget extends HTMLElement {
     }).setView([49.4, 8.7], 7);
     this.currentMapMode = "wk"; this.activePopupType = "wk"; this.umsatzDarstellung = "abs";
     this.umsatzMainMode = "gesamt"; this.useWerbeUmsatz = true; this.useZusatzUmsatz = false;
-    this.activeCategories = new Set(["stationaer"]); this.showBestreuung = false; this.useRadiusFilter = true;
+    this.activeCategories = new Set(["stationaer","pluscard","ra","online"]); this.showBestreuung = false; this.useRadiusFilter = true;
     this.filteredGroup = L.layerGroup().addTo(this.map); this.neighbourGroup = L.layerGroup().addTo(this.map);
     this.radiusGroup = L.layerGroup().addTo(this.map); this.bestreuungGroup = L.layerGroup().addTo(this.map);
 
-    // Karte ist jetzt bereit. Wenn Daten bereits vorlagen (_pendingRender),
-    // sofort render() aufrufen – sonst normaler render()-Aufruf (der bei
-    // fehlendem dataSource nichts tut).
+    // Karte ist jetzt bereit.
     if (this._pendingRender) {
       this._pendingRender = false;
       if (this._myDataSource?.state === "success") {
@@ -1214,10 +1221,15 @@ class GeoMapWidget extends HTMLElement {
       } else if (this._myDataSource) {
         this._scheduleDataPoll();
       }
-      // Falls noch kein myDataSource gesetzt wurde: render() wird vom Setter ausgelöst
-    } else {
+      // Falls noch kein myDataSource gesetzt: render() wird vom Setter ausgelöst
+    } else if (this._myDataSource?.state === "success") {
+      // Daten schon bereit (z.B. Reload) – direkt rendern
       this.render();
+    } else if (this._myDataSource && !this._dataPollTimer) {
+      // Daten noch unterwegs – Poll starten falls noch keiner läuft
+      this._scheduleDataPoll();
     }
+    // Kein myDataSource: render() kommt vom Setter, kein Aufruf nötig
     this.initRadiusSlider();
 
     const panel=$("map-control-panel"),btnWK=$("btn-wk"),btnUmsatz=$("btn-umsatz"),umsatzPanel=$("umsatz-panel");
@@ -1259,7 +1271,7 @@ class GeoMapWidget extends HTMLElement {
       this.bestreuungGroup?.clearLayers();
       if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
       this.updateGeoLayer(); this.updateHeatmapLegend();
-      if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); }
+      if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); this._rerenderActivePopup(); }
     });
 
     btnUmsatz?.addEventListener("click", () => {
@@ -1275,7 +1287,7 @@ class GeoMapWidget extends HTMLElement {
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
       if (!this.showBestreuung) this.bestreuungGroup?.clearLayers();
       this.updateGeoLayer(); this.updateHeatmapLegend();
-      if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); }
+      if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); this._rerenderActivePopup(); }
     });
 
     typeSwitch?.addEventListener("click", () => {
@@ -1311,18 +1323,39 @@ class GeoMapWidget extends HTMLElement {
       refreshMapAndPopup();
     });
 
+    const allCats = ["stationaer","pluscard","ra","online"];
     this._shadowRoot.querySelectorAll(".category-toggle").forEach(toggle => {
       toggle.addEventListener("click", () => {
         const cat = toggle.dataset.cat; if (!cat) return;
-        if (this.activeCategories.has(cat)) { this.activeCategories.delete(cat); toggle.classList.remove("active"); }
-        else { this.activeCategories.add(cat); toggle.classList.add("active"); }
+        const allActive = allCats.every(c => this.activeCategories.has(c));
+        if (allActive) {
+          // Alle aktiv → klick isoliert auf diese eine
+          this.activeCategories = new Set([cat]);
+          this._shadowRoot.querySelectorAll(".category-toggle").forEach(t =>
+            t.classList.toggle("active", t.dataset.cat === cat));
+        } else if (this.activeCategories.has(cat)) {
+          this.activeCategories.delete(cat);
+          toggle.classList.remove("active");
+          if (this.activeCategories.size === 0) {
+            // Alle deselektiert → zurück zu allen
+            this.activeCategories = new Set(allCats);
+            this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
+          }
+        } else {
+          this.activeCategories.add(cat);
+          toggle.classList.add("active");
+          if (allCats.every(c => this.activeCategories.has(c))) {
+            // Alle wieder aktiv → Normalzustand
+            this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
+          }
+        }
         this.currentMapMode = "umsatz-multi"; this.activePopupType = "umsatz";
         refreshMapAndPopup();
       });
     });
 
-    chkDoppel?.addEventListener("change", () => { this.showCritical=chkDoppel.checked; this.updateGeoLayer(); this.updateHeatmapLegend(); });
-    chkBestreuung?.addEventListener("change", () => { this.showBestreuung=chkBestreuung.checked; this.updateBestreuungMarkers(); this.updateHeatmapLegend(); });
+    chkDoppel?.addEventListener("change", () => { this.showCritical=chkDoppel.checked; this.updateGeoLayer(); this.updateHeatmapLegend(); if(this._activeFilter) this.renderDataTable(this.filteredKennwerte); });
+    chkBestreuung?.addEventListener("change", () => { this.showBestreuung=chkBestreuung.checked; this.updateBestreuungMarkers(); this.updateHeatmapLegend(); if(this._activeFilter) this.renderDataTable(this.filteredKennwerte); });
   }
 
   _rerenderActivePopup() {
@@ -1459,6 +1492,8 @@ class GeoMapWidget extends HTMLElement {
     this._nlSelectionInitialized = false;
 
     this.applyNLFilter([...this._selectedNLs]);
+    // updateMarkers setzt nlMarkers korrekt bevor _buildDistanceCache
+    this.updateMarkers();
     const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value??0);
     this.applyRadiusFilter(radius); this.updateGeoLayer(); this.updateNLSelectionUI?.(); this._buildDistanceCache();
   }
@@ -1479,10 +1514,9 @@ class GeoMapWidget extends HTMLElement {
       if (plz) _plzSet.add(plz);
     }
     this.filteredPLZs = [..._plzSet];
-    this.updateMarkers(); this.computeWKKennwerte();
-    const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
-    this.currentRadius = radius; this.applyRadiusFilter(radius); this.prepareUmsatzPLZWerte(); this.computeStreuverlust();
-    // Kein _rerenderActivePopup hier – toggleNLSelection/showOverviewPopup übernimmt das
+    this.computeWKKennwerte();
+    // Kein applyRadiusFilter hier – Aufrufer (toggleNLSelection/onMarkerClick) erledigt das
+    // nach _buildDistanceCache() mit den neuen nlMarkers
   }
 
   createMarkerIcon(nl, isPhantom = false) {
@@ -1895,9 +1929,13 @@ class GeoMapWidget extends HTMLElement {
 
   onMarkerClick(nl) {
     if(this._selectedNLs.has(nl)) this._selectedNLs.delete(nl); else this._selectedNLs.add(nl);
-    this.updateNLSelectionUI(); this.applyNLFilter([...this._selectedNLs]);
+    this.updateNLSelectionUI();
+    this.updateMarkers();
+    this._distanceCacheNLKey = null; this._buildDistanceCache();
+    this.computeWKKennwerte();
     const radius=Number(this._shadowRoot.getElementById("radius-slider").value);
-    this.applyRadiusFilter(radius); this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte);
+    this.applyRadiusFilter(radius); this.prepareUmsatzPLZWerte(); this.computeStreuverlust();
+    this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte);
   }
 
   // Einheitliche Formatierung: "5" → "GF-Bereich 5"
@@ -2115,6 +2153,7 @@ class GeoMapWidget extends HTMLElement {
     this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
     this.updateGeoLayer(); this.updateHeatmapLegend();
     this.renderDataTable(this.filteredKennwerte);
+    if (this._activeFilter) this.showOverviewPopup();
   }
 
   getColorForPLZ(plz) {
@@ -2323,6 +2362,9 @@ class GeoMapWidget extends HTMLElement {
       _mark("markersStart");
       this.allNLs=[...Object.keys(this.Niederlassung),...(this.extraNLs?.map(e=>e.nl)??[])];
       this._selectedNLs=new Set(this.allNLs); this._nlSelectionInitialized=false;
+      // Kategorien auf alle zurücksetzen + UI-Buttons synchronisieren
+      this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
+      this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
       this.createAllMarkers();
       _mark("markersEnd");
 
@@ -2614,6 +2656,17 @@ class GeoMapWidget extends HTMLElement {
     }
     this._shadowRoot.getElementById("back-to-home-btn")?.classList.remove("visible");
     this._shadowRoot.getElementById("overview-toggle-btn")?.classList.remove("visible");
+    // Kategorien + UI-Buttons zurücksetzen
+    this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
+    this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
+    // WK/Umsatz-Panel zurücksetzen
+    this.currentMapMode = "wk"; this.activePopupType = "wk";
+    this.umsatzMainMode = "gesamt"; this.umsatzDarstellung = "abs";
+    this._shadowRoot.getElementById("btn-wk")?.classList.add("active");
+    this._shadowRoot.getElementById("btn-umsatz")?.classList.remove("active");
+    this._shadowRoot.getElementById("umsatz-panel")?.classList.add("hidden");
+    this._shadowRoot.getElementById("wk-extra")?.style && (this._shadowRoot.getElementById("wk-extra").style.display = "");
+    this._shadowRoot.getElementById("map-control-panel")?.classList.remove("panel-large","panel-medium");
     this._startPreviewAnimation();
     this.renderDataTableFromEntries([]);
     const box = this._shadowRoot.getElementById("streuverlust-box");
@@ -3032,12 +3085,19 @@ class GeoMapWidget extends HTMLElement {
     }
 
     this.updateNLSelectionUI();
-    this.applyNLFilter([...this._selectedNLs]);
+    // updateMarkers setzt this.nlMarkers auf die gefilterten NLs
+    this.updateMarkers();
+    // Distanz-Cache auf Basis der jetzt aktiven NLs neu berechnen
+    this._distanceCacheNLKey = null;
+    this._buildDistanceCache();
+    // Kennwerte + Radius auf Basis der neuen NL-Auswahl neu berechnen
+    this.computeWKKennwerte();
     const radius = Number(this._shadowRoot.getElementById("radius-slider").value);
     this.applyRadiusFilter(radius);
+    this.prepareUmsatzPLZWerte();
+    this.computeStreuverlust();
     this.updateGeoLayer();
     this.renderDataTable(this.filteredKennwerte);
-    this.prepareUmsatzPLZWerte();
     this.showOverviewPopup();
   }
 
@@ -3050,7 +3110,7 @@ class GeoMapWidget extends HTMLElement {
     let debounceTimer=null;
     slider.addEventListener("input",()=>{
       const radius=Number(slider.value);valueLabel.textContent=radius;updateFill();
-      clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{this.applyRadiusFilter(radius);this.renderDataTable(this.filteredKennwerte);},80);
+      clearTimeout(debounceTimer);debounceTimer=setTimeout(()=>{this.applyRadiusFilter(radius);if(this._activeFilter)this.showOverviewPopup();},80);
     });
   }
 
