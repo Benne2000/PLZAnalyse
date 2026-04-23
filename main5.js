@@ -743,6 +743,106 @@ class GeoMapWidget extends HTMLElement {
     return this._erhebungIndex[erhID + "|" + jahr + "|" + nummer] || [];
   }
 
+  // ═══════════════════════════════════════════════════════════════
+  // PERF: Zugriff auf SAC DataSource-API (wie im ECharts-Sample-Widget)
+  // Erlaubt programmatisches Setzen/Entfernen von Dimensionsfiltern
+  // direkt im Widget ohne SAC Script.
+  // ═══════════════════════════════════════════════════════════════
+  _getDataSource() {
+    try {
+      return this.dataBindings?.getDataBinding('myDataSource')?.getDataSource() ?? null;
+    } catch(e) {
+      console.warn("[PLZ-Widget] DataSource nicht verfügbar:", e);
+      return null;
+    }
+  }
+
+  // Setzt initialen PLZ=00000 Filter beim Widget-Start.
+  // BW liefert dann nur ~8 Rows statt 27k → Bootstrap in <1s.
+  _applyPLZ00000Filter() {
+    const ds = this._getDataSource();
+    if (!ds) {
+      console.warn("[PLZ-Widget] _applyPLZ00000Filter: DataSource nicht verfügbar – normaler Ladeweg");
+      return;
+    }
+    try {
+      ds.setDimensionFilter("dimension_plz", ["00000"]);
+      console.warn("[PLZ-Widget] PLZ=00000 Filter gesetzt – warte auf ~8 Bootstrap-Rows");
+    } catch(e) {
+      console.warn("[PLZ-Widget] PLZ=00000 Filter fehlgeschlagen:", e);
+    }
+  }
+
+  // Wechselt nach "Anzeigen"-Klick von PLZ=00000 auf Jahr+Nummer.
+  // Kein ErhebungsID-Filter → BW liefert alle Erhebungen des Zeitraums
+  // → CrossErhebDoppel-Erkennung funktioniert unverändert.
+  // Gibt true zurück wenn der Filter-Wechsel erfolgreich war.
+  _switchToErhebungFilter(jahr, nummer) {
+    const ds = this._getDataSource();
+    if (!ds) return false;
+    try {
+      ds.removeDimensionFilter("dimension_plz");
+      ds.setDimensionFilter("dimension_jahr",            [jahr]);
+      ds.setDimensionFilter("dimension_erhebungsnummer", [nummer]);
+      console.warn("[PLZ-Widget] Filter → Jahr: " + jahr + " | Nummer: " + nummer);
+      // SAC löst bei setDimensionFilter automatisch einen Refresh aus
+      // → set myDataSource() wird erneut aufgerufen → render() (Phase 2)
+      return true;
+    } catch(e) {
+      console.warn("[PLZ-Widget] Filter-Wechsel fehlgeschlagen:", e);
+      return false;
+    }
+  }
+
+  // Phase 1: Wird aufgerufen wenn BW nur PLZ 00000 Rows liefert (~8 Rows).
+  // Baut Dropdowns und Preview-Animation auf ohne auf alle 27k Rows zu warten.
+  _bootstrapFromPLZ00000(rows) {
+    const t0 = performance.now();
+    console.warn("[PLZ-Widget] Bootstrap PLZ 00000 | Rows: " + rows.length);
+
+    // Leichtgewichtigen Index nur über 00000-Rows aufbauen
+    const idx = {};
+    const _bad = v => !v || v === "@NullMember" || v === "@TotalMembers";
+    for (const row of rows) {
+      const eID = row["dimension_erhebung_0"]?.id;
+      const yr  = row["dimension_jahr_0"]?.id;
+      const nr  = row["dimension_erhebungsnummer_0"]?.id;
+      if (_bad(eID) || _bad(yr) || _bad(nr)) continue;
+      const k = eID + "|" + yr + "|" + nr;
+      if (!idx[k]) idx[k] = [];
+      idx[k].push(row);
+    }
+    this._erhebungIndex = idx;
+
+    // Dropdown-Struktur aufbauen und UI befüllen
+    this._erhData = this.buildErhebungsStruktur(rows);
+    this.setupFilterDropdowns();
+
+    // NL-Koordinaten für Preview-Animation aus PLZ 00000 Rows extrahieren
+    // (jede NL hat immer eine PLZ 00000 Row mit Lat/Lon)
+    this.Niederlassung = {};
+    this.nlKoordinaten = {};
+    for (const row of rows) {
+      const nl  = row["dimension_niederlassung_0"]?.id?.trim();
+      const lat = parseFloat(row["dimension_Lat_0"]?.label);
+      const lon = parseFloat(row["dimension_lon_0"]?.label);
+      if (!nl || isNaN(lat) || isNaN(lon)) continue;
+      this.Niederlassung[nl] = row["dimension_nl_name_0"]?.label?.trim() || nl;
+      this.nlKoordinaten[nl] = { lat, lon };
+    }
+
+    // GeoJSON war per connectedCallback bereits prefetched – parallel fortsetzen
+    this.loadGeoJson();
+
+    // Preview-Animation starten (zeigt NL-Pins für alle Erhebungen)
+    this._startPreviewAnimation();
+
+    // Loader verstecken – Widget ist jetzt interaktiv
+    this._hideCinematicLoader();
+
+    console.warn("[PLZ-Widget] Bootstrap fertig in " + (performance.now() - t0).toFixed(0) + " ms – Widget bereit");
+  }
+
   connectedCallback() {
     // GeoJSON sofort prefetchen – läuft parallel zu Leaflet-Init und BW-Daten
     this._geoJsonPromise = fetch("https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson", { cache: "force-cache" })
@@ -1219,19 +1319,33 @@ class GeoMapWidget extends HTMLElement {
     if (this._pendingRender) {
       this._pendingRender = false;
       if (this._myDataSource?.state === "success") {
-        this.render();
+        // Daten schon da (z.B. sehr schneller BW) → Phase prüfen
+        if (!this._fullDataLoaded) {
+          this._bootstrapFromPLZ00000(this._myDataSource.data);
+        } else {
+          this._fullDataLoaded = false;
+          this.render();
+        }
       } else if (this._myDataSource) {
         this._scheduleDataPoll();
       }
       // Falls noch kein myDataSource gesetzt: render() wird vom Setter ausgelöst
     } else if (this._myDataSource?.state === "success") {
       // Daten schon bereit (z.B. Reload) – direkt rendern
-      this.render();
+      if (!this._fullDataLoaded) {
+        this._bootstrapFromPLZ00000(this._myDataSource.data);
+      } else {
+        this._fullDataLoaded = false;
+        this.render();
+      }
     } else if (this._myDataSource && !this._dataPollTimer) {
       // Daten noch unterwegs – Poll starten falls noch keiner läuft
       this._scheduleDataPoll();
     }
     // Kein myDataSource: render() kommt vom Setter, kein Aufruf nötig
+
+    // Initialen PLZ=00000 Filter setzen damit BW nur ~8 Rows liefert
+    this._applyPLZ00000Filter();
     this.initRadiusSlider();
 
     const panel=$("map-control-panel"),btnWK=$("btn-wk"),btnUmsatz=$("btn-umsatz"),umsatzPanel=$("umsatz-panel");
@@ -2244,50 +2358,103 @@ class GeoMapWidget extends HTMLElement {
       }
       return;
     }
-    const rawData=this._myDataSource.data;
-    const _rt={}, _rm=l=>{ _rt[l]=performance.now(); }, _rfmt=ms=>ms<1000?ms.toFixed(0)+" ms":(ms/1000).toFixed(2)+" s", _rd=(a,b)=>_rfmt(_rt[b]-_rt[a]);
-    _rm("start");
-    console.group("[PLZ-Widget] render() – Initialisierung");
-    console.warn("Rohdaten gesamt: " + rawData.length.toLocaleString("de-DE") + " Rows");
-    this._buildErhebungIndex();
-    _rm("indexDone");
-    console.warn("[1] _buildErhebungIndex: " + _rd("start","indexDone") + " | Index-Keys: " + Object.keys(this._erhebungIndex||{}).length);
-    this._erhData=this.buildErhebungsStruktur(rawData);
-    _rm("strukturDone");
-    console.warn("[2] buildErhebungsStruktur: " + _rd("indexDone","strukturDone") + " | Erhebungen: " + Object.keys(this._erhData||{}).length);
-    this.setupFilterDropdowns();
-    _rm("dropdownDone");
-    console.warn("[3] setupFilterDropdowns: " + _rd("strukturDone","dropdownDone"));
-    const isFiltered=!!this._activeFilter;
-    const filteredData=isFiltered?this.getFilteredData():rawData;
-    // GeoJSON und Datenverarbeitung parallel
-    _rm("parallelStart");
-    const [_] = await Promise.all([
-      this.loadGeoJson(),
-      Promise.resolve().then(() => {
-        this.prepareMapData(filteredData);
-        this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
-      })
-    ]);
-    _rm("parallelEnd");
-    console.warn("[4] loadGeoJson + prepareMap parallel: " + _rd("parallelStart","parallelEnd"));
-    this.updateGeoLayer(); this.createAllMarkers();
-    const filteredPLZs=isFiltered?filteredData.map(d=>{
-      const rawPLZ=d["dimension_plz_0"]?.id?.trim();
-      return this._normalizePLZ(rawPLZ);
-    }).filter(p=>p!==null):Object.keys(this.allMarkers||{});
-    this.updateMarkers(filteredPLZs); this.renderDataTable(this.filteredKennwerte);
-    _rm("end");
-    console.warn("[5] updateGeoLayer + Marker + Tabelle: " + _rd("parallelEnd","end"));
-    console.warn("--- GESAMT render(): " + _rd("start","end"));
-    console.groupEnd();
-    this._hideCinematicLoader();
-    if (!isFiltered) {
-      setTimeout(() => this._startPreviewAnimation(), 200);
-    } else {
-      this._stopPreview?.();
+
+    // ── PHASE 2: Erhebungsdaten sind da → volle Pipeline ───────────
+    // render() wird nur noch von Phase 2 aufgerufen (nach Filter-Wechsel).
+    // _activeFilter ist bereits gesetzt (von loadErhebung).
+    if (!this._activeFilter) {
+      // Kein Filter aktiv – sollte nach Umstellung nicht mehr vorkommen,
+      // aber als Sicherheitsnetz: Bootstrap starten falls noch nicht geschehen
+      console.warn("[PLZ-Widget] render() ohne _activeFilter – Bootstrap-Fallback");
+      this._bootstrapFromPLZ00000(this._myDataSource.data);
+      return;
     }
-    this.hideSpinner();
+
+    const { erhID, jahr, nummer } = this._activeFilter;
+    const rawData = this._myDataSource.data;
+
+    const _t = {};
+    const _mark = label => { _t[label] = performance.now(); };
+    const _fmt  = ms => ms < 1000 ? ms.toFixed(0) + " ms" : (ms/1000).toFixed(2) + " s";
+    const _diff = (a, b) => _fmt(_t[b] - _t[a]);
+    _mark("start");
+
+    console.group("[PLZ-Widget] render() Phase 2 – " + erhID + " | " + jahr + " | " + nummer);
+    console.warn("Rows vom BW: " + rawData.length.toLocaleString("de-DE"));
+
+    try {
+      this._updateLoaderPhase(1, "Erhebungsdaten werden verarbeitet…");
+
+      // Index über die gefilterten Rows aufbauen (nur Jahr+Nummer, alle ErhebungsIDs)
+      _mark("indexStart");
+      this._buildErhebungIndex();
+      // Dropdown-Struktur aktualisieren (Auswahl bleibt, neue Keys ergänzen)
+      this._erhData = this.buildErhebungsStruktur(rawData);
+      this.setupFilterDropdowns();
+      this.restoreDropdownSelections();
+      _mark("indexDone");
+      console.warn("[1] Index + Dropdowns: " + _diff("indexStart","indexDone"));
+
+      // Erhebungs-Rows aus Index holen
+      _mark("queryStart");
+      const filteredData = this._getErhebungRows(erhID, jahr, nummer);
+      this.filteredData = filteredData;
+      _mark("queryEnd");
+      console.warn("[2] Index-Lookup: " + _diff("queryStart","queryEnd") + " | Rows: " + filteredData.length);
+
+      this._updateLoaderPhase(2, "Karte wird vorbereitet…");
+      _mark("mapDataStart");
+      await this.loadGeoJson();
+      this.prepareMapData(filteredData);
+      _mark("mapDataEnd");
+      console.warn("[3] GeoJSON + prepareMapData: " + _diff("mapDataStart","mapDataEnd"));
+
+      this._updateLoaderPhase(3, "Niederlassungen werden gesetzt…");
+      _mark("markersStart");
+      this.allNLs = [...Object.keys(this.Niederlassung), ...(this.extraNLs?.map(e => e.nl) ?? [])];
+      this._selectedNLs = new Set(this.allNLs);
+      this._nlSelectionInitialized = false;
+      this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
+      this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
+      this.createAllMarkers();
+      _mark("markersEnd");
+      console.warn("[4] Marker: " + _diff("markersStart","markersEnd"));
+
+      this._updateLoaderPhase(4, "Kennwerte werden berechnet…");
+      _mark("kennwerteStart");
+      const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 40);
+      this._buildDistanceCache();
+      this.applyRadiusFilter(radius);
+      this.prepareUmsatzPLZWerte();
+      this.computeWKKennwerte();
+      this.computeStreuverlust();
+      _mark("kennwerteEnd");
+      console.warn("[5] Kennwerte/Distanzen: " + _diff("kennwerteStart","kennwerteEnd"));
+
+      _mark("renderStart");
+      this.updateGeoLayer();
+      this.renderDataTable(this.filteredKennwerte);
+      this.zoomToFilteredPLZ();
+      _mark("renderEnd");
+      console.warn("[6] GeoLayer + Tabelle: " + _diff("renderStart","renderEnd"));
+
+      _mark("end");
+      console.warn("── GESAMT: " + _diff("start","end"));
+      console.groupEnd();
+
+      requestAnimationFrame(() => {
+        this.prepareErhebungsInfo();
+        const block = this._shadowRoot.getElementById("map-interaction-block");
+        if (block) block.classList.add("hidden");
+        this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
+        this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
+        this.showOverviewPopup();
+      });
+
+    } finally {
+      this._hideCinematicLoader();
+      this.hideSpinner();
+    }
   }
 
   updateHeatmapLegend() {
@@ -2341,82 +2508,86 @@ class GeoMapWidget extends HTMLElement {
     this._rawPLZCache = {};
     this._crossErhebungPLZ = {};
     this._showCinematicLoader();
-    // Performance-Log
-    const _t = {};
-    const _mark = label => { _t[label] = performance.now(); };
-    const _fmt  = ms => ms < 1000 ? ms.toFixed(0) + " ms" : (ms/1000).toFixed(2) + " s";
-    const _diff = (a, b) => _fmt(_t[b] - _t[a]);
-    _mark("start");
+    this._updateLoaderPhase(1, "Erhebungsdaten werden geladen…");
 
-    try {
-      this._updateLoaderPhase(1,"Erhebungsdaten werden geladen…");
-      _mark("queryStart");
-      const [rawData] = await Promise.all([
-        this.queryErhebungFromBW(erhID, jahr, nummer),
-        this.loadGeoJson()
-      ]);
-      _mark("queryEnd");
-      this._activeFilter={erhID,jahr,nummer}; this.filteredData=rawData;
+    // Merken welche Erhebung geladen werden soll – render() liest das aus
+    this._activeFilter = { erhID, jahr, nummer };
+    // Nächster myDataSource-Call ist Phase 2 → render()
+    this._fullDataLoaded = true;
 
-      this._updateLoaderPhase(2,"Karte wird vorbereitet…");
-      _mark("mapDataStart");
-      this.prepareMapData(rawData);
-      _mark("mapDataEnd");
+    // ── FILTER-WECHSEL über SAC DataSource-API ─────────────────────
+    // PLZ=00000 entfernen, nur Jahr+Nummer filtern (KEIN ErhebungsID-Filter)
+    // → BW liefert alle Erhebungen des Zeitraums → CrossErhebDoppel funktioniert
+    const switched = this._switchToErhebungFilter(jahr, nummer);
 
-      this._updateLoaderPhase(3,"Niederlassungen werden gesetzt…");
-      _mark("markersStart");
-      this.allNLs=[...Object.keys(this.Niederlassung),...(this.extraNLs?.map(e=>e.nl)??[])];
-      this._selectedNLs=new Set(this.allNLs); this._nlSelectionInitialized=false;
-      // Kategorien auf alle zurücksetzen + UI-Buttons synchronisieren
-      this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
-      this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
-      this.createAllMarkers();
-      _mark("markersEnd");
+    if (!switched) {
+      // Fallback: DataSource-API nicht verfügbar → alter Weg über vorhandenen Index
+      console.warn("[PLZ-Widget] Fallback: Filter-Wechsel nicht möglich, nutze vorhandenen Index");
+      this._fullDataLoaded = false;
+      try {
+        const _t = {};
+        const _mark = label => { _t[label] = performance.now(); };
+        const _fmt  = ms => ms < 1000 ? ms.toFixed(0) + " ms" : (ms/1000).toFixed(2) + " s";
+        const _diff = (a, b) => _fmt(_t[b] - _t[a]);
+        _mark("start");
 
-      this._updateLoaderPhase(4,"Kennwerte werden berechnet…");
-      _mark("kennwerteStart");
-      const radius=Number(this._shadowRoot.getElementById("radius-slider")?.value??40);
-      this._buildDistanceCache(); this.applyRadiusFilter(radius);
-      this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
-      _mark("kennwerteEnd");
+        this._updateLoaderPhase(1,"Erhebungsdaten werden geladen…");
+        _mark("queryStart");
+        const [rawData] = await Promise.all([
+          this.queryErhebungFromBW(erhID, jahr, nummer),
+          this.loadGeoJson()
+        ]);
+        _mark("queryEnd");
+        this.filteredData=rawData;
 
-      _mark("renderStart");
-      this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
-      _mark("renderEnd");
+        this._updateLoaderPhase(2,"Karte wird vorbereitet…");
+        _mark("mapDataStart");
+        this.prepareMapData(rawData);
+        _mark("mapDataEnd");
 
-      requestAnimationFrame(() => {
-        this.prepareErhebungsInfo();
-        const block = this._shadowRoot.getElementById("map-interaction-block");
-        if (block) block.classList.add("hidden");
-        this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
-        this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
-        this.showOverviewPopup();
-      });
+        this._updateLoaderPhase(3,"Niederlassungen werden gesetzt…");
+        _mark("markersStart");
+        this.allNLs=[...Object.keys(this.Niederlassung),...(this.extraNLs?.map(e=>e.nl)??[])];
+        this._selectedNLs=new Set(this.allNLs); this._nlSelectionInitialized=false;
+        this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
+        this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
+        this.createAllMarkers();
+        _mark("markersEnd");
 
-      // Ladezeit-Log in Browser-Konsole
-      _mark("end");
-      const totalRows = this._myDataSource?.data?.length ?? 0;
-      const erh_rows  = rawData.length;
-      const plzCount  = Object.keys(this.filteredKennwerte || {}).length;
-      const nlCount   = this.allNLs?.length ?? 0;
-      console.group("[PLZ-Widget] Ladezeiten: " + erhID + " | " + jahr + " | " + nummer);
-      console.warn("Datensaetze gesamt (BW): " + totalRows.toLocaleString("de-DE") + " Rows");
-      console.warn("Datensaetze Erhebung:    " + erh_rows.toLocaleString("de-DE") + " Rows");
-      console.warn("PLZs verarbeitet:        " + plzCount);
-      console.warn("Niederlassungen:         " + nlCount);
-      console.warn("---");
-      console.warn("[1] Query (Index-Lookup): " + _diff("queryStart","queryEnd"));
-      console.warn("[2] prepareMapData:       " + _diff("mapDataStart","mapDataEnd"));
-      console.warn("[3] Marker erstellen:     " + _diff("markersStart","markersEnd"));
-      console.warn("[4] Kennwerte/Distanzen:  " + _diff("kennwerteStart","kennwerteEnd"));
-      console.warn("[5] GeoLayer/Tabelle:     " + _diff("renderStart","renderEnd"));
-      console.warn("---");
-      console.warn("    GESAMT:               " + _diff("start","end"));
-      console.groupEnd();
+        this._updateLoaderPhase(4,"Kennwerte werden berechnet…");
+        _mark("kennwerteStart");
+        const radius=Number(this._shadowRoot.getElementById("radius-slider")?.value??40);
+        this._buildDistanceCache(); this.applyRadiusFilter(radius);
+        this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); this.computeStreuverlust();
+        _mark("kennwerteEnd");
 
-    } finally {
-      this._hideCinematicLoader();
+        _mark("renderStart");
+        this.updateGeoLayer(); this.renderDataTable(this.filteredKennwerte); this.zoomToFilteredPLZ();
+        _mark("renderEnd");
+
+        requestAnimationFrame(() => {
+          this.prepareErhebungsInfo();
+          const block = this._shadowRoot.getElementById("map-interaction-block");
+          if (block) block.classList.add("hidden");
+          this._shadowRoot.getElementById("back-to-home-btn")?.classList.add("visible");
+          this._shadowRoot.getElementById("overview-toggle-btn")?.classList.add("visible");
+          this.showOverviewPopup();
+        });
+
+        _mark("end");
+        console.group("[PLZ-Widget] Ladezeiten (Fallback): " + erhID + " | " + jahr + " | " + nummer);
+        console.warn("[1] Query:       " + _diff("queryStart","queryEnd"));
+        console.warn("[2] prepareMap:  " + _diff("mapDataStart","mapDataEnd"));
+        console.warn("[3] Marker:      " + _diff("markersStart","markersEnd"));
+        console.warn("[4] Kennwerte:   " + _diff("kennwerteStart","kennwerteEnd"));
+        console.warn("[5] GeoLayer:    " + _diff("renderStart","renderEnd"));
+        console.warn("    GESAMT:      " + _diff("start","end"));
+        console.groupEnd();
+      } finally {
+        this._hideCinematicLoader();
+      }
     }
+    // Bei erfolgreichem Filter-Wechsel: SAC triggert set myDataSource() → render()
   }
 
   _showCinematicLoader() {
@@ -2679,6 +2850,20 @@ class GeoMapWidget extends HTMLElement {
     this.map?.setView([49.4, 8.7], 7);
     const block = this._shadowRoot.getElementById("map-interaction-block");
     if (block) block.classList.remove("hidden");
+
+    // ── Filter zurück auf PLZ 00000 setzen ────────────────────────
+    this._fullDataLoaded = false;
+    const ds = this._getDataSource();
+    if (ds) {
+      try {
+        ds.removeDimensionFilter("dimension_jahr");
+        ds.removeDimensionFilter("dimension_erhebungsnummer");
+        ds.setDimensionFilter("dimension_plz", ["00000"]);
+        console.warn("[PLZ-Widget] Home: PLZ=00000 Filter wiederhergestellt");
+      } catch(e) {
+        console.warn("[PLZ-Widget] Home: Filter-Reset fehlgeschlagen:", e);
+      }
+    }
   }
 
   _showDoppelTooltip(plz, event, container) {
@@ -3138,7 +3323,16 @@ class GeoMapWidget extends HTMLElement {
       this._scheduleDataPoll();
       return;
     }
-    this.render();
+
+    // ── ZWEI-PHASEN-LOGIK ──────────────────────────────────────────
+    // Phase 1 (Bootstrap): BW liefert nur PLZ 00000 → Dropdowns + Preview
+    // Phase 2 (Render):    BW liefert Erhebungsdaten → vollständiges render()
+    if (!this._fullDataLoaded) {
+      this._bootstrapFromPLZ00000(this._myDataSource.data);
+    } else {
+      this._fullDataLoaded = false; // reset für nächsten Zyklus
+      this.render();
+    }
   }
 
   _scheduleDataPoll() {
@@ -3152,7 +3346,13 @@ class GeoMapWidget extends HTMLElement {
         this._dataPollTimer = null;
         const waited = ((Date.now() - start) / 1000).toFixed(1);
         console.warn("[PLZ-Widget] BW-Daten empfangen nach " + waited + "s | Rows: " + (this._myDataSource?.data?.length?.toLocaleString("de-DE") ?? "?"));
-        this.render();
+        // ── ZWEI-PHASEN-LOGIK ──────────────────────────────────────
+        if (!this._fullDataLoaded) {
+          this._bootstrapFromPLZ00000(this._myDataSource.data);
+        } else {
+          this._fullDataLoaded = false;
+          this.render();
+        }
       } else {
         // Fortschritt anzeigen damit User sieht dass etwas passiert
         const secs = Math.floor((Date.now() - start) / 1000);
@@ -3161,7 +3361,7 @@ class GeoMapWidget extends HTMLElement {
           this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
         }
       }
-    }, 1000);
+    }, 300); // schneller pollen – PLZ 00000 kommt in <1s
   }
 }
 
