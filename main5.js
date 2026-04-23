@@ -1015,7 +1015,7 @@ class GeoMapWidget extends HTMLElement {
     const lastColLabel = isUmsatzMode ? 'Umsatz-\nAnteil' : 'WK (%)';
     const headers = [
       { label: 'PLZ', width: '44px' }, { label: 'Gemeinde', width: '88px' },
-      { label: 'HZ', width: '22px' }, { label: 'Netto-Umsatz\n(Jahr)', width: '58px' },
+      { label: 'HZ', width: '22px' }, { label: 'Umsatz Brutto\n(hochger.)', width: '58px' },
       { label: lastColLabel, width: '46px' }
     ];
     const thead = document.createElement('thead'); const headerRow = document.createElement('tr');
@@ -1051,15 +1051,17 @@ class GeoMapWidget extends HTMLElement {
       if (this.filteredKennwerte[plz]?.isCritical) { symbol = "▲"; symbolColor = "#f0a500"; }
       else if (this.filteredKennwerte[plz]?.isHZ)  { symbol = "●"; symbolColor = "#33a02c"; }
 
-      const umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
-
-      let lastColVal;
+      let umsatz, lastColVal;
       if (isUmsatzMode) {
+        // Umsatz-Modus: Spalte zeigt Kategoriensumme der gewählten Kategorien
         const plzUmsatz = this.getUmsatzSumForPLZ(this.filteredPLZWerte?.[plz] || {});
+        umsatz = plzUmsatz > 0 ? Math.round(plzUmsatz).toLocaleString('de-DE') : '–';
         lastColVal = totalUmsatz > 0
           ? (plzUmsatz / totalUmsatz * 100).toFixed(1) + ' %'
           : '–';
       } else {
+        // WK-Modus: Spalte zeigt hochgerechneten Brutto-Umsatz
+        umsatz = kennwerte["value_hr_n_umsatz_0"]?.raw?.toLocaleString('de-DE') ?? '–';
         lastColVal = (kennwerte["value_wk_in_percent_0"]?.raw?.toFixed(1) ?? '–') + ' %';
       }
 
@@ -1269,6 +1271,9 @@ class GeoMapWidget extends HTMLElement {
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
       this.bestreuungGroup?.clearLayers();
+      // Im WK-Modus immer alle Kategorien aktiv
+      this.activeCategories = new Set(["stationaer","pluscard","ra","online"]);
+      this._shadowRoot.querySelectorAll(".category-toggle").forEach(t => t.classList.add("active"));
       if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
       this.updateGeoLayer(); this.updateHeatmapLegend();
       if (this._activeFilter) { this.renderDataTable(this.filteredKennwerte); this.showOverviewPopup(); this._rerenderActivePopup(); }
@@ -1546,7 +1551,7 @@ class GeoMapWidget extends HTMLElement {
     let symbol = "📍";
     if (daten?.isCritical) symbol = "⚠️"; else if (daten?.isHZ) symbol = "✅";
     const beschreibungen = {
-      value_hr_n_umsatz_0:"Netto-Umsatz (Jahr)",value_umsatz_p_hh_0:"Umsatz p. HH",
+      value_hr_n_umsatz_0:"Umsatz Brutto (hochgerechnet)",value_umsatz_p_hh_0:"Umsatz p. HH",
       value_wk_in_percent_0:"Werbekosten (%)",value_wk_nachbar_0:"WK (%) inkl. Nachb.",
       value_hz_kosten_0:"HZ-Werbekosten",value_werbeverweigerer_0:"Werbeverweigerer (%)",
       value_haushalte_0:"Haushalte",value_kaufkraft_0:"BM-Kaufkraft-Idx",
@@ -2863,7 +2868,7 @@ class GeoMapWidget extends HTMLElement {
 
         <div class="section-title">WK-Kennwerte</div>
         <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px;font-size:0.82rem;">
-          <div style="color:var(--gray-600);font-weight:500">Netto-Umsatz (HR)</div>
+          <div style="color:var(--gray-600);font-weight:500">Umsatz Brutto (hochgerechnet)</div>
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(totalUmsatzHR)} €</div>
           <div style="color:var(--gray-600);font-weight:500">HZ-Werbekosten</div>
           <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fA(totalHZKosten)} €</div>
