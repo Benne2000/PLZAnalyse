@@ -2402,37 +2402,48 @@ class GeoMapWidget extends HTMLElement {
     const _diff = (a, b) => _fmt(_t[b] - _t[a]);
     _mark("start");
 
+    // Hilfsfunktion: einen Browser-Frame abwarten damit die UI sich aktualisiert
+    const _yield = () => new Promise(r => requestAnimationFrame(r));
+
+    // Fortschrittsanzeige: Schritte mit echten Row-Zahlen + Prozent
+    const totalRows = rawData.length;
+    const _progress = (loaderPhase, pct, label, rows) => {
+      this._updateLoaderPhase(loaderPhase, label);
+      this._updateDataLoadProgress(rows ?? totalRows, totalRows, pct);
+    };
+
     console.group("[PLZ-Widget] render() Phase 2 – " + erhID + " | " + jahr + " | " + nummer);
     console.warn("Rows vom BW: " + rawData.length.toLocaleString("de-DE"));
 
     try {
-      this._updateLoaderPhase(1, "Erhebungsdaten werden verarbeitet…");
+      _progress(1, 5, "Index wird aufgebaut…", 0);
+      await _yield();
 
       // Index über die gefilterten Rows aufbauen (nur Jahr+Nummer, alle ErhebungsIDs)
       _mark("indexStart");
       this._buildErhebungIndex();
-      // Dropdown-Struktur aktualisieren (Auswahl bleibt, neue Keys ergänzen)
       this._erhData = this.buildErhebungsStruktur(rawData);
       this.setupFilterDropdowns();
       this.restoreDropdownSelections();
       _mark("indexDone");
       console.warn("[1] Index + Dropdowns: " + _diff("indexStart","indexDone"));
 
-      // Erhebungs-Rows aus Index holen
       _mark("queryStart");
       const filteredData = this._getErhebungRows(erhID, jahr, nummer);
       this.filteredData = filteredData;
       _mark("queryEnd");
       console.warn("[2] Index-Lookup: " + _diff("queryStart","queryEnd") + " | Rows: " + filteredData.length);
 
-      this._updateLoaderPhase(2, "Karte wird vorbereitet…");
+      _progress(2, 25, "Karte wird vorbereitet…", filteredData.length);
+      await _yield();
       _mark("mapDataStart");
       await this.loadGeoJson();
       this.prepareMapData(filteredData);
       _mark("mapDataEnd");
       console.warn("[3] GeoJSON + prepareMapData: " + _diff("mapDataStart","mapDataEnd"));
 
-      this._updateLoaderPhase(3, "Niederlassungen werden gesetzt…");
+      _progress(3, 50, "Standorte werden gesetzt…", filteredData.length);
+      await _yield();
       _mark("markersStart");
       this.allNLs = [...Object.keys(this.Niederlassung), ...(this.extraNLs?.map(e => e.nl) ?? [])];
       this._selectedNLs = new Set(this.allNLs);
@@ -2443,7 +2454,8 @@ class GeoMapWidget extends HTMLElement {
       _mark("markersEnd");
       console.warn("[4] Marker: " + _diff("markersStart","markersEnd"));
 
-      this._updateLoaderPhase(4, "Kennwerte werden berechnet…");
+      _progress(4, 70, "Kennwerte werden berechnet…", filteredData.length);
+      await _yield();
       _mark("kennwerteStart");
       const radius = Number(this._shadowRoot.getElementById("radius-slider")?.value ?? 40);
       this._buildDistanceCache();
@@ -2454,6 +2466,8 @@ class GeoMapWidget extends HTMLElement {
       _mark("kennwerteEnd");
       console.warn("[5] Kennwerte/Distanzen: " + _diff("kennwerteStart","kennwerteEnd"));
 
+      _progress(4, 88, "Karte wird gerendert…", filteredData.length);
+      await _yield();
       _mark("renderStart");
       this.updateGeoLayer();
       this.renderDataTable(this.filteredKennwerte);
@@ -2461,6 +2475,7 @@ class GeoMapWidget extends HTMLElement {
       _mark("renderEnd");
       console.warn("[6] GeoLayer + Tabelle: " + _diff("renderStart","renderEnd"));
 
+      _progress(4, 100, "Fertig!", filteredData.length);
       _mark("end");
       console.warn("── GESAMT: " + _diff("start","end"));
       console.groupEnd();
@@ -2544,10 +2559,12 @@ class GeoMapWidget extends HTMLElement {
     const switched = this._switchToErhebungFilter(jahr, nummer);
 
     if (switched) {
-      // Sofort Fortschrittsanzeige auf 0 setzen – Poll-Timer aktualisiert sie
-      this._updateDataLoadProgress(0, this._totalRowCount ?? 0);
-      // _scheduleDataPoll übernimmt ab hier die Anzeige + ruft render() auf
-      this._scheduleDataPoll();
+      // SAC ruft set myDataSource() synchron nach removeDimensionFilter auf →
+      // render() wurde bereits gestartet. Kein Poll-Timer nötig.
+      // Falls set myDataSource() doch asynchron kam und render() noch nicht lief:
+      if (!this._renderInProgress && this._fullDataLoaded) {
+        this._scheduleDataPoll();
+      }
     } else {
       // Fallback: DataSource-API nicht verfügbar → Index-Lookup auf vorhandenen Daten.
       // Wenn der Hintergrund-Index noch läuft, kurz warten.
@@ -2658,9 +2675,9 @@ class GeoMapWidget extends HTMLElement {
     if(mc) mc.appendChild(overlay); else this._shadowRoot.appendChild(overlay);
   }
 
-  // Zeigt Lade-Fortschritt während BW-Query läuft.
-  // current = aktuell geladene Rows, total = bekannte Gesamtzahl (aus Bootstrap)
-  _updateDataLoadProgress(current, total) {
+  // Zeigt Lade-Fortschritt während der Verarbeitung.
+  // pct = expliziter Prozentwert (0-100), current/total für das Label.
+  _updateDataLoadProgress(current, total, pct) {
     const loader = this._shadowRoot.getElementById("cinematic-loader");
     if (!loader) return;
     const progressBox = loader.querySelector("#loader-data-progress");
@@ -2670,17 +2687,24 @@ class GeoMapWidget extends HTMLElement {
 
     progressBox.style.display = "block";
 
-    if (total > 0) {
-      const pct = Math.min(100, Math.round((current / total) * 100));
-      if (bar)   bar.style.width = pct + "%";
-      if (label) label.textContent =
-        current.toLocaleString("de-DE") + " von " +
-        total.toLocaleString("de-DE") + " Datensätzen (" + pct + " %)";
-    } else {
-      // Gesamtzahl unbekannt → animierter indeterminate Balken
-      if (bar)   bar.style.width = "100%";
-      if (bar)   bar.style.animation = "indeterminate 1.4s ease-in-out infinite";
-      if (label) label.textContent = current.toLocaleString("de-DE") + " Datensätze geladen…";
+    // Expliziter pct-Wert hat Vorrang, sonst aus current/total berechnen
+    const percent = (pct !== undefined)
+      ? Math.min(100, Math.round(pct))
+      : (total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0);
+
+    if (bar) {
+      bar.style.animation = "none"; // indeterminate abbrechen falls aktiv
+      bar.style.width = percent + "%";
+    }
+
+    if (label) {
+      if (total > 0 && current !== undefined) {
+        label.textContent =
+          current.toLocaleString("de-DE") + " von " +
+          total.toLocaleString("de-DE") + " Datensätzen (" + percent + " %)";
+      } else {
+        label.textContent = percent + " %";
+      }
     }
   }
 
@@ -3427,9 +3451,18 @@ class GeoMapWidget extends HTMLElement {
       if (!this._bootstrapDone) {
         this._bootstrapFromPLZ00000(this._myDataSource.data);
       }
+      // Wiederholte SAC-Refreshes im Bootstrap-Zustand ignorieren
+      // (SAC schickt nach ~17s einen zweiten Refresh mit denselben Daten)
     } else {
+      // Nur einmal rendern – SAC schickt nach ~17s einen zweiten Refresh
+      // mit denselben Daten. _renderInProgress verhindert doppeltes render().
+      if (this._renderInProgress) {
+        console.warn("[PLZ-Widget] set myDataSource: render läuft bereits – ignoriere wiederholten SAC-Refresh");
+        return;
+      }
       this._fullDataLoaded = false; // reset für nächsten Zyklus
-      this.render();
+      this._renderInProgress = true;
+      this.render().finally(() => { this._renderInProgress = false; });
     }
   }
 
@@ -3451,9 +3484,12 @@ class GeoMapWidget extends HTMLElement {
             this._bootstrapFromPLZ00000(this._myDataSource.data);
           }
         } else {
-          this._hideDataLoadProgress();
-          this._fullDataLoaded = false;
-          this.render();
+          if (!this._renderInProgress) {
+            this._hideDataLoadProgress();
+            this._fullDataLoaded = false;
+            this._renderInProgress = true;
+            this.render().finally(() => { this._renderInProgress = false; });
+          }
         }
       } else {
         const secs = Math.floor((Date.now() - start) / 1000);
