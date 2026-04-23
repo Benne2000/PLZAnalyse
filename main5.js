@@ -802,43 +802,25 @@ class GeoMapWidget extends HTMLElement {
     }
   }
 
-  // Setzt Jahr+Nummer-Filter und entfernt danach den PLZ=00000-Filter.
-  // Reihenfolge ist wichtig: erst einschränken, dann PLZ-Filter weg →
-  // BW liefert nur Rows des gewählten Zeitraums statt alles.
-  // Gibt true zurück wenn erfolgreich.
+  // Entfernt den SAC-seitigen PLZ=00000 Filter nach "Anzeigen"-Klick.
+  // Jahr+Nummer werden NICHT per setDimensionFilter gesetzt – das würde ein
+  // asynchrones fetchMembers auslösen und einen zweiten BW-Query mit 27k Rows
+  // triggern. Stattdessen filtert render() intern per _getErhebungRows(erhID, jahr, nummer).
+  // Gibt true zurück wenn der removeDimensionFilter-Aufruf geklappt hat.
   _switchToErhebungFilter(jahr, nummer) {
     const ds = this._getDataSource();
     if (!ds) return false;
-
-    // Bekannte BW-Feldnamen für Jahr und Nummer
-    const jahrKeys   = ["0CALYEAR",      "dimension_jahr_0",            "dimension_jahr"];
-    const nummerKeys = ["BERHBNUM",       "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
-    const plzKeys    = ["0POSTALCODE",    "dimension_plz_0",             "dimension_plz"];
-
-    // Jahr setzen
-    let jahrOk = false;
-    for (const key of jahrKeys) {
-      try { ds.setDimensionFilter(key, [jahr]); jahrOk = true; this._jahrFilterKey = key; break; }
-      catch(e) {}
+    const keysToTry = ["0POSTALCODE", "dimension_plz_0", "dimension_plz"];
+    for (const key of keysToTry) {
+      try {
+        ds.removeDimensionFilter(key);
+        console.warn("[PLZ-Widget] PLZ-Filter entfernt (Key: " + key + ") → BW liefert alle Rows, render() filtert intern");
+        this._plzFilterKey = key;
+        return true;
+      } catch(e) {}
     }
-    // Nummer setzen
-    let nummerOk = false;
-    for (const key of nummerKeys) {
-      try { ds.setDimensionFilter(key, [nummer]); nummerOk = true; this._nummerFilterKey = key; break; }
-      catch(e) {}
-    }
-    // PLZ-Filter entfernen – erst jetzt, damit BW nicht kurz alle Rows schickt
-    let plzOk = false;
-    for (const key of plzKeys) {
-      try { ds.removeDimensionFilter(key); plzOk = true; this._plzFilterKey = key; break; }
-      catch(e) {}
-    }
-
-    console.warn("[PLZ-Widget] Filter gesetzt → Jahr(" + (this._jahrFilterKey||"?") + ")=" + jahr +
-      " | Nummer(" + (this._nummerFilterKey||"?") + ")=" + nummer +
-      " | PLZ-Filter entfernt(" + (this._plzFilterKey||"?") + "): " + plzOk);
-
-    return plzOk || jahrOk || nummerOk;
+    console.warn("[PLZ-Widget] removeDimensionFilter fehlgeschlagen – alle Keys probiert");
+    return false;
   }
 
   // Phase 1: BW liefert nur PLZ 00000 Rows (SAC-Filter ist serverseitig gesetzt).
@@ -3006,7 +2988,7 @@ class GeoMapWidget extends HTMLElement {
     const block = this._shadowRoot.getElementById("map-interaction-block");
     if (block) block.classList.remove("hidden");
 
-    // ── Filter zurücksetzen: Jahr+Nummer weg, PLZ=00000 wieder setzen ──
+    // ── PLZ=00000 Filter wiederherstellen → BW liefert nur Bootstrap-Rows ──
     this._fullDataLoaded = false;
     this._bootstrapDone = false;
     this._fullIndexReady = false;
@@ -3014,11 +2996,9 @@ class GeoMapWidget extends HTMLElement {
     const ds = this._getDataSource();
     if (ds) {
       try {
-        if (this._jahrFilterKey)   { try { ds.removeDimensionFilter(this._jahrFilterKey);   } catch(e) {} }
-        if (this._nummerFilterKey) { try { ds.removeDimensionFilter(this._nummerFilterKey); } catch(e) {} }
         const plzKey = this._plzFilterKey ?? "0POSTALCODE";
         ds.setDimensionFilter(plzKey, ["00000"]);
-        console.warn("[PLZ-Widget] Home: Filter zurückgesetzt → PLZ=00000");
+        console.warn("[PLZ-Widget] Home: PLZ=00000 Filter wiederhergestellt (Key: " + plzKey + ")");
       } catch(e) {
         console.warn("[PLZ-Widget] Home: Filter-Reset fehlgeschlagen:", e);
       }
@@ -3492,31 +3472,49 @@ class GeoMapWidget extends HTMLElement {
       // Wiederholte SAC-Refreshes im Bootstrap-Zustand ignorieren
       // (SAC schickt nach ~17s einen zweiten Refresh mit denselben Daten)
     } else {
-      // Nur einmal rendern – SAC schickt nach ~17s einen zweiten Refresh
-      // mit denselben Daten. _renderInProgress verhindert doppeltes render().
+      // Phase 2: Erhebungsdaten erwartet.
+      // SAC schickt nach removeDimensionFilter zunächst die gecachten Bootstrap-Rows
+      // (gleiche Anzahl wie PLZ=00000 Query). Diese ignorieren und auf echte Daten warten.
+      const rowCount = this._myDataSource?.data?.length ?? 0;
+      if (rowCount <= (this._totalRowCount ?? 0) && rowCount > 0) {
+        console.warn("[PLZ-Widget] set myDataSource Phase 2: SAC-Cache-Response (" + rowCount + " Rows = Bootstrap-Stand) – ignoriere, warte auf echte Daten");
+        // Poll starten falls noch nicht aktiv
+        if (!this._dataPollTimer) this._scheduleDataPoll();
+        return;
+      }
       if (this._renderInProgress) {
         console.warn("[PLZ-Widget] set myDataSource: render läuft bereits – ignoriere wiederholten SAC-Refresh");
         return;
       }
-      this._fullDataLoaded = false; // reset für nächsten Zyklus
+      this._fullDataLoaded = false;
       this._renderInProgress = true;
       this.render().finally(() => { this._renderInProgress = false; });
     }
   }
 
   _scheduleDataPoll() {
-    if (this._dataPollTimer) return; // läuft bereits, kein zweiter starten
+    if (this._dataPollTimer) return;
     this._updateLoaderPhase(1, "Warte auf Daten…");
     const start = Date.now();
     console.warn("[PLZ-Widget] _scheduleDataPoll gestartet – warte auf BW-Daten…");
-    this._dataPollTimer = setInterval(() => {
+
+    const tick = () => {
       if (this._myDataSource?.state === "success") {
+        const rowCount = this._myDataSource?.data?.length ?? 0;
+
+        // Phase 2 + Cache-Detection: SAC schickt nach removeDimensionFilter zunächst
+        // die gecachten Bootstrap-Rows (= _totalRowCount). Auf echte Daten warten.
+        if (this._fullDataLoaded && rowCount <= (this._totalRowCount ?? 0) && rowCount > 0) {
+          const waited = ((Date.now() - start) / 1000).toFixed(1);
+          console.warn("[PLZ-Widget] Poll Phase 2: SAC-Cache (" + rowCount + " Rows nach " + waited + "s) – warte weiter");
+          return; // Timer läuft weiter
+        }
+
         clearInterval(this._dataPollTimer);
         this._dataPollTimer = null;
         const waited = ((Date.now() - start) / 1000).toFixed(1);
-        console.warn("[PLZ-Widget] BW-Daten empfangen nach " + waited + "s | Rows: " + (this._myDataSource?.data?.length?.toLocaleString("de-DE") ?? "?"));
+        console.warn("[PLZ-Widget] BW-Daten empfangen nach " + waited + "s | Rows: " + (rowCount.toLocaleString("de-DE")));
 
-        // ── ZWEI-PHASEN-LOGIK ──────────────────────────────────────
         if (!this._fullDataLoaded) {
           if (!this._bootstrapDone) {
             this._bootstrapFromPLZ00000(this._myDataSource.data);
@@ -3534,19 +3532,18 @@ class GeoMapWidget extends HTMLElement {
         if (secs !== this._lastPollSecs) {
           this._lastPollSecs = secs;
           if (!this._fullDataLoaded) {
-            // Phase 1: normaler Warte-Text
             this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
           } else {
-            // Phase 2: Fortschrittsanzeige mit Row-Zähler
             const currentRows = this._myDataSource?.data?.length ?? 0;
-            // _bootstrapRowCount wurde beim Bootstrap gespeichert (Gesamtzahl aus PLZ 00000 Query)
             const totalRows = this._totalRowCount ?? 0;
             this._updateLoaderPhase(1, "Erhebungsdaten werden geladen…");
             this._updateDataLoadProgress(currentRows, totalRows);
           }
         }
       }
-    }, 300);
+    };
+
+    this._dataPollTimer = setInterval(tick, 300);
   }
 }
 
