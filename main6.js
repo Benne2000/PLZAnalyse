@@ -3036,6 +3036,49 @@ class GeoMapWidget extends HTMLElement {
 
   onCustomWidgetEvent(event) { if(event.name==="toggleTiles") this.toggleMapTiles(); }
 
+  // ═══════════════════════════════════════════════════════════════
+  // SAC LIFECYCLE HOOKS
+  // SAC ruft onCustomWidgetAfterUpdate auf wenn Daten fertig sind,
+  // Filter geändert wurden oder Story-Variablen sich geändert haben.
+  // Der Setter (set myDataSource) feuert nur einmalig beim ersten
+  // Binding-Attach – danach immer nur onCustomWidgetAfterUpdate.
+  // ═══════════════════════════════════════════════════════════════
+  onCustomWidgetBeforeUpdate(changedProperties) {
+    if (changedProperties.myDataSource !== undefined) {
+      if (this._dataPollTimer) { clearInterval(this._dataPollTimer); this._dataPollTimer = null; }
+    }
+    if (changedProperties.myDetailSource !== undefined) {
+      if (this._detailPollTimer) { clearInterval(this._detailPollTimer); this._detailPollTimer = null; }
+    }
+  }
+
+  onCustomWidgetAfterUpdate(changedProperties) {
+    // myDataSource hat neue/aktualisierte Daten → Dropdown & Karte neu aufbauen
+    if (changedProperties.myDataSource !== undefined) {
+      if (this._dataPollTimer) { clearInterval(this._dataPollTimer); this._dataPollTimer = null; }
+      this._erhebungIndex = null;
+      this._plzNormCache  = null;
+      if (!this.map) { this._pendingRender = true; return; }
+      this.render();
+    }
+    // myDetailSource hat neue Daten → laufenden Detail-Poll sofort auflösen
+    if (changedProperties.myDetailSource !== undefined) {
+      const state   = this._myDetailSource?.state;
+      const data    = this._myDetailSource?.data;
+      const hasData = Array.isArray(data) && data.length > 0;
+      const ready   = state === "success" || (hasData && state !== "error");
+      if (ready && this._detailPollResolve) {
+        if (this._detailPollTimer) { clearInterval(this._detailPollTimer); this._detailPollTimer = null; }
+        const resolve = this._detailPollResolve;
+        this._detailPollResolve = null;
+        this._detailPollReject  = null;
+        resolve(data);
+      } else if (ready && this._detailPollTimer) {
+        // Poll läuft noch ohne gespeichertem resolve – nächster Tick löst ihn auf
+      }
+    }
+  }
+
   set myDataSource(dataBinding) {
     this._myDataSource = dataBinding;
     // Index + Cache invalidieren bei neuen Daten
@@ -3100,6 +3143,9 @@ class GeoMapWidget extends HTMLElement {
       clearInterval(this._detailPollTimer);
       this._detailPollTimer = null;
     }
+    // resolve/reject speichern damit onCustomWidgetAfterUpdate sie sofort auflösen kann
+    this._detailPollResolve = resolve;
+    this._detailPollReject  = reject;
     const start = Date.now();
     let _lastSecs = -1;
     const TIMEOUT_MS = 180_000; // 3 Minuten Timeout
@@ -3110,16 +3156,22 @@ class GeoMapWidget extends HTMLElement {
       if (ready) {
         clearInterval(this._detailPollTimer);
         this._detailPollTimer = null;
+        this._detailPollResolve = null;
+        this._detailPollReject  = null;
         resolve(this._myDetailSource.data);
       } else if (state === "error") {
         clearInterval(this._detailPollTimer);
         this._detailPollTimer = null;
+        this._detailPollResolve = null;
+        this._detailPollReject  = null;
         reject(new Error("Detail-DataSource Fehler"));
       } else {
         const elapsed = Date.now() - start;
         if (elapsed > TIMEOUT_MS) {
           clearInterval(this._detailPollTimer);
           this._detailPollTimer = null;
+          this._detailPollResolve = null;
+          this._detailPollReject  = null;
           reject(new Error("Timeout: Detail-DataSource nicht geladen nach 3 Minuten"));
           return;
         }
