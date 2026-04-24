@@ -994,8 +994,23 @@ class GeoMapWidget extends HTMLElement {
 
     this._totalRowCount = rows.length;
     this._fullIndexReady = true;
-    // Bootstrap-Rows cachen → Home-Reset kann sofort wiederverwenden ohne neuen BW-Query
+    // Bootstrap-Rows + Struktur cachen → Home-Reset und Dropdown-Befüllung nutzen das
     this._cachedBootstrapRows = rows;
+    // Struktur direkt aus Rows aufbauen (ohne _erhebungIndex, der noch nicht existiert)
+    this._cachedBootstrapStruktur = (() => {
+      const struktur = {};
+      const _bad = v => !v || v === "@NullMember" || v === "@TotalMembers";
+      for (const row of rows) {
+        const eID = row["dimension_erhebung_0"]?.id?.trim();
+        const yr  = row["dimension_jahr_0"]?.id?.trim();
+        const nr  = row["dimension_erhebungsnummer_0"]?.id?.trim();
+        if (_bad(eID) || _bad(yr) || _bad(nr)) continue;
+        if (!struktur[eID]) struktur[eID] = {};
+        if (!struktur[eID][yr]) struktur[eID][yr] = new Set();
+        struktur[eID][yr].add(nr);
+      }
+      return struktur;
+    })();
 
     console.warn("  Dauer: " + (performance.now() - t0).toFixed(0) + "ms – Widget bereit");
     console.groupEnd();
@@ -2616,10 +2631,9 @@ class GeoMapWidget extends HTMLElement {
       // Index über die gefilterten Rows aufbauen (nur Jahr+Nummer, alle ErhebungsIDs)
       _mark("indexStart");
       this._buildErhebungIndex(erhID); // Fremd-Erhebungen: nur HZ=X Rows
-      // Dropdowns immer aus Bootstrap-Cache befüllen (alle Erhebungen verfügbar,
+      // Dropdowns immer aus Bootstrap-Struktur befüllen (alle Erhebungen verfügbar,
       // unabhängig vom aktiven Filter) statt aus den gefilterten 4k/28k-Rows
-      const bootstrapRows = this._cachedBootstrapRows ?? rawData;
-      this._erhData = this.buildErhebungsStruktur(bootstrapRows);
+      this._erhData = this._cachedBootstrapStruktur ?? this.buildErhebungsStruktur(rawData);
       this.setupFilterDropdowns();
       this.restoreDropdownSelections();
       _mark("indexDone");
