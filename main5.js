@@ -2271,13 +2271,26 @@ class GeoMapWidget extends HTMLElement {
       const optEin = bar.querySelector("#doppel-opt-ein");
       this._doppelbestreuungAktiv = false; // default: aus
 
+      const _refreshBtnOnToggle = () => {
+        // Wenn alle 3 Dropdowns bereits befüllt sind, Button auf ready setzen
+        const erhSel = this._shadowRoot.getElementById("erhebung-select");
+        const jSel   = this._shadowRoot.getElementById("jahr-select");
+        const nSel   = this._shadowRoot.getElementById("nummer-select");
+        const btn    = this._shadowRoot.getElementById("filter-button");
+        if (btn && erhSel?.value && jSel?.value && nSel?.value) {
+          btn.classList.add("ready");
+        }
+      };
+
       optAus.addEventListener("click", () => {
         this._doppelbestreuungAktiv = false;
         optAus.classList.add("active"); optEin.classList.remove("active");
+        _refreshBtnOnToggle();
       });
       optEin.addEventListener("click", () => {
         this._doppelbestreuungAktiv = true;
         optEin.classList.add("active"); optAus.classList.remove("active");
+        _refreshBtnOnToggle();
       });
     }
 
@@ -2603,7 +2616,10 @@ class GeoMapWidget extends HTMLElement {
       // Index über die gefilterten Rows aufbauen (nur Jahr+Nummer, alle ErhebungsIDs)
       _mark("indexStart");
       this._buildErhebungIndex(erhID); // Fremd-Erhebungen: nur HZ=X Rows
-      this._erhData = this.buildErhebungsStruktur(rawData);
+      // Dropdowns immer aus Bootstrap-Cache befüllen (alle Erhebungen verfügbar,
+      // unabhängig vom aktiven Filter) statt aus den gefilterten 4k/28k-Rows
+      const bootstrapRows = this._cachedBootstrapRows ?? rawData;
+      this._erhData = this.buildErhebungsStruktur(bootstrapRows);
       this.setupFilterDropdowns();
       this.restoreDropdownSelections();
       _mark("indexDone");
