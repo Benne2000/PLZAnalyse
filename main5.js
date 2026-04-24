@@ -830,16 +830,12 @@ class GeoMapWidget extends HTMLElement {
     const ds = this._getDataSource();
     if (!ds) return false;
 
-    // Alle set-Calls VOR remove bündeln:
-    // SAC queued die Filter intern. Erst wenn removeDimensionFilter aufgerufen
-    // wird, feuert SAC den kombinierten BW-Query mit allen Constraints gleichzeitig.
-    // Das ist die kleinstmögliche Abfrage – kein Zwischenquery mit zu vielen Rows.
     const t0 = performance.now();
 
     if (!this._doppelbestreuungAktiv) {
       // ── Ohne Doppelbestreuung: ErhebungsID + Jahr + Nummer ──────────
-      // BW liefert nur Rows der exakten Erhebung → minimale Datenmenge
-      const erhKeys    = ["BERHBID",  "dimension_erhebung_0",        "dimension_erhebung"];
+      // BGFBNR = technischer BW-Name für ErhebungsID (GF-Bereich-Nummer)
+      const erhKeys    = ["BGFBNR",   "dimension_erhebung_0",        "dimension_erhebung"];
       const jahrKeys   = ["0CALYEAR", "dimension_jahr_0",            "dimension_jahr"];
       const nummerKeys = ["BERHBNUM", "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
 
@@ -850,7 +846,6 @@ class GeoMapWidget extends HTMLElement {
       console.warn("[PLZ-Widget] ▶ Filter gesetzt (ohne Doppelbestreuung): " + ok.join(" | ") + " [" + (performance.now()-t0).toFixed(0) + "ms]");
     } else {
       // ── Mit Doppelbestreuung: nur Jahr + Nummer ──────────────────────
-      // BW liefert alle Erhebungen des Zeitraums → CrossErhebDoppel möglich
       const jahrKeys   = ["0CALYEAR", "dimension_jahr_0",            "dimension_jahr"];
       const nummerKeys = ["BERHBNUM", "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
 
@@ -868,11 +863,11 @@ class GeoMapWidget extends HTMLElement {
         ds.removeDimensionFilter(key);
         this._plzFilterKey = key;
         console.warn("[PLZ-Widget] ▶ PLZ-Filter entfernt (Key: " + key + ") → BW-Query gestartet [" + (performance.now()-t1).toFixed(0) + "ms]");
-        this._filterSwitchTime = Date.now(); // Startzeit für End-to-End Messung
+        this._filterSwitchTime = Date.now();
         return true;
       } catch(e) {}
     }
-    console.warn("[PLZ-Widget] ✖ removeDimensionFilter fehlgeschlagen – alle Keys probiert");
+    console.warn("[PLZ-Widget] ✖ removeDimensionFilter fehlgeschlagen");
     return false;
   }
 
@@ -2652,14 +2647,14 @@ class GeoMapWidget extends HTMLElement {
     // Gleiche Optik wie der Bootstrap-Loader: "(Xs)" im Phasentext
     const _loadStart = Date.now();
     this._loadSecTimer = setInterval(() => {
-      if (!this._fullDataLoaded) { // render() hat _fullDataLoaded=false gesetzt → fertig
+      if (!this._fullDataLoaded) {
         clearInterval(this._loadSecTimer);
         this._loadSecTimer = null;
         return;
       }
       const secs = Math.floor((Date.now() - _loadStart) / 1000);
       this._updateLoaderPhase(1, `Erhebungsdaten werden geladen… (${secs}s)`);
-      this._updateDataLoadProgress(0, this._totalRowCount ?? 0, 0);
+      // Kein _updateDataLoadProgress hier – Balken bleibt versteckt bis echte Daten kommen
     }, 1000);
 
     // ── FILTER-WECHSEL über SAC DataSource-API ─────────────────────
@@ -3568,7 +3563,7 @@ class GeoMapWidget extends HTMLElement {
     } else {
       const rowCount = this._myDataSource?.data?.length ?? 0;
       const e2e      = this._filterSwitchTime ? ((Date.now() - this._filterSwitchTime) / 1000).toFixed(1) + "s" : "–";
-      if (this._doppelbestreuungAktiv && rowCount <= (this._totalRowCount ?? 0) && rowCount > 0) {
+      if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
         console.warn("[PLZ-Widget] ⚡ set myDataSource: SAC-Cache (" + rowCount.toLocaleString("de-DE") + " Rows / E2E: " + e2e + ") – warte auf echte Daten");
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
@@ -3597,10 +3592,12 @@ class GeoMapWidget extends HTMLElement {
       if (this._myDataSource?.state === "success") {
         const rowCount = this._myDataSource?.data?.length ?? 0;
 
-        // Cache-Detection nur bei Doppelbestreuung EIN:
-        // Bei AUS liefert ErhID-Filter evtl. weniger Rows als Bootstrap → kein Check
-        if (this._fullDataLoaded && this._doppelbestreuungAktiv &&
-            rowCount <= (this._totalRowCount ?? 0) && rowCount > 0) {
+        // Cache-Detection für beide Modi:
+        // SAC schickt nach Filter-Änderungen zunächst gecachte Bootstrap-Rows.
+        // Bei AUS: BGFBNR-fetchMembers triggert denselben Cache-Mechanismus wie bei EIN.
+        // Echte Rows kommen erst nach dem vollständigen BW-Query.
+        // Erkennnung: rowCount identisch mit Bootstrap-Stand = noch Cache.
+        if (this._fullDataLoaded && rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
           const waited = ((Date.now() - start) / 1000).toFixed(1);
           console.warn("[PLZ-Widget] ⚡ SAC-Cache (" + rowCount.toLocaleString("de-DE") + " Rows / " + waited + "s) – warte auf echten BW-Query");
           return;
