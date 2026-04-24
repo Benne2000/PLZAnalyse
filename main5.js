@@ -2733,8 +2733,7 @@ class GeoMapWidget extends HTMLElement {
     // Nächster myDataSource-Call ist Phase 2 → render()
     this._fullDataLoaded = true;
 
-    // ── Sekundenanzeiger während SAC den Filter-Wechsel verarbeitet ──
-    // Gleiche Optik wie der Bootstrap-Loader: "(Xs)" im Phasentext
+    // ── Sekundenanzeiger mit Flackern während SAC den Filter-Wechsel verarbeitet ──
     const _loadStart = Date.now();
     this._loadSecTimer = setInterval(() => {
       if (!this._fullDataLoaded) {
@@ -2743,8 +2742,16 @@ class GeoMapWidget extends HTMLElement {
         return;
       }
       const secs = Math.floor((Date.now() - _loadStart) / 1000);
-      this._updateLoaderPhase(1, `Erhebungsdaten werden geladen… (${secs}s)`);
-      // Kein _updateDataLoadProgress hier – Balken bleibt versteckt bis echte Daten kommen
+      // Text direkt setzen (kein fade) + kurzes Flackern des Loaders
+      const loader = this._shadowRoot.getElementById("cinematic-loader");
+      if (loader) {
+        const phaseText = loader.querySelector("#loader-phase-text");
+        if (phaseText) phaseText.textContent = `Erhebungsdaten werden geladen… (${secs}s)`;
+        // Flackern: kurzes opacity-dip
+        loader.style.transition = "opacity 0.08s ease";
+        loader.style.opacity = "0.55";
+        setTimeout(() => { loader.style.opacity = "1"; }, 90);
+      }
     }, 1000);
 
     // ── FILTER-WECHSEL über SAC DataSource-API ─────────────────────
@@ -3194,6 +3201,10 @@ class GeoMapWidget extends HTMLElement {
         console.warn("[PLZ-Widget] Home: Filter-Reset fehlgeschlagen:", e);
       }
     }
+
+    // Poll starten – SAC liefert nach dem PLZ=00000-Filter die Bootstrap-Rows
+    // die dann _bootstrapFromPLZ00000() aufruft und die Dropdowns befüllt
+    if (!this._dataPollTimer) this._scheduleDataPoll();
   }
 
   _showDoppelTooltip(plz, event, container) {
