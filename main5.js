@@ -695,12 +695,7 @@ let neighbours = true;
 
       <div class="map-container">
       <div id="map-interaction-block"></div>
-        <button id="back-to-home-btn" title="Zurück zum Hauptmenü">
-          ← Hauptmenü
-        </button>
-        <button id="overview-toggle-btn" title="Gesamt-Übersicht">
-          📊 Übersicht
-        </button>
+
         <div id="map-preview-overlay" style="position:absolute;inset:0;z-index:400;pointer-events:none;overflow:hidden;"></div>
         <div id="loading-spinner" class="spinner hidden"></div>
         <div id="radius-slider-container">
@@ -1567,17 +1562,7 @@ class GeoMapWidget extends HTMLElement {
     $("back-to-home-btn")?.addEventListener("click", () => this._resetToHome());
     // Panel-Footer Buttons
     $("panel-home-btn")?.addEventListener("click", () => this._resetToHome());
-    $("panel-overview-btn")?.addEventListener("click", () => {
-      const nlBox = this._shadowRoot.getElementById("nl-info-container");
-      const filter = this._shadowRoot.querySelector(".filter-container");
-      if (!nlBox) return;
-      if (nlBox.classList.contains("show")) {
-        nlBox.classList.remove("show"); filter?.classList.remove("nl-info-active");
-      } else {
-        this.prepareErhebungsInfo(); this.renderErhebungsInfoTable();
-        nlBox.classList.add("show"); filter?.classList.add("nl-info-active");
-      }
-    });
+    $("panel-overview-btn")?.addEventListener("click", () => this.showOverviewPopup());
     $("overview-toggle-btn")?.addEventListener("click", () => this.showOverviewPopup());
     btnWA?.classList.add("disabled");
 
@@ -2413,8 +2398,24 @@ class GeoMapWidget extends HTMLElement {
       });
     }
 
-    // Info-Toggle-Button (Übersicht) wird separat im Panel-Footer eingebaut
-    // → _initPanelFooter() kümmert sich darum, nicht setupFilterDropdowns
+    if (!this._shadowRoot.getElementById("info-toggle-btn")) {
+      const infoBtn = document.createElement("button");
+      infoBtn.id = "info-toggle-btn";
+      infoBtn.className = "info-toggle-btn";
+      infoBtn.innerHTML = `↕ Erhebungsübersicht`;
+      infoBtn.addEventListener("click", () => {
+        const nlBox = this._shadowRoot.getElementById("nl-info-container");
+        const filter = this._shadowRoot.querySelector(".filter-container");
+        if (!nlBox) return;
+        if (nlBox.classList.contains("show")) {
+          nlBox.classList.remove("show"); filter.classList.remove("nl-info-active");
+        } else {
+          this.prepareErhebungsInfo(); this.renderErhebungsInfoTable();
+          nlBox.classList.add("show"); filter.classList.add("nl-info-active");
+        }
+      });
+      this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
+    }
   }
 
   restoreFilterUI() {
@@ -3403,7 +3404,8 @@ class GeoMapWidget extends HTMLElement {
     this._shadowRoot.getElementById("side-popup")?.classList.add("hidden");
     this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
     this._shadowRoot.getElementById("side-popup-umsatz")?.classList.add("hidden");
-    this._activePopupPLZ = null; this._activePopupType = null;
+    // Overview-Popup als "aktiv" markieren damit _syncPanelState Panel klein hält
+    this._activePopupPLZ = "__overview__"; this._activePopupType = "overview";
 
     // Header-Titel: Erhebungsname oder gefilterte NLs
     const { erhID } = this._activeFilter || {};
@@ -3414,8 +3416,8 @@ class GeoMapWidget extends HTMLElement {
       headerTitle = [...selNLs].join(", ");
     }
 
-    const panel = this._shadowRoot.getElementById("map-control-panel");
-    panel?.classList.remove("panel-large"); panel?.classList.add("panel-medium");
+    // Panel klein schalten damit Overview-Popup Platz hat
+    this._syncPanelState();
 
     // ── Gemeinsame Aggregation ──
     const isWerbungMode = this.umsatzMainMode === "werbung";
@@ -3551,6 +3553,9 @@ class GeoMapWidget extends HTMLElement {
     popup.classList.remove("hidden"); void popup.offsetWidth; popup.classList.add("show");
     popup.querySelector(".close-btn").onclick = () => {
       popup.classList.remove("show"); popup.classList.add("hidden");
+      this._activePopupPLZ = null; this._activePopupType = null;
+      // Im Umsatz-Modus: Panel wieder hochfahren wenn kein Popup offen
+      this._syncPanelState();
     };
   }
 
