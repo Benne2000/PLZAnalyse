@@ -2765,7 +2765,7 @@ class GeoMapWidget extends HTMLElement {
     // Nächster myDataSource-Call ist Phase 2 → render()
     this._fullDataLoaded = true;
 
-    // ── Sekundenanzeiger mit Flackern während SAC den Filter-Wechsel verarbeitet ──
+    // ── Sekundenanzeiger – gleicher Rhythmus wie initialer Loader ──────────────
     const _loadStart = Date.now();
     this._loadSecTimer = setInterval(() => {
       if (!this._fullDataLoaded) {
@@ -2774,19 +2774,14 @@ class GeoMapWidget extends HTMLElement {
         return;
       }
       const secs = Math.floor((Date.now() - _loadStart) / 1000);
-      // Text direkt setzen (kein fade) + kurzes Flackern des Loaders
-      const loader = this._shadowRoot.getElementById("cinematic-loader");
-      if (loader) {
-        const phaseText = loader.querySelector("#loader-phase-text");
-        if (phaseText) phaseText.textContent = `Erhebungsdaten werden geladen… (${secs}s)`;
-        // Flackern: kurzes opacity-dip
-        loader.style.transition = "opacity 0.08s ease";
-        loader.style.opacity = "0.55";
-        setTimeout(() => { loader.style.opacity = "1"; }, 90);
-      }
+      // Gleicher Mechanismus wie _updateLoaderPhase: fade-out/in des Textes
+      this._updateLoaderPhase(1, `Erhebungsdaten werden geladen… (${secs}s)`);
     }, 1000);
 
     // ── FILTER-WECHSEL über SAC DataSource-API ─────────────────────
+    // Index invalidieren – damit render() nach dem neuen BW-Query neu aufbaut
+    // und nicht aus dem alten Index der vorherigen Erhebung liest
+    this._erhebungIndex = null;
     // PLZ=00000 entfernen, nur Jahr+Nummer filtern (KEIN ErhebungsID-Filter)
     // → BW liefert alle Erhebungen des Zeitraums → CrossErhebDoppel funktioniert
     const switched = this._switchToErhebungFilter(erhID, jahr, nummer);
