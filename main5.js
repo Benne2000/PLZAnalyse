@@ -396,6 +396,21 @@ let neighbours = true;
         scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
       }
       #map-control-panel.panel-auto { height: auto; max-height: 68%; overflow-y: visible; }
+      #panel-footer {
+        margin-top: 4px; padding-top: 10px;
+        border-top: 1px solid var(--gray-100);
+        display: flex; gap: 6px; flex-shrink: 0;
+      }
+      .panel-footer-btn {
+        flex: 1; padding: 8px 6px; font-size: 0.75rem;
+        font-family: var(--font); font-weight: 600;
+        border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
+        background: var(--white); color: var(--gray-500); cursor: pointer;
+        transition: background 0.18s, border-color 0.18s, color 0.18s;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+        white-space: nowrap;
+      }
+      .panel-footer-btn:hover { background: var(--red-bg); border-color: var(--red); color: var(--red); }
       #map-control-panel.panel-large  { height: 68%; }
       #map-control-panel.panel-medium { height: 30%; }
       #map-control-panel::before {
@@ -741,6 +756,10 @@ let neighbours = true;
           <div class="category-toggle active" data-cat="online">🛒 KUBE OS</div>
         </div>
       </div>
+      <div id="panel-footer">
+        <button id="panel-home-btn" class="panel-footer-btn">← Hauptmenü</button>
+        <button id="panel-overview-btn" class="panel-footer-btn">📊 Übersicht</button>
+      </div>
     </div>
     `;
 
@@ -1031,6 +1050,12 @@ class GeoMapWidget extends HTMLElement {
 
     console.warn("  Dauer: " + (performance.now() - t0).toFixed(0) + "ms – Widget bereit");
     console.groupEnd();
+
+    // Panel-Footer Buttons im Hauptmenü deaktivieren
+    const homeBtn = this._shadowRoot.getElementById("panel-home-btn");
+    const ovBtn   = this._shadowRoot.getElementById("panel-overview-btn");
+    if (homeBtn) { homeBtn.disabled = true; homeBtn.style.opacity = "0.35"; homeBtn.style.cursor = "not-allowed"; }
+    if (ovBtn)   { ovBtn.disabled   = true; ovBtn.style.opacity   = "0.35"; ovBtn.style.cursor = "not-allowed"; }
   }
 
   connectedCallback() {
@@ -1540,6 +1565,19 @@ class GeoMapWidget extends HTMLElement {
     $("map-tile-toggle-btn")?.addEventListener("click", () => this.toggleMapTiles());
     $("legend-toggle-btn")?.addEventListener("click", () => $("heatmap-legend").classList.toggle("hidden"));
     $("back-to-home-btn")?.addEventListener("click", () => this._resetToHome());
+    // Panel-Footer Buttons
+    $("panel-home-btn")?.addEventListener("click", () => this._resetToHome());
+    $("panel-overview-btn")?.addEventListener("click", () => {
+      const nlBox = this._shadowRoot.getElementById("nl-info-container");
+      const filter = this._shadowRoot.querySelector(".filter-container");
+      if (!nlBox) return;
+      if (nlBox.classList.contains("show")) {
+        nlBox.classList.remove("show"); filter?.classList.remove("nl-info-active");
+      } else {
+        this.prepareErhebungsInfo(); this.renderErhebungsInfoTable();
+        nlBox.classList.add("show"); filter?.classList.add("nl-info-active");
+      }
+    });
     $("overview-toggle-btn")?.addEventListener("click", () => this.showOverviewPopup());
     btnWA?.classList.add("disabled");
 
@@ -1582,12 +1620,7 @@ class GeoMapWidget extends HTMLElement {
       if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
       wkExtra.style.display = "none"; umsatzOptionsRow.classList.remove("hidden");
       umsatzPanel.classList.remove("hidden");
-      // Kein Popup offen → panel-auto (passt sich an Inhalt an, keine Scrollbar)
-      if (!this._activePopupPLZ) {
-        panel.classList.remove("panel-medium","panel-large"); panel.classList.add("panel-auto");
-      } else {
-        panel.classList.remove("panel-medium","panel-auto"); panel.classList.add("panel-large");
-      }
+      this._syncPanelState();
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
@@ -1896,7 +1929,7 @@ class GeoMapWidget extends HTMLElement {
     this._activePopupPLZ = plz; this._activePopupType = 'umsatz';
 
     const panel = this._shadowRoot.getElementById("map-control-panel");
-    panel.classList.remove("panel-large","panel-auto"); panel.classList.add("panel-medium");
+    this._syncPanelState();
 
     const isWerbungMode = this.umsatzMainMode === "werbung";
     const useWerbe  = this.useWerbeUmsatz  === true;
@@ -2026,9 +2059,7 @@ class GeoMapWidget extends HTMLElement {
         if (l) this.applyStyleToLayer(l);
         this._highlightedPLZ = null;
       }
-      // Ohne Popup: Panel auf auto-Höhe → keine Scrollbar im Umsatz-Modus
-      const p = this._shadowRoot.getElementById("map-control-panel");
-      if (p) { p.classList.remove("panel-medium"); p.classList.add("panel-auto"); }
+      this._syncPanelState();
     };
   }
 
@@ -2382,40 +2413,8 @@ class GeoMapWidget extends HTMLElement {
       });
     }
 
-    if (!this._shadowRoot.getElementById("filter-sticky-footer")) {
-      const footer = document.createElement("div");
-      footer.id = "filter-sticky-footer";
-      footer.className = "filter-footer";
-
-      // Hauptmenü-Button
-      const homeBtn = document.createElement("button");
-      homeBtn.className = "filter-footer-btn home-btn";
-      homeBtn.innerHTML = `← Hauptmenü`;
-      homeBtn.title = "Zurück zum Hauptmenü";
-      homeBtn.addEventListener("click", () => this._resetToHome());
-
-      // Übersichts-Button
-      const overviewBtn = document.createElement("button");
-      overviewBtn.id = "info-toggle-btn";
-      overviewBtn.className = "filter-footer-btn";
-      overviewBtn.innerHTML = `📊 Übersicht`;
-      overviewBtn.title = "Erhebungsübersicht";
-      overviewBtn.addEventListener("click", () => {
-        const nlBox = this._shadowRoot.getElementById("nl-info-container");
-        const filter = this._shadowRoot.querySelector(".filter-container");
-        if (!nlBox) return;
-        if (nlBox.classList.contains("show")) {
-          nlBox.classList.remove("show"); filter.classList.remove("nl-info-active");
-        } else {
-          this.prepareErhebungsInfo(); this.renderErhebungsInfoTable();
-          nlBox.classList.add("show"); filter.classList.add("nl-info-active");
-        }
-      });
-
-      footer.appendChild(homeBtn);
-      footer.appendChild(overviewBtn);
-      this._shadowRoot.querySelector(".filter-container").appendChild(footer);
-    }
+    // Info-Toggle-Button (Übersicht) wird separat im Panel-Footer eingebaut
+    // → _initPanelFooter() kümmert sich darum, nicht setupFilterDropdowns
   }
 
   restoreFilterUI() {
@@ -2607,7 +2606,7 @@ class GeoMapWidget extends HTMLElement {
     this._activePopupPLZ=plz;this._activePopupType='umsatz';
     popup.innerHTML=`<div class="popup-header"><span title="${note}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${note}</span><button class="close-btn" style="flex-shrink:0">✕</button></div><div style="padding:20px 14px;text-align:center;color:#adb5bd;font-size:0.85rem"><div style="font-size:2rem;margin-bottom:8px;opacity:.4">📭</div>Keine Umsatzdaten für PLZ ${plz}</div>`;
     popup.classList.remove("hidden");void popup.offsetWidth;popup.classList.add("show");
-    popup.querySelector(".close-btn").onclick=()=>{popup.classList.remove("show");popup.classList.add("hidden");this._activePopupPLZ=null;this._activePopupType=null;};
+    popup.querySelector(".close-btn").onclick=()=>{popup.classList.remove("show");popup.classList.add("hidden");this._activePopupPLZ=null;this._activePopupType=null;this._syncPanelState();};
   }
 
   prepareDropdownData(data) {
@@ -2805,6 +2804,13 @@ class GeoMapWidget extends HTMLElement {
     if (overlay) overlay.innerHTML = '';
     this._rawPLZCache = {};
     this._crossErhebungPLZ = {};
+
+    // Panel-Footer Buttons aktivieren – Erhebung wird geladen
+    const homeBtn_ = this._shadowRoot.getElementById("panel-home-btn");
+    const ovBtn_   = this._shadowRoot.getElementById("panel-overview-btn");
+    if (homeBtn_) { homeBtn_.disabled = false; homeBtn_.style.opacity = ""; homeBtn_.style.cursor = ""; }
+    if (ovBtn_)   { ovBtn_.disabled   = false; ovBtn_.style.opacity   = ""; ovBtn_.style.cursor   = ""; }
+
     this._showCinematicLoader();
     this._updateLoaderPhase(1, "Erhebungsdaten werden geladen…");
 
@@ -2926,6 +2932,20 @@ class GeoMapWidget extends HTMLElement {
       }
     }
     // Bei erfolgreichem Filter-Wechsel: SAC triggert set myDataSource() → render()
+  }
+
+  // Zentrales Panel-State-Management für den Umsatz-Modus:
+  // Kein Popup offen → panel fährt hoch (auto), Popup offen → panel-large (Platz lassen)
+  _syncPanelState() {
+    if (this.currentMapMode !== "umsatz-multi" && this.currentMapMode !== "werbeanteil") return;
+    const panel = this._shadowRoot.getElementById("map-control-panel");
+    if (!panel) return;
+    const hasPopup = this._activePopupPLZ != null;
+    if (hasPopup) {
+      panel.classList.remove("panel-auto"); panel.classList.add("panel-large");
+    } else {
+      panel.classList.remove("panel-large","panel-medium"); panel.classList.add("panel-auto");
+    }
   }
 
   _showCinematicLoader() {
@@ -3272,6 +3292,11 @@ class GeoMapWidget extends HTMLElement {
           try { ds.setDimensionFilter(key, ["00000"]); this._plzFilterKey = key; break; } catch(e) {}
         }
         console.warn("[PLZ-Widget] Home: Filter zurückgesetzt → PLZ=00000 (" + this._plzFilterKey + ")");
+        // Panel-Footer Buttons beim Home-Reset deaktivieren
+        const hBtn = this._shadowRoot.getElementById("panel-home-btn");
+        const oBtn = this._shadowRoot.getElementById("panel-overview-btn");
+        if (hBtn) { hBtn.disabled = true; hBtn.style.opacity = "0.35"; hBtn.style.cursor = "not-allowed"; }
+        if (oBtn) { oBtn.disabled = true; oBtn.style.opacity = "0.35"; oBtn.style.cursor = "not-allowed"; }
       } catch(e) {
         console.warn("[PLZ-Widget] Home: Filter-Reset fehlgeschlagen:", e);
       }
@@ -3787,6 +3812,9 @@ class GeoMapWidget extends HTMLElement {
         return;
       }
       console.warn("[PLZ-Widget] ✅ set myDataSource Phase 2: " + rowCount.toLocaleString("de-DE") + " Rows | E2E: " + e2e + " | " + (this._doppelbestreuungAktiv ? "mit Doppelbestreuung" : "ohne Doppelbestreuung"));
+      // Cache-Referenz für nächsten Erhebungswechsel aktualisieren:
+      // Beim nächsten loadErhebung liefert SAC diese Rowzahl als Cache – muss erkannt werden.
+      this._totalRowCount = rowCount;
       this._fullDataLoaded = false;
       this._renderInProgress = true;
       this.render().finally(() => { this._renderInProgress = false; });
@@ -3845,6 +3873,8 @@ class GeoMapWidget extends HTMLElement {
         } else {
           if (!this._renderInProgress) {
             this._hideDataLoadProgress();
+            // Cache-Referenz für nächsten Erhebungswechsel aktualisieren
+            this._totalRowCount = rowCount;
             this._fullDataLoaded = false;
             this._renderInProgress = true;
             this.render().finally(() => { this._renderInProgress = false; });
