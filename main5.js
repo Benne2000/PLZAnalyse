@@ -474,7 +474,27 @@ let neighbours = true;
       #cinematic-loader.fade-out { animation: loaderFadeOut 0.35s ease forwards; }
       @keyframes loaderFadeOut { to { opacity: 0; pointer-events: none; } }
 
-      /* ── Daten-Fortschrittsanzeige ─────────────────────────────── */
+      /* ── Doppelbestreuungs-Toggle ──────────────────────────────── */
+      #doppel-toggle-bar {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 6px 10px 6px 12px;
+        background: var(--gray-50); border-bottom: 1px solid var(--gray-100);
+        gap: 8px; flex-shrink: 0;
+      }
+      .doppel-toggle-label {
+        font-size: 0.72rem; font-weight: 700; color: var(--gray-600);
+        letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+      }
+      .doppel-toggle-group { display: flex; gap: 3px; }
+      .doppel-btn {
+        padding: 3px 10px; font-size: 0.72rem; font-weight: 600;
+        border: 1.5px solid var(--gray-200); border-radius: 20px;
+        background: white; color: var(--gray-500); cursor: pointer;
+        transition: all 0.18s ease; white-space: nowrap;
+      }
+      .doppel-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+      .doppel-btn.active { background: var(--red); color: white; border-color: var(--red); }
+      .doppel-btn.active:hover { background: var(--red-light); border-color: var(--red-light); }
       #cinematic-loader .loader-data-progress {
         width: 240px; margin-top: 14px; display: flex; flex-direction: column; gap: 5px;
       }
@@ -802,24 +822,57 @@ class GeoMapWidget extends HTMLElement {
     }
   }
 
-  // Entfernt den SAC-seitigen PLZ=00000 Filter nach "Anzeigen"-Klick.
-  // Jahr+Nummer werden NICHT per setDimensionFilter gesetzt – das würde ein
-  // asynchrones fetchMembers auslösen und einen zweiten BW-Query mit 27k Rows
-  // triggern. Stattdessen filtert render() intern per _getErhebungRows(erhID, jahr, nummer).
-  // Gibt true zurück wenn der removeDimensionFilter-Aufruf geklappt hat.
-  _switchToErhebungFilter(jahr, nummer) {
+  // Setzt BW-Filter vor dem removeDimensionFilter für PLZ:
+  // Doppelbestreuung AUS → ErhebungsID + Jahr + Nummer → nur eigene Erhebung
+  // Doppelbestreuung EIN → nur Jahr + Nummer → alle Erhebungen des Zeitraums
+  // Gibt true zurück wenn PLZ-Filter erfolgreich entfernt wurde.
+  _switchToErhebungFilter(erhID, jahr, nummer) {
     const ds = this._getDataSource();
     if (!ds) return false;
-    const keysToTry = ["0POSTALCODE", "dimension_plz_0", "dimension_plz"];
-    for (const key of keysToTry) {
+
+    // Alle set-Calls VOR remove bündeln:
+    // SAC queued die Filter intern. Erst wenn removeDimensionFilter aufgerufen
+    // wird, feuert SAC den kombinierten BW-Query mit allen Constraints gleichzeitig.
+    // Das ist die kleinstmögliche Abfrage – kein Zwischenquery mit zu vielen Rows.
+    const t0 = performance.now();
+
+    if (!this._doppelbestreuungAktiv) {
+      // ── Ohne Doppelbestreuung: ErhebungsID + Jahr + Nummer ──────────
+      // BW liefert nur Rows der exakten Erhebung → minimale Datenmenge
+      const erhKeys    = ["BERHBID",  "dimension_erhebung_0",        "dimension_erhebung"];
+      const jahrKeys   = ["0CALYEAR", "dimension_jahr_0",            "dimension_jahr"];
+      const nummerKeys = ["BERHBNUM", "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
+
+      let ok = [];
+      for (const key of erhKeys)    { try { ds.setDimensionFilter(key, [erhID]);  this._erhIDFilterKey  = key; ok.push("ErhID(" + key + ")=" + erhID);  break; } catch(e) {} }
+      for (const key of jahrKeys)   { try { ds.setDimensionFilter(key, [jahr]);   this._jahrFilterKey   = key; ok.push("Jahr(" + key + ")=" + jahr);    break; } catch(e) {} }
+      for (const key of nummerKeys) { try { ds.setDimensionFilter(key, [nummer]); this._nummerFilterKey = key; ok.push("Nr(" + key + ")=" + nummer);    break; } catch(e) {} }
+      console.warn("[PLZ-Widget] ▶ Filter gesetzt (ohne Doppelbestreuung): " + ok.join(" | ") + " [" + (performance.now()-t0).toFixed(0) + "ms]");
+    } else {
+      // ── Mit Doppelbestreuung: nur Jahr + Nummer ──────────────────────
+      // BW liefert alle Erhebungen des Zeitraums → CrossErhebDoppel möglich
+      const jahrKeys   = ["0CALYEAR", "dimension_jahr_0",            "dimension_jahr"];
+      const nummerKeys = ["BERHBNUM", "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
+
+      let ok = [];
+      for (const key of jahrKeys)   { try { ds.setDimensionFilter(key, [jahr]);   this._jahrFilterKey   = key; ok.push("Jahr(" + key + ")=" + jahr);   break; } catch(e) {} }
+      for (const key of nummerKeys) { try { ds.setDimensionFilter(key, [nummer]); this._nummerFilterKey = key; ok.push("Nr(" + key + ")=" + nummer);   break; } catch(e) {} }
+      console.warn("[PLZ-Widget] ▶ Filter gesetzt (mit Doppelbestreuung): " + ok.join(" | ") + " [" + (performance.now()-t0).toFixed(0) + "ms]");
+    }
+
+    // PLZ-Filter zuletzt entfernen → triggert kombinierten BW-Query
+    const t1 = performance.now();
+    const plzKeys = ["0POSTALCODE", "dimension_plz_0", "dimension_plz"];
+    for (const key of plzKeys) {
       try {
         ds.removeDimensionFilter(key);
-        console.warn("[PLZ-Widget] PLZ-Filter entfernt (Key: " + key + ") → BW liefert alle Rows, render() filtert intern");
         this._plzFilterKey = key;
+        console.warn("[PLZ-Widget] ▶ PLZ-Filter entfernt (Key: " + key + ") → BW-Query gestartet [" + (performance.now()-t1).toFixed(0) + "ms]");
+        this._filterSwitchTime = Date.now(); // Startzeit für End-to-End Messung
         return true;
       } catch(e) {}
     }
-    console.warn("[PLZ-Widget] removeDimensionFilter fehlgeschlagen – alle Keys probiert");
+    console.warn("[PLZ-Widget] ✖ removeDimensionFilter fehlgeschlagen – alle Keys probiert");
     return false;
   }
 
@@ -830,7 +883,9 @@ class GeoMapWidget extends HTMLElement {
     this._bootstrapDone = true;
 
     const t0 = performance.now();
-    console.warn("[PLZ-Widget] Bootstrap | Rows: " + rows.length);
+    console.group("[PLZ-Widget] 🚀 Bootstrap");
+    console.warn("  Rows:  " + rows.length.toLocaleString("de-DE"));
+    console.warn("  Modus: PLZ=00000 (nur Stammdaten)");
 
     // ── Index über 00000-Rows aufbauen ────────────────────────────
     const _bad = v => !v || v === "@NullMember" || v === "@TotalMembers";
@@ -867,12 +922,11 @@ class GeoMapWidget extends HTMLElement {
     this._startPreviewAnimation();
     this._hideCinematicLoader();
 
-    // Gesamtzahl für spätere Fortschrittsanzeige merken
-    // (nach removeDimensionFilter liefert BW wieder ~diese Anzahl Rows)
     this._totalRowCount = rows.length;
     this._fullIndexReady = true;
 
-    console.warn("[PLZ-Widget] Bootstrap fertig in " + (performance.now() - t0).toFixed(0) + " ms – Widget bereit");
+    console.warn("  Dauer: " + (performance.now() - t0).toFixed(0) + "ms – Widget bereit");
+    console.groupEnd();
   }
 
   connectedCallback() {
@@ -2106,6 +2160,40 @@ class GeoMapWidget extends HTMLElement {
       return;
     }
     this._dropdownsInitialized = true;
+
+    // ── Doppelbestreuungs-Toggle oben in die Filter-Container einfügen ──
+    const filterContainer = this._shadowRoot.querySelector(".filter-container");
+    if (filterContainer && !this._shadowRoot.getElementById("doppel-toggle-bar")) {
+      const bar = document.createElement("div");
+      bar.id = "doppel-toggle-bar";
+      bar.innerHTML = `
+        <div class="doppel-toggle-label">Doppelbestreuung</div>
+        <div class="doppel-toggle-group">
+          <button id="doppel-btn-aus" class="doppel-btn active"
+            title="Nur Daten der gewählten Erhebung werden geladen. Schnellste Ladezeit.">
+            Aus
+          </button>
+          <button id="doppel-btn-ein" class="doppel-btn"
+            title="Überschneidungen mit anderen Erhebungen desselben Zeitraums werden erkannt. Etwas längere Ladezeit, da mehr Daten geladen werden.">
+            Ein
+          </button>
+        </div>`;
+      filterContainer.insertBefore(bar, filterContainer.firstChild);
+
+      const btnAus = bar.querySelector("#doppel-btn-aus");
+      const btnEin = bar.querySelector("#doppel-btn-ein");
+      this._doppelbestreuungAktiv = false; // default: aus
+
+      btnAus.addEventListener("click", () => {
+        this._doppelbestreuungAktiv = false;
+        btnAus.classList.add("active"); btnEin.classList.remove("active");
+      });
+      btnEin.addEventListener("click", () => {
+        this._doppelbestreuungAktiv = true;
+        btnEin.classList.add("active"); btnAus.classList.remove("active");
+      });
+    }
+
     const erhSelect=this._shadowRoot.getElementById("erhebung-select");
     const jahrSelect=this._shadowRoot.getElementById("jahr-select");
     const nummerSelect=this._shadowRoot.getElementById("nummer-select");
@@ -2483,7 +2571,8 @@ class GeoMapWidget extends HTMLElement {
 
       _progress(4, 100, "Fertig!", filteredData.length);
       _mark("end");
-      console.warn("── GESAMT: " + _diff("start","end"));
+      const e2e = this._filterSwitchTime ? ((Date.now() - this._filterSwitchTime) / 1000).toFixed(1) : "–";
+      console.warn("── GESAMT render(): " + _diff("start","end") + " | E2E ab Filter-Switch: " + e2e + "s | " + filteredData.length.toLocaleString("de-DE") + " Rows verarbeitet");
       console.groupEnd();
 
       requestAnimationFrame(() => {
@@ -2576,7 +2665,7 @@ class GeoMapWidget extends HTMLElement {
     // ── FILTER-WECHSEL über SAC DataSource-API ─────────────────────
     // PLZ=00000 entfernen, nur Jahr+Nummer filtern (KEIN ErhebungsID-Filter)
     // → BW liefert alle Erhebungen des Zeitraums → CrossErhebDoppel funktioniert
-    const switched = this._switchToErhebungFilter(jahr, nummer);
+    const switched = this._switchToErhebungFilter(erhID, jahr, nummer);
 
     if (switched) {
       // SAC ruft set myDataSource() synchron nach removeDimensionFilter auf →
@@ -2988,7 +3077,7 @@ class GeoMapWidget extends HTMLElement {
     const block = this._shadowRoot.getElementById("map-interaction-block");
     if (block) block.classList.remove("hidden");
 
-    // ── PLZ=00000 Filter wiederherstellen → BW liefert nur Bootstrap-Rows ──
+    // ── Alle Erhebungs-Filter entfernen, PLZ=00000 wiederherstellen ──
     this._fullDataLoaded = false;
     this._bootstrapDone = false;
     this._fullIndexReady = false;
@@ -2996,9 +3085,14 @@ class GeoMapWidget extends HTMLElement {
     const ds = this._getDataSource();
     if (ds) {
       try {
+        // Alle ggf. gesetzten Dimension-Filter entfernen
+        if (this._erhIDFilterKey)  { try { ds.removeDimensionFilter(this._erhIDFilterKey);  } catch(e) {} this._erhIDFilterKey  = null; }
+        if (this._jahrFilterKey)   { try { ds.removeDimensionFilter(this._jahrFilterKey);   } catch(e) {} this._jahrFilterKey   = null; }
+        if (this._nummerFilterKey) { try { ds.removeDimensionFilter(this._nummerFilterKey); } catch(e) {} this._nummerFilterKey = null; }
+        // PLZ=00000 setzen → BW liefert nur Bootstrap-Rows
         const plzKey = this._plzFilterKey ?? "0POSTALCODE";
         ds.setDimensionFilter(plzKey, ["00000"]);
-        console.warn("[PLZ-Widget] Home: PLZ=00000 Filter wiederhergestellt (Key: " + plzKey + ")");
+        console.warn("[PLZ-Widget] Home: Filter zurückgesetzt → PLZ=00000");
       } catch(e) {
         console.warn("[PLZ-Widget] Home: Filter-Reset fehlgeschlagen:", e);
       }
@@ -3472,20 +3566,18 @@ class GeoMapWidget extends HTMLElement {
       // Wiederholte SAC-Refreshes im Bootstrap-Zustand ignorieren
       // (SAC schickt nach ~17s einen zweiten Refresh mit denselben Daten)
     } else {
-      // Phase 2: Erhebungsdaten erwartet.
-      // SAC schickt nach removeDimensionFilter zunächst die gecachten Bootstrap-Rows
-      // (gleiche Anzahl wie PLZ=00000 Query). Diese ignorieren und auf echte Daten warten.
       const rowCount = this._myDataSource?.data?.length ?? 0;
-      if (rowCount <= (this._totalRowCount ?? 0) && rowCount > 0) {
-        console.warn("[PLZ-Widget] set myDataSource Phase 2: SAC-Cache-Response (" + rowCount + " Rows = Bootstrap-Stand) – ignoriere, warte auf echte Daten");
-        // Poll starten falls noch nicht aktiv
+      const e2e      = this._filterSwitchTime ? ((Date.now() - this._filterSwitchTime) / 1000).toFixed(1) + "s" : "–";
+      if (this._doppelbestreuungAktiv && rowCount <= (this._totalRowCount ?? 0) && rowCount > 0) {
+        console.warn("[PLZ-Widget] ⚡ set myDataSource: SAC-Cache (" + rowCount.toLocaleString("de-DE") + " Rows / E2E: " + e2e + ") – warte auf echte Daten");
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
       if (this._renderInProgress) {
-        console.warn("[PLZ-Widget] set myDataSource: render läuft bereits – ignoriere wiederholten SAC-Refresh");
+        console.warn("[PLZ-Widget] ↩ set myDataSource: render läuft – ignoriere SAC-Refresh (" + rowCount.toLocaleString("de-DE") + " Rows)");
         return;
       }
+      console.warn("[PLZ-Widget] ✅ set myDataSource Phase 2: " + rowCount.toLocaleString("de-DE") + " Rows | E2E: " + e2e + " | " + (this._doppelbestreuungAktiv ? "mit Doppelbestreuung" : "ohne Doppelbestreuung"));
       this._fullDataLoaded = false;
       this._renderInProgress = true;
       this.render().finally(() => { this._renderInProgress = false; });
@@ -3496,24 +3588,34 @@ class GeoMapWidget extends HTMLElement {
     if (this._dataPollTimer) return;
     this._updateLoaderPhase(1, "Warte auf Daten…");
     const start = Date.now();
-    console.warn("[PLZ-Widget] _scheduleDataPoll gestartet – warte auf BW-Daten…");
+    const mode = this._fullDataLoaded
+      ? (this._doppelbestreuungAktiv ? "Phase 2 – mit Doppelbestreuung" : "Phase 2 – ohne Doppelbestreuung")
+      : "Phase 1 – Bootstrap";
+    console.warn("[PLZ-Widget] ⏳ Poll gestartet [" + mode + "]");
 
     const tick = () => {
       if (this._myDataSource?.state === "success") {
         const rowCount = this._myDataSource?.data?.length ?? 0;
 
-        // Phase 2 + Cache-Detection: SAC schickt nach removeDimensionFilter zunächst
-        // die gecachten Bootstrap-Rows (= _totalRowCount). Auf echte Daten warten.
-        if (this._fullDataLoaded && rowCount <= (this._totalRowCount ?? 0) && rowCount > 0) {
+        // Cache-Detection nur bei Doppelbestreuung EIN:
+        // Bei AUS liefert ErhID-Filter evtl. weniger Rows als Bootstrap → kein Check
+        if (this._fullDataLoaded && this._doppelbestreuungAktiv &&
+            rowCount <= (this._totalRowCount ?? 0) && rowCount > 0) {
           const waited = ((Date.now() - start) / 1000).toFixed(1);
-          console.warn("[PLZ-Widget] Poll Phase 2: SAC-Cache (" + rowCount + " Rows nach " + waited + "s) – warte weiter");
-          return; // Timer läuft weiter
+          console.warn("[PLZ-Widget] ⚡ SAC-Cache (" + rowCount.toLocaleString("de-DE") + " Rows / " + waited + "s) – warte auf echten BW-Query");
+          return;
         }
 
         clearInterval(this._dataPollTimer);
         this._dataPollTimer = null;
         const waited = ((Date.now() - start) / 1000).toFixed(1);
-        console.warn("[PLZ-Widget] BW-Daten empfangen nach " + waited + "s | Rows: " + (rowCount.toLocaleString("de-DE")));
+        const e2e    = this._filterSwitchTime ? ((Date.now() - this._filterSwitchTime) / 1000).toFixed(1) : "–";
+
+        console.group("[PLZ-Widget] ✅ BW-Daten empfangen [" + mode + "]");
+        console.warn("  Rows:            " + rowCount.toLocaleString("de-DE") + (this._totalRowCount ? " (Bootstrap: " + this._totalRowCount.toLocaleString("de-DE") + ")" : ""));
+        console.warn("  Poll-Wartezeit:  " + waited + "s");
+        if (this._filterSwitchTime) console.warn("  End-to-End:      " + e2e + "s (ab Filter-Switch)");
+        console.groupEnd();
 
         if (!this._fullDataLoaded) {
           if (!this._bootstrapDone) {
@@ -3535,7 +3637,7 @@ class GeoMapWidget extends HTMLElement {
             this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
           } else {
             const currentRows = this._myDataSource?.data?.length ?? 0;
-            const totalRows = this._totalRowCount ?? 0;
+            const totalRows   = this._totalRowCount ?? 0;
             this._updateLoaderPhase(1, "Erhebungsdaten werden geladen…");
             this._updateDataLoadProgress(currentRows, totalRows);
           }
