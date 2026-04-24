@@ -846,6 +846,25 @@ class GeoMapWidget extends HTMLElement {
       console.warn("[PLZ-Widget] ▶ Filter gesetzt (ohne Doppelbestreuung): " + ok.join(" | ") + " [" + (performance.now()-t0).toFixed(0) + "ms]");
     } else {
       // ── Mit Doppelbestreuung: nur Jahr + Nummer ──────────────────────
+      // FIX: ErhebungsID-Filter (BGFBNR) aus einem vorigen "ohne Doppelbestreuung"-Lauf
+      // explizit entfernen – sonst bleibt er als versteckter BW-Filter aktiv und
+      // BW liefert nur die eigene Erhebung (~4k) statt alle Erhebungen des Zeitraums (~27k).
+      const erhKeys = ["BGFBNR", "dimension_erhebung_0", "dimension_erhebung"];
+      if (this._erhIDFilterKey) {
+        try {
+          ds.removeDimensionFilter(this._erhIDFilterKey);
+          console.warn("[PLZ-Widget] ▶ ErhID-Filter entfernt (Key: " + this._erhIDFilterKey + ") → Doppelbestreuung aktiv");
+          this._erhIDFilterKey = null;
+        } catch(e) {
+          console.warn("[PLZ-Widget] ✖ ErhID-Filter konnte nicht entfernt werden:", e);
+        }
+      } else {
+        // Fallback: alle bekannten Keys versuchen (z.B. nach Page-Reload)
+        for (const key of erhKeys) {
+          try { ds.removeDimensionFilter(key); this._erhIDFilterKey = null; break; } catch(e) {}
+        }
+      }
+
       const jahrKeys   = ["0CALYEAR", "dimension_jahr_0",            "dimension_jahr"];
       const nummerKeys = ["BERHBNUM", "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
 
