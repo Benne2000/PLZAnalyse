@@ -96,6 +96,22 @@ let neighbours = true;
       #filter-button.ready:hover { background: var(--red-light); box-shadow: var(--shadow-red); transform: translateY(-1px); }
       #filter-button.ready:active { transform: translateY(0); box-shadow: none; }
 
+      .filter-footer {
+        margin-top: auto; padding-top: 10px;
+        border-top: 1px solid var(--gray-100);
+        display: flex; gap: 6px; flex-shrink: 0;
+      }
+      .filter-footer-btn {
+        flex: 1; padding: 8px 6px; font-size: 0.78rem;
+        font-family: var(--font); font-weight: 600;
+        border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
+        background: var(--white); color: var(--gray-600); cursor: pointer;
+        transition: background 0.18s, border-color 0.18s, color 0.18s;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+        white-space: nowrap;
+      }
+      .filter-footer-btn:hover { background: var(--red-bg); border-color: var(--red); color: var(--red); }
+      .filter-footer-btn.home-btn:hover { background: var(--red-bg); border-color: var(--red); color: var(--red); }
       .info-toggle-btn {
         width: 100%; margin-top: 8px; padding: 7px 12px; font-size: 0.8rem;
         font-family: var(--font); font-weight: 600; color: var(--red);
@@ -296,7 +312,7 @@ let neighbours = true;
       .side-popup {
         position: absolute; right: 0; top: 0;
         width: 26%;
-        height: calc(100% - 26% - 10px);
+        height: calc(100% - 36% - 10px);
         max-height: 68%;
         background: var(--white); border-left: 3px solid var(--red);
         border-top-left-radius: var(--radius-xl); border-bottom-left-radius: var(--radius-xl);
@@ -370,7 +386,7 @@ let neighbours = true;
       }
 
       #map-control-panel {
-        position: absolute; right: 0; bottom: 0; width: 26%; height: 25%; max-height: 58%;
+        position: absolute; right: 0; bottom: 0; width: 26%; height: 25%; max-height: 68%;
         overflow-y: auto; background: rgba(255,255,255,0.97); backdrop-filter: blur(8px);
         border-left: 1px solid var(--gray-200); border-top: 1px solid var(--gray-200);
         border-top-left-radius: var(--radius-xl); padding: 14px; box-sizing: border-box;
@@ -379,7 +395,8 @@ let neighbours = true;
         box-shadow: -2px -2px 16px rgba(0,0,0,0.08);
         scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
       }
-      #map-control-panel.panel-large  { height: 58%; }
+      #map-control-panel.panel-auto { height: auto; max-height: 68%; overflow-y: visible; }
+      #map-control-panel.panel-large  { height: 68%; }
       #map-control-panel.panel-medium { height: 30%; }
       #map-control-panel::before {
         content: ''; display: block; position: absolute; top: 0; left: 24px; right: 0; height: 2px;
@@ -1564,7 +1581,13 @@ class GeoMapWidget extends HTMLElement {
       this.closeAllPopups(); this.currentMapMode = "umsatz-multi"; this.activePopupType = "umsatz";
       if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
       wkExtra.style.display = "none"; umsatzOptionsRow.classList.remove("hidden");
-      umsatzPanel.classList.remove("hidden"); panel.classList.remove("panel-medium"); panel.classList.add("panel-large");
+      umsatzPanel.classList.remove("hidden");
+      // Kein Popup offen → panel-auto (passt sich an Inhalt an, keine Scrollbar)
+      if (!this._activePopupPLZ) {
+        panel.classList.remove("panel-medium","panel-large"); panel.classList.add("panel-auto");
+      } else {
+        panel.classList.remove("panel-medium","panel-auto"); panel.classList.add("panel-large");
+      }
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
       btnAbs.classList.add("active"); btnWA.classList.add("disabled");
@@ -1873,7 +1896,7 @@ class GeoMapWidget extends HTMLElement {
     this._activePopupPLZ = plz; this._activePopupType = 'umsatz';
 
     const panel = this._shadowRoot.getElementById("map-control-panel");
-    panel.classList.remove("panel-large"); panel.classList.add("panel-medium");
+    panel.classList.remove("panel-large","panel-auto"); panel.classList.add("panel-medium");
 
     const isWerbungMode = this.umsatzMainMode === "werbung";
     const useWerbe  = this.useWerbeUmsatz  === true;
@@ -2003,6 +2026,9 @@ class GeoMapWidget extends HTMLElement {
         if (l) this.applyStyleToLayer(l);
         this._highlightedPLZ = null;
       }
+      // Ohne Popup: Panel auf auto-Höhe → keine Scrollbar im Umsatz-Modus
+      const p = this._shadowRoot.getElementById("map-control-panel");
+      if (p) { p.classList.remove("panel-medium"); p.classList.add("panel-auto"); }
     };
   }
 
@@ -2356,17 +2382,39 @@ class GeoMapWidget extends HTMLElement {
       });
     }
 
-    let existingBtn=this._shadowRoot.getElementById("info-toggle-btn");
-    if(!existingBtn){
-      const infoBtn=document.createElement("button"); infoBtn.id="info-toggle-btn"; infoBtn.className="info-toggle-btn";
-      infoBtn.innerHTML=`↕ Erhebungsübersicht`;
-      infoBtn.addEventListener("click",()=>{
-        const nlBox=this._shadowRoot.getElementById("nl-info-container"),filter=this._shadowRoot.querySelector(".filter-container");
-        if(!nlBox) return;
-        if(nlBox.classList.contains("show")){nlBox.classList.remove("show");filter.classList.remove("nl-info-active");}
-        else{this.prepareErhebungsInfo();this.renderErhebungsInfoTable();nlBox.classList.add("show");filter.classList.add("nl-info-active");}
+    if (!this._shadowRoot.getElementById("filter-sticky-footer")) {
+      const footer = document.createElement("div");
+      footer.id = "filter-sticky-footer";
+      footer.className = "filter-footer";
+
+      // Hauptmenü-Button
+      const homeBtn = document.createElement("button");
+      homeBtn.className = "filter-footer-btn home-btn";
+      homeBtn.innerHTML = `← Hauptmenü`;
+      homeBtn.title = "Zurück zum Hauptmenü";
+      homeBtn.addEventListener("click", () => this._resetToHome());
+
+      // Übersichts-Button
+      const overviewBtn = document.createElement("button");
+      overviewBtn.id = "info-toggle-btn";
+      overviewBtn.className = "filter-footer-btn";
+      overviewBtn.innerHTML = `📊 Übersicht`;
+      overviewBtn.title = "Erhebungsübersicht";
+      overviewBtn.addEventListener("click", () => {
+        const nlBox = this._shadowRoot.getElementById("nl-info-container");
+        const filter = this._shadowRoot.querySelector(".filter-container");
+        if (!nlBox) return;
+        if (nlBox.classList.contains("show")) {
+          nlBox.classList.remove("show"); filter.classList.remove("nl-info-active");
+        } else {
+          this.prepareErhebungsInfo(); this.renderErhebungsInfoTable();
+          nlBox.classList.add("show"); filter.classList.add("nl-info-active");
+        }
       });
-      this._shadowRoot.querySelector(".filter-container").appendChild(infoBtn);
+
+      footer.appendChild(homeBtn);
+      footer.appendChild(overviewBtn);
+      this._shadowRoot.querySelector(".filter-container").appendChild(footer);
     }
   }
 
