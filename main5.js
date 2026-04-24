@@ -994,6 +994,8 @@ class GeoMapWidget extends HTMLElement {
 
     this._totalRowCount = rows.length;
     this._fullIndexReady = true;
+    // Bootstrap-Rows cachen → Home-Reset kann sofort wiederverwenden ohne neuen BW-Query
+    this._cachedBootstrapRows = rows;
 
     console.warn("  Dauer: " + (performance.now() - t0).toFixed(0) + "ms – Widget bereit");
     console.groupEnd();
@@ -3202,11 +3204,20 @@ class GeoMapWidget extends HTMLElement {
       }
     }
 
-    // Flag setzen: nächste Daten müssen ~164 Bootstrap-Rows sein, nicht gecachte Erhebungs-Rows
-    this._homeResetPending = true;
-    // Poll starten – SAC liefert nach dem PLZ=00000-Filter die Bootstrap-Rows
-    // die dann _bootstrapFromPLZ00000() aufruft und die Dropdowns befüllt
-    if (!this._dataPollTimer) this._scheduleDataPoll();
+    // Gecachte Bootstrap-Rows direkt nutzen → kein neuer BW-Query nötig
+    if (this._cachedBootstrapRows?.length > 0) {
+      console.warn("[PLZ-Widget] Home: Bootstrap aus Cache (" + this._cachedBootstrapRows.length.toLocaleString("de-DE") + " Rows) – kein BW-Query nötig");
+      // Kurzes Timeout damit SAC den PLZ=00000-Filter verarbeiten kann,
+      // bevor wir die UI aufbauen (verhindert Race-Condition beim nächsten loadErhebung)
+      setTimeout(() => {
+        this._bootstrapDone = false;
+        this._bootstrapFromPLZ00000(this._cachedBootstrapRows);
+      }, 50);
+    } else {
+      // Fallback: kein Cache → auf BW-Query warten
+      this._homeResetPending = true;
+      if (!this._dataPollTimer) this._scheduleDataPoll();
+    }
   }
 
   _showDoppelTooltip(plz, event, container) {
