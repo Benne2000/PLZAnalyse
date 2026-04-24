@@ -753,7 +753,7 @@ let neighbours = true;
       </div>
       <div id="panel-footer">
         <button id="panel-home-btn" class="panel-footer-btn">← Hauptmenü</button>
-        <button id="panel-overview-btn" class="panel-footer-btn">📊 Übersicht</button>
+        <button id="panel-overview-btn" class="panel-footer-btn">📋 Übersicht</button>
       </div>
     </div>
     `;
@@ -1355,8 +1355,7 @@ class GeoMapWidget extends HTMLElement {
       tr.style.cursor = "pointer";
       tr.dataset.plz = plz;
       tr.addEventListener("click", () => {
-        const popupOV=this._shadowRoot.getElementById("side-popup-overview");
-        if(popupOV){popupOV.classList.remove("show");popupOV.classList.add("hidden");}
+        this.closeAllPopups();
         this.highlightMapArea(plz);
         this.openPopupFromTable(plz);
         this.highlightTableRow(tr);
@@ -1583,7 +1582,7 @@ class GeoMapWidget extends HTMLElement {
       btnWK.classList.add("active"); btnUmsatz.classList.remove("active");
       this.currentMapMode = "wk"; this.activePopupType = "wk";
       wkExtra.style.display = ""; umsatzOptionsRow.classList.add("hidden");
-      umsatzPanel.classList.add("hidden"); panel.classList.remove("panel-large","panel-medium");
+      umsatzPanel.classList.add("hidden"); panel.classList.remove("panel-large","panel-medium","panel-auto");
       this.showCritical = chkDoppel.checked;
       this.umsatzDarstellung = "abs";
       darstellungSwitch.querySelectorAll("span").forEach(s => s.classList.remove("active"));
@@ -1685,6 +1684,8 @@ class GeoMapWidget extends HTMLElement {
   _rerenderActivePopup() {
     if (!this._activePopupPLZ) return;
     const plz = this._activePopupPLZ;
+    // Overview-Popup: immer neu rendern
+    if (this._activePopupType === 'overview') { this.showOverviewPopup(); return; }
     if (this._activePopupType === 'umsatz' || this.currentMapMode === 'umsatz-multi' || this.currentMapMode === 'werbeanteil') {
       const values = this.filteredPLZWerte?.[plz];
       if (values) this.showUmsatzPopup(plz, values);
@@ -1861,9 +1862,11 @@ class GeoMapWidget extends HTMLElement {
     const plz = String(feature.properties?.plz??"").padStart(5,"0").trim();
     const note = feature.properties?.note || "Keine Notiz";
     this._activePopupPLZ = plz; this._activePopupType = 'wk';
-
-    const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
-    if (popupUmsatz) { popupUmsatz.classList.remove("show"); popupUmsatz.classList.add("hidden"); }
+    // Alle anderen Popups schließen bevor WK-Popup öffnet
+    ["side-popup-umsatz","side-popup-overview"].forEach(id => {
+      const el = this._shadowRoot.getElementById(id);
+      if (el) { el.classList.remove("show"); el.classList.add("hidden"); }
+    });
     this._syncPanelState();
     const umsatz = this.filteredPLZWerte?.[plz] || {};
     let symbol = "📍";
@@ -1909,11 +1912,12 @@ class GeoMapWidget extends HTMLElement {
 
   showUmsatzPopup(plz, values) {
     const popup = this._shadowRoot.getElementById("side-popup-umsatz");
-    const popupWK = this._shadowRoot.getElementById("side-popup");
-    if (popupWK) { popupWK.classList.remove("show"); popupWK.classList.add("hidden"); }
+    // Alle anderen Popups schließen bevor Umsatz-Popup öffnet
+    ["side-popup","side-popup-overview"].forEach(id => {
+      const el = this._shadowRoot.getElementById(id);
+      if (el) { el.classList.remove("show"); el.classList.add("hidden"); }
+    });
     this._activePopupPLZ = plz; this._activePopupType = 'umsatz';
-
-    const panel = this._shadowRoot.getElementById("map-control-panel");
     this._syncPanelState();
 
     const isWerbungMode = this.umsatzMainMode === "werbung";
@@ -2150,12 +2154,8 @@ class GeoMapWidget extends HTMLElement {
       if(layer._path) layer._path.setAttribute("pointer-events","auto");
       layer.off("click");
       layer.on("click",()=>{
-        const popupWK=this._shadowRoot.getElementById("side-popup"),popupU=this._shadowRoot.getElementById("side-popup-umsatz");
-        const popupOV=this._shadowRoot.getElementById("side-popup-overview");
-        popupWK?.classList.remove("show");popupWK?.classList.add("hidden");popupU?.classList.remove("show");popupU?.classList.add("hidden");
-        if(popupOV){popupOV.classList.remove("show");popupOV.classList.add("hidden");}
-        if(this.currentMapMode==="umsatz-multi"||this.currentMapMode==="werbeanteil"){this.activePopupType="umsatz";this.showEmptyUmsatzPopup(plz);return;}
-        this.activePopupType="wk";this.showPopup(layer.feature,{});
+        if(this.currentMapMode==="umsatz-multi"||this.currentMapMode==="werbeanteil"){this.closeAllPopups();this.showEmptyUmsatzPopup(plz);return;}
+        this.closeAllPopups();this.showPopup(layer.feature,{});
       });
       this._removeCriticalMarker(plz); return;
     }
@@ -2166,15 +2166,12 @@ class GeoMapWidget extends HTMLElement {
     layer.off("click");
     layer.on("click",()=>{
       const values=this.filteredPLZWerte?.[plz];
-      const popupWK=this._shadowRoot.getElementById("side-popup"),popupU=this._shadowRoot.getElementById("side-popup-umsatz");
-      const popupOV=this._shadowRoot.getElementById("side-popup-overview");
-      popupWK?.classList.remove("show");popupWK?.classList.add("hidden");popupU?.classList.remove("show");popupU?.classList.add("hidden");
-      if(popupOV){popupOV.classList.remove("show");popupOV.classList.add("hidden");}
+      this.closeAllPopups();
       this.highlightMapArea(plz); this.highlightTableRowByPLZ(plz);
       if(this.currentMapMode==="umsatz-multi"||this.currentMapMode==="werbeanteil"){
-        this.activePopupType="umsatz"; values?this.showUmsatzPopup(plz,values):this.showEmptyUmsatzPopup(plz); return;
+        values?this.showUmsatzPopup(plz,values):this.showEmptyUmsatzPopup(plz); return;
       }
-      this.activePopupType="wk";this.showPopup(layer.feature,this.filteredKennwerte?.[plz]||{});
+      this.showPopup(layer.feature,this.filteredKennwerte?.[plz]||{});
     });
 
     const showCritical=this.currentMapMode==="wk"&&this.showCritical;
@@ -3390,11 +3387,17 @@ class GeoMapWidget extends HTMLElement {
   }
 
   closeAllPopups() {
-    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.add("hidden");
-    this._shadowRoot.getElementById("side-popup")?.classList.add("hidden");
-    const ov = this._shadowRoot.getElementById("side-popup-overview");
-    if (ov) { ov.classList.remove("show"); ov.classList.add("hidden"); }
-    this._activePopupPLZ=null; this._activePopupType=null;
+    ["side-popup","side-popup-umsatz","side-popup-overview"].forEach(id => {
+      const el = this._shadowRoot.getElementById(id);
+      if (el) { el.classList.remove("show"); el.classList.add("hidden"); }
+    });
+    if (this._highlightedPLZ) {
+      const l = this._layerByPLZ?.[this._highlightedPLZ];
+      if (l) this.applyStyleToLayer(l);
+      this._highlightedPLZ = null;
+    }
+    this._activePopupPLZ = null; this._activePopupType = null;
+    this._syncPanelState();
   }
 
   showOverviewPopup() {
@@ -3402,12 +3405,17 @@ class GeoMapWidget extends HTMLElement {
     const popup = this._shadowRoot.getElementById("side-popup-overview");
     if (!popup) return;
 
-    // Andere Popups schließen
-    this._shadowRoot.getElementById("side-popup")?.classList.remove("show");
-    this._shadowRoot.getElementById("side-popup")?.classList.add("hidden");
-    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.remove("show");
-    this._shadowRoot.getElementById("side-popup-umsatz")?.classList.add("hidden");
-    // Overview-Popup als "aktiv" markieren damit _syncPanelState Panel klein hält
+    // Alle anderen Popups schließen bevor Overview öffnet
+    ["side-popup","side-popup-umsatz"].forEach(id => {
+      const el = this._shadowRoot.getElementById(id);
+      if (el) { el.classList.remove("show"); el.classList.add("hidden"); }
+    });
+    if (this._highlightedPLZ) {
+      const l = this._layerByPLZ?.[this._highlightedPLZ];
+      if (l) this.applyStyleToLayer(l);
+      this._highlightedPLZ = null;
+    }
+    // Overview als aktiv markieren damit _syncPanelState Panel klein hält
     this._activePopupPLZ = "__overview__"; this._activePopupType = "overview";
 
     // Header-Titel: Erhebungsname oder gefilterte NLs
