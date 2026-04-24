@@ -1864,8 +1864,7 @@ class GeoMapWidget extends HTMLElement {
 
     const popupUmsatz = this._shadowRoot.getElementById("side-popup-umsatz");
     if (popupUmsatz) { popupUmsatz.classList.remove("show"); popupUmsatz.classList.add("hidden"); }
-    const panel = this._shadowRoot.getElementById("map-control-panel");
-    panel.classList.remove("panel-large"); panel.classList.add("panel-medium");
+    this._syncPanelState();
     const umsatz = this.filteredPLZWerte?.[plz] || {};
     let symbol = "📍";
     if (daten?.isCritical) symbol = "⚠️"; else if (daten?.isHZ) symbol = "✅";
@@ -1904,6 +1903,7 @@ class GeoMapWidget extends HTMLElement {
       sidePopup.classList.remove("show"); sidePopup.classList.add("hidden");
       this._activePopupPLZ = null; this._activePopupType = null;
       if (this._highlightedPLZ) { const l = this._layerByPLZ?.[this._highlightedPLZ]; if (l) this.applyStyleToLayer(l); this._highlightedPLZ = null; }
+      this._syncPanelState();
     };
   }
 
@@ -2938,13 +2938,16 @@ class GeoMapWidget extends HTMLElement {
   // Zentrales Panel-State-Management für den Umsatz-Modus:
   // Kein Popup offen → panel fährt hoch (auto), Popup offen → panel-large (Platz lassen)
   _syncPanelState() {
+    // Nur im Umsatz-Modus relevant
     if (this.currentMapMode !== "umsatz-multi" && this.currentMapMode !== "werbeanteil") return;
     const panel = this._shadowRoot.getElementById("map-control-panel");
     if (!panel) return;
     const hasPopup = this._activePopupPLZ != null;
     if (hasPopup) {
-      panel.classList.remove("panel-auto"); panel.classList.add("panel-large");
+      // Popup offen: Panel verkleinern damit Popup sichtbar bleibt
+      panel.classList.remove("panel-auto","panel-large"); panel.classList.add("panel-medium");
     } else {
+      // Kein Popup: Panel auf Inhaltshöhe (kein Scrollbalken)
       panel.classList.remove("panel-large","panel-medium"); panel.classList.add("panel-auto");
     }
   }
