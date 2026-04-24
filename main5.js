@@ -476,25 +476,61 @@ let neighbours = true;
 
       /* ── Doppelbestreuungs-Toggle ──────────────────────────────── */
       #doppel-toggle-bar {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 6px 10px 6px 12px;
-        background: var(--gray-50); border-bottom: 1px solid var(--gray-100);
-        gap: 8px; flex-shrink: 0;
+        margin-top: 10px; flex-shrink: 0;
+        border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
+        background: var(--gray-50); overflow: hidden;
       }
+      #doppel-toggle-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 10px 6px 10px;
+      }
+      .doppel-toggle-icon {
+        font-size: 1rem; line-height: 1; flex-shrink: 0;
+      }
+      .doppel-toggle-title-block { display: flex; flex-direction: column; gap: 1px; flex: 1; }
       .doppel-toggle-label {
-        font-size: 0.72rem; font-weight: 700; color: var(--gray-600);
-        letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap;
+        font-size: 0.72rem; font-weight: 700; color: var(--gray-700);
+        letter-spacing: 0.04em; text-transform: uppercase;
       }
-      .doppel-toggle-group { display: flex; gap: 3px; }
-      .doppel-btn {
-        padding: 3px 10px; font-size: 0.72rem; font-weight: 600;
-        border: 1.5px solid var(--gray-200); border-radius: 20px;
-        background: white; color: var(--gray-500); cursor: pointer;
-        transition: all 0.18s ease; white-space: nowrap;
+      .doppel-toggle-subtitle {
+        font-size: 0.67rem; color: var(--gray-500); font-weight: 400;
       }
-      .doppel-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-bg); }
-      .doppel-btn.active { background: var(--red); color: white; border-color: var(--red); }
-      .doppel-btn.active:hover { background: var(--red-light); border-color: var(--red-light); }
+      #doppel-toggle-options {
+        display: flex; flex-direction: column; gap: 0;
+        border-top: 1px solid var(--gray-200);
+      }
+      .doppel-option {
+        display: flex; align-items: center; gap: 10px;
+        padding: 7px 10px; cursor: pointer;
+        transition: background 0.15s;
+        border-bottom: 1px solid var(--gray-100);
+        background: white;
+      }
+      .doppel-option:last-child { border-bottom: none; }
+      .doppel-option:hover { background: var(--red-bg); }
+      .doppel-option.active { background: var(--red-bg); }
+      .doppel-option-radio {
+        width: 14px; height: 14px; border-radius: 50%;
+        border: 2px solid var(--gray-300); flex-shrink: 0;
+        transition: border-color 0.15s, background 0.15s;
+        position: relative;
+      }
+      .doppel-option.active .doppel-option-radio {
+        border-color: var(--red); background: var(--red);
+        box-shadow: 0 0 0 3px rgba(180,24,33,0.12);
+      }
+      .doppel-option.active .doppel-option-radio::after {
+        content: ''; position: absolute; inset: 2px;
+        border-radius: 50%; background: white;
+      }
+      .doppel-option-text { display: flex; flex-direction: column; gap: 1px; }
+      .doppel-option-name {
+        font-size: 0.78rem; font-weight: 600; color: var(--gray-800);
+      }
+      .doppel-option.active .doppel-option-name { color: var(--red); }
+      .doppel-option-desc {
+        font-size: 0.67rem; color: var(--gray-500); line-height: 1.3;
+      }
       #cinematic-loader .loader-data-progress {
         width: 240px; margin-top: 14px; display: flex; flex-direction: column; gap: 5px;
       }
@@ -807,7 +843,9 @@ class GeoMapWidget extends HTMLElement {
   }
 
   // Setzt initialen PLZ=00000 Filter beim Widget-Start.
-  // BW liefert dann nur ~8 Rows statt 27k → Bootstrap in <1s.
+  // BW liefert dann nur ~161 Rows statt 27k → Bootstrap in <1s.
+  // FIX: Entfernt zuerst alle Erhebungs-Filter, die SAC session-übergreifend
+  // persistiert – sonst bekommt der Bootstrap bereits gefilterte Daten (~3k statt 161).
   _applyPLZ00000Filter() {
     const ds = this._getDataSource();
     if (!ds) {
@@ -815,10 +853,28 @@ class GeoMapWidget extends HTMLElement {
       return;
     }
     try {
-      ds.setDimensionFilter("dimension_plz", ["00000"]);
-      console.warn("[PLZ-Widget] PLZ=00000 Filter gesetzt – warte auf ~8 Bootstrap-Rows");
+      // Alle bekannten Erhebungs-Filter aus vorherigen Sessions entfernen
+      const staleKeys = ["BGFBNR", "dimension_erhebung_0", "dimension_erhebung",
+                         "0CALYEAR", "dimension_jahr_0", "dimension_jahr",
+                         "BERHBNUM", "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
+      for (const key of staleKeys) {
+        try { ds.removeDimensionFilter(key); } catch(e) { /* nicht gesetzt – ok */ }
+      }
+      // PLZ=00000 setzen – alle Key-Varianten versuchen
+      const plzKeys = ["0POSTALCODE", "dimension_plz_0", "dimension_plz"];
+      let plzSet = false;
+      for (const key of plzKeys) {
+        try {
+          ds.setDimensionFilter(key, ["00000"]);
+          this._plzFilterKey = key;
+          plzSet = true;
+          console.warn("[PLZ-Widget] PLZ=00000 Filter gesetzt (Key: " + key + ") – warte auf ~161 Bootstrap-Rows");
+          break;
+        } catch(e) {}
+      }
+      if (!plzSet) console.warn("[PLZ-Widget] PLZ=00000 Filter konnte nicht gesetzt werden");
     } catch(e) {
-      console.warn("[PLZ-Widget] PLZ=00000 Filter fehlgeschlagen:", e);
+      console.warn("[PLZ-Widget] _applyPLZ00000Filter fehlgeschlagen:", e);
     }
   }
 
@@ -2181,30 +2237,45 @@ class GeoMapWidget extends HTMLElement {
       const bar = document.createElement("div");
       bar.id = "doppel-toggle-bar";
       bar.innerHTML = `
-        <div class="doppel-toggle-label">Doppelbestreuung</div>
-        <div class="doppel-toggle-group">
-          <button id="doppel-btn-aus" class="doppel-btn active"
-            title="Nur Daten der gewählten Erhebung werden geladen. Schnellste Ladezeit.">
-            Aus
-          </button>
-          <button id="doppel-btn-ein" class="doppel-btn"
-            title="Überschneidungen mit anderen Erhebungen desselben Zeitraums werden erkannt. Etwas längere Ladezeit, da mehr Daten geladen werden.">
-            Ein
-          </button>
+        <div id="doppel-toggle-header">
+          <span class="doppel-toggle-icon">⚠️</span>
+          <div class="doppel-toggle-title-block">
+            <span class="doppel-toggle-label">Doppelbestreuung</span>
+            <span class="doppel-toggle-subtitle">Erkennung von Überschneidungen</span>
+          </div>
+        </div>
+        <div id="doppel-toggle-options">
+          <div class="doppel-option active" id="doppel-opt-aus">
+            <div class="doppel-option-radio"></div>
+            <div class="doppel-option-text">
+              <span class="doppel-option-name">Ohne Doppelbestreuung</span>
+              <span class="doppel-option-desc">Nur eigene Erhebung · Schnellste Ladezeit</span>
+            </div>
+          </div>
+          <div class="doppel-option" id="doppel-opt-ein">
+            <div class="doppel-option-radio"></div>
+            <div class="doppel-option-text">
+              <span class="doppel-option-name">Mit Doppelbestreuung</span>
+              <span class="doppel-option-desc">Alle Erhebungen des Zeitraums · Längere Ladezeit</span>
+            </div>
+          </div>
         </div>`;
-      filterContainer.insertBefore(bar, filterContainer.firstChild);
+      // Toggle vor den Anzeigen-Button einfügen
+      const filterBtn_ = filterContainer.querySelector("#filter-button");
+      if (filterBtn_) filterContainer.insertBefore(bar, filterBtn_);
+      else filterContainer.appendChild(bar);
 
-      const btnAus = bar.querySelector("#doppel-btn-aus");
-      const btnEin = bar.querySelector("#doppel-btn-ein");
+      const optAus = bar.querySelector("#doppel-opt-aus");
+      const optEin = bar.querySelector("#doppel-opt-ein");
       this._doppelbestreuungAktiv = false; // default: aus
 
-      btnAus.addEventListener("click", () => {
+      optAus.addEventListener("click", () => {
         this._doppelbestreuungAktiv = false;
-        btnAus.classList.add("active"); btnEin.classList.remove("active");
+        optAus.classList.add("active"); optEin.classList.remove("active");
       });
-      btnEin.addEventListener("click", () => {
+      optEin.addEventListener("click", () => {
         this._doppelbestreuungAktiv = true;
-        btnEin.classList.add("active"); btnAus.classList.remove("active");
+        optEin.classList.add("active"); optAus.classList.remove("active");
       });
     }
 
@@ -2782,12 +2853,7 @@ class GeoMapWidget extends HTMLElement {
       <div class="loader-logo"><div class="loader-core"></div></div>
       <div class="loader-phase" id="loader-phase-text">Wird geladen…</div>
       <div class="loader-bar-track"><div class="loader-bar-fill" id="loader-bar"></div></div>
-      <div class="loader-data-progress" id="loader-data-progress" style="display:none">
-        <div class="loader-data-bar-track">
-          <div class="loader-data-bar-fill" id="loader-data-bar"></div>
-        </div>
-        <div class="loader-data-label" id="loader-data-label">0 von ? Datensätzen</div>
-      </div>
+
       <div class="loader-dots">
         <div class="loader-dot" data-phase="1"><div class="dot-circle"></div><div class="dot-label">Daten</div></div>
         <div class="loader-dot" data-phase="2"><div class="dot-circle"></div><div class="dot-label">Karte</div></div>
@@ -3095,18 +3161,35 @@ class GeoMapWidget extends HTMLElement {
     this._fullDataLoaded = false;
     this._bootstrapDone = false;
     this._fullIndexReady = false;
+    this._dropdownsInitialized = false; // Dropdowns beim nächsten Bootstrap neu aufbauen
     if (this._loadSecTimer) { clearInterval(this._loadSecTimer); this._loadSecTimer = null; }
+
+    // Dropdowns zurücksetzen damit User eine neue Auswahl treffen muss
+    const erhSelect    = this._shadowRoot.getElementById("erhebung-select");
+    const jahrSelect   = this._shadowRoot.getElementById("jahr-select");
+    const nummerSelect = this._shadowRoot.getElementById("nummer-select");
+    const filterBtn    = this._shadowRoot.getElementById("filter-button");
+    if (erhSelect)    { erhSelect.innerHTML = ""; const ph = document.createElement("option"); ph.textContent = "– ErhebungsID wählen –"; ph.disabled = true; ph.selected = true; erhSelect.appendChild(ph); }
+    if (jahrSelect)   { jahrSelect.innerHTML = ""; jahrSelect.disabled = true; const ph = document.createElement("option"); ph.textContent = "– Jahr wählen –"; ph.disabled = true; ph.selected = true; jahrSelect.appendChild(ph); }
+    if (nummerSelect) { nummerSelect.innerHTML = ""; nummerSelect.disabled = true; const ph = document.createElement("option"); ph.textContent = "– Nummer wählen –"; ph.disabled = true; ph.selected = true; nummerSelect.appendChild(ph); }
+    filterBtn?.classList.remove("ready");
+
     const ds = this._getDataSource();
     if (ds) {
       try {
-        // Alle ggf. gesetzten Dimension-Filter entfernen
-        if (this._erhIDFilterKey)  { try { ds.removeDimensionFilter(this._erhIDFilterKey);  } catch(e) {} this._erhIDFilterKey  = null; }
-        if (this._jahrFilterKey)   { try { ds.removeDimensionFilter(this._jahrFilterKey);   } catch(e) {} this._jahrFilterKey   = null; }
-        if (this._nummerFilterKey) { try { ds.removeDimensionFilter(this._nummerFilterKey); } catch(e) {} this._nummerFilterKey = null; }
-        // PLZ=00000 setzen → BW liefert nur Bootstrap-Rows
-        const plzKey = this._plzFilterKey ?? "0POSTALCODE";
-        ds.setDimensionFilter(plzKey, ["00000"]);
-        console.warn("[PLZ-Widget] Home: Filter zurückgesetzt → PLZ=00000");
+        // Alle bekannten Erhebungs-Filter aus vorherigen Läufen entfernen
+        const staleKeys = ["BGFBNR", "dimension_erhebung_0", "dimension_erhebung",
+                           "0CALYEAR", "dimension_jahr_0", "dimension_jahr",
+                           "BERHBNUM", "dimension_erhebungsnummer_0", "dimension_erhebungsnummer"];
+        for (const key of staleKeys) { try { ds.removeDimensionFilter(key); } catch(e) {} }
+        this._erhIDFilterKey = null; this._jahrFilterKey = null; this._nummerFilterKey = null;
+        // PLZ=00000 setzen – alle Key-Varianten versuchen
+        const plzKeys = ["0POSTALCODE", "dimension_plz_0", "dimension_plz"];
+        const knownKey = this._plzFilterKey ? [this._plzFilterKey] : [];
+        for (const key of [...knownKey, ...plzKeys.filter(k => k !== this._plzFilterKey)]) {
+          try { ds.setDimensionFilter(key, ["00000"]); this._plzFilterKey = key; break; } catch(e) {}
+        }
+        console.warn("[PLZ-Widget] Home: Filter zurückgesetzt → PLZ=00000 (" + this._plzFilterKey + ")");
       } catch(e) {
         console.warn("[PLZ-Widget] Home: Filter-Reset fehlgeschlagen:", e);
       }
@@ -3556,6 +3639,21 @@ class GeoMapWidget extends HTMLElement {
     // Index + Cache invalidieren bei neuen Daten
     this._erhebungIndex = null;
     this._plzNormCache = null;
+
+    // FIX: Beim allerersten Setter-Aufruf sofort Stale-Filter aus vorherigen
+    // SAC-Sessions clearen und PLZ=00000 setzen – sonst bekommt der Bootstrap
+    // bereits gefilterte Erhebungsdaten (~3k) statt der 161 Stammdaten-Rows.
+    if (!this._plzFilterInitialized) {
+      this._plzFilterInitialized = true;
+      this._applyPLZ00000Filter();
+      // Karte noch nicht bereit? Warten und nach dem Filter-Reset den SAC-Refresh abwarten
+      if (!this.map) {
+        this._pendingRender = true;
+        return;
+      }
+      // Filter gesetzt – SAC wird jetzt einen neuen Query auslösen, Daten noch nicht bereit
+      return;
+    }
 
     // Sofort versuchen zu rendern – wenn Karte noch nicht bereit, einmaligen
     // Map-ready-Callback registrieren statt polling-Loop
