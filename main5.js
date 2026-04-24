@@ -3202,6 +3202,8 @@ class GeoMapWidget extends HTMLElement {
       }
     }
 
+    // Flag setzen: nächste Daten müssen ~164 Bootstrap-Rows sein, nicht gecachte Erhebungs-Rows
+    this._homeResetPending = true;
     // Poll starten – SAC liefert nach dem PLZ=00000-Filter die Bootstrap-Rows
     // die dann _bootstrapFromPLZ00000() aufruft und die Dropdowns befüllt
     if (!this._dataPollTimer) this._scheduleDataPoll();
@@ -3720,15 +3722,25 @@ class GeoMapWidget extends HTMLElement {
       if (this._myDataSource?.state === "success") {
         const rowCount = this._myDataSource?.data?.length ?? 0;
 
-        // Cache-Detection für beide Modi:
-        // SAC schickt nach Filter-Änderungen zunächst gecachte Bootstrap-Rows.
-        // Bei AUS: BGFBNR-fetchMembers triggert denselben Cache-Mechanismus wie bei EIN.
-        // Echte Rows kommen erst nach dem vollständigen BW-Query.
-        // Erkennnung: rowCount identisch mit Bootstrap-Stand = noch Cache.
+        // Cache-Detection für Phase 2 (Erhebung laden):
+        // SAC schickt nach Filter-Änderungen zunächst gecachte Rows – auf echte BW-Antwort warten.
         if (this._fullDataLoaded && rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
           const waited = ((Date.now() - start) / 1000).toFixed(1);
           console.warn("[PLZ-Widget] ⚡ SAC-Cache (" + rowCount.toLocaleString("de-DE") + " Rows / " + waited + "s) – warte auf echten BW-Query");
           return;
+        }
+
+        // Cache-Detection für Home-Reset (Phase 1):
+        // Nach PLZ=00000 liefert SAC zunächst noch die gecachten Erhebungs-Rows (~4k/28k).
+        // Erst wenn rowCount auf ~164 gesunken ist, hat BW die echte Antwort geliefert.
+        if (this._homeResetPending && !this._fullDataLoaded) {
+          const expectedBootstrap = 200; // PLZ=00000 liefert ~164 Rows
+          if (rowCount > expectedBootstrap) {
+            const waited = ((Date.now() - start) / 1000).toFixed(1);
+            console.warn("[PLZ-Widget] ⚡ Home-Cache (" + rowCount.toLocaleString("de-DE") + " Rows / " + waited + "s) – warte auf PLZ=00000 Rows");
+            return;
+          }
+          this._homeResetPending = false;
         }
 
         clearInterval(this._dataPollTimer);
