@@ -216,24 +216,22 @@
       }
       .nl-info-scroll::-webkit-scrollbar       { width: 5px; }
       .nl-info-scroll::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
-      .nl-info-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 0.78rem; }
+      .nl-info-table { width: 100%; border-collapse: collapse; table-layout: auto; font-size: 0.78rem; }
       .nl-info-table th {
         background: var(--red); color: white; padding: 8px;
-        position: sticky; top: 0; z-index: 2; white-space: pre-line;
+        position: sticky; top: 0; z-index: 2; white-space: nowrap;
         border-right: 1px solid rgba(255,255,255,0.2);
         font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
       }
       .nl-info-table td {
         padding: 6px 8px; border-bottom: 1px solid var(--gray-100);
-        font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        color: var(--gray-700); transition: background 0.12s;
+        font-size: 0.78rem; white-space: nowrap; color: var(--gray-700);
+        transition: background 0.12s;
       }
       .nl-info-row { cursor: pointer; transition: background 0.12s; }
       .nl-info-row:hover td { background: var(--red-bg); }
-      .nl-info-row.table-row-selected td              { background: #fff3f3; }
-      .nl-info-row.table-row-selected td:first-child  { border-left: 3px solid var(--red); }
-      .nl-col-nl { width: 30px; } .nl-col-jahr { width: 70px; } .nl-col-erf { width: 58px; }
-      .nl-col-pct1 { width: 30px; } .nl-col-val { width: 55px; } .nl-col-pct2 { width: 30px; } .nl-col-abd { width: 55px; }
+      .nl-info-row.table-row-selected td             { background: #fff3f3; }
+      .nl-info-row.table-row-selected td:first-child { border-left: 3px solid var(--red); }
       .filter-container.nl-info-active .table-wrapper { transform: translateY(-100%); }
 
       /* ─── Map ───────────────────────────────────────────────────── */
@@ -2022,7 +2020,7 @@
         renderer: this._canvasRenderer,
         zoomAnimation: true,
         markerZoomAnimation: true,
-      }).setView([49.4, 8.7], 7);
+      }).setView([51.2, 12.5], 6);
 
       // Default-State konsolidiert im Constructor; hier nur LayerGroups
       this.filteredGroup   = L.layerGroup().addTo(this.map);
@@ -3201,16 +3199,16 @@
       const table  = document.createElement('table'); table.classList.add('nl-info-table');
       const thead  = document.createElement('thead'); const headerRow = document.createElement('tr');
       const headers = [
-        { label: 'NL',               class: 'nl-col-nl' },
-        { label: 'Umsatz\n(Hochrechi.)', class: 'nl-col-jahr' },
-        { label: 'Erfasst',          class: 'nl-col-erf' },
-        { label: '%',                class: 'nl-col-pct1' },
-        { label: 'Valide',           class: 'nl-col-val' },
-        { label: 'Abdeckung',        class: 'nl-col-abd' },
+        { label: 'NL' },
+        { label: 'Umsatz\n(Hochrechn.)' },
+        { label: 'Erfasst' },
+        { label: '%' },
+        { label: 'Valide' },
+        { label: 'Abdeckung' },
       ];
       for (const h of headers) {
         const th = document.createElement('th');
-        th.textContent = h.label; th.classList.add(h.class);
+        th.textContent = h.label;
         headerRow.appendChild(th);
       }
       thead.appendChild(headerRow); table.appendChild(thead);
@@ -3238,7 +3236,7 @@
         ];
         cells.forEach((val, i) => {
           const td = document.createElement('td');
-          td.textContent = val; td.classList.add(headers[i].class);
+          td.textContent = val;
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
@@ -4134,7 +4132,7 @@
       this.renderDataTableFromEntries([]);
       const box = this.$('streuverlust-box');
       if (box) box.innerHTML = '';
-      this.map?.setView([49.4, 8.7], 7);
+      this.map?.setView([51.2, 12.5], 6);
       this.$('map-interaction-block')?.classList.remove('hidden');
 
       // Filter zurücksetzen
