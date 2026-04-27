@@ -275,6 +275,9 @@
         pointer-events: none;
         box-shadow: 0 1px 2px rgba(0,0,0,0.08);
         line-height: 1.25;
+        display: inline-block;
+        width: fit-content;
+        transform: translate(-50%, -50%);
       }
       .plz-map-label.plz-map-label-strong {
         background: rgba(255,255,255,0.96);
@@ -459,7 +462,7 @@
       }
       #side-popup-overview .popup-header::before {
         content: ''; position: absolute; top: 0; left: 0; right: 0;
-        height: 3px; background: linear-gradient(90deg, var(--red), var(--red-light));
+        height: 3px; background: var(--gray-800);
       }
       .overview-badge {
         display: inline-flex; align-items: center; gap: 4px;
@@ -856,25 +859,6 @@
       .doppel-tooltip-row:last-child { border-bottom: none; }
 
       /* ─── Buttons ───────────────────────────────────────────────── */
-      #overview-toggle-btn,
-      #back-to-home-btn {
-        position: absolute; top: 12px;
-        background: var(--white); border: 1.5px solid var(--gray-200);
-        border-radius: 100px; padding: 6px 14px 6px 10px;
-        font-size: 0.78rem; font-weight: 600; color: var(--gray-600);
-        cursor: pointer; z-index: 9999; display: none;
-        align-items: center; gap: 6px;
-        box-shadow: var(--shadow-sm);
-        transition: border-color 0.18s, background 0.18s, color 0.18s, transform 0.15s;
-        font-family: var(--font);
-      }
-      #overview-toggle-btn { right: 14px; }
-      #back-to-home-btn    { left: 14px; }
-      #overview-toggle-btn:hover { border-color: var(--red); background: var(--red-bg); color: var(--red); }
-      #back-to-home-btn:hover    { border-color: var(--red); background: var(--red-bg); color: var(--red); transform: translateX(-2px); }
-      #overview-toggle-btn.visible,
-      #back-to-home-btn.visible { display: flex; }
-
       .hidden { display: none; }
 
       @keyframes rowFadeIn {
@@ -934,8 +918,6 @@
         <div id="map"></div>
         <div id="legend-toggle-btn" title="Legende"></div>
         <div id="heatmap-legend" class="heatmap-legend hidden"></div>
-        <div id="back-to-home-btn">← Hauptmenü</div>
-        <div id="overview-toggle-btn">📋 Übersicht</div>
       </div>
 
       <div id="side-popup"          class="side-popup hidden"></div>
@@ -1630,8 +1612,8 @@
         const icon = L.divIcon({
           html: `<div class="plz-map-label${strong ? ' plz-map-label-strong' : ''}">${inner}</div>`,
           className: '',
-          iconSize: [labelW, labelH],
-          iconAnchor: [labelW / 2, labelH / 2],
+          iconSize: [0, 0],       // kein fixer Rahmen → div bestimmt Breite selbst
+          iconAnchor: [0, 0],     // Anker oben-links, Label zentriert sich via CSS transform
         });
         const m = L.marker([a.lat, a.lng], { icon, interactive: false, keyboard: false, zIndexOffset: 400 });
         this._labelLayer.addLayer(m);
@@ -2099,10 +2081,8 @@
       // Map-Buttons
       this._on(this.$('map-tile-toggle-btn'), 'click', () => this.toggleMapTiles());
       this._on(this.$('legend-toggle-btn'),   'click', () => this.$('heatmap-legend').classList.toggle('hidden'));
-      this._on(this.$('back-to-home-btn'),    'click', () => this._resetToHome());
       this._on(this.$('panel-home-btn'),      'click', () => this._resetToHome());
       this._on(this.$('panel-overview-btn'),  'click', () => this.showOverviewPopup());
-      this._on(this.$('overview-toggle-btn'), 'click', () => this.showOverviewPopup());
 
       const refreshMapAndPopup = () => {
         this._refreshAll();
@@ -3979,8 +3959,6 @@
             requestAnimationFrame(() => {
               this.prepareErhebungsInfo();
               this.$('map-interaction-block')?.classList.add('hidden');
-              this.$('back-to-home-btn')?.classList.add('visible');
-              this.$('overview-toggle-btn')?.classList.add('visible');
               this.showOverviewPopup();
               // Nach neuem Filter Labels aktualisieren (Daten-Priorität neu)
               this._scheduleLabelUpdate();
@@ -4097,8 +4075,6 @@
           if (isStale()) return;   // Home wurde inzwischen geklickt
           this.prepareErhebungsInfo();
           this.$('map-interaction-block')?.classList.add('hidden');
-          this.$('back-to-home-btn')?.classList.add('visible');
-          this.$('overview-toggle-btn')?.classList.add('visible');
           this.showOverviewPopup();
           // Label-Update: jetzt haben wir Daten für Priorisierung
           this._scheduleLabelUpdate();
@@ -4145,8 +4121,6 @@
       }
       // Click-Handler bleiben gebunden – _handlePolygonClick prüft _activeFilter
 
-      this.$('back-to-home-btn')?.classList.remove('visible');
-      this.$('overview-toggle-btn')?.classList.remove('visible');
       this.activeCategories = new Set(CATEGORIES);
       this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
       this.currentMapMode = 'wk'; 
