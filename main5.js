@@ -1038,7 +1038,6 @@
 
       // UI-State
       this.currentMapMode        = 'wk';
-      this.activePopupType       = 'wk';
       this.activeCategories      = new Set(CATEGORIES);
       this.umsatzMainMode        = 'gesamt';
       this.umsatzDarstellung     = 'abs';
@@ -1090,6 +1089,12 @@
 
     // ── Lifecycle ──────────────────────────────────────────────────────
     connectedCallback() {
+      // Re-Connect-fest: nach disconnect ist der AbortController aborted und alle
+      // weiteren _on()-Calls würden ins Leere laufen. Bei jedem connect frisch.
+      if (this._signal?.aborted) {
+        this._abortCtrl = new AbortController();
+        this._signal    = this._abortCtrl.signal;
+      }
       // GeoJSON parallel vorladen
       this._geoJsonPromise = fetch(GEOJSON_URL, { cache: 'force-cache' })
         .then(r => r.json())
@@ -1131,6 +1136,17 @@
         try { this.map.off(); this.map.remove(); } catch (e) { /* swallow */ }
         this.map = null;
       }
+      // Layer-Referenzen explizit nullen, damit ein eventueller Re-Connect
+      // (gleiche Instanz, neue map) die Layer korrekt neu aufbaut.
+      this._geoLayer       = null;
+      this._labelLayer     = null;
+      this._tileLayer      = null;
+      this._canvasRenderer = null;
+      this.filteredGroup   = null;
+      this.neighbourGroup  = null;
+      this.radiusGroup     = null;
+      this.bestreuungGroup = null;
+      this._previewGroup   = null;
 
       // Caches freigeben
       this._plzNormCache = null;
@@ -1141,6 +1157,19 @@
       this._labelByPLZ = {};
       this.criticalMarkers = {};
       this.iconCache = {};
+
+      // Init-Flags zurücksetzen, damit ein eventueller Re-Connect sauber neu aufsetzt
+      this._dropdownsInitialized = false;
+      this._plzFilterInitialized = false;
+      this._geoClickBound        = false;
+      this._bootstrapDone        = false;
+      this._fullIndexReady       = false;
+      this._fullDataLoaded       = false;
+      this._renderInProgress     = false;
+      this._pendingRender        = false;
+      this._dataPollTimer        = null;
+      this._loadSecTimer         = null;
+      this._previewInterval      = null;
     }
 
     // Tracked setTimeout/Interval — werden in disconnectedCallback aufgeräumt
@@ -2020,17 +2049,25 @@
       this.bestreuungGroup = L.layerGroup().addTo(this.map);
 
       // Daten-Ready?
+      // ACHTUNG: render()-Aufrufe MÜSSEN über _renderInProgress geschützt werden,
+      // sonst kann ein paralleler set myDataSource() einen zweiten render() starten.
+      const startRender = () => {
+        if (this._renderInProgress) return;
+        this._fullDataLoaded = false;
+        this._renderInProgress = true;
+        this.render().finally(() => { this._renderInProgress = false; });
+      };
       if (this._pendingRender) {
         this._pendingRender = false;
         if (this._myDataSource?.state === 'success') {
           if (!this._fullDataLoaded) this._bootstrapFromPLZ00000(this._myDataSource.data);
-          else                       { this._fullDataLoaded = false; this.render(); }
+          else                       startRender();
         } else if (this._myDataSource) {
           this._scheduleDataPoll();
         }
       } else if (this._myDataSource?.state === 'success') {
         if (!this._fullDataLoaded) this._bootstrapFromPLZ00000(this._myDataSource.data);
-        else                       { this._fullDataLoaded = false; this.render(); }
+        else                       startRender();
       } else if (this._myDataSource && !this._dataPollTimer) {
         this._scheduleDataPoll();
       }
@@ -2076,7 +2113,7 @@
       this._on(btnWK, 'click', () => {
         this.closeAllPopups();
         btnWK.classList.add('active'); btnUmsatz.classList.remove('active');
-        this.currentMapMode = 'wk'; this.activePopupType = 'wk';
+        this.currentMapMode = 'wk'; 
         wkExtra.style.display = ''; umsatzOptionsRow.classList.add('hidden');
         umsatzPanel.classList.add('hidden');
         panel.classList.remove('panel-large', 'panel-medium', 'panel-auto');
@@ -2101,7 +2138,7 @@
         typeSwitch.classList.remove('active-right'); typeSwitch.classList.add('active-left');
         btnUmsatz.classList.add('active'); btnWK.classList.remove('active');
         this.closeAllPopups();
-        this.currentMapMode = 'umsatz-multi'; this.activePopupType = 'umsatz';
+        this.currentMapMode = 'umsatz-multi'; 
         if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
         wkExtra.style.display = 'none'; umsatzOptionsRow.classList.remove('hidden');
         umsatzPanel.classList.remove('hidden');
@@ -2151,7 +2188,7 @@
 
       // Darstellung
       const setDarst = (modus, mapMode, btn) => {
-        this.umsatzDarstellung = modus; this.currentMapMode = mapMode; this.activePopupType = 'umsatz';
+        this.umsatzDarstellung = modus; this.currentMapMode = mapMode; 
         darstSwitch.querySelectorAll('span').forEach(s => s.classList.remove('active'));
         btn.classList.add('active');
       };
@@ -2186,7 +2223,7 @@
             this.activeCategories.add(cat);
             toggle.classList.add('active');
           }
-          this.currentMapMode = 'umsatz-multi'; this.activePopupType = 'umsatz';
+          this.currentMapMode = 'umsatz-multi'; 
           refreshMapAndPopup();
         });
       });
@@ -2418,11 +2455,11 @@
 
       this.applyNLFilter([...this._selectedNLs]);
       this.updateMarkers();
-      const radius = Number(this.$('radius-slider')?.value ?? 0);
-      this.applyRadiusFilter(radius);
-      this.updateGeoLayer();
-      this.updateNLSelectionUI?.();
       this._buildDistanceCache();
+      const radius = Number(this.$('radius-slider')?.value ?? 0);
+      // applyRadiusFilter ruft intern updateGeoLayer auf — kein extra-Aufruf nötig
+      this.applyRadiusFilter(radius);
+      this.updateNLSelectionUI?.();
     }
 
     applyNLFilter(selectedNLs) {
@@ -2506,13 +2543,11 @@
       this.updateMarkers();
       this._distanceCacheNLKey = null;
       this._buildDistanceCache();
-      this.computeWKKennwerte();
+      // applyRadiusFilter ruft intern prepareUmsatzPLZWerte, computeWKKennwerte,
+      // computeStreuverlust, updateGeoLayer, renderDataTable, _rerenderActivePopup auf
       const radius = Number(this.$('radius-slider').value);
       this.applyRadiusFilter(radius);
-      this.prepareUmsatzPLZWerte();
-      this.computeStreuverlust();
-      this.updateGeoLayer();
-      this.renderDataTable(this.filteredKennwerte);
+      // Nach NL-Wechsel immer Overview zeigen (überschreibt ggf. _rerenderActivePopup)
       this.showOverviewPopup();
     }
 
@@ -2531,8 +2566,14 @@
       this._on(slider, 'input', () => {
         const radius = Number(slider.value);
         valueLabel.textContent = radius; updateFill();
-        if (debounceTimer != null) clearTimeout(debounceTimer);
+        // Vorherigen Debounce-Timer aus beiden Stellen entfernen
+        if (debounceTimer != null) {
+          clearTimeout(debounceTimer);
+          this._timers.delete(debounceTimer);
+          debounceTimer = null;
+        }
         debounceTimer = this._setTimeout(() => {
+          debounceTimer = null;
           this.applyRadiusFilter(radius);
           if (this._activeFilter) this.showOverviewPopup();
         }, 80);
@@ -2973,14 +3014,27 @@
         return opt;
       };
 
-      // Dropdown-Optionen befüllen (bei jedem Aufruf, Listener aber nur einmal)
-      erhSelect.innerHTML = '';
-      erhSelect.appendChild(mkPlaceholder('– ErhebungsID wählen –'));
-      for (const erhID of Object.keys(this._erhData || {})) {
-        if (isNull(erhID)) continue;
-        const opt = document.createElement('option');
-        opt.value = erhID; opt.textContent = this._fmtGF(erhID);
-        erhSelect.appendChild(opt);
+      // Dropdown-Optionen befüllen.
+      // WICHTIG: Wenn der User schon eine Selektion getroffen hat, soll diese
+      // erhalten bleiben. Wir vergleichen die aktuell gerenderten Optionen
+      // mit den gewünschten und bauen nur neu, wenn sich etwas geändert hat.
+      const desiredErhIDs = Object.keys(this._erhData || {}).filter(id => !isNull(id));
+      const currentErhIDs = Array.from(erhSelect.options).map(o => o.value).filter(v => v !== '');
+      const sameSet = desiredErhIDs.length === currentErhIDs.length &&
+                      desiredErhIDs.every(id => currentErhIDs.includes(id));
+      if (!sameSet) {
+        const previousValue = erhSelect.value;
+        erhSelect.innerHTML = '';
+        erhSelect.appendChild(mkPlaceholder('– ErhebungsID wählen –'));
+        for (const erhID of desiredErhIDs) {
+          const opt = document.createElement('option');
+          opt.value = erhID; opt.textContent = this._fmtGF(erhID);
+          erhSelect.appendChild(opt);
+        }
+        // Vorherige Auswahl wiederherstellen, falls sie noch existiert
+        if (previousValue && desiredErhIDs.includes(previousValue)) {
+          erhSelect.value = previousValue;
+        }
       }
 
       if (this._dropdownsInitialized) return;
@@ -3118,9 +3172,11 @@
       const jahrSelect   = this.$('jahr-select');
       const nummerSelect = this.$('nummer-select');
       if (!erhSelect || !jahrSelect || !nummerSelect) return;
+      // change-Events sind nötig, damit die Folge-Dropdowns korrekt befüllt werden
+      // und der Filter-Button den .ready-Status bekommt.
       if (erhID)  { erhSelect.value  = erhID;  erhSelect.dispatchEvent(new Event('change')); }
       if (jahr)   { jahrSelect.value = jahr;   jahrSelect.dispatchEvent(new Event('change')); }
-      if (nummer) { nummerSelect.value = nummer; }
+      if (nummer) { nummerSelect.value = nummer; nummerSelect.dispatchEvent(new Event('change')); }
     }
 
     // ── Erhebungs-Info (NL-Tabelle) ────────────────────────────────────
@@ -3553,10 +3609,13 @@
         legend.classList.remove('hidden'); return;
       }
       if (this.currentMapMode === 'umsatz-multi') {
-        const values = Object.values(this.filteredPLZWerte)
-          .map(v => this.getUmsatzSumForPLZ(v))
-          .filter(v => v > 0);
-        const max = values.length > 0 ? Math.max(...values) : 0;
+        // Math.max(...values) würde bei sehr großen PLZ-Arrays (>~10k) den Stack
+        // sprengen. reduce ist sicher und gleich schnell.
+        let max = 0;
+        for (const v of Object.values(this.filteredPLZWerte)) {
+          const sum = this.getUmsatzSumForPLZ(v);
+          if (sum > max) max = sum;
+        }
         if (max === 0) { legend.classList.add('hidden'); return; }
         const fmt = (x) => x.toLocaleString('de-DE', { maximumFractionDigits: 0 });
         const steps = [
@@ -3963,6 +4022,10 @@
 
       const { erhID, jahr, nummer } = this._activeFilter;
       const rawData = this._myDataSource.data;
+      // Token-Snapshot: wenn _resetToHome während render() klickt wird, erhöht es
+      // _renderToken. Wir prüfen nach jedem yieldFrame, ob unser Snapshot noch gültig ist.
+      const myToken = this._renderToken || 0;
+      const isStale = () => (this._renderToken || 0) !== myToken || !this._activeFilter;
       const yieldFrame = () => new Promise(r => requestAnimationFrame(r));
       const totalRows = rawData.length;
       const progress = (phase, pct, label, rows) => {
@@ -3979,6 +4042,7 @@
       try {
         progress(1, 5, 'Index wird aufgebaut…', 0);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
 
         this._buildErhebungIndex(erhID);
         this._erhData = this._cachedBootstrapStruktur ?? this.buildErhebungsStruktur(rawData);
@@ -3991,11 +4055,13 @@
 
         progress(2, 25, 'Karte wird vorbereitet…', filteredData.length);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         await this.loadGeoJson();
         this.prepareMapData(filteredData);
 
         progress(3, 50, 'Standorte werden gesetzt…', filteredData.length);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         this.allNLs = [...Object.keys(this.Niederlassung), ...(this.extraNLs?.map(e => e.nl) ?? [])];
         this._selectedNLs = new Set(this.allNLs);
         this._nlSelectionInitialized = false;
@@ -4005,6 +4071,7 @@
 
         progress(4, 70, 'Kennwerte werden berechnet…', filteredData.length);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         const radius = Number(this.$('radius-slider')?.value ?? 40);
         this._buildDistanceCache();
         this.applyRadiusFilter(radius);
@@ -4014,6 +4081,7 @@
 
         progress(4, 88, 'Karte wird gerendert…', filteredData.length);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         this.updateGeoLayer();
         this.renderDataTable(this.filteredKennwerte);
         this.zoomToFilteredPLZ();
@@ -4026,6 +4094,7 @@
         console.groupEnd();
 
         requestAnimationFrame(() => {
+          if (isStale()) return;   // Home wurde inzwischen geklickt
           this.prepareErhebungsInfo();
           this.$('map-interaction-block')?.classList.add('hidden');
           this.$('back-to-home-btn')?.classList.add('visible');
@@ -4042,6 +4111,10 @@
 
     // ── Home-Reset ─────────────────────────────────────────────────────
     _resetToHome() {
+      // Token erhöhen, damit eine eventuell laufende render()-Pipeline merkt,
+      // dass sie abgebrochen wurde und keine späten DOM-Updates mehr macht.
+      this._renderToken = (this._renderToken || 0) + 1;
+
       this._activeFilter       = null;
       this.filteredData        = null;
       this.filteredKennwerte   = {};
@@ -4076,7 +4149,7 @@
       this.$('overview-toggle-btn')?.classList.remove('visible');
       this.activeCategories = new Set(CATEGORIES);
       this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
-      this.currentMapMode = 'wk'; this.activePopupType = 'wk';
+      this.currentMapMode = 'wk'; 
       this.umsatzMainMode = 'gesamt'; this.umsatzDarstellung = 'abs';
       this.$('btn-wk')?.classList.add('active');
       this.$('btn-umsatz')?.classList.remove('active');
