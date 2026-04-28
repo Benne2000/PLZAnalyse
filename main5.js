@@ -51,7 +51,7 @@
       .replace(/'/g, '&#39;');
   };
 
-  const fmtNum = (x) => Number(x || 0).toLocaleString('de-DE');
+  const fmtNum = (x) => Math.round(Number(x || 0)).toLocaleString('de-DE');
   const fmtDec = (x) => Number(x || 0).toFixed(2);
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -218,10 +218,12 @@
       .nl-info-scroll::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
       .nl-info-table { width: 100%; border-collapse: collapse; table-layout: auto; font-size: 0.78rem; }
       .nl-info-table th {
-        background: var(--red); color: white; padding: 8px;
-        position: sticky; top: 0; z-index: 2; white-space: nowrap;
+        background: var(--red); color: white; padding: 6px 8px;
+        position: sticky; top: 0; z-index: 2;
+        white-space: normal; word-break: break-word; text-align: center;
         border-right: 1px solid rgba(255,255,255,0.2);
         font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+        line-height: 1.3;
       }
       .nl-info-table td {
         padding: 6px 8px; border-bottom: 1px solid var(--gray-100);
@@ -932,7 +934,7 @@
           <button id="btn-umsatz" class="switch-btn">💶 Umsatz</button>
         </div>
         <div id="wk-extra" class="option-row">
-          <label><input type="checkbox" id="chk-doppelbestreuung" checked> Doppelbestreuung</label>
+          <label><input type="checkbox" id="chk-doppelbestreuung"> Doppelbestreuung</label>
         </div>
         <div id="umsatz-options-row" class="option-row hidden">
           <label><input type="checkbox" id="chk-bestreuung"> 📍 Bestreuung</label>
@@ -1025,7 +1027,7 @@
       this.useZusatzUmsatz       = false;
       this.useRadiusFilter       = true;
       this.showBestreuung        = false;
-      this.showCritical          = true;
+      this.showCritical          = false;
       this._sortState            = { column: null, direction: 'asc' };
       this._selectedNLs          = new Set();
       this._nlSelectionInitialized = false;
@@ -1900,7 +1902,8 @@
           umsatz     = plzUmsatz > 0 ? Math.round(plzUmsatz).toLocaleString('de-DE') : '–';
           lastColVal = totalUmsatz > 0 ? (plzUmsatz / totalUmsatz * 100).toFixed(1) + ' %' : '–';
         } else {
-          umsatz     = kennwerte['value_hr_n_umsatz_0']?.raw?.toLocaleString('de-DE') ?? '–';
+          const rawUmsatz = kennwerte['value_hr_n_umsatz_0']?.raw;
+          umsatz     = rawUmsatz != null ? Math.round(rawUmsatz).toLocaleString('de-DE') : '–';
           lastColVal = (kennwerte['value_wk_in_percent_0']?.raw?.toFixed(1) ?? '–') + ' %';
         }
 
@@ -2611,10 +2614,27 @@
       const ue = d.value_ums_erhebung_0?.raw ?? 0;
       d.value_bon_erhebung_0 = { raw: kd > 0 ? Number((ue / kd).toFixed(2)) : 0 };
 
+      // Felder die als ganze Euro-Beträge angezeigt werden sollen
+      const euroFields = new Set([
+        'value_hr_n_umsatz_0', 'value_hz_kosten_0', 'value_ums_erhebung_0',
+        'value_hz_potentiell_0', 'value_wk_potentiell_0'
+      ]);
+      // Pro-HH-Felder: 2 Nachkommastellen
+      const hhFields = new Set(['value_umsatz_p_hh_0']);
+
       let rowsHtml = '';
       Object.entries(beschreibungen).forEach(([id, label], idx) => {
         const raw = d?.[id]?.raw;
-        const wert = typeof raw === 'number' ? raw.toLocaleString('de-DE') : '–';
+        let wert;
+        if (typeof raw !== 'number') {
+          wert = '–';
+        } else if (euroFields.has(id)) {
+          wert = Math.round(raw).toLocaleString('de-DE');
+        } else if (hhFields.has(id)) {
+          wert = Number(raw).toFixed(2).replace('.', ',');
+        } else {
+          wert = raw.toLocaleString('de-DE');
+        }
         if (idx === 8) rowsHtml += `<tr><td colspan="2" class="section-title">Erhebungsdaten</td></tr>`;
         rowsHtml += `<tr><td class="label-cell">${escapeHtml(label)}</td><td class="value-cell">${escapeHtml(wert)}</td></tr>`;
       });
