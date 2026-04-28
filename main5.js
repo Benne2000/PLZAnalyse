@@ -54,6 +54,33 @@
   const fmtNum = (x) => Math.round(Number(x || 0)).toLocaleString('de-DE');
   const fmtDec = (x) => Number(x || 0).toFixed(2);
 
+  /**
+   * Formatiert einen 15-stelligen Erhebungsnummer-Char aus BW.
+   *
+   * Zwei Varianten:
+   *   "000000000000000"  → "0. Laufendes Jahr"
+   *   "XXXXXNNSSSSEEEE"  → "N. SS.SS–EE.EE"
+   *     XXXXX = Padding (ignoriert)
+   *     NN    = lfd. Nummer (2-stellig, führende 0 entfernt)
+   *     SSSS  = Start: DDMM
+   *     EEEE  = Ende:  DDMM
+   *
+   * Beispiel: "00000120040305" → Stelle 5-6="01", 7-8="20", 9-10="04", 11-12="03", 13-14="05"
+   *           → "1. 20.04–03.05"
+   */
+  function fmtNummer(raw) {
+    if (!raw) return raw;
+    const s = String(raw).replace(/\s/g, '');
+    if (!s || /^0+$/.test(s)) return '0. Laufendes Jahr';
+    if (s.length < 14) return s;           // unbekanntes Format → unverändert
+    const nr    = String(parseInt(s.slice(5, 7), 10));   // "01" → "1"
+    const sdDay = s.slice(7, 9);
+    const sdMon = s.slice(9, 11);
+    const edDay = s.slice(11, 13);
+    const edMon = s.slice(13, 15);
+    return `${nr}. ${sdDay}.${sdMon}–${edDay}.${edMon}`;
+  }
+
   // ═══════════════════════════════════════════════════════════════════════
   //  Template (Styles + DOM)
   // ═══════════════════════════════════════════════════════════════════════
@@ -3125,7 +3152,7 @@
         for (const n of Array.from(set)) {
           if (isNull(n)) continue;
           const opt = document.createElement('option');
-          opt.value = n; opt.textContent = n;
+          opt.value = n; opt.textContent = fmtNummer(n);
           nummerSelect.appendChild(opt);
         }
         updateBtnState();
