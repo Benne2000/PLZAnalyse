@@ -1126,55 +1126,49 @@
         .then(r => r.json())
         .catch(err => { console.error('[PLZ-Widget] GeoJSON prefetch:', err); return null; });
 
+      // Eingebettete Fallback-Daten — werden genutzt wenn der Fetch fehlschlägt
+      const COMPETITOR_FALLBACK = [
+        { brand: 'HOR', name: 'Hornbach 41063 Mönchengladbach', lat: '51.2025', lon: '6.4445' },
+        { brand: 'HOR', name: 'Hornbach 41199 Mönchengladbach', lat: '51.1625', lon: '6.4835' },
+      ];
+
+      const applyCompetitorData = (raw) => {
+        const brandAlias = { HOR: 'Hornbach', OBI: 'OBI', GLO: 'Globus', HEL: 'Hellweg', TOO: 'Toom', HAG: 'Hagebau' };
+        const entries = Array.isArray(raw)
+          ? raw
+          : Object.entries(raw).map(([name, v]) => ({ name, ...v }));
+        this._competitorData = entries.map(v => ({
+          name:  v.name  ?? '–',
+          brand: brandAlias[v.brand] ?? v.brand ?? 'Unbekannt',
+          lat:   Number(v.lat),
+          lon:   Number(v.lon),
+        })).filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lon));
+        console.info(`[PLZ-Widget] Mitbewerber: ${this._competitorData.length} Einträge`);
+        if (this.showCompetitors && this.map) this.updateCompetitorMarkers();
+      };
+
       fetch(COMPETITORS_URL, { cache: 'force-cache' })
         .then(r => {
-          console.info(`[PLZ-Widget] competitor.json HTTP ${r.status} ${r.statusText} | Content-Type: ${r.headers.get('content-type')}`);
+          console.info(`[PLZ-Widget] competitor.json HTTP ${r.status} | Content-Type: ${r.headers.get('content-type')}`);
           return r.text();
         })
         .then(text => {
-          console.info(`[PLZ-Widget] competitor.json Rohinhalt (erste 300 Zeichen):`, JSON.stringify(text.slice(0, 300)));
           const clean = text.replace(/^\uFEFF/, '').trim();
-          if (clean.startsWith('<')) {
-            console.warn('[PLZ-Widget] competitor.json: Server liefert HTML — URL prüfen:', COMPETITORS_URL);
-            this._competitorData = [];
+          if (clean.startsWith('<') || clean === '404: Not Found') {
+            console.warn('[PLZ-Widget] competitor.json nicht erreichbar — nutze Fallback-Daten');
+            applyCompetitorData(COMPETITOR_FALLBACK);
             return;
           }
-          let raw;
           try {
-            raw = JSON.parse(clean);
+            applyCompetitorData(JSON.parse(clean));
           } catch (parseErr) {
-            console.error('[PLZ-Widget] competitor.json JSON.parse fehlgeschlagen:', parseErr.message);
-            console.error('[PLZ-Widget] Problematischer Inhalt:', JSON.stringify(clean.slice(0, 500)));
-            this._competitorData = [];
-            return;
+            console.error('[PLZ-Widget] competitor.json Parse-Fehler — nutze Fallback:', parseErr.message);
+            applyCompetitorData(COMPETITOR_FALLBACK);
           }
-          console.info(`[PLZ-Widget] competitor.json geparst — Typ: ${Array.isArray(raw) ? 'Array' : typeof raw}, Keys:`, Object.keys(raw).slice(0, 5));
-          // Brand-Kürzel → Anzeigename
-          const brandAlias = {
-            HOR: 'Hornbach',
-            OBI: 'OBI',
-            GLO: 'Globus',
-            HEL: 'Hellweg',
-            TOO: 'Toom',
-            HAG: 'Hagebau',
-          };
-          // Format: Array [ { brand, name, lat, lon }, ... ]
-          // oder Object { "Name": { brand, lat, lon }, ... } — beide werden unterstützt
-          const entries = Array.isArray(raw)
-            ? raw
-            : Object.entries(raw).map(([name, v]) => ({ name, ...v }));
-          this._competitorData = entries.map(v => ({
-            name:  v.name  ?? '–',
-            brand: brandAlias[v.brand] ?? v.brand ?? 'Unbekannt',
-            lat:   Number(v.lat),
-            lon:   Number(v.lon),
-          })).filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lon));
-          console.info(`[PLZ-Widget] Mitbewerber geladen: ${this._competitorData.length} Einträge`, this._competitorData);
-          if (this.showCompetitors && this.map) this.updateCompetitorMarkers();
         })
         .catch(err => {
-          console.warn('[PLZ-Widget] competitor.json Fetch-Fehler:', err.message ?? err);
-          this._competitorData = [];
+          console.warn('[PLZ-Widget] competitor.json Fetch-Fehler — nutze Fallback:', err.message);
+          applyCompetitorData(COMPETITOR_FALLBACK);
         });
 
       this._showCinematicLoader();
