@@ -974,8 +974,6 @@
         </div>
         <div id="wk-extra" class="option-row">
           <label><input type="checkbox" id="chk-doppelbestreuung"> Doppelbestreuung</label>
-        </div>
-        <div id="competitor-row-wk" class="option-row">
           <label><input type="checkbox" id="chk-competitors-wk"> 🔨 Mitbewerber</label>
         </div>
         <div id="umsatz-options-row" class="option-row hidden">
