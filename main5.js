@@ -72,8 +72,8 @@
     if (!raw) return raw;
     const s = String(raw).replace(/\s/g, '');
     if (!s || /^0+$/.test(s)) return '0. Laufendes Jahr';
-    if (s.length < 14) return s;           // unbekanntes Format → unverändert
-    const nr    = String(parseInt(s.slice(5, 7), 10));   // "01" → "1"
+    if (s.length < 15) return s;           // unbekanntes Format → unverändert
+    const nr    = String(parseInt(s.slice(6, 7), 10));   // 1 Stelle Nummer
     const sdDay = s.slice(7, 9);
     const sdMon = s.slice(9, 11);
     const edDay = s.slice(11, 13);
