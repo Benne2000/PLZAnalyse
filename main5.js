@@ -72,12 +72,14 @@
     if (!raw) return raw;
     const s = String(raw).replace(/\s/g, '');
     if (!s || /^0+$/.test(s)) return '0. Laufendes Jahr';
-    if (s.length < 15) return s;           // unbekanntes Format → unverändert
-    const nr    = String(parseInt(s.slice(6, 7), 10));   // 1 Stelle Nummer
-    const sdDay = s.slice(7, 9);
-    const sdMon = s.slice(9, 11);
-    const edDay = s.slice(11, 13);
-    const edMon = s.slice(13, 15);
+    // Von hinten lesen: letzte 8 Stellen = DDMMDDMM, davor 1+ Stellen = Nummer
+    const meaningful = s.replace(/^0+/, '') || '0';  // führende Nullen weg
+    if (meaningful.length < 9) return meaningful;     // unbekanntes Format
+    const edMon = meaningful.slice(-2);
+    const edDay = meaningful.slice(-4, -2);
+    const sdMon = meaningful.slice(-6, -4);
+    const sdDay = meaningful.slice(-8, -6);
+    const nr    = meaningful.slice(0, -8);
     return `${nr}. ${sdDay}.${sdMon}–${edDay}.${edMon}`;
   }
 
