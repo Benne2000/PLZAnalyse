@@ -1131,6 +1131,13 @@
         .then(text => {
           // BOM (U+FEFF) und unsichtbare Zeichen am Anfang entfernen
           const clean = text.replace(/^\uFEFF/, '').trim();
+          // Wenn GitHub eine 404-HTML-Seite liefert statt JSON
+          if (clean.startsWith('<')) {
+            console.warn('[PLZ-Widget] competitor.json: Server liefert HTML statt JSON — URL prüfen:', COMPETITORS_URL);
+            console.warn('[PLZ-Widget] Erste 200 Zeichen:', clean.slice(0, 200));
+            this._competitorData = [];
+            return;
+          }
           const data = JSON.parse(clean);
           this._competitorData = Array.isArray(data) ? data : [];
           console.info(`[PLZ-Widget] Mitbewerber geladen: ${this._competitorData.length} Einträge`);
