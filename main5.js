@@ -1127,24 +1127,40 @@
         .catch(err => { console.error('[PLZ-Widget] GeoJSON prefetch:', err); return null; });
 
       fetch(COMPETITORS_URL, { cache: 'force-cache' })
-        .then(r => r.text())
+        .then(r => {
+          console.info(`[PLZ-Widget] competitor.json HTTP ${r.status} ${r.statusText} | Content-Type: ${r.headers.get('content-type')}`);
+          return r.text();
+        })
         .then(text => {
-          // BOM (U+FEFF) und unsichtbare Zeichen am Anfang entfernen
+          console.info(`[PLZ-Widget] competitor.json Rohinhalt (erste 300 Zeichen):`, JSON.stringify(text.slice(0, 300)));
           const clean = text.replace(/^\uFEFF/, '').trim();
-          // Wenn GitHub eine 404-HTML-Seite liefert statt JSON
           if (clean.startsWith('<')) {
-            console.warn('[PLZ-Widget] competitor.json: Server liefert HTML statt JSON — URL prüfen:', COMPETITORS_URL);
-            console.warn('[PLZ-Widget] Erste 200 Zeichen:', clean.slice(0, 200));
+            console.warn('[PLZ-Widget] competitor.json: Server liefert HTML — URL prüfen:', COMPETITORS_URL);
             this._competitorData = [];
             return;
           }
-          const data = JSON.parse(clean);
-          this._competitorData = Array.isArray(data) ? data : [];
-          console.info(`[PLZ-Widget] Mitbewerber geladen: ${this._competitorData.length} Einträge`);
+          let raw;
+          try {
+            raw = JSON.parse(clean);
+          } catch (parseErr) {
+            console.error('[PLZ-Widget] competitor.json JSON.parse fehlgeschlagen:', parseErr.message);
+            console.error('[PLZ-Widget] Problematischer Inhalt:', JSON.stringify(clean.slice(0, 500)));
+            this._competitorData = [];
+            return;
+          }
+          console.info(`[PLZ-Widget] competitor.json geparst — Typ: ${Array.isArray(raw) ? 'Array' : typeof raw}, Keys:`, Object.keys(raw).slice(0, 5));
+          // Format: { "Name": { "brand": "...", "lat": 0, "lon": 0 }, ... }
+          this._competitorData = Object.entries(raw).map(([name, v]) => ({
+            name,
+            brand: v.brand ?? 'Unbekannt',
+            lat:   Number(v.lat),
+            lon:   Number(v.lon),
+          })).filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lon));
+          console.info(`[PLZ-Widget] Mitbewerber geladen: ${this._competitorData.length} Einträge`, this._competitorData);
           if (this.showCompetitors && this.map) this.updateCompetitorMarkers();
         })
         .catch(err => {
-          console.warn('[PLZ-Widget] competitor.json nicht ladbar:', err);
+          console.warn('[PLZ-Widget] competitor.json Fetch-Fehler:', err.message ?? err);
           this._competitorData = [];
         });
 
