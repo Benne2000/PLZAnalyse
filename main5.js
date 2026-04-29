@@ -2652,14 +2652,14 @@
 
       // Brand-spezifische Icon-Definitionen
       const brandConfig = {
-        Hornbach: { color: '#f26522', emoji: '🔨', size: 32 },
-        OBI:      { color: '#f5a800', emoji: '🪣', size: 32 },
-        Globus:   { color: '#0066b2', emoji: '🌐', size: 32 },
-        Hellweg:  { color: '#e30613', emoji: '🪛', size: 32 },
-        Toom:     { color: '#00843d', emoji: '🌱', size: 32 },
-        Hagebau:  { color: '#e94e1b', emoji: '🧱', size: 32 },
+        Hornbach: { color: '#f26522', label: 'HOR', size: 24 },
+        OBI:      { color: '#f5a800', label: 'OBI', size: 24 },
+        Globus:   { color: '#0066b2', label: 'GLO', size: 24 },
+        Hellweg:  { color: '#e30613', label: 'HEL', size: 24 },
+        Toom:     { color: '#00843d', label: 'TOO', size: 24 },
+        Hagebau:  { color: '#e94e1b', label: 'HAG', size: 24 },
       };
-      const defaultConfig = { color: '#888', emoji: '🏪', size: 32 };
+      const defaultConfig = { color: '#888', label: '???', size: 24 };
 
       for (const comp of this._competitorData) {
         const { brand, name, lat, lon } = comp;
@@ -2680,12 +2680,14 @@
           html: `<div style="
             width:${cfg.size}px; height:${cfg.size}px;
             background:${cfg.color};
+            opacity:0.72;
             border-radius:50% 50% 50% 0;
             transform:rotate(-45deg);
-            box-shadow:-1px 2px 6px rgba(0,0,0,0.35);
+            box-shadow:-1px 2px 4px rgba(0,0,0,0.25);
             display:flex; align-items:center; justify-content:center;
-            border:2px solid rgba(255,255,255,0.7);
-          "><span style="transform:rotate(45deg);font-size:14px;line-height:1">${cfg.emoji}</span></div>`,
+            border:1.5px solid rgba(255,255,255,0.6);
+          "><span style="transform:rotate(45deg);font-size:8px;font-weight:700;color:white;
+            font-family:system-ui;letter-spacing:-0.02em;line-height:1">${escapeHtml(cfg.label)}</span></div>`,
           className: '',
           iconSize:   [0, 0],
           iconAnchor: [0, 0],
@@ -4303,6 +4305,7 @@
               this.prepareErhebungsInfo();
               this.$('map-interaction-block')?.classList.add('hidden');
               this.showOverviewPopup();
+              this.updateCompetitorMarkers();
               // Nach neuem Filter Labels aktualisieren (Daten-Priorität neu)
               this._scheduleLabelUpdate();
             });
@@ -4419,6 +4422,7 @@
           this.prepareErhebungsInfo();
           this.$('map-interaction-block')?.classList.add('hidden');
           this.showOverviewPopup();
+          this.updateCompetitorMarkers();
           // Label-Update: jetzt haben wir Daten für Priorisierung
           this._scheduleLabelUpdate();
         });
