@@ -1127,11 +1127,13 @@
         .catch(err => { console.error('[PLZ-Widget] GeoJSON prefetch:', err); return null; });
 
       fetch(COMPETITORS_URL, { cache: 'force-cache' })
-        .then(r => r.json())
-        .then(data => {
+        .then(r => r.text())
+        .then(text => {
+          // BOM (U+FEFF) und unsichtbare Zeichen am Anfang entfernen
+          const clean = text.replace(/^\uFEFF/, '').trim();
+          const data = JSON.parse(clean);
           this._competitorData = Array.isArray(data) ? data : [];
           console.info(`[PLZ-Widget] Mitbewerber geladen: ${this._competitorData.length} Einträge`);
-          // Falls Marker bereits sichtbar sein sollen (Widget schon fertig)
           if (this.showCompetitors && this.map) this.updateCompetitorMarkers();
         })
         .catch(err => {
