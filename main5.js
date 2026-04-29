@@ -1138,7 +1138,7 @@
         { brand: 'HOR', name: 'Hornbach 47055 Duisburg',               lat: '51.4155', lon: '6.7685' },
         { brand: 'HOR', name: 'Hornbach 47167 Duisburg',               lat: '51.4795', lon: '6.7855' },
         { brand: 'HOR', name: 'Hornbach 47443 Moers',                  lat: '51.4625', lon: '6.6765' },
-        { brand: 'HOR', name: 'Hornbach 47803 Krefeld',                lat: '51.3355', lon: '6.5845' },
+        { brand: 'HOR', name: 'Hornbach 47803 Krefeld 2',                lat: '51.345939', lon: '6.536338' },
         { brand: 'HOR', name: 'Hornbach 48157 Münster',                lat: '51.9835', lon: '7.6915' },
         { brand: 'HOR', name: 'Hornbach 49084 Osnabrück',              lat: '52.2885', lon: '8.0785' },
         { brand: 'HOR', name: 'Hornbach 51105 Köln',                   lat: '50.9245', lon: '7.0205' },
