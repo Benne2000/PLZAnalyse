@@ -21,8 +21,9 @@
   'use strict';
 
   // ── Geteilte Konstanten ───────────────────────────────────────────────
-  const GEOJSON_URL  = 'https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson';
-  const LEAFLET_JS   = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  const GEOJSON_URL      = 'https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson';
+  const COMPETITORS_URL  = 'https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/competitor.json';
+  const LEAFLET_JS       = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
   const LEAFLET_CSS  = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
   const OSM_TILES    = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 
@@ -888,6 +889,15 @@
       .doppel-tooltip-row:last-child { border-bottom: none; }
 
       /* ─── Buttons ───────────────────────────────────────────────── */
+      /* ─── Mitbewerber-Tooltip ───────────────────────────────────────── */
+      .competitor-tooltip {
+        background: var(--white); border: 1.5px solid #f26522;
+        border-radius: var(--radius-md); padding: 6px 10px;
+        font-family: var(--font); font-size: 0.8rem;
+        box-shadow: var(--shadow-md); line-height: 1.5;
+      }
+      .competitor-tooltip::before { display: none; }
+
       .hidden { display: none; }
 
       @keyframes rowFadeIn {
@@ -965,8 +975,12 @@
         <div id="wk-extra" class="option-row">
           <label><input type="checkbox" id="chk-doppelbestreuung"> Doppelbestreuung</label>
         </div>
+        <div id="competitor-row-wk" class="option-row">
+          <label><input type="checkbox" id="chk-competitors-wk"> 🔨 Mitbewerber</label>
+        </div>
         <div id="umsatz-options-row" class="option-row hidden">
           <label><input type="checkbox" id="chk-bestreuung"> 📍 Bestreuung</label>
+          <label><input type="checkbox" id="chk-competitors-umsatz"> 🔨 Mitbewerber</label>
         </div>
       </div>
       <div id="umsatz-panel" class="panel-card hidden">
@@ -1056,6 +1070,7 @@
       this.useZusatzUmsatz       = false;
       this.useRadiusFilter       = true;
       this.showBestreuung        = false;
+      this.showCompetitors       = false;
       this.showCritical          = false;
       this._sortState            = { column: null, direction: 'asc' };
       this._selectedNLs          = new Set();
@@ -1106,10 +1121,23 @@
         this._abortCtrl = new AbortController();
         this._signal    = this._abortCtrl.signal;
       }
-      // GeoJSON parallel vorladen
+      // GeoJSON + Competitor-Daten parallel vorladen
       this._geoJsonPromise = fetch(GEOJSON_URL, { cache: 'force-cache' })
         .then(r => r.json())
         .catch(err => { console.error('[PLZ-Widget] GeoJSON prefetch:', err); return null; });
+
+      fetch(COMPETITORS_URL, { cache: 'force-cache' })
+        .then(r => r.json())
+        .then(data => {
+          this._competitorData = Array.isArray(data) ? data : [];
+          console.info(`[PLZ-Widget] Mitbewerber geladen: ${this._competitorData.length} Einträge`);
+          // Falls Marker bereits sichtbar sein sollen (Widget schon fertig)
+          if (this.showCompetitors && this.map) this.updateCompetitorMarkers();
+        })
+        .catch(err => {
+          console.warn('[PLZ-Widget] competitor.json nicht ladbar:', err);
+          this._competitorData = [];
+        });
 
       this._showCinematicLoader();
       this._updateLoaderPhase(1, 'Leaflet wird geladen…');
@@ -1157,6 +1185,8 @@
       this.neighbourGroup  = null;
       this.radiusGroup     = null;
       this.bestreuungGroup = null;
+      this.competitorGroup = null;   // Mitbewerber-Marker
+      this._competitorData = null;   // geladene competitor.json
       this._previewGroup   = null;
 
       // Caches freigeben
@@ -2059,6 +2089,7 @@
       this.neighbourGroup  = L.layerGroup().addTo(this.map);
       this.radiusGroup     = L.layerGroup().addTo(this.map);
       this.bestreuungGroup = L.layerGroup().addTo(this.map);
+      this.competitorGroup = L.layerGroup().addTo(this.map);
 
       // Daten-Ready?
       // ACHTUNG: render()-Aufrufe MÜSSEN über _renderInProgress geschützt werden,
@@ -2104,7 +2135,9 @@
       const chkWerbe   = this.$('chk-werbeumsatz');
       const chkMit     = this.$('chk-mitgekauft');
       const chkBestreu = this.$('chk-bestreuung');
-      const chkDoppel  = this.$('chk-doppelbestreuung');
+      const chkDoppel          = this.$('chk-doppelbestreuung');
+      const chkCompetitorsWK   = this.$('chk-competitors-wk');
+      const chkCompetitorsUms  = this.$('chk-competitors-umsatz');
 
       this.showCritical = !!chkDoppel?.checked;
 
@@ -2248,6 +2281,16 @@
         this.updateBestreuungMarkers(); this.updateHeatmapLegend();
         if (this._activeFilter) this.renderDataTable(this.filteredKennwerte);
       });
+
+      // Mitbewerber: beide Checkboxen spiegeln denselben State
+      const onCompetitorChange = (checked) => {
+        this.showCompetitors = checked;
+        if (chkCompetitorsWK)  chkCompetitorsWK.checked  = checked;
+        if (chkCompetitorsUms) chkCompetitorsUms.checked = checked;
+        this.updateCompetitorMarkers();
+      };
+      this._on(chkCompetitorsWK,  'change', () => onCompetitorChange(chkCompetitorsWK.checked));
+      this._on(chkCompetitorsUms, 'change', () => onCompetitorChange(chkCompetitorsUms.checked));
     }
 
 
@@ -2408,6 +2451,87 @@
       }
     }
 
+    // ── Mitbewerber-Marker (Hornbach + künftig weitere Brands) ─────────
+    updateCompetitorMarkers() {
+      if (!this.competitorGroup) return;
+      this.competitorGroup.clearLayers();
+      if (!this.showCompetitors) return;
+      if (!this._competitorData?.length) return;
+
+      // Aktive NL-Koordinaten sammeln (nur die, die gerade selektiert sind)
+      const activeNLCoords = [];
+      const selNLs = this._selectedNLs;
+      const allSelected = !selNLs || selNLs.size === 0 ||
+                          selNLs.size === (this.allNLs?.length ?? 0);
+      for (const [nl, coords] of Object.entries(this.nlKoordinaten || {})) {
+        if (!allSelected && !selNLs.has(nl)) continue;
+        activeNLCoords.push({ lat: coords.lat, lon: coords.lon });
+      }
+      if (activeNLCoords.length === 0) return;
+
+      const RADIUS_KM = 100;
+      const toRad = d => d * Math.PI / 180;
+      const haversine = (lat1, lon1, lat2, lon2) => {
+        const R = 6371;
+        const dLat = toRad(lat2 - lat1), dLon = toRad(lon2 - lon1);
+        const a = Math.sin(dLat / 2) ** 2 +
+                  Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      };
+
+      // Brand-spezifische Icon-Definitionen
+      const brandConfig = {
+        Hornbach: {
+          color:   '#f26522',   // Hornbach-Orange
+          emoji:   '🔨',
+          size:    32,
+        },
+        // Weitere Brands hier ergänzbar:
+        // OBI: { color: '#ffcc00', emoji: '🏠', size: 32 },
+      };
+      const defaultConfig = { color: '#888', emoji: '🏪', size: 32 };
+
+      for (const comp of this._competitorData) {
+        const { brand, name, lat, lon } = comp;
+        if (typeof lat !== 'number' || typeof lon !== 'number') continue;
+
+        // Minimale Distanz zu einer aktiven NL berechnen
+        let minDist = Infinity;
+        for (const nl of activeNLCoords) {
+          const d = haversine(nl.lat, nl.lon, lat, lon);
+          if (d < minDist) minDist = d;
+        }
+        if (minDist > RADIUS_KM) continue;
+
+        const cfg = brandConfig[brand] ?? defaultConfig;
+        const distLabel = minDist < 999 ? `${Math.round(minDist)} km zur nächsten NL` : '';
+
+        const icon = L.divIcon({
+          html: `<div style="
+            width:${cfg.size}px; height:${cfg.size}px;
+            background:${cfg.color};
+            border-radius:50% 50% 50% 0;
+            transform:rotate(-45deg);
+            box-shadow:-1px 2px 6px rgba(0,0,0,0.35);
+            display:flex; align-items:center; justify-content:center;
+            border:2px solid rgba(255,255,255,0.7);
+          "><span style="transform:rotate(45deg);font-size:14px;line-height:1">${cfg.emoji}</span></div>`,
+          className: '',
+          iconSize:   [0, 0],
+          iconAnchor: [0, 0],
+        });
+
+        const marker = L.marker([lat, lon], { icon, interactive: true, zIndexOffset: 800 });
+        marker.bindTooltip(
+          `<strong style="color:${cfg.color}">${escapeHtml(brand)}</strong><br>
+           ${escapeHtml(name)}<br>
+           <span style="font-size:0.85em;color:#666">${escapeHtml(distLabel)}</span>`,
+          { direction: 'top', offset: [0, -cfg.size / 2], className: 'competitor-tooltip' }
+        );
+        this.competitorGroup.addLayer(marker);
+      }
+    }
+
     initializeMapTiles() {
       if (!this.map) return;
       this._tileLayer = L.tileLayer(OSM_TILES, {
@@ -2469,6 +2593,7 @@
       const radius = Number(this.$('radius-slider')?.value ?? 0);
       // applyRadiusFilter ruft intern updateGeoLayer auf — kein extra-Aufruf nötig
       this.applyRadiusFilter(radius);
+      this.updateCompetitorMarkers();
       this.updateNLSelectionUI?.();
     }
 
@@ -2557,6 +2682,7 @@
       // computeStreuverlust, updateGeoLayer, renderDataTable, _rerenderActivePopup auf
       const radius = Number(this.$('radius-slider').value);
       this.applyRadiusFilter(radius);
+      this.updateCompetitorMarkers();
       // Nach NL-Wechsel immer Overview zeigen (überschreibt ggf. _rerenderActivePopup)
       this.showOverviewPopup();
     }
@@ -4159,6 +4285,7 @@
       this.neighbourGroup?.clearLayers();
       this.radiusGroup?.clearLayers();
       this.bestreuungGroup?.clearLayers();
+      this.competitorGroup?.clearLayers();
       this._clearDoppelMarkers();
 
       if (this._geoLayer) {
