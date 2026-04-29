@@ -2481,13 +2481,9 @@
 
       // Brand-spezifische Icon-Definitionen
       const brandConfig = {
-        Hornbach: {
-          color:   '#f26522',   // Hornbach-Orange
-          emoji:   '🔨',
-          size:    32,
-        },
-        // Weitere Brands hier ergänzbar:
-        // OBI: { color: '#ffcc00', emoji: '🏠', size: 32 },
+        Hornbach: { color: '#f26522', emoji: '🔨', size: 32 },
+        OBI:      { color: '#f5a800', emoji: '🪣', size: 32 },
+        Globus:   { color: '#0066b2', emoji: '🌐', size: 32 },
       };
       const defaultConfig = { color: '#888', emoji: '🏪', size: 32 };
 
