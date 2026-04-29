@@ -1130,6 +1130,24 @@
       const COMPETITOR_FALLBACK = [
         { brand: 'HOR', name: 'Hornbach 41063 Mönchengladbach', lat: '51.2025', lon: '6.4445' },
         { brand: 'HOR', name: 'Hornbach 41199 Mönchengladbach', lat: '51.1625', lon: '6.4835' },
+        { brand: 'HOR', name: 'Hornbach 42285 Wuppertal',       lat: '51.2565', lon: '7.1915' },
+        { brand: 'HOR', name: 'Hornbach 44145 Dortmund',        lat: '51.5345', lon: '7.4905' },
+        { brand: 'HOR', name: 'Hornbach 44625 Herne',           lat: '51.5285', lon: '7.2275' },
+        { brand: 'HOR', name: 'Hornbach 45356 Essen',           lat: '51.4745', lon: '6.9905' },
+        { brand: 'HOR', name: 'Hornbach 45711 Datteln',         lat: '51.6575', lon: '7.3355' },
+        { brand: 'HOR', name: 'Hornbach 45881 Gelsenkirchen',   lat: '51.5225', lon: '7.1035' },
+        { brand: 'HOR', name: 'Hornbach 46047 Oberhausen',      lat: '51.4795', lon: '6.8755' },
+        { brand: 'HOR', name: 'Hornbach 47055 Duisburg',        lat: '51.4155', lon: '6.7685' },
+        { brand: 'HOR', name: 'Hornbach 47167 Duisburg',        lat: '51.4795', lon: '6.7855' },
+        { brand: 'HOR', name: 'Hornbach 47443 Moers',           lat: '51.4625', lon: '6.6765' },
+        { brand: 'HOR', name: 'Hornbach 47803 Krefeld',         lat: '51.3355', lon: '6.5845' },
+        { brand: 'HOR', name: 'Hornbach 48157 Münster',         lat: '51.9835', lon: '7.6915' },
+        { brand: 'HOR', name: 'Hornbach 49084 Osnabrück',       lat: '52.2885', lon: '8.0785' },
+        { brand: 'HOR', name: 'Hornbach 51105 Köln',            lat: '50.9245', lon: '7.0205' },
+        { brand: 'GLO', name: 'Globus 40670 Meerbusch',         lat: '51.272',  lon: '6.665'  },
+        { brand: 'GLO', name: 'Globus 45770 Marl',              lat: '51.662',  lon: '7.094'  },
+        { brand: 'OBI', name: 'OBI 40231 Düsseldorf',           lat: '51.2161', lon: '6.8160' },
+        { brand: 'OBI', name: 'OBI 40472 Düsseldorf',           lat: '51.2772', lon: '6.7977' },
       ];
 
       const applyCompetitorData = (raw) => {
