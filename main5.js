@@ -21,8 +21,8 @@
   'use strict';
 
   // ── Geteilte Konstanten ───────────────────────────────────────────────
-  const GEOJSON_URL      = 'https://raw.githubusercontent.com/Benne2000/PLZAnalyse/refs/heads/main/PLZ.geojson';
-  const COMPETITORS_URL  = 'https://raw.githubusercontent.com/Benne2000/PLZAnalyse/refs/heads/main/competitor.json';
+  const GEOJSON_URL      = 'https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/PLZ.geojson';
+  const COMPETITORS_URL  = 'https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/competitor.json';
   const LEAFLET_JS       = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
   const LEAFLET_CSS  = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
   const OSM_TILES    = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
