@@ -1149,10 +1149,23 @@
             return;
           }
           console.info(`[PLZ-Widget] competitor.json geparst — Typ: ${Array.isArray(raw) ? 'Array' : typeof raw}, Keys:`, Object.keys(raw).slice(0, 5));
-          // Format: { "Name": { "brand": "...", "lat": 0, "lon": 0 }, ... }
-          this._competitorData = Object.entries(raw).map(([name, v]) => ({
-            name,
-            brand: v.brand ?? 'Unbekannt',
+          // Brand-Kürzel → Anzeigename
+          const brandAlias = {
+            HOR: 'Hornbach',
+            OBI: 'OBI',
+            GLO: 'Globus',
+            HEL: 'Hellweg',
+            TOO: 'Toom',
+            HAG: 'Hagebau',
+          };
+          // Format: Array [ { brand, name, lat, lon }, ... ]
+          // oder Object { "Name": { brand, lat, lon }, ... } — beide werden unterstützt
+          const entries = Array.isArray(raw)
+            ? raw
+            : Object.entries(raw).map(([name, v]) => ({ name, ...v }));
+          this._competitorData = entries.map(v => ({
+            name:  v.name  ?? '–',
+            brand: brandAlias[v.brand] ?? v.brand ?? 'Unbekannt',
             lat:   Number(v.lat),
             lon:   Number(v.lon),
           })).filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lon));
@@ -2509,6 +2522,9 @@
         Hornbach: { color: '#f26522', emoji: '🔨', size: 32 },
         OBI:      { color: '#f5a800', emoji: '🪣', size: 32 },
         Globus:   { color: '#0066b2', emoji: '🌐', size: 32 },
+        Hellweg:  { color: '#e30613', emoji: '🪛', size: 32 },
+        Toom:     { color: '#00843d', emoji: '🌱', size: 32 },
+        Hagebau:  { color: '#e94e1b', emoji: '🧱', size: 32 },
       };
       const defaultConfig = { color: '#888', emoji: '🏪', size: 32 };
 
