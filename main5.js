@@ -3760,7 +3760,7 @@
     // ── WK-Kennwerte (HZ-Kosten pro PLZ etc.) ──────────────────────────
     computeWKKennwerte() {
       if (!this.filteredData) return;
-      const aggregated = {}, unfilteredUmsatzByPLZ = {};
+      const aggregated = {}, unfilteredUmsatzByPLZ = {}, unfilteredByPLZ = {};
       const selNLs = this._selectedNLs;
       const radius = this.plzImRadius;
       const hasNLFilter = selNLs && selNLs.size > 0;
@@ -3770,16 +3770,25 @@
       for (let i = 0, len = data.length; i < len; i++) {
         const row = data[i];
         const plz = this._normalizePLZ(row['dimension_plz_0']?.id ?? row['dimension_plz_0']?.raw) || '00000';
-        const umsatz = row['value_hr_n_umsatz_0']?.raw ?? 0;
+        const umsatz   = row['value_hr_n_umsatz_0']?.raw ?? 0;
+        const hzKosten = row['value_hz_kosten_0']?.raw   ?? 0;
+        const hzFlag   = row['dimension_hzflag_0']?.id?.trim() === 'X';
+        // Vor NL-Filter: Gesamtumsatz und HZ-Kosten sammeln (Basis für WK%)
+        // BW liefert Umsatz und Kosten oft auf verschiedenen NL-Dimensionen —
+        // der NL-Filter würde sie sonst trennen und WK% auf 0 drücken.
         unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
+        if (!unfilteredByPLZ[plz]) unfilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0 };
+        unfilteredByPLZ[plz].hzKosten += hzKosten;
+        if (hzFlag) unfilteredByPLZ[plz].hzCount++;
+
         const nl = row['dimension_niederlassung_0']?.id?.trim();
         if (hasNLFilter && !selNLs.has(nl)) continue;
         if (hasRadius && !radius.has(plz)) continue;
         if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, umsatzNetto: 0, hzKosten: 0, potHzSum: 0, potHzCount: 0 };
         const entry = aggregated[plz];
-        if (row['dimension_hzflag_0']?.id?.trim() === 'X') entry.hzCount++;
+        if (hzFlag) entry.hzCount++;
         entry.umsatzNetto += umsatz;
-        entry.hzKosten    += row['value_hz_kosten_0']?.raw ?? 0;
+        entry.hzKosten    += hzKosten;
         const potHz = row['value_hz_potentiell_0']?.raw;
         if (typeof potHz === 'number') { entry.potHzSum += potHz; entry.potHzCount++; }
       }
@@ -3790,15 +3799,26 @@
 
       for (const plz of Object.keys(aggregated)) {
         const entry = aggregated[plz];
-        const hzKosten    = entry.hzKosten;
-        // Fallback: wenn value_hr_n_umsatz_0 = 0 auf allen Rows, Gesamtumsatz aus
-        // prepareUmsatzPLZWerte nehmen (Summe der Kategorie-Umsätze)
+        const unfiltered = unfilteredByPLZ[plz] || { hzKosten: 0, hzCount: 0 };
+        // Wenn NL-Filter HZ-Kosten-Rows rausfiltert (BW-Strukturproblem),
+        // auf ungefilterte Werte zurückfallen
+        const hzKosten   = entry.hzKosten > 0 ? entry.hzKosten : unfiltered.hzKosten;
+        const isHZ       = entry.hzCount > 0 || unfiltered.hzCount > 0;
+        const isCritical = (entry.hzCount > 0 ? entry.hzCount : unfiltered.hzCount) > 1;
+        // Wenn der NL-Filter Umsatz-Rows und Kosten-Rows trennt (BW liefert sie
+        // auf verschiedenen NL-Dimensionen), kann umsatzNetto=0 sein obwohl Kosten
+        // vorhanden sind. Fallback-Kette: gefilterter Umsatz → ungefiltert → PLZWerte-Summe
         let umsatzNetto = entry.umsatzNetto;
-        if (umsatzNetto === 0) {
-          const plzWerte = this.filteredPLZWerte?.[plz];
-          if (plzWerte) {
-            umsatzNetto = (plzWerte.umsatz || 0) + (plzWerte.ra || 0) +
-                          (plzWerte.onlineshop || 0) + (plzWerte.pluscard || 0);
+        if (umsatzNetto === 0 && hzKosten > 0) {
+          const unfU = unfilteredUmsatzByPLZ[plz] ?? 0;
+          if (unfU > 0) {
+            umsatzNetto = unfU;
+          } else {
+            const plzWerte = this.filteredPLZWerte?.[plz];
+            if (plzWerte) {
+              umsatzNetto = (plzWerte.umsatz || 0) + (plzWerte.ra || 0) +
+                            (plzWerte.onlineshop || 0) + (plzWerte.pluscard || 0);
+            }
           }
         }
         const wkPercent   = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
@@ -3806,8 +3826,6 @@
         const wkNachbarn  = unfU > 0 ? Number(((hzKosten / unfU) * 100).toFixed(1)) : 0;
         const avgPotHz    = entry.potHzCount > 0 ? entry.potHzSum / entry.potHzCount : 0;
         const potHzPct    = umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0;
-        const isHZ        = entry.hzCount > 0;
-        const isCritical  = entry.hzCount > 1;
         const baseEntry   = base[plz] || {};
         const old         = this.filteredPLZWerte?.[plz] || {};
 
