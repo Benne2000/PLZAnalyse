@@ -1138,7 +1138,7 @@
         { brand: 'HOR', name: 'Hornbach 47055 Duisburg',               lat: '51.4155', lon: '6.7685' },
         { brand: 'HOR', name: 'Hornbach 47167 Duisburg',               lat: '51.4795', lon: '6.7855' },
         { brand: 'HOR', name: 'Hornbach 47443 Moers',                  lat: '51.4625', lon: '6.6765' },
-        { brand: 'HOR', name: 'Hornbach 47803 Krefeld 2',              lat: '51.3355', lon: '6.5845' },
+        { brand: 'HOR', name: 'Hornbach 47803 Krefeld',                lat: '51.3355', lon: '6.5845' },
         { brand: 'HOR', name: 'Hornbach 48157 Münster',                lat: '51.9835', lon: '7.6915' },
         { brand: 'HOR', name: 'Hornbach 49084 Osnabrück',              lat: '52.2885', lon: '8.0785' },
         { brand: 'HOR', name: 'Hornbach 51105 Köln',                   lat: '50.9245', lon: '7.0205' },
@@ -3760,7 +3760,8 @@
     // ── WK-Kennwerte (HZ-Kosten pro PLZ etc.) ──────────────────────────
     computeWKKennwerte() {
       if (!this.filteredData) return;
-      const aggregated = {}, unfilteredUmsatzByPLZ = {}, unfilteredByPLZ = {};
+      const aggregated = {}, unfilteredUmsatzByPLZ = {}, unfilteredByPLZ = {},
+            nlFilteredUmsatzByPLZ = {}, nlFilteredByPLZ = {};
       const selNLs = this._selectedNLs;
       const radius = this.plzImRadius;
       const hasNLFilter = selNLs && selNLs.size > 0;
@@ -3773,16 +3774,24 @@
         const umsatz   = row['value_hr_n_umsatz_0']?.raw ?? 0;
         const hzKosten = row['value_hz_kosten_0']?.raw   ?? 0;
         const hzFlag   = row['dimension_hzflag_0']?.id?.trim() === 'X';
-        // Vor NL-Filter: Gesamtumsatz und HZ-Kosten sammeln (Basis für WK%)
-        // BW liefert Umsatz und Kosten oft auf verschiedenen NL-Dimensionen —
-        // der NL-Filter würde sie sonst trennen und WK% auf 0 drücken.
+        const nl       = row['dimension_niederlassung_0']?.id?.trim();
+        const nlPassed = !hasNLFilter || selNLs.has(nl);
+
+        // Bucket 1: komplett ungefiltert — für isHZ/hzKosten-Fallback
         unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
         if (!unfilteredByPLZ[plz]) unfilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0 };
         unfilteredByPLZ[plz].hzKosten += hzKosten;
         if (hzFlag) unfilteredByPLZ[plz].hzCount++;
 
-        const nl = row['dimension_niederlassung_0']?.id?.trim();
-        if (hasNLFilter && !selNLs.has(nl)) continue;
+        // Bucket 2: nach NL-Filter, vor Radius — Nenner für WK% bei aktivem NL-Filter
+        if (nlPassed) {
+          nlFilteredUmsatzByPLZ[plz] = (nlFilteredUmsatzByPLZ[plz] || 0) + umsatz;
+          if (!nlFilteredByPLZ[plz]) nlFilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0 };
+          nlFilteredByPLZ[plz].hzKosten += hzKosten;
+          if (hzFlag) nlFilteredByPLZ[plz].hzCount++;
+        }
+
+        if (!nlPassed) continue;
         if (hasRadius && !radius.has(plz)) continue;
         if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, umsatzNetto: 0, hzKosten: 0, potHzSum: 0, potHzCount: 0 };
         const entry = aggregated[plz];
@@ -3799,18 +3808,22 @@
 
       for (const plz of Object.keys(aggregated)) {
         const entry = aggregated[plz];
-        const unfiltered = unfilteredByPLZ[plz] || { hzKosten: 0, hzCount: 0 };
-        // HZ-Kosten: wenn NL-Filter die Kosten-Rows rausfiltert, ungefilterte Werte nutzen
-        const hzKosten   = entry.hzKosten > 0 ? entry.hzKosten : unfiltered.hzKosten;
-        const isHZ       = entry.hzCount > 0 || unfiltered.hzCount > 0;
-        const isCritical = (entry.hzCount > 0 ? entry.hzCount : unfiltered.hzCount) > 1;
+        // Wenn NL-Filter aktiv: NL-gefilterte Werte als Basis (zeigt nur selektierte NLs).
+        // Ohne NL-Filter: alle Rows der PLZ (unfilteredByPLZ).
+        // Hintergrund: BW liefert Umsatz auf Nachbar-NL-Rows und Kosten auf HZ-NL-Row —
+        // WK%-Nenner muss denselben NL-Scope haben wie der Zähler (hzKosten).
+        const refBucket  = hasNLFilter ? (nlFilteredByPLZ[plz] || { hzKosten: 0, hzCount: 0 })
+                                       : (unfilteredByPLZ[plz]  || { hzKosten: 0, hzCount: 0 });
+        const umsatzRef  = hasNLFilter ? (nlFilteredUmsatzByPLZ[plz] ?? 0)
+                                       : (unfilteredUmsatzByPLZ[plz]  ?? 0);
 
-        // WK%-Nenner ist immer der Gesamtumsatz der PLZ (alle NLs zusammen).
-        // BW liefert Umsatz auf Nachbar-NL-Rows und HZ-Kosten auf der eigenen NL-Row —
-        // der NL-Filter würde sonst den Umsatzteil wegschneiden und WK%=0 erzeugen.
-        const umsatzGesamt = unfilteredUmsatzByPLZ[plz] ?? 0;
-        // Angezeigter Umsatz in Tabelle/Popup: gefilterter Wert (was die selektierte NL sieht),
-        // Fallback auf Gesamtumsatz wenn gefiltert 0
+        const hzKosten   = entry.hzKosten > 0 ? entry.hzKosten : refBucket.hzKosten;
+        const isHZ       = entry.hzCount > 0 || refBucket.hzCount > 0;
+        const isCritical = (entry.hzCount > 0 ? entry.hzCount : refBucket.hzCount) > 1;
+
+        // WK%-Nenner = Umsatz im gewählten NL-Scope (alle NLs oder nur selektierte)
+        const umsatzGesamt = umsatzRef;
+        // Angezeigter Umsatz: gefilterter Wert (inkl. Radius), Fallback auf Scope-Umsatz
         const umsatzNetto = entry.umsatzNetto > 0 ? entry.umsatzNetto : umsatzGesamt;
         // WK% Nenner = Gesamtumsatz PLZ (inkl. Nachbar-NLs) — so wie BW-Analyse
         const wkPercent  = umsatzGesamt > 0 ? Number(((hzKosten / umsatzGesamt) * 100).toFixed(2)) : 0;
