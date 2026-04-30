@@ -813,26 +813,157 @@
         font-variant-numeric: tabular-nums;
       }
 
-      /* ─── Doppelbestreuungs-Toggle ──────────────────────────────── */
+      /* ─── Welcome-Guide / User-Doku ─────────────────────────────── */
+      .welcome-guide {
+        padding: 20px 14px; flex: 1;
+        display: flex; flex-direction: column; gap: 14px;
+        overflow-y: auto; min-height: 0;
+        scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
+      }
+      .welcome-guide::-webkit-scrollbar       { width: 5px; }
+      .welcome-guide::-webkit-scrollbar-track { background: var(--gray-100); }
+      .welcome-guide::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+
+      .docs-expandable {
+        border: 1px solid var(--gray-200); border-radius: var(--radius-md);
+        background: var(--white);
+        box-shadow: var(--shadow-xs);
+        overflow: hidden;
+        transition: border-color 0.18s var(--ease-in-out),
+                    box-shadow   0.18s var(--ease-in-out);
+      }
+      .docs-expandable:hover { border-color: var(--red-border); box-shadow: var(--shadow-sm); }
+      .docs-expandable-header {
+        display: flex; align-items: center; gap: 9px;
+        padding: 10px 12px;
+        cursor: pointer; user-select: none;
+        transition: background 0.15s var(--ease-in-out);
+      }
+      .docs-expandable-header:hover { background: var(--red-bg); }
+      .docs-expandable-icon { font-size: 1.05rem; line-height: 1; flex-shrink: 0; }
+      .docs-expandable-title-block {
+        display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0;
+      }
+      .docs-expandable-title {
+        font-size: 0.78rem; font-weight: 700;
+        color: var(--gray-700);
+        letter-spacing: 0.02em;
+      }
+      .docs-expandable-subtitle {
+        font-size: 0.67rem; color: var(--gray-500); font-weight: 400;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .docs-expandable-chevron {
+        flex-shrink: 0; width: 14px; height: 14px;
+        color: var(--gray-500);
+        transition: transform 0.28s var(--ease-out);
+      }
+      .docs-expandable.expanded .docs-expandable-chevron { transform: rotate(180deg); }
+
+      .docs-expandable-content {
+        display: grid;
+        grid-template-rows: 0fr;
+        transition: grid-template-rows 0.32s var(--ease-out);
+      }
+      .docs-expandable.expanded .docs-expandable-content {
+        grid-template-rows: 1fr;
+      }
+      .docs-expandable-content-inner {
+        overflow: hidden;
+        border-top: 1px solid transparent;
+        transition: border-top-color 0.32s var(--ease-out);
+      }
+      .docs-expandable.expanded .docs-expandable-content-inner {
+        border-top-color: var(--gray-200);
+      }
+      .docs-section {
+        padding: 12px 14px;
+        font-size: 0.74rem; line-height: 1.6;
+        color: var(--gray-700);
+      }
+      .docs-section h4 {
+        margin: 0 0 4px 0;
+        font-size: 0.7rem; font-weight: 700;
+        color: var(--gray-800);
+        letter-spacing: 0.04em; text-transform: uppercase;
+      }
+      .docs-section h4:not(:first-child) { margin-top: 12px; }
+      .docs-section p { margin: 0 0 6px 0; color: var(--gray-600); }
+      .docs-section p:last-child { margin-bottom: 0; }
+      .docs-section ul {
+        margin: 4px 0 6px 0; padding-left: 18px;
+        display: flex; flex-direction: column; gap: 3px;
+        color: var(--gray-600);
+      }
+      .docs-section ul ul { margin: 2px 0 4px 0; }
+      .docs-section li { line-height: 1.5; }
+      .docs-section strong { color: var(--gray-800); font-weight: 700; }
+      .docs-section code {
+        background: var(--gray-100); color: var(--red-dark);
+        padding: 1px 5px; border-radius: 4px;
+        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 0.7rem;
+      }
+      .docs-divider {
+        margin: 0; height: 1px; border: none;
+        background: var(--gray-100);
+      }
+      .docs-tip {
+        margin: 0; padding: 8px 14px;
+        background: var(--red-bg); border-top: 1px solid var(--red-border);
+        font-size: 0.7rem; color: var(--gray-700); line-height: 1.5;
+      }
+      .docs-tip strong { color: var(--red); }
+
+      /* ─── Doppelbestreuungs-Toggle (collapsible) ────────────────── */
       #doppel-toggle-bar {
         margin-top: 10px; flex-shrink: 0;
         border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
         background: var(--gray-50); overflow: hidden;
+        transition: border-color 0.18s var(--ease-in-out);
       }
+      #doppel-toggle-bar:hover { border-color: var(--red-border); }
       #doppel-toggle-header {
         display: flex; align-items: center; gap: 8px;
         padding: 8px 10px 6px 10px;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.15s var(--ease-in-out);
       }
+      #doppel-toggle-header:hover { background: rgba(180,24,33,0.04); }
       .doppel-toggle-icon { font-size: 1rem; line-height: 1; flex-shrink: 0; }
-      .doppel-toggle-title-block { display: flex; flex-direction: column; gap: 1px; flex: 1; }
+      .doppel-toggle-title-block { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
       .doppel-toggle-label {
         font-size: 0.72rem; font-weight: 700; color: var(--gray-700);
         letter-spacing: 0.04em; text-transform: uppercase;
       }
-      .doppel-toggle-subtitle { font-size: 0.67rem; color: var(--gray-500); font-weight: 400; }
+      .doppel-toggle-subtitle {
+        font-size: 0.67rem; color: var(--gray-500); font-weight: 400;
+        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      }
+      .doppel-toggle-chevron {
+        flex-shrink: 0; width: 14px; height: 14px;
+        color: var(--gray-500);
+        transition: transform 0.28s var(--ease-out);
+        transform: rotate(180deg); /* Zeigt nach oben (=ausgeklappt) */
+      }
+      #doppel-toggle-bar.collapsed .doppel-toggle-chevron {
+        transform: rotate(0deg); /* Zeigt nach unten (=eingeklappt) */
+      }
       #doppel-toggle-options {
-        display: flex; flex-direction: column; gap: 0;
+        display: grid;
+        grid-template-rows: 1fr;
+        transition: grid-template-rows 0.32s var(--ease-out),
+                    border-top-color   0.32s var(--ease-out);
         border-top: 1px solid var(--gray-200);
+      }
+      #doppel-toggle-bar.collapsed #doppel-toggle-options {
+        grid-template-rows: 0fr;
+        border-top-color: transparent;
+      }
+      #doppel-toggle-options-inner {
+        overflow: hidden;
+        display: flex; flex-direction: column;
       }
       .doppel-option {
         display: flex; align-items: center; gap: 10px;
@@ -939,9 +1070,7 @@
         <button id="filter-button">Anzeigen</button>
 
         <div class="table-container">
-          <div class="table-wrapper" id="table-container">
-            <div id="streuverlust-box"></div>
-          </div>
+          <div class="table-wrapper" id="table-container"></div>
           <div id="nl-info-container"></div>
         </div>
       </div>
@@ -1996,7 +2125,7 @@
 
     _renderWelcomeGuide(container) {
       const guide = document.createElement('div');
-      guide.style.cssText = 'padding:20px 14px;flex:1;display:flex;flex-direction:column;gap:14px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--red) var(--gray-100);';
+      guide.classList.add('welcome-guide');
       const modes = [
         ['📊', 'WK-Analyse',         'Werbekosten-Anteile je PLZ. Grün = HZ-bestreut, Blau = potentiell nicht bestreut. Klicke auf eine PLZ für Detailwerte.'],
         ['💶', 'Umsatz-Analyse',     'Umsatzverteilung nach Kategorien (Stationär, Pluscard, R&A, KUBE OS). Absolut-, Pro-HH- oder Werbeanteil-Darstellung.'],
@@ -2017,6 +2146,10 @@
             <div style="font-size:0.7rem;color:var(--gray-500);margin-top:2px;line-height:1.45;">${escapeHtml(desc)}</div>
           </div>
         </div>`;
+
+      // SVG-Chevron: einmalig definieren
+      const chevronSvg = `<svg class="docs-expandable-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 6 8 10 12 6"/></svg>`;
+
       guide.innerHTML = `
         <div style="text-align:center;padding:12px 0 6px;">
           <div style="font-size:2.2rem;margin-bottom:6px;">🗺️</div>
@@ -2039,17 +2172,185 @@
         <div style="display:flex;flex-direction:column;gap:6px;">${modes.map(m => card(...m)).join('')}</div>
         <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-400);margin-top:2px;margin-bottom:2px;">Werkzeuge</div>
         <div style="display:flex;flex-direction:column;gap:6px;">${tools.map(t => card(...t)).join('')}</div>
+
+        <!-- Ausführliche User-Dokumentation, ausklappbar -->
+        <div class="docs-expandable" id="docs-expandable-section">
+          <div class="docs-expandable-header" id="docs-expandable-header">
+            <div class="docs-expandable-icon">📖</div>
+            <div class="docs-expandable-title-block">
+              <span class="docs-expandable-title">Ausführliche Dokumentation</span>
+              <span class="docs-expandable-subtitle">Begriffe, Berechnungen, Workflows</span>
+            </div>
+            ${chevronSvg}
+          </div>
+          <div class="docs-expandable-content">
+            <div class="docs-expandable-content-inner">
+
+              <div class="docs-section">
+                <h4>Was ist eine Erhebung?</h4>
+                <p>Eine <strong>Erhebung</strong> ist ein definierter Beobachtungszeitraum, in dem für eine Niederlassung (NL) die Bestreuung mit Werbeprospekten und der dazugehörige Umsatz erfasst werden. Eine Erhebung wird eindeutig identifiziert durch:</p>
+                <ul>
+                  <li><strong>ErhebungsID</strong> — die Niederlassung bzw. der Geschäftsbereich</li>
+                  <li><strong>Jahr</strong> — Kalenderjahr der Erhebung</li>
+                  <li><strong>Erhebungsnummer</strong> — fortlaufend, Format <code>N. SS.SS–EE.EE</code> (Start–Ende)</li>
+                </ul>
+                <p>Die Nummer <code>0</code> bezeichnet das laufende Jahr (Year-to-Date).</p>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Bestreuung &amp; HZ</h4>
+                <p>Eine PLZ gilt als <strong>HZ-bestreut</strong> (HZ = Hauptzustellung), wenn das Werbeprospekt der Erhebung dort ausgeliefert wurde. Sichtbar in der Tabelle in der HZ-Spalte:</p>
+                <ul>
+                  <li><span style="color:#33a02c;font-weight:700">●</span> <strong>Grün</strong> — bestreut</li>
+                  <li><span style="color:#f0a500;font-weight:700">▲</span> <strong>Gelb-Dreieck</strong> — Doppelbestreuung (mehrere NLs gleichzeitig)</li>
+                  <li><span style="color:#dee2e6;font-weight:700">●</span> <strong>Grau</strong> — nicht bestreut (Streuverlust)</li>
+                </ul>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Doppelbestreuung</h4>
+                <p>Doppelbestreuung tritt auf, wenn mehrere Niederlassungen <strong>im selben Zeitraum</strong> dieselbe PLZ bestreuen.</p>
+                <ul>
+                  <li><strong>Ohne Doppelbestreuung</strong> (Standard) — schneller, lädt nur Daten der gewählten ErhebungsID</li>
+                  <li><strong>Mit Doppelbestreuung</strong> — lädt alle Erhebungen mit gleichem Jahr+Nummer; erkennt Überschneidungen über NL-Grenzen hinweg (Cross-Erhebungs-Doppelbestreuung)</li>
+                </ul>
+                <p>Die Auswahl wird vor dem Klick auf <strong>Anzeigen</strong> getroffen und beeinflusst Ladezeit und Detail-Tiefe.</p>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Werbekosten-Anteil (WK%)</h4>
+                <p>Verhältnis aus Werbekosten zu Umsatz, in Prozent:</p>
+                <ul>
+                  <li><strong>WK%</strong> = HZ-Kosten ÷ Umsatz × 100</li>
+                  <li><strong>Nenner</strong> = Gesamtumsatz der PLZ über alle bestreuenden NLs (mit aktivem NL-Filter: nur selektierte NLs)</li>
+                  <li><strong>Zähler</strong> = HZ-Kosten der gewählten Erhebung in dieser PLZ</li>
+                </ul>
+                <p>Im Heatmap-Modus werden niedrige WK-Werte grün, hohe WK-Werte rot dargestellt. Potentielle WK% (für nicht bestreute PLZs) zeigt an, was die Erhebung kosten würde, wenn sie diese PLZ zusätzlich bestreuen würde.</p>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Umsatz-Modus</h4>
+                <p>Im Umsatz-Modus werden vier Kategorien unterschieden:</p>
+                <ul>
+                  <li><strong>Stationär</strong> — Verkauf in der Filiale</li>
+                  <li><strong>Pluscard</strong> — Großkunden / B2B</li>
+                  <li><strong>R&amp;A</strong> — Räumungs- und Abverkauf</li>
+                  <li><strong>KUBE OS (Online)</strong> — Online-Shop</li>
+                </ul>
+                <h4>Umsatztyp</h4>
+                <ul>
+                  <li><strong>Umsatz</strong> — alle Umsätze in der PLZ</li>
+                  <li><strong>Werbeumsatz</strong> — nur Umsätze, die der Werbung zugerechnet werden. Optional zusätzlich <strong>Mitgekauft</strong> (=Zusatzumsatz, der durch die Werbung mitgezogen wurde)</li>
+                </ul>
+                <h4>Darstellung</h4>
+                <ul>
+                  <li><strong>Absolut</strong> — Eurobeträge je PLZ</li>
+                  <li><strong>pro HH</strong> — Eurobeträge pro Haushalt (für Vergleichbarkeit zwischen großen und kleinen PLZs)</li>
+                  <li><strong>Werbeanteil</strong> — Anteil Werbeumsatz am Gesamtumsatz (nur im Werbeumsatz-Modus)</li>
+                </ul>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Streuverlust</h4>
+                <p>Der <strong>Streuverlust</strong> ist der Umsatzanteil, der <em>außerhalb</em> der bestreuten Gebiete oder außerhalb des aktiven Radius generiert wurde.</p>
+                <ul>
+                  <li><strong>€-Wert</strong> — Umsatz außerhalb der gewählten PLZs</li>
+                  <li><strong>%-Wert</strong> — Anteil am Gesamterhebungsumsatz</li>
+                </ul>
+                <p>Niedriger Streuverlust = Werbung erreicht die zahlenden Kunden gut.</p>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Radius-Filter</h4>
+                <p>Der Radius-Slider oben in der Mitte begrenzt die Auswertung auf PLZs in einem Umkreis (10–100 km) um die Niederlassungen der Erhebung. Das wirkt sich aus auf:</p>
+                <ul>
+                  <li>Sichtbare PLZs auf der Karte und in der Tabelle</li>
+                  <li>Streuverlust-Berechnung</li>
+                  <li>WK%-Aggregation</li>
+                  <li>Umsatz-Aggregation</li>
+                </ul>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Niederlassungs-Filter (NL-Filter)</h4>
+                <p>Über den Button <strong>↕ Erhebungsübersicht</strong> öffnet sich eine Tabelle mit allen NLs der Erhebung und deren Kennzahlen:</p>
+                <ul>
+                  <li><strong>Umsatz (Hochrechn.)</strong> — Jahresumsatz der NL</li>
+                  <li><strong>Erfasst</strong> — Umsatz im Erhebungs-Zeitraum</li>
+                  <li><strong>%</strong> — Erfasster Anteil am Jahresumsatz</li>
+                  <li><strong>Valide</strong> — Umsatz mit gültiger PLZ</li>
+                  <li><strong>Abdeckung</strong> — Validierter Anteil am Jahresumsatz</li>
+                </ul>
+                <p>Klick auf eine Zeile filtert die Karte/Tabelle auf diese NL. Mehrfachauswahl möglich. Erneuter Klick deselektiert.</p>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Karten-Bedienung</h4>
+                <ul>
+                  <li><strong>Klick auf PLZ</strong> — öffnet Detail-Popup mit Werten</li>
+                  <li><strong>Mausrad / Pinch</strong> — Zoom; ab Zoom-Stufe ${LABEL_ZOOM_MIN} werden PLZ-Namen direkt eingeblendet</li>
+                  <li><strong>Karten-Button</strong> (unten rechts) — OpenStreetMap-Hintergrund ein/aus</li>
+                  <li><strong>Legende-Button</strong> (unten links) — Farbskala der Heatmap</li>
+                  <li><strong>Übersicht-Button</strong> (Panel-Footer) — Gesamtwerte aller sichtbaren PLZs</li>
+                  <li><strong>Hauptmenü-Button</strong> (Panel-Footer) — zurück zum Start (alle Filter zurücksetzen)</li>
+                </ul>
+              </div>
+
+              <hr class="docs-divider">
+
+              <div class="docs-section">
+                <h4>Mitbewerber-Layer</h4>
+                <p>Die Mitbewerber-Checkbox blendet Märkte von Hornbach, OBI, Globus, Hellweg, Toom und Hagebau auf der Karte ein. Tooltip beim Hover zeigt Name und Adresse.</p>
+              </div>
+
+              <p class="docs-tip">
+                <strong>💡 Performance-Tipp:</strong> Aktiviere die Doppelbestreuung nur, wenn du tatsächlich die Cross-Erhebungs-Analyse brauchst. Ohne ist die Ladezeit deutlich kürzer.
+              </p>
+            </div>
+          </div>
+        </div>
+
         <div style="padding:8px 10px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100);font-size:0.7rem;color:var(--gray-500);line-height:1.5;margin-top:2px;">
           💡 <strong style="color:var(--gray-600)">Tipp:</strong> Zoom in die Karte — ab Zoom-Stufe ${LABEL_ZOOM_MIN} werden PLZ-Namen direkt eingeblendet.
         </div>`;
       container.appendChild(guide);
+
+      // Click-Handler für ausklappbare Doku-Sektion
+      const docsSection = guide.querySelector('#docs-expandable-section');
+      const docsHeader  = guide.querySelector('#docs-expandable-header');
+      if (docsSection && docsHeader) {
+        this._on(docsHeader, 'click', () => {
+          docsSection.classList.toggle('expanded');
+        });
+      }
     }
 
     renderDataTableFromEntries(entries) {
       const container = this.$('table-container');
       if (!container) return;
       container.innerHTML = '';
-      container.style.cssText = 'display:flex;flex-direction:column;height:100%;min-height:0;';
+      // Layout sicherstellen, ohne andere Inline-Styles zu zerstören.
+      // (Vorher überschrieb style.cssText auch laufende Animationen/Transforms.)
+      container.style.display       = 'flex';
+      container.style.flexDirection = 'column';
+      container.style.height        = '100%';
+      container.style.minHeight     = '0';
 
       entries = entries.filter(([plz]) => plz !== '00000');
       if (this.plzImRadius && this.plzImRadius.size > 0) {
@@ -2337,6 +2638,10 @@
         this.umsatzDarstellung = 'abs';
         darstSwitch.querySelectorAll('span').forEach(s => s.classList.remove('active'));
         btnAbs.classList.add('active'); btnWA.classList.add('disabled');
+        // Bug B5-Fix: Bestreuungs-Overlay-State auch im WK-Modus konsistent
+        // halten (Checkbox + Layer + Flag).
+        this.showBestreuung = false;
+        if (chkBestreu) chkBestreu.checked = false;
         this.bestreuungGroup?.clearLayers();
         this.activeCategories = new Set(CATEGORIES);
         this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
@@ -3392,27 +3697,32 @@
       if (filterContainer && !this.$('doppel-toggle-bar')) {
         const bar = document.createElement('div');
         bar.id = 'doppel-toggle-bar';
+        // Standardmäßig im Hauptmenü ausgeklappt — wird beim Erhebungs-Load
+        // automatisch eingeklappt und beim Reset zum Hauptmenü wieder geöffnet.
         bar.innerHTML = `
-          <div id="doppel-toggle-header">
+          <div id="doppel-toggle-header" role="button" tabindex="0" aria-expanded="true" aria-controls="doppel-toggle-options">
             <span class="doppel-toggle-icon">⚠️</span>
             <div class="doppel-toggle-title-block">
               <span class="doppel-toggle-label">Doppelbestreuung</span>
-              <span class="doppel-toggle-subtitle">Erkennung von Überschneidungen</span>
+              <span class="doppel-toggle-subtitle" id="doppel-toggle-subtitle">Erkennung von Überschneidungen</span>
             </div>
+            <svg class="doppel-toggle-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 6 8 10 12 6"/></svg>
           </div>
           <div id="doppel-toggle-options">
-            <div class="doppel-option active" id="doppel-opt-aus">
-              <div class="doppel-option-radio"></div>
-              <div class="doppel-option-text">
-                <span class="doppel-option-name">Ohne Doppelbestreuung</span>
-                <span class="doppel-option-desc">Nur eigene Erhebung · Schnellste Ladezeit</span>
+            <div id="doppel-toggle-options-inner">
+              <div class="doppel-option active" id="doppel-opt-aus">
+                <div class="doppel-option-radio"></div>
+                <div class="doppel-option-text">
+                  <span class="doppel-option-name">Ohne Doppelbestreuung</span>
+                  <span class="doppel-option-desc">Nur eigene Erhebung · Schnellste Ladezeit</span>
+                </div>
               </div>
-            </div>
-            <div class="doppel-option" id="doppel-opt-ein">
-              <div class="doppel-option-radio"></div>
-              <div class="doppel-option-text">
-                <span class="doppel-option-name">Mit Doppelbestreuung</span>
-                <span class="doppel-option-desc">Alle Erhebungen des Zeitraums · Längere Ladezeit</span>
+              <div class="doppel-option" id="doppel-opt-ein">
+                <div class="doppel-option-radio"></div>
+                <div class="doppel-option-text">
+                  <span class="doppel-option-name">Mit Doppelbestreuung</span>
+                  <span class="doppel-option-desc">Alle Erhebungen des Zeitraums · Längere Ladezeit</span>
+                </div>
               </div>
             </div>
           </div>`;
@@ -3420,26 +3730,74 @@
         if (filterBtn) filterContainer.insertBefore(bar, filterBtn);
         else           filterContainer.appendChild(bar);
 
-        const optAus = bar.querySelector('#doppel-opt-aus');
-        const optEin = bar.querySelector('#doppel-opt-ein');
+        const header   = bar.querySelector('#doppel-toggle-header');
+        const subtitle = bar.querySelector('#doppel-toggle-subtitle');
+        const optAus   = bar.querySelector('#doppel-opt-aus');
+        const optEin   = bar.querySelector('#doppel-opt-ein');
         this._doppelbestreuungAktiv = false;
 
-        const refreshBtn = () => {
-          const btn = this.$('filter-button');
-          if (btn && erhSelect.value && jahrSelect.value && nummerSelect.value) {
-            btn.classList.add('ready');
+        // Subtitle reflektiert den aktuell gewählten Modus, damit der User
+        // ihn auch im eingeklappten Zustand sieht.
+        const updateSubtitle = () => {
+          if (!subtitle) return;
+          if (bar.classList.contains('collapsed')) {
+            subtitle.textContent = this._doppelbestreuungAktiv
+              ? 'Mit Doppelbestreuung'
+              : 'Ohne Doppelbestreuung';
+          } else {
+            subtitle.textContent = 'Erkennung von Überschneidungen';
           }
         };
+
+        // Bug B7-Fix: refreshBtn entfernt .ready auch, wenn Dropdowns
+        // unvollständig sind (vorher: nur add, kein remove).
+        const refreshBtn = () => {
+          const btn = this.$('filter-button');
+          if (!btn) return;
+          if (erhSelect.value && jahrSelect.value && nummerSelect.value) {
+            btn.classList.add('ready');
+          } else {
+            btn.classList.remove('ready');
+          }
+        };
+
         this._on(optAus, 'click', () => {
           this._doppelbestreuungAktiv = false;
           optAus.classList.add('active'); optEin.classList.remove('active');
+          updateSubtitle();
           refreshBtn();
         });
         this._on(optEin, 'click', () => {
           this._doppelbestreuungAktiv = true;
           optEin.classList.add('active'); optAus.classList.remove('active');
+          updateSubtitle();
           refreshBtn();
         });
+
+        // Collapsible: Klick auf Header toggelt Bar.
+        const toggleCollapsed = () => {
+          const wasCollapsed = bar.classList.contains('collapsed');
+          bar.classList.toggle('collapsed');
+          header.setAttribute('aria-expanded', wasCollapsed ? 'true' : 'false');
+          updateSubtitle();
+        };
+        this._on(header, 'click', toggleCollapsed);
+        // Tastatur-Bedienung (Space/Enter)
+        this._on(header, 'keydown', (ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ') {
+            ev.preventDefault();
+            toggleCollapsed();
+          }
+        });
+
+        // Hilfsmethode für loadErhebung / _resetToHome zum programmatischen Steuern.
+        this._setDoppelBarCollapsed = (shouldCollapse) => {
+          if (!bar) return;
+          if (shouldCollapse) bar.classList.add('collapsed');
+          else                bar.classList.remove('collapsed');
+          header.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
+          updateSubtitle();
+        };
       }
 
       jahrSelect.innerHTML = '';   jahrSelect.disabled = true;
@@ -3947,6 +4305,11 @@
     }
 
     prepareMapData(filteredData) {
+      // Bug B11/B14-Fix: NL-Klarnamen aus dem Bootstrap übernehmen.
+      // Vorher wurde Niederlassung in jedem prepareMapData neu zugewiesen mit
+      // NL[nlKey] = nlKey, wodurch der im Bootstrap gelesene Klarname
+      // (dimension_nl_name_0.label) verloren ging.
+      const previousNL = this.Niederlassung || {};
       this.Niederlassung = {}; this.nlKoordinaten = {}; this.hzFlags = {}; this.extraNLs = [];
       const NL  = this.Niederlassung;
       const nlK = this.nlKoordinaten;
@@ -3957,7 +4320,10 @@
         const nlKey = row['dimension_niederlassung_0']?.id?.trim();
         const hz = row['dimension_hzflag_0']?.id?.trim() === 'X';
         if (nlKey) {
-          NL[nlKey] = nlKey;
+          // Reihenfolge: Klarname aus Erhebungs-Row, Fallback Bootstrap-Cache,
+          // letzter Fallback der Schlüssel selbst.
+          const rowName = row['dimension_nl_name_0']?.label?.trim();
+          NL[nlKey] = rowName || previousNL[nlKey] || nlKey;
           if (!nlK[nlKey]) {
             const lat = parseFloat(row['dimension_Lat_0']?.label);
             const lon = parseFloat(row['dimension_lon_0']?.label);
@@ -4295,6 +4661,10 @@
       this.$('panel-home-btn')?.removeAttribute('disabled');
       this.$('panel-overview-btn')?.removeAttribute('disabled');
 
+      // Doppelbestreuungs-Bar einklappen, damit die PLZ-Tabelle mehr Höhe bekommt.
+      // Der User kann die Bar manuell wieder aufklappen (Klick auf Header).
+      this._setDoppelBarCollapsed?.(true);
+
       this._showCinematicLoader();
       this._updateLoaderPhase(1, 'Erhebungsdaten werden geladen…');
 
@@ -4536,6 +4906,36 @@
       this.$('umsatz-panel')?.classList.add('hidden');
       const wkExtra = this.$('wk-extra');
       if (wkExtra?.style) wkExtra.style.display = '';
+
+      // Modus-spezifische Flags & Checkboxen konsistent zurücksetzen, damit
+      // beim nächsten Erhebungs-Load nichts „hängt".
+      this.showCritical    = false;
+      this.showBestreuung  = false;
+      this.showCompetitors = false;
+      this.useWerbeUmsatz  = true;
+      this.useZusatzUmsatz = false;
+      const chkDoppel       = this.$('chk-doppelbestreuung');
+      const chkBestreu      = this.$('chk-bestreuung');
+      const chkCompWK       = this.$('chk-competitors-wk');
+      const chkCompUms      = this.$('chk-competitors-umsatz');
+      const chkWerbeumsatz  = this.$('chk-werbeumsatz');
+      const chkMitgekauft   = this.$('chk-mitgekauft');
+      if (chkDoppel)      chkDoppel.checked      = false;
+      if (chkBestreu)     chkBestreu.checked     = false;
+      if (chkCompWK)      chkCompWK.checked      = false;
+      if (chkCompUms)     chkCompUms.checked     = false;
+      if (chkWerbeumsatz) chkWerbeumsatz.checked = true;
+      if (chkMitgekauft) { chkMitgekauft.checked = false; chkMitgekauft.disabled = false; }
+
+      // Doppelbestreuung beim Home-Reset auf "Aus" und Bar wieder ausklappen.
+      // Konsistent mit dem Initial-State im Hauptmenü.
+      this._doppelbestreuungAktiv = false;
+      const doppelOptAus = this.$('doppel-opt-aus');
+      const doppelOptEin = this.$('doppel-opt-ein');
+      doppelOptAus?.classList.add('active');
+      doppelOptEin?.classList.remove('active');
+      this._setDoppelBarCollapsed?.(false);
+
       this._startPreviewAnimation();
       this.renderDataTableFromEntries([]);
       const box = this.$('streuverlust-box');
