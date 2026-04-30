@@ -813,157 +813,57 @@
         font-variant-numeric: tabular-nums;
       }
 
-      /* ─── Welcome-Guide / User-Doku ─────────────────────────────── */
-      .welcome-guide {
-        padding: 20px 14px; flex: 1;
-        display: flex; flex-direction: column; gap: 14px;
-        overflow-y: auto; min-height: 0;
-        scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
-      }
-      .welcome-guide::-webkit-scrollbar       { width: 5px; }
-      .welcome-guide::-webkit-scrollbar-track { background: var(--gray-100); }
-      .welcome-guide::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
-
-      .docs-expandable {
-        border: 1px solid var(--gray-200); border-radius: var(--radius-md);
-        background: var(--white);
-        box-shadow: var(--shadow-xs);
-        overflow: hidden;
-        transition: border-color 0.18s var(--ease-in-out),
-                    box-shadow   0.18s var(--ease-in-out);
-      }
-      .docs-expandable:hover { border-color: var(--red-border); box-shadow: var(--shadow-sm); }
-      .docs-expandable-header {
-        display: flex; align-items: center; gap: 9px;
-        padding: 10px 12px;
-        cursor: pointer; user-select: none;
-        transition: background 0.15s var(--ease-in-out);
-      }
-      .docs-expandable-header:hover { background: var(--red-bg); }
-      .docs-expandable-icon { font-size: 1.05rem; line-height: 1; flex-shrink: 0; }
-      .docs-expandable-title-block {
-        display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0;
-      }
-      .docs-expandable-title {
-        font-size: 0.78rem; font-weight: 700;
-        color: var(--gray-700);
-        letter-spacing: 0.02em;
-      }
-      .docs-expandable-subtitle {
-        font-size: 0.67rem; color: var(--gray-500); font-weight: 400;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      }
-      .docs-expandable-chevron {
-        flex-shrink: 0; width: 14px; height: 14px;
-        color: var(--gray-500);
-        transition: transform 0.28s var(--ease-out);
-      }
-      .docs-expandable.expanded .docs-expandable-chevron { transform: rotate(180deg); }
-
-      .docs-expandable-content {
-        display: grid;
-        grid-template-rows: 0fr;
-        transition: grid-template-rows 0.32s var(--ease-out);
-      }
-      .docs-expandable.expanded .docs-expandable-content {
-        grid-template-rows: 1fr;
-      }
-      .docs-expandable-content-inner {
-        overflow: hidden;
-        border-top: 1px solid transparent;
-        transition: border-top-color 0.32s var(--ease-out);
-      }
-      .docs-expandable.expanded .docs-expandable-content-inner {
-        border-top-color: var(--gray-200);
-      }
-      .docs-section {
-        padding: 12px 14px;
-        font-size: 0.74rem; line-height: 1.6;
-        color: var(--gray-700);
-      }
-      .docs-section h4 {
-        margin: 0 0 4px 0;
-        font-size: 0.7rem; font-weight: 700;
-        color: var(--gray-800);
-        letter-spacing: 0.04em; text-transform: uppercase;
-      }
-      .docs-section h4:not(:first-child) { margin-top: 12px; }
-      .docs-section p { margin: 0 0 6px 0; color: var(--gray-600); }
-      .docs-section p:last-child { margin-bottom: 0; }
-      .docs-section ul {
-        margin: 4px 0 6px 0; padding-left: 18px;
-        display: flex; flex-direction: column; gap: 3px;
-        color: var(--gray-600);
-      }
-      .docs-section ul ul { margin: 2px 0 4px 0; }
-      .docs-section li { line-height: 1.5; }
-      .docs-section strong { color: var(--gray-800); font-weight: 700; }
-      .docs-section code {
-        background: var(--gray-100); color: var(--red-dark);
-        padding: 1px 5px; border-radius: 4px;
-        font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
-        font-size: 0.7rem;
-      }
-      .docs-divider {
-        margin: 0; height: 1px; border: none;
-        background: var(--gray-100);
-      }
-      .docs-tip {
-        margin: 0; padding: 8px 14px;
-        background: var(--red-bg); border-top: 1px solid var(--red-border);
-        font-size: 0.7rem; color: var(--gray-700); line-height: 1.5;
-      }
-      .docs-tip strong { color: var(--red); }
-
       /* ─── Doppelbestreuungs-Toggle (collapsible) ────────────────── */
       #doppel-toggle-bar {
         margin-top: 10px; flex-shrink: 0;
         border: 1.5px solid var(--gray-200); border-radius: var(--radius-md);
         background: var(--gray-50); overflow: hidden;
-        transition: border-color 0.18s var(--ease-in-out);
       }
-      #doppel-toggle-bar:hover { border-color: var(--red-border); }
       #doppel-toggle-header {
         display: flex; align-items: center; gap: 8px;
         padding: 8px 10px 6px 10px;
-        cursor: pointer;
-        user-select: none;
-        transition: background 0.15s var(--ease-in-out);
+        cursor: pointer; user-select: none;
+        transition: background 0.15s;
       }
-      #doppel-toggle-header:hover { background: rgba(180,24,33,0.04); }
+      #doppel-toggle-header:hover { background: var(--gray-100); }
       .doppel-toggle-icon { font-size: 1rem; line-height: 1; flex-shrink: 0; }
-      .doppel-toggle-title-block { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+      .doppel-toggle-title-block { display: flex; flex-direction: column; gap: 1px; flex: 1; }
       .doppel-toggle-label {
         font-size: 0.72rem; font-weight: 700; color: var(--gray-700);
         letter-spacing: 0.04em; text-transform: uppercase;
       }
-      .doppel-toggle-subtitle {
-        font-size: 0.67rem; color: var(--gray-500); font-weight: 400;
-        overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-      }
+      .doppel-toggle-subtitle { font-size: 0.67rem; color: var(--gray-500); font-weight: 400; }
       .doppel-toggle-chevron {
-        flex-shrink: 0; width: 14px; height: 14px;
-        color: var(--gray-500);
+        font-size: 0.8rem; color: var(--gray-500); flex-shrink: 0;
         transition: transform 0.28s var(--ease-out);
-        transform: rotate(180deg); /* Zeigt nach oben (=ausgeklappt) */
+        transform: rotate(180deg);
+        line-height: 1;
+        margin-left: 4px;
       }
-      #doppel-toggle-bar.collapsed .doppel-toggle-chevron {
-        transform: rotate(0deg); /* Zeigt nach unten (=eingeklappt) */
+      #doppel-toggle-bar.collapsed .doppel-toggle-chevron { transform: rotate(0deg); }
+      #doppel-toggle-bar.collapsed #doppel-toggle-header { padding-bottom: 8px; }
+      /* Compact-Hint im collapsed-Zustand: zeigt aktuelle Auswahl rechts */
+      .doppel-toggle-current {
+        font-size: 0.66rem; color: var(--red); font-weight: 600;
+        padding: 2px 7px; border-radius: 8px;
+        background: var(--red-bg); border: 1px solid var(--red-border);
+        white-space: nowrap; flex-shrink: 0;
+        opacity: 0; max-width: 0; overflow: hidden;
+        transition: opacity 0.2s ease, max-width 0.28s var(--ease-out);
+      }
+      #doppel-toggle-bar.collapsed .doppel-toggle-current {
+        opacity: 1; max-width: 140px;
       }
       #doppel-toggle-options {
-        display: grid;
-        grid-template-rows: 1fr;
-        transition: grid-template-rows 0.32s var(--ease-out),
-                    border-top-color   0.32s var(--ease-out);
+        display: flex; flex-direction: column; gap: 0;
         border-top: 1px solid var(--gray-200);
+        max-height: 200px; overflow: hidden;
+        transition: max-height 0.32s var(--ease-out),
+                    border-top-color 0.2s ease,
+                    opacity 0.2s ease;
       }
       #doppel-toggle-bar.collapsed #doppel-toggle-options {
-        grid-template-rows: 0fr;
-        border-top-color: transparent;
-      }
-      #doppel-toggle-options-inner {
-        overflow: hidden;
-        display: flex; flex-direction: column;
+        max-height: 0; border-top-color: transparent; opacity: 0;
       }
       .doppel-option {
         display: flex; align-items: center; gap: 10px;
@@ -1018,6 +918,103 @@
         color: var(--gray-700);
       }
       .doppel-tooltip-row:last-child { border-bottom: none; }
+
+      /* ─── Welcome-Guide + ausführliche Doku im Hauptmenü ───────── */
+      .welcome-guide {
+        padding: 20px 14px 14px;
+        flex: 1;
+        display: flex; flex-direction: column; gap: 14px;
+        overflow-y: auto; min-height: 0;
+        scrollbar-width: thin;
+        scrollbar-color: var(--red) var(--gray-100);
+      }
+      .welcome-guide::-webkit-scrollbar       { width: 5px; }
+      .welcome-guide::-webkit-scrollbar-track { background: var(--gray-100); }
+      .welcome-guide::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+      .welcome-guide-card {
+        display: flex; gap: 9px; align-items: flex-start;
+        padding: 7px 9px;
+        background: var(--gray-50);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--gray-100);
+      }
+      .welcome-guide-card-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+      .welcome-guide-card-title { font-size: 0.76rem; font-weight: 700; color: var(--gray-700); }
+      .welcome-guide-card-desc { font-size: 0.7rem; color: var(--gray-500); margin-top: 2px; line-height: 1.45; }
+      .welcome-guide-section-label {
+        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em;
+        text-transform: uppercase; color: var(--gray-400);
+        margin-top: 2px; margin-bottom: 2px;
+      }
+
+      /* Ausklappbare ausführliche Doku */
+      .docs-section {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        background: var(--white);
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .docs-section-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 9px 11px;
+        cursor: pointer; user-select: none;
+        background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
+        color: white;
+        transition: filter 0.15s;
+      }
+      .docs-section-header:hover { filter: brightness(1.05); }
+      .docs-section-icon { font-size: 0.95rem; line-height: 1; flex-shrink: 0; }
+      .docs-section-title {
+        flex: 1; font-size: 0.74rem; font-weight: 700;
+        letter-spacing: 0.05em; text-transform: uppercase;
+      }
+      .docs-section-chevron {
+        font-size: 0.78rem; line-height: 1; flex-shrink: 0;
+        transition: transform 0.28s var(--ease-out);
+      }
+      .docs-section.open .docs-section-chevron { transform: rotate(180deg); }
+      .docs-section-body {
+        max-height: 0; overflow: hidden;
+        transition: max-height 0.4s var(--ease-out);
+        font-size: 0.74rem; color: var(--gray-700); line-height: 1.55;
+      }
+      .docs-section.open .docs-section-body { max-height: 4000px; }
+      .docs-content { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+      .docs-content h4 {
+        margin: 6px 0 2px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: var(--red);
+      }
+      .docs-content h4:first-child { margin-top: 0; }
+      .docs-content p { margin: 0; }
+      .docs-content ul, .docs-content ol {
+        margin: 0; padding-left: 18px;
+        display: flex; flex-direction: column; gap: 3px;
+      }
+      .docs-content li { line-height: 1.5; }
+      .docs-content code {
+        font-family: 'Consolas', 'Courier New', monospace;
+        background: var(--gray-100);
+        padding: 1px 5px;
+        border-radius: 3px;
+        font-size: 0.92em;
+        color: var(--red-dark);
+      }
+      .docs-content strong { color: var(--gray-900); font-weight: 700; }
+      .docs-key-block {
+        background: var(--gray-50);
+        border-left: 3px solid var(--red);
+        border-radius: 4px;
+        padding: 8px 11px;
+        font-size: 0.72rem;
+        color: var(--gray-700);
+        line-height: 1.55;
+      }
+      .docs-key-block strong { color: var(--red); }
 
       /* ─── Buttons ───────────────────────────────────────────────── */
       /* ─── Mitbewerber-Tooltip ───────────────────────────────────────── */
@@ -1519,6 +1516,11 @@
       this._timers.add(id);
       return id;
     }
+    _clearTimeout(id) {
+      if (id == null) return;
+      clearTimeout(id);
+      this._timers.delete(id);
+    }
     _setInterval(fn, ms) {
       const id = setInterval(fn, ms);
       this._intervals.add(id);
@@ -1574,9 +1576,11 @@
       const hasAktFilter = !!aktErhID;
       for (let i = 0, len = data.length; i < len; i++) {
         const row = data[i];
-        const eID = row['dimension_erhebung_0']?.id;
-        const yr  = row['dimension_jahr_0']?.id;
-        const nr  = row['dimension_erhebungsnummer_0']?.id;
+        // Bug-Fix B19: trim() konsistent — _buildStrukturFromRows nutzt ihn auch.
+        // Ohne trim hier würden Index-Keys mit Spaces nicht zu den Dropdown-Werten passen.
+        const eID = row['dimension_erhebung_0']?.id?.trim();
+        const yr  = row['dimension_jahr_0']?.id?.trim();
+        const nr  = row['dimension_erhebungsnummer_0']?.id?.trim();
         if (isNull(eID) || isNull(yr) || isNull(nr)) continue;
         // Fremd-Erhebung: nur HZ=X Rows speichern
         if (hasAktFilter && eID !== aktErhID) {
@@ -1716,14 +1720,22 @@
       if (this._bootstrapDone) return;
       this._bootstrapDone = true;
 
+      // Bug-Fix B9: Home-Reset-Pending sicher löschen, sobald Bootstrap erfolgt.
+      this._homeResetPending = false;
+      if (this._homeResetSafetyTimer) {
+        this._clearTimeout(this._homeResetSafetyTimer);
+        this._homeResetSafetyTimer = null;
+      }
+
       const t0 = performance.now();
 
       // Index aus den 00000-Rows aufbauen
+      // Bug-Fix B19: .trim() konsistent zu _buildErhebungIndex und _buildStrukturFromRows
       const idx = {};
       for (const row of rows) {
-        const eID = row['dimension_erhebung_0']?.id;
-        const yr  = row['dimension_jahr_0']?.id;
-        const nr  = row['dimension_erhebungsnummer_0']?.id;
+        const eID = row['dimension_erhebung_0']?.id?.trim();
+        const yr  = row['dimension_jahr_0']?.id?.trim();
+        const nr  = row['dimension_erhebungsnummer_0']?.id?.trim();
         if (isNull(eID) || isNull(yr) || isNull(nr)) continue;
         const k = eID + '|' + yr + '|' + nr;
         (idx[k] ||= []).push(row);
@@ -1757,6 +1769,10 @@
       // Panel-Footer-Buttons im Hauptmenü deaktivieren
       this.$('panel-home-btn')?.setAttribute('disabled', '');
       this.$('panel-overview-btn')?.setAttribute('disabled', '');
+
+      // Welcome-Guide rendern (sonst bleibt der Tabellen-Container leer
+      // bis _resetToHome aufgerufen wird).
+      this.renderDataTableFromEntries([]);
 
       console.info(`[PLZ-Widget] Bootstrap: ${rows.length} Rows in ${(performance.now() - t0).toFixed(0)}ms`);
     }
@@ -2077,6 +2093,9 @@
         if (hasNL && !selNLs.has(nl)) continue;
         const plz = this._normalizePLZ(row['dimension_plz_0']?.id ?? row['dimension_plz_0']?.raw);
         if (!plz) continue;
+        // Bug-Fix B38: PLZ='00000' sind Stammdaten-Aggregate ohne PLZ-Zuordnung.
+        // Die als Streuverlust zu zählen würde den Anteil künstlich aufblähen.
+        if (plz === '00000') continue;
         const umsatz = row['value_hr_n_umsatz_0']?.raw ?? 0;
         totalErhebungUmsatz += umsatz;
         if (!hasRad || !radius.has(plz)) streuverlustUmsatz += umsatz;
@@ -2125,7 +2144,7 @@
 
     _renderWelcomeGuide(container) {
       const guide = document.createElement('div');
-      guide.classList.add('welcome-guide');
+      guide.className = 'welcome-guide';
       const modes = [
         ['📊', 'WK-Analyse',         'Werbekosten-Anteile je PLZ. Grün = HZ-bestreut, Blau = potentiell nicht bestreut. Klicke auf eine PLZ für Detailwerte.'],
         ['💶', 'Umsatz-Analyse',     'Umsatzverteilung nach Kategorien (Stationär, Pluscard, R&A, KUBE OS). Absolut-, Pro-HH- oder Werbeanteil-Darstellung.'],
@@ -2138,219 +2157,227 @@
         ['🗺️', 'Kartenebenen',       'Karten-Button: OpenStreetMap ein-/ausblenden. Legende-Button: Farbskala anzeigen.'],
         ['📋', 'Tabelle sortieren', 'Klick auf Spalten-Header sortiert. Klick auf Zeile markiert die PLZ auf der Karte.'],
       ];
-      const card = (icon, title, desc) => `
-        <div style="display:flex;gap:9px;align-items:flex-start;padding:7px 9px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100);">
-          <div style="font-size:1rem;flex-shrink:0;margin-top:1px;">${icon}</div>
+      const card = (icon, title, desc) => {
+        const div = document.createElement('div');
+        div.className = 'welcome-guide-card';
+        div.innerHTML = `
+          <div class="welcome-guide-card-icon">${icon}</div>
           <div>
-            <div style="font-size:0.76rem;font-weight:700;color:var(--gray-700);">${escapeHtml(title)}</div>
-            <div style="font-size:0.7rem;color:var(--gray-500);margin-top:2px;line-height:1.45;">${escapeHtml(desc)}</div>
-          </div>
+            <div class="welcome-guide-card-title">${escapeHtml(title)}</div>
+            <div class="welcome-guide-card-desc">${escapeHtml(desc)}</div>
+          </div>`;
+        return div;
+      };
+
+      // Hero
+      const hero = document.createElement('div');
+      hero.style.cssText = 'text-align:center;padding:12px 0 6px;';
+      hero.innerHTML = `
+        <div style="font-size:2.2rem;margin-bottom:6px;">🗺️</div>
+        <div style="font-size:0.9rem;font-weight:700;color:var(--gray-700);margin-bottom:3px;">Willkommen zur PLZ-Analyse</div>
+        <div style="font-size:0.76rem;color:var(--gray-500);line-height:1.6;">
+          Wähle oben <strong style="color:var(--gray-700)">ErhebungsID → Jahr → Nummer</strong>
+          und klicke auf <strong style="color:var(--red)">Anzeigen</strong>.
         </div>`;
+      guide.appendChild(hero);
 
-      // SVG-Chevron: einmalig definieren
-      const chevronSvg = `<svg class="docs-expandable-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 6 8 10 12 6"/></svg>`;
+      // Schnellstart
+      const quickstart = document.createElement('div');
+      quickstart.style.cssText = 'background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius-md);padding:8px 11px;font-size:0.74rem;color:var(--gray-600);line-height:1.6;';
+      quickstart.innerHTML = `
+        <strong style="color:var(--red);display:block;margin-bottom:3px;">⚡ Schnellstart</strong>
+        <ol style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:2px;">
+          <li>ErhebungsID im ersten Dropdown wählen</li>
+          <li>Jahr auswählen → Erhebungsnummer auswählen</li>
+          <li><strong>Anzeigen</strong> klicken</li>
+          <li>PLZ auf Karte oder Tabelle anklicken</li>
+        </ol>`;
+      guide.appendChild(quickstart);
 
-      guide.innerHTML = `
-        <div style="text-align:center;padding:12px 0 6px;">
-          <div style="font-size:2.2rem;margin-bottom:6px;">🗺️</div>
-          <div style="font-size:0.9rem;font-weight:700;color:var(--gray-700);margin-bottom:3px;">Willkommen zur PLZ-Analyse</div>
-          <div style="font-size:0.76rem;color:var(--gray-500);line-height:1.6;">
-            Wähle oben <strong style="color:var(--gray-700)">ErhebungsID → Jahr → Nummer</strong>
-            und klicke auf <strong style="color:var(--red)">Anzeigen</strong>.
-          </div>
-        </div>
-        <div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius-md);padding:8px 11px;font-size:0.74rem;color:var(--gray-600);line-height:1.6;">
-          <strong style="color:var(--red);display:block;margin-bottom:3px;">⚡ Schnellstart</strong>
-          <ol style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:2px;">
-            <li>ErhebungsID im ersten Dropdown wählen</li>
-            <li>Jahr auswählen → Erhebungsnummer auswählen</li>
-            <li><strong>Anzeigen</strong> klicken</li>
-            <li>PLZ auf Karte oder Tabelle anklicken</li>
-          </ol>
-        </div>
-        <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-400);margin-top:2px;margin-bottom:2px;">Analyse-Modi</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">${modes.map(m => card(...m)).join('')}</div>
-        <div style="font-size:0.68rem;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--gray-400);margin-top:2px;margin-bottom:2px;">Werkzeuge</div>
-        <div style="display:flex;flex-direction:column;gap:6px;">${tools.map(t => card(...t)).join('')}</div>
+      // Modi
+      const modesLabel = document.createElement('div');
+      modesLabel.className = 'welcome-guide-section-label';
+      modesLabel.textContent = 'Analyse-Modi';
+      guide.appendChild(modesLabel);
+      const modesGrid = document.createElement('div');
+      modesGrid.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+      modes.forEach(m => modesGrid.appendChild(card(...m)));
+      guide.appendChild(modesGrid);
 
-        <!-- Ausführliche User-Dokumentation, ausklappbar -->
-        <div class="docs-expandable" id="docs-expandable-section">
-          <div class="docs-expandable-header" id="docs-expandable-header">
-            <div class="docs-expandable-icon">📖</div>
-            <div class="docs-expandable-title-block">
-              <span class="docs-expandable-title">Ausführliche Dokumentation</span>
-              <span class="docs-expandable-subtitle">Begriffe, Berechnungen, Workflows</span>
-            </div>
-            ${chevronSvg}
-          </div>
-          <div class="docs-expandable-content">
-            <div class="docs-expandable-content-inner">
+      // Tools
+      const toolsLabel = document.createElement('div');
+      toolsLabel.className = 'welcome-guide-section-label';
+      toolsLabel.textContent = 'Werkzeuge';
+      guide.appendChild(toolsLabel);
+      const toolsGrid = document.createElement('div');
+      toolsGrid.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
+      tools.forEach(t => toolsGrid.appendChild(card(...t)));
+      guide.appendChild(toolsGrid);
 
-              <div class="docs-section">
-                <h4>Was ist eine Erhebung?</h4>
-                <p>Eine <strong>Erhebung</strong> ist ein definierter Beobachtungszeitraum, in dem für eine Niederlassung (NL) die Bestreuung mit Werbeprospekten und der dazugehörige Umsatz erfasst werden. Eine Erhebung wird eindeutig identifiziert durch:</p>
-                <ul>
-                  <li><strong>ErhebungsID</strong> — die Niederlassung bzw. der Geschäftsbereich</li>
-                  <li><strong>Jahr</strong> — Kalenderjahr der Erhebung</li>
-                  <li><strong>Erhebungsnummer</strong> — fortlaufend, Format <code>N. SS.SS–EE.EE</code> (Start–Ende)</li>
-                </ul>
-                <p>Die Nummer <code>0</code> bezeichnet das laufende Jahr (Year-to-Date).</p>
-              </div>
+      // Tipp
+      const tipBox = document.createElement('div');
+      tipBox.style.cssText = 'padding:8px 10px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100);font-size:0.7rem;color:var(--gray-500);line-height:1.5;margin-top:2px;';
+      tipBox.innerHTML = `💡 <strong style="color:var(--gray-600)">Tipp:</strong> Zoom in die Karte — ab Zoom-Stufe ${LABEL_ZOOM_MIN} werden PLZ-Namen direkt eingeblendet.`;
+      guide.appendChild(tipBox);
 
-              <hr class="docs-divider">
+      // ── Ausklappbare ausführliche Doku ──
+      guide.appendChild(this._buildDocsSection());
 
-              <div class="docs-section">
-                <h4>Bestreuung &amp; HZ</h4>
-                <p>Eine PLZ gilt als <strong>HZ-bestreut</strong> (HZ = Hauptzustellung), wenn das Werbeprospekt der Erhebung dort ausgeliefert wurde. Sichtbar in der Tabelle in der HZ-Spalte:</p>
-                <ul>
-                  <li><span style="color:#33a02c;font-weight:700">●</span> <strong>Grün</strong> — bestreut</li>
-                  <li><span style="color:#f0a500;font-weight:700">▲</span> <strong>Gelb-Dreieck</strong> — Doppelbestreuung (mehrere NLs gleichzeitig)</li>
-                  <li><span style="color:#dee2e6;font-weight:700">●</span> <strong>Grau</strong> — nicht bestreut (Streuverlust)</li>
-                </ul>
-              </div>
-
-              <hr class="docs-divider">
-
-              <div class="docs-section">
-                <h4>Doppelbestreuung</h4>
-                <p>Doppelbestreuung tritt auf, wenn mehrere Niederlassungen <strong>im selben Zeitraum</strong> dieselbe PLZ bestreuen.</p>
-                <ul>
-                  <li><strong>Ohne Doppelbestreuung</strong> (Standard) — schneller, lädt nur Daten der gewählten ErhebungsID</li>
-                  <li><strong>Mit Doppelbestreuung</strong> — lädt alle Erhebungen mit gleichem Jahr+Nummer; erkennt Überschneidungen über NL-Grenzen hinweg (Cross-Erhebungs-Doppelbestreuung)</li>
-                </ul>
-                <p>Die Auswahl wird vor dem Klick auf <strong>Anzeigen</strong> getroffen und beeinflusst Ladezeit und Detail-Tiefe.</p>
-              </div>
-
-              <hr class="docs-divider">
-
-              <div class="docs-section">
-                <h4>Werbekosten-Anteil (WK%)</h4>
-                <p>Verhältnis aus Werbekosten zu Umsatz, in Prozent:</p>
-                <ul>
-                  <li><strong>WK%</strong> = HZ-Kosten ÷ Umsatz × 100</li>
-                  <li><strong>Nenner</strong> = Gesamtumsatz der PLZ über alle bestreuenden NLs (mit aktivem NL-Filter: nur selektierte NLs)</li>
-                  <li><strong>Zähler</strong> = HZ-Kosten der gewählten Erhebung in dieser PLZ</li>
-                </ul>
-                <p>Im Heatmap-Modus werden niedrige WK-Werte grün, hohe WK-Werte rot dargestellt. Potentielle WK% (für nicht bestreute PLZs) zeigt an, was die Erhebung kosten würde, wenn sie diese PLZ zusätzlich bestreuen würde.</p>
-              </div>
-
-              <hr class="docs-divider">
-
-              <div class="docs-section">
-                <h4>Umsatz-Modus</h4>
-                <p>Im Umsatz-Modus werden vier Kategorien unterschieden:</p>
-                <ul>
-                  <li><strong>Stationär</strong> — Verkauf in der Filiale</li>
-                  <li><strong>Pluscard</strong> — Großkunden / B2B</li>
-                  <li><strong>R&amp;A</strong> — Räumungs- und Abverkauf</li>
-                  <li><strong>KUBE OS (Online)</strong> — Online-Shop</li>
-                </ul>
-                <h4>Umsatztyp</h4>
-                <ul>
-                  <li><strong>Umsatz</strong> — alle Umsätze in der PLZ</li>
-                  <li><strong>Werbeumsatz</strong> — nur Umsätze, die der Werbung zugerechnet werden. Optional zusätzlich <strong>Mitgekauft</strong> (=Zusatzumsatz, der durch die Werbung mitgezogen wurde)</li>
-                </ul>
-                <h4>Darstellung</h4>
-                <ul>
-                  <li><strong>Absolut</strong> — Eurobeträge je PLZ</li>
-                  <li><strong>pro HH</strong> — Eurobeträge pro Haushalt (für Vergleichbarkeit zwischen großen und kleinen PLZs)</li>
-                  <li><strong>Werbeanteil</strong> — Anteil Werbeumsatz am Gesamtumsatz (nur im Werbeumsatz-Modus)</li>
-                </ul>
-              </div>
-
-              <hr class="docs-divider">
-
-              <div class="docs-section">
-                <h4>Streuverlust</h4>
-                <p>Der <strong>Streuverlust</strong> ist der Umsatzanteil, der <em>außerhalb</em> der bestreuten Gebiete oder außerhalb des aktiven Radius generiert wurde.</p>
-                <ul>
-                  <li><strong>€-Wert</strong> — Umsatz außerhalb der gewählten PLZs</li>
-                  <li><strong>%-Wert</strong> — Anteil am Gesamterhebungsumsatz</li>
-                </ul>
-                <p>Niedriger Streuverlust = Werbung erreicht die zahlenden Kunden gut.</p>
-              </div>
-
-              <hr class="docs-divider">
-
-              <div class="docs-section">
-                <h4>Radius-Filter</h4>
-                <p>Der Radius-Slider oben in der Mitte begrenzt die Auswertung auf PLZs in einem Umkreis (10–100 km) um die Niederlassungen der Erhebung. Das wirkt sich aus auf:</p>
-                <ul>
-                  <li>Sichtbare PLZs auf der Karte und in der Tabelle</li>
-                  <li>Streuverlust-Berechnung</li>
-                  <li>WK%-Aggregation</li>
-                  <li>Umsatz-Aggregation</li>
-                </ul>
-              </div>
-
-              <hr class="docs-divider">
-
-              <div class="docs-section">
-                <h4>Niederlassungs-Filter (NL-Filter)</h4>
-                <p>Über den Button <strong>↕ Erhebungsübersicht</strong> öffnet sich eine Tabelle mit allen NLs der Erhebung und deren Kennzahlen:</p>
-                <ul>
-                  <li><strong>Umsatz (Hochrechn.)</strong> — Jahresumsatz der NL</li>
-                  <li><strong>Erfasst</strong> — Umsatz im Erhebungs-Zeitraum</li>
-                  <li><strong>%</strong> — Erfasster Anteil am Jahresumsatz</li>
-                  <li><strong>Valide</strong> — Umsatz mit gültiger PLZ</li>
-                  <li><strong>Abdeckung</strong> — Validierter Anteil am Jahresumsatz</li>
-                </ul>
-                <p>Klick auf eine Zeile filtert die Karte/Tabelle auf diese NL. Mehrfachauswahl möglich. Erneuter Klick deselektiert.</p>
-              </div>
-
-              <hr class="docs-divider">
-
-              <div class="docs-section">
-                <h4>Karten-Bedienung</h4>
-                <ul>
-                  <li><strong>Klick auf PLZ</strong> — öffnet Detail-Popup mit Werten</li>
-                  <li><strong>Mausrad / Pinch</strong> — Zoom; ab Zoom-Stufe ${LABEL_ZOOM_MIN} werden PLZ-Namen direkt eingeblendet</li>
-                  <li><strong>Karten-Button</strong> (unten rechts) — OpenStreetMap-Hintergrund ein/aus</li>
-                  <li><strong>Legende-Button</strong> (unten links) — Farbskala der Heatmap</li>
-                  <li><strong>Übersicht-Button</strong> (Panel-Footer) — Gesamtwerte aller sichtbaren PLZs</li>
-                  <li><strong>Hauptmenü-Button</strong> (Panel-Footer) — zurück zum Start (alle Filter zurücksetzen)</li>
-                </ul>
-              </div>
-
-              <hr class="docs-divider">
-
-              <div class="docs-section">
-                <h4>Mitbewerber-Layer</h4>
-                <p>Die Mitbewerber-Checkbox blendet Märkte von Hornbach, OBI, Globus, Hellweg, Toom und Hagebau auf der Karte ein. Tooltip beim Hover zeigt Name und Adresse.</p>
-              </div>
-
-              <p class="docs-tip">
-                <strong>💡 Performance-Tipp:</strong> Aktiviere die Doppelbestreuung nur, wenn du tatsächlich die Cross-Erhebungs-Analyse brauchst. Ohne ist die Ladezeit deutlich kürzer.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div style="padding:8px 10px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100);font-size:0.7rem;color:var(--gray-500);line-height:1.5;margin-top:2px;">
-          💡 <strong style="color:var(--gray-600)">Tipp:</strong> Zoom in die Karte — ab Zoom-Stufe ${LABEL_ZOOM_MIN} werden PLZ-Namen direkt eingeblendet.
-        </div>`;
       container.appendChild(guide);
+    }
 
-      // Click-Handler für ausklappbare Doku-Sektion
-      const docsSection = guide.querySelector('#docs-expandable-section');
-      const docsHeader  = guide.querySelector('#docs-expandable-header');
-      if (docsSection && docsHeader) {
-        this._on(docsHeader, 'click', () => {
-          docsSection.classList.toggle('expanded');
-        });
-      }
+    _buildDocsSection() {
+      const section = document.createElement('div');
+      section.className = 'docs-section';
+      section.id = 'docs-section';
+
+      const header = document.createElement('div');
+      header.className = 'docs-section-header';
+      header.innerHTML = `
+        <span class="docs-section-icon">📖</span>
+        <span class="docs-section-title">Ausführliche Anleitung</span>
+        <span class="docs-section-chevron">▾</span>`;
+      section.appendChild(header);
+
+      const body = document.createElement('div');
+      body.className = 'docs-section-body';
+      const content = document.createElement('div');
+      content.className = 'docs-content';
+      content.innerHTML = `
+        <h4>Was zeigt das Widget?</h4>
+        <p>
+          Die <strong>PLZ-Analyse</strong> visualisiert die Werbe-Effizienz einer Erhebung
+          auf Postleitzahl-Ebene. Du siehst auf der Karte, welche PLZs durch eine
+          Niederlassung bestreut werden, wie hoch der Werbekosten-Anteil (WK%) ausfällt
+          und wie sich der Umsatz nach Vertriebskanälen verteilt.
+        </p>
+
+        <h4>Schritt 1 – Erhebung auswählen</h4>
+        <p>
+          Oben links wählst du nacheinander <strong>ErhebungsID</strong>,
+          <strong>Jahr</strong> und <strong>Erhebungsnummer</strong>. Sobald alle drei
+          Dropdowns gefüllt sind, wird der <strong>Anzeigen</strong>-Button aktiv.
+        </p>
+        <div class="docs-key-block">
+          <strong>Doppelbestreuung aus</strong> (Standard) lädt nur die ausgewählte
+          Erhebung — schnell, ~1–3 s.<br>
+          <strong>Doppelbestreuung ein</strong> lädt zusätzlich alle anderen Erhebungen
+          mit gleichem Jahr und gleicher Nummer, um Überschneidungen zu erkennen.
+          Längere Ladezeit, dafür siehst du auf der Karte (▲ orange Marker), welche PLZs
+          mehrfach bestreut werden.
+        </div>
+
+        <h4>Schritt 2 – Analyse-Modus</h4>
+        <p>
+          Unten rechts auf der Karte schaltest du zwischen <strong>📊 WK</strong>
+          (Werbekosten-Anteil) und <strong>💶 Umsatz</strong> um.
+        </p>
+        <ul>
+          <li><strong>WK-Modus:</strong> Heatmap nach WK%. Grün = HZ-bestreut, Blau = nicht
+            bestreut (potentielle WK), Grau = keine Daten. Doppelbestreuung-Checkbox
+            blendet ▲-Marker ein.</li>
+          <li><strong>Umsatz-Modus:</strong> Heatmap nach Umsatzhöhe. Im Panel kannst du
+            zwischen <em>Umsatz</em> (gesamt) und <em>Werbeumsatz</em> (mit optionalem
+            Mitkauf) wechseln, sowie zwischen <em>Absolut</em>, <em>pro Haushalt</em>
+            und <em>Werbeanteil</em>. Die vier Kategorie-Toggle-Buttons (Stationär,
+            Pluscard, R&amp;A, KUBE OS) lassen dich einzelne Vertriebskanäle ein- und
+            ausblenden.</li>
+        </ul>
+
+        <h4>Schritt 3 – Radius einstellen</h4>
+        <p>
+          Der <strong>Radius-Slider</strong> oben in der Mitte (10–100 km) definiert
+          das Einzugsgebiet rund um die Niederlassung(en) der Erhebung. Nur PLZs
+          innerhalb dieses Radius gehen in die Tabelle und in die Streuverlust-
+          Berechnung ein.
+        </p>
+
+        <h4>Schritt 4 – PLZ inspizieren</h4>
+        <ul>
+          <li>Klick auf eine PLZ in der <strong>Tabelle</strong> oder auf der
+            <strong>Karte</strong> öffnet das Detail-Popup rechts.</li>
+          <li>Das <strong>Übersichts-Popup</strong> (📋-Button im Footer) zeigt
+            Aggregate für die gesamte Erhebung — Umsatz, Anzahl HZ-PLZs,
+            Streuverlust-Quote.</li>
+          <li>Die Tabellen-Spalten sind <strong>sortierbar</strong> per Klick auf den
+            Spalten-Header.</li>
+        </ul>
+
+        <h4>NL-Filter (Erhebungsübersicht)</h4>
+        <p>
+          Der <strong>↕ Erhebungsübersicht</strong>-Button am unteren Rand des
+          Filter-Bereichs öffnet eine Tabelle mit allen Niederlassungen der Erhebung
+          und ihren Erfassungs-Kennzahlen. Klick auf eine NL filtert die Karte und
+          alle Berechnungen auf diese eine Niederlassung. Mehrfachauswahl möglich
+          (Klick auf weitere NLs). Erneuter Klick deselektiert.
+        </p>
+
+        <h4>Kennzahlen verstehen</h4>
+        <ul>
+          <li><strong>WK %:</strong> Werbekosten geteilt durch Umsatz, in Prozent.
+            Niedrig = effizient.</li>
+          <li><strong>Umsatz Brutto (hochger.):</strong> Hochgerechneter Umsatz aus
+            der Erhebung — Basis für alle WK-Berechnungen.</li>
+          <li><strong>HZ:</strong> ● grün = Hauszustellung erfolgte. ▲ orange =
+            mehrfache HZ-Bestreuung (Doppelbestreuung). Kein Symbol = nicht
+            bestreut.</li>
+          <li><strong>Streuverlust:</strong> Umsatz, der außerhalb des Radius
+            entstanden ist — geht ins Werbe-Gebiet aber nicht in die Reichweite ein.</li>
+        </ul>
+
+        <h4>Karten-Tools</h4>
+        <ul>
+          <li><strong>🗺️ Kartenstil</strong> (rechts unten): OpenStreetMap-Hintergrund
+            ein- oder ausblenden.</li>
+          <li><strong>☰ Legende</strong> (links unten): Farbskala für die aktuelle
+            Heatmap einblenden.</li>
+          <li><strong>← Hauptmenü</strong> im Panel-Footer: zurück zum Startbildschirm,
+            Filter werden zurückgesetzt.</li>
+          <li><strong>Mitbewerber-Checkbox</strong>: blendet bekannte
+            Wettbewerber-Standorte (Hornbach, OBI, Globus, Hellweg, Toom, Hagebau)
+            als 🔨-Marker ein.</li>
+        </ul>
+
+        <h4>Tipps für die Praxis</h4>
+        <ul>
+          <li>Bei <strong>vielen NLs</strong> in einer Erhebung lohnt es sich, den
+            Radius auf 20–30 km zu reduzieren — sonst überlappen sich die
+            Einzugsgebiete stark.</li>
+          <li>Im <strong>Umsatz-Modus / Werbeanteil</strong> siehst du, wie groß der
+            Anteil des werbeinduzierten Umsatzes pro PLZ ist — gut für die Bewertung
+            einer einzelnen Kampagne.</li>
+          <li>Beim <strong>Wechsel zwischen Erhebungen</strong> bleiben Radius- und
+            Kategorie-Einstellungen erhalten — Modus-Auswahl wird auf WK
+            zurückgesetzt.</li>
+        </ul>
+
+        <h4>Bei Problemen</h4>
+        <p>
+          Wenn die Karte leer bleibt oder Daten fehlen: Erhebung erneut auswählen,
+          Browser-Tab neu laden, oder im SAC-Backend prüfen, ob die DataSource Daten
+          für die gewählte Kombination liefert. Der Bootstrap-Status wird in der
+          Browser-Konsole geloggt (<code>[PLZ-Widget]</code>-Präfix).
+        </p>
+      `;
+      body.appendChild(content);
+      section.appendChild(body);
+
+      // Toggle
+      this._on(header, 'click', () => {
+        section.classList.toggle('open');
+      });
+
+      return section;
     }
 
     renderDataTableFromEntries(entries) {
       const container = this.$('table-container');
       if (!container) return;
       container.innerHTML = '';
-      // Layout sicherstellen, ohne andere Inline-Styles zu zerstören.
-      // (Vorher überschrieb style.cssText auch laufende Animationen/Transforms.)
-      container.style.display       = 'flex';
-      container.style.flexDirection = 'column';
-      container.style.height        = '100%';
-      container.style.minHeight     = '0';
+      // (Die nötigen Layout-Properties – display:flex, flex-direction:column,
+      // min-height:0, height:100% – kommen bereits aus der .table-wrapper-Regel.
+      // Frühere Versionen setzten diese hier inline; das überschrieb die
+      // nl-info-active-Translation und führte zu Flackern beim NL-Tabellen-Toggle.)
 
       entries = entries.filter(([plz]) => plz !== '00000');
       if (this.plzImRadius && this.plzImRadius.size > 0) {
@@ -2635,13 +2662,14 @@
         umsatzPanel.classList.add('hidden');
         panel.classList.remove('panel-large', 'panel-medium', 'panel-auto');
         this.showCritical = chkDoppel.checked;
+        // Bug-Fix B5: Bestreuungs-Overlay-State sauber zurücksetzen.
+        // Sonst bleibt showBestreuung=true und beim nächsten Umsatz-Wechsel
+        // ist die Checkbox unchecked, intern aber true.
+        this.showBestreuung = false;
+        if (chkBestreu) chkBestreu.checked = false;
         this.umsatzDarstellung = 'abs';
         darstSwitch.querySelectorAll('span').forEach(s => s.classList.remove('active'));
         btnAbs.classList.add('active'); btnWA.classList.add('disabled');
-        // Bug B5-Fix: Bestreuungs-Overlay-State auch im WK-Modus konsistent
-        // halten (Checkbox + Layer + Flag).
-        this.showBestreuung = false;
-        if (chkBestreu) chkBestreu.checked = false;
         this.bestreuungGroup?.clearLayers();
         this.activeCategories = new Set(CATEGORIES);
         this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
@@ -3697,32 +3725,30 @@
       if (filterContainer && !this.$('doppel-toggle-bar')) {
         const bar = document.createElement('div');
         bar.id = 'doppel-toggle-bar';
-        // Standardmäßig im Hauptmenü ausgeklappt — wird beim Erhebungs-Load
-        // automatisch eingeklappt und beim Reset zum Hauptmenü wieder geöffnet.
+        // Hauptmenü-Default: aufgeklappt. _resetToHome forciert das nochmal.
         bar.innerHTML = `
-          <div id="doppel-toggle-header" role="button" tabindex="0" aria-expanded="true" aria-controls="doppel-toggle-options">
+          <div id="doppel-toggle-header">
             <span class="doppel-toggle-icon">⚠️</span>
             <div class="doppel-toggle-title-block">
               <span class="doppel-toggle-label">Doppelbestreuung</span>
-              <span class="doppel-toggle-subtitle" id="doppel-toggle-subtitle">Erkennung von Überschneidungen</span>
+              <span class="doppel-toggle-subtitle">Erkennung von Überschneidungen</span>
             </div>
-            <svg class="doppel-toggle-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 6 8 10 12 6"/></svg>
+            <span class="doppel-toggle-current" id="doppel-toggle-current">Ohne</span>
+            <span class="doppel-toggle-chevron">▾</span>
           </div>
           <div id="doppel-toggle-options">
-            <div id="doppel-toggle-options-inner">
-              <div class="doppel-option active" id="doppel-opt-aus">
-                <div class="doppel-option-radio"></div>
-                <div class="doppel-option-text">
-                  <span class="doppel-option-name">Ohne Doppelbestreuung</span>
-                  <span class="doppel-option-desc">Nur eigene Erhebung · Schnellste Ladezeit</span>
-                </div>
+            <div class="doppel-option active" id="doppel-opt-aus">
+              <div class="doppel-option-radio"></div>
+              <div class="doppel-option-text">
+                <span class="doppel-option-name">Ohne Doppelbestreuung</span>
+                <span class="doppel-option-desc">Nur eigene Erhebung · Schnellste Ladezeit</span>
               </div>
-              <div class="doppel-option" id="doppel-opt-ein">
-                <div class="doppel-option-radio"></div>
-                <div class="doppel-option-text">
-                  <span class="doppel-option-name">Mit Doppelbestreuung</span>
-                  <span class="doppel-option-desc">Alle Erhebungen des Zeitraums · Längere Ladezeit</span>
-                </div>
+            </div>
+            <div class="doppel-option" id="doppel-opt-ein">
+              <div class="doppel-option-radio"></div>
+              <div class="doppel-option-text">
+                <span class="doppel-option-name">Mit Doppelbestreuung</span>
+                <span class="doppel-option-desc">Alle Erhebungen des Zeitraums · Längere Ladezeit</span>
               </div>
             </div>
           </div>`;
@@ -3730,27 +3756,13 @@
         if (filterBtn) filterContainer.insertBefore(bar, filterBtn);
         else           filterContainer.appendChild(bar);
 
-        const header   = bar.querySelector('#doppel-toggle-header');
-        const subtitle = bar.querySelector('#doppel-toggle-subtitle');
-        const optAus   = bar.querySelector('#doppel-opt-aus');
-        const optEin   = bar.querySelector('#doppel-opt-ein');
+        const header  = bar.querySelector('#doppel-toggle-header');
+        const optAus  = bar.querySelector('#doppel-opt-aus');
+        const optEin  = bar.querySelector('#doppel-opt-ein');
+        const current = bar.querySelector('#doppel-toggle-current');
         this._doppelbestreuungAktiv = false;
 
-        // Subtitle reflektiert den aktuell gewählten Modus, damit der User
-        // ihn auch im eingeklappten Zustand sieht.
-        const updateSubtitle = () => {
-          if (!subtitle) return;
-          if (bar.classList.contains('collapsed')) {
-            subtitle.textContent = this._doppelbestreuungAktiv
-              ? 'Mit Doppelbestreuung'
-              : 'Ohne Doppelbestreuung';
-          } else {
-            subtitle.textContent = 'Erkennung von Überschneidungen';
-          }
-        };
-
-        // Bug B7-Fix: refreshBtn entfernt .ready auch, wenn Dropdowns
-        // unvollständig sind (vorher: nur add, kein remove).
+        // Bug-Fix B7: ready-Klasse auch entfernen wenn Voraussetzungen fehlen
         const refreshBtn = () => {
           const btn = this.$('filter-button');
           if (!btn) return;
@@ -3760,44 +3772,25 @@
             btn.classList.remove('ready');
           }
         };
-
-        this._on(optAus, 'click', () => {
-          this._doppelbestreuungAktiv = false;
-          optAus.classList.add('active'); optEin.classList.remove('active');
-          updateSubtitle();
+        const setActive = (modeEin) => {
+          this._doppelbestreuungAktiv = !!modeEin;
+          optEin.classList.toggle('active', !!modeEin);
+          optAus.classList.toggle('active', !modeEin);
+          if (current) current.textContent = modeEin ? 'Mit' : 'Ohne';
           refreshBtn();
+        };
+        this._on(optAus, 'click', (ev) => {
+          ev.stopPropagation();   // Header-Toggle nicht triggern
+          setActive(false);
         });
-        this._on(optEin, 'click', () => {
-          this._doppelbestreuungAktiv = true;
-          optEin.classList.add('active'); optAus.classList.remove('active');
-          updateSubtitle();
-          refreshBtn();
+        this._on(optEin, 'click', (ev) => {
+          ev.stopPropagation();
+          setActive(true);
         });
-
-        // Collapsible: Klick auf Header toggelt Bar.
-        const toggleCollapsed = () => {
-          const wasCollapsed = bar.classList.contains('collapsed');
+        // Header-Click klappt die Bar ein/aus
+        this._on(header, 'click', () => {
           bar.classList.toggle('collapsed');
-          header.setAttribute('aria-expanded', wasCollapsed ? 'true' : 'false');
-          updateSubtitle();
-        };
-        this._on(header, 'click', toggleCollapsed);
-        // Tastatur-Bedienung (Space/Enter)
-        this._on(header, 'keydown', (ev) => {
-          if (ev.key === 'Enter' || ev.key === ' ') {
-            ev.preventDefault();
-            toggleCollapsed();
-          }
         });
-
-        // Hilfsmethode für loadErhebung / _resetToHome zum programmatischen Steuern.
-        this._setDoppelBarCollapsed = (shouldCollapse) => {
-          if (!bar) return;
-          if (shouldCollapse) bar.classList.add('collapsed');
-          else                bar.classList.remove('collapsed');
-          header.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
-          updateSubtitle();
-        };
       }
 
       jahrSelect.innerHTML = '';   jahrSelect.disabled = true;
@@ -4130,7 +4123,11 @@
 
       for (let i = 0, len = data.length; i < len; i++) {
         const row = data[i];
-        const plz = this._normalizePLZ(row['dimension_plz_0']?.id ?? row['dimension_plz_0']?.raw) || '00000';
+        const plz = this._normalizePLZ(row['dimension_plz_0']?.id ?? row['dimension_plz_0']?.raw);
+        // Bug-Fix B38: '00000' ist Stammdaten-Aggregat ohne PLZ-Zuordnung.
+        // Vorher: || '00000' als Fallback → Stammdaten landeten in den Buckets
+        // und wären ohne Radius-Filter in aggregated[] gelandet (falsche WK%).
+        if (!plz || plz === '00000') continue;
         const umsatz   = row['value_hr_n_umsatz_0']?.raw ?? 0;
         const hzKosten = row['value_hz_kosten_0']?.raw   ?? 0;
         const hzFlag   = row['dimension_hzflag_0']?.id?.trim() === 'X';
@@ -4177,6 +4174,12 @@
         const umsatzRef  = hasNLFilter ? (nlFilteredUmsatzByPLZ[plz] ?? 0)
                                        : (unfilteredUmsatzByPLZ[plz]  ?? 0);
 
+        // hzKosten-Fallback (B37): Wenn `entry.hzKosten` 0 ist (HZ-NL nicht im
+        // NL-Filter ODER nicht im Radius), springt der Fallback auf den Scope-
+        // Bucket. Im NL-Filter-Modus zeigt das die ungefilterten HZ-Kosten —
+        // bewusste Designentscheidung (User-friendly, zeigt Original-WK auch
+        // bei NL-Filter). Wenn das geändert werden soll: hier `entry.hzKosten`
+        // direkt nehmen ohne Fallback.
         const hzKosten   = entry.hzKosten > 0 ? entry.hzKosten : refBucket.hzKosten;
         // isHZ gilt nur wenn die selektierte NL die HZ-Bestreuung hat.
         // Wenn NL-Filter aktiv und die HZ-NL rausgefiltert ist → isHZ=false,
@@ -4192,6 +4195,10 @@
         const wkPercent  = umsatzGesamt > 0 ? Number(((hzKosten / umsatzGesamt) * 100).toFixed(2)) : 0;
         // wkNachbarn = gleich wie wkPercent (beide auf Gesamtumsatz)
         const wkNachbarn = wkPercent;
+        // Hinweis (B35): avgPotHz ist Mittelwert über NL-Rows. Annahme — analog
+        // zu Haushalten (Antwort 1) — value_hz_potentiell_0 ist ein PLZ-Stammdatum,
+        // d.h. jede NL-Row liefert denselben Wert. Wenn das nicht zutrifft (NL-spezifisch),
+        // müsste man summieren statt mitteln.
         const avgPotHz   = entry.potHzCount > 0 ? entry.potHzSum / entry.potHzCount : 0;
         const potHzPct   = umsatzGesamt > 0 ? Number(((avgPotHz / umsatzGesamt) * 100).toFixed(2)) : 0;
         const baseEntry   = base[plz] || {};
@@ -4305,11 +4312,11 @@
     }
 
     prepareMapData(filteredData) {
-      // Bug B11/B14-Fix: NL-Klarnamen aus dem Bootstrap übernehmen.
-      // Vorher wurde Niederlassung in jedem prepareMapData neu zugewiesen mit
-      // NL[nlKey] = nlKey, wodurch der im Bootstrap gelesene Klarname
-      // (dimension_nl_name_0.label) verloren ging.
-      const previousNL = this.Niederlassung || {};
+      // Bug-Fix B11/B14: Bootstrap hat NL-Klarnamen aus 00000-Stammdaten gelesen.
+      // Hier NICHT pauschal überschreiben, sondern nur ergänzen wo etwas fehlt.
+      // Die Erhebungs-Rows enthalten denselben Namen unter dimension_nl_name_0?.label,
+      // aber falls das Feld fehlt fallen wir sauber auf den Bootstrap-Wert zurück.
+      const prevNL = this.Niederlassung || {};
       this.Niederlassung = {}; this.nlKoordinaten = {}; this.hzFlags = {}; this.extraNLs = [];
       const NL  = this.Niederlassung;
       const nlK = this.nlKoordinaten;
@@ -4320,10 +4327,11 @@
         const nlKey = row['dimension_niederlassung_0']?.id?.trim();
         const hz = row['dimension_hzflag_0']?.id?.trim() === 'X';
         if (nlKey) {
-          // Reihenfolge: Klarname aus Erhebungs-Row, Fallback Bootstrap-Cache,
-          // letzter Fallback der Schlüssel selbst.
-          const rowName = row['dimension_nl_name_0']?.label?.trim();
-          NL[nlKey] = rowName || previousNL[nlKey] || nlKey;
+          if (!NL[nlKey]) {
+            // Priorität: Erhebungs-Row > Bootstrap-Cache > nlKey selbst
+            const labelHere = row['dimension_nl_name_0']?.label?.trim();
+            NL[nlKey] = labelHere || prevNL[nlKey] || nlKey;
+          }
           if (!nlK[nlKey]) {
             const lat = parseFloat(row['dimension_Lat_0']?.label);
             const lon = parseFloat(row['dimension_lon_0']?.label);
@@ -4651,6 +4659,9 @@
     async loadErhebung(erhID, jahr, nummer) {
       this.$('heatmap-legend')?.classList.add('hidden');
       this.closeNLTable();
+      // Doppelbestreuungs-Bar collapsed während der Erhebung —
+      // gibt der PLZ-Tabelle mehr vertikalen Platz.
+      this.$('doppel-toggle-bar')?.classList.add('collapsed');
       this._stopPreview();
       const overlay = this.$('map-preview-overlay');
       if (overlay) overlay.innerHTML = '';
@@ -4660,10 +4671,6 @@
       // Panel-Footer-Buttons aktivieren
       this.$('panel-home-btn')?.removeAttribute('disabled');
       this.$('panel-overview-btn')?.removeAttribute('disabled');
-
-      // Doppelbestreuungs-Bar einklappen, damit die PLZ-Tabelle mehr Höhe bekommt.
-      // Der User kann die Bar manuell wieder aufklappen (Klick auf Header).
-      this._setDoppelBarCollapsed?.(true);
 
       this._showCinematicLoader();
       this._updateLoaderPhase(1, 'Erhebungsdaten werden geladen…');
@@ -4720,10 +4727,10 @@
             this._updateLoaderPhase(4, 'Kennwerte werden berechnet…');
             const radius = Number(this.$('radius-slider')?.value ?? 40);
             this._buildDistanceCache();
+            // Bug-Fix B23: applyRadiusFilter ruft intern bereits
+            // prepareUmsatzPLZWerte, computeWKKennwerte, computeStreuverlust auf.
+            // Doppelaufruf entfernt — spart bei großen Erhebungen 2× O(n).
             this.applyRadiusFilter(radius);
-            this.prepareUmsatzPLZWerte();
-            this.computeWKKennwerte();
-            this.computeStreuverlust();
 
             this.updateGeoLayer();
             this.renderDataTable(this.filteredKennwerte);
@@ -4826,10 +4833,9 @@
         if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         const radius = Number(this.$('radius-slider')?.value ?? 40);
         this._buildDistanceCache();
+        // Bug-Fix B23: applyRadiusFilter ruft intern bereits
+        // prepareUmsatzPLZWerte, computeWKKennwerte, computeStreuverlust auf.
         this.applyRadiusFilter(radius);
-        this.prepareUmsatzPLZWerte();
-        this.computeWKKennwerte();
-        this.computeStreuverlust();
 
         progress(4, 88, 'Karte wird gerendert…', filteredData.length);
         await yieldFrame();
@@ -4883,6 +4889,8 @@
       this.closeNLTable();
       this.$('heatmap-legend')?.classList.add('hidden');
       this.$('map-control-panel')?.classList.remove('panel-large', 'panel-medium');
+      // Doppelbestreuungs-Bar im Hauptmenü wieder aufklappen
+      this.$('doppel-toggle-bar')?.classList.remove('collapsed');
       this.filteredGroup?.clearLayers();
       this.neighbourGroup?.clearLayers();
       this.radiusGroup?.clearLayers();
@@ -4906,36 +4914,6 @@
       this.$('umsatz-panel')?.classList.add('hidden');
       const wkExtra = this.$('wk-extra');
       if (wkExtra?.style) wkExtra.style.display = '';
-
-      // Modus-spezifische Flags & Checkboxen konsistent zurücksetzen, damit
-      // beim nächsten Erhebungs-Load nichts „hängt".
-      this.showCritical    = false;
-      this.showBestreuung  = false;
-      this.showCompetitors = false;
-      this.useWerbeUmsatz  = true;
-      this.useZusatzUmsatz = false;
-      const chkDoppel       = this.$('chk-doppelbestreuung');
-      const chkBestreu      = this.$('chk-bestreuung');
-      const chkCompWK       = this.$('chk-competitors-wk');
-      const chkCompUms      = this.$('chk-competitors-umsatz');
-      const chkWerbeumsatz  = this.$('chk-werbeumsatz');
-      const chkMitgekauft   = this.$('chk-mitgekauft');
-      if (chkDoppel)      chkDoppel.checked      = false;
-      if (chkBestreu)     chkBestreu.checked     = false;
-      if (chkCompWK)      chkCompWK.checked      = false;
-      if (chkCompUms)     chkCompUms.checked     = false;
-      if (chkWerbeumsatz) chkWerbeumsatz.checked = true;
-      if (chkMitgekauft) { chkMitgekauft.checked = false; chkMitgekauft.disabled = false; }
-
-      // Doppelbestreuung beim Home-Reset auf "Aus" und Bar wieder ausklappen.
-      // Konsistent mit dem Initial-State im Hauptmenü.
-      this._doppelbestreuungAktiv = false;
-      const doppelOptAus = this.$('doppel-opt-aus');
-      const doppelOptEin = this.$('doppel-opt-ein');
-      doppelOptAus?.classList.add('active');
-      doppelOptEin?.classList.remove('active');
-      this._setDoppelBarCollapsed?.(false);
-
       this._startPreviewAnimation();
       this.renderDataTableFromEntries([]);
       const box = this.$('streuverlust-box');
@@ -4991,6 +4969,19 @@
         }, 50);
       } else {
         this._homeResetPending = true;
+        // Bug-Fix B9: Safety-Timeout — falls Poll-Tick das Flag nie zurücksetzt
+        // (Tick läuft nicht, BW antwortet nicht), bleibt sonst _homeResetPending
+        // dauerhaft hängen und blockiert spätere Bootstraps.
+        if (this._homeResetSafetyTimer) {
+          this._clearTimeout(this._homeResetSafetyTimer);
+        }
+        this._homeResetSafetyTimer = this._setTimeout(() => {
+          this._homeResetSafetyTimer = null;
+          if (this._homeResetPending) {
+            console.warn('[PLZ-Widget] Home-Reset Safety-Timeout — Flag forciert zurückgesetzt');
+            this._homeResetPending = false;
+          }
+        }, 30000);
         if (!this._dataPollTimer) this._scheduleDataPoll();
       }
     }
