@@ -3818,8 +3818,11 @@
                                        : (unfilteredUmsatzByPLZ[plz]  ?? 0);
 
         const hzKosten   = entry.hzKosten > 0 ? entry.hzKosten : refBucket.hzKosten;
-        const isHZ       = entry.hzCount > 0 || refBucket.hzCount > 0;
-        const isCritical = (entry.hzCount > 0 ? entry.hzCount : refBucket.hzCount) > 1;
+        // isHZ gilt nur wenn die selektierte NL die HZ-Bestreuung hat.
+        // Wenn NL-Filter aktiv und die HZ-NL rausgefiltert ist → isHZ=false,
+        // PLZ erscheint als nicht bestreut → potentielle WK werden angezeigt.
+        const isHZ       = entry.hzCount > 0;
+        const isCritical = entry.hzCount > 1;
 
         // WK%-Nenner = Umsatz im gewählten NL-Scope (alle NLs oder nur selektierte)
         const umsatzGesamt = umsatzRef;
