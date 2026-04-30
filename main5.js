@@ -1138,7 +1138,7 @@
         { brand: 'HOR', name: 'Hornbach 47055 Duisburg',               lat: '51.4155', lon: '6.7685' },
         { brand: 'HOR', name: 'Hornbach 47167 Duisburg',               lat: '51.4795', lon: '6.7855' },
         { brand: 'HOR', name: 'Hornbach 47443 Moers',                  lat: '51.4625', lon: '6.6765' },
-        { brand: 'HOR', name: 'Hornbach 47803 Krefeld',                lat: '51.3355', lon: '6.5845' },
+        { brand: 'HOR', name: 'Hornbach 47803 Krefeld 2',              lat: '51.3355', lon: '6.5845' },
         { brand: 'HOR', name: 'Hornbach 48157 Münster',                lat: '51.9835', lon: '7.6915' },
         { brand: 'HOR', name: 'Hornbach 49084 Osnabrück',              lat: '52.2885', lon: '8.0785' },
         { brand: 'HOR', name: 'Hornbach 51105 Köln',                   lat: '50.9245', lon: '7.0205' },
@@ -3800,32 +3800,24 @@
       for (const plz of Object.keys(aggregated)) {
         const entry = aggregated[plz];
         const unfiltered = unfilteredByPLZ[plz] || { hzKosten: 0, hzCount: 0 };
-        // Wenn NL-Filter HZ-Kosten-Rows rausfiltert (BW-Strukturproblem),
-        // auf ungefilterte Werte zurückfallen
+        // HZ-Kosten: wenn NL-Filter die Kosten-Rows rausfiltert, ungefilterte Werte nutzen
         const hzKosten   = entry.hzKosten > 0 ? entry.hzKosten : unfiltered.hzKosten;
         const isHZ       = entry.hzCount > 0 || unfiltered.hzCount > 0;
         const isCritical = (entry.hzCount > 0 ? entry.hzCount : unfiltered.hzCount) > 1;
-        // Wenn der NL-Filter Umsatz-Rows und Kosten-Rows trennt (BW liefert sie
-        // auf verschiedenen NL-Dimensionen), kann umsatzNetto=0 sein obwohl Kosten
-        // vorhanden sind. Fallback-Kette: gefilterter Umsatz → ungefiltert → PLZWerte-Summe
-        let umsatzNetto = entry.umsatzNetto;
-        if (umsatzNetto === 0 && hzKosten > 0) {
-          const unfU = unfilteredUmsatzByPLZ[plz] ?? 0;
-          if (unfU > 0) {
-            umsatzNetto = unfU;
-          } else {
-            const plzWerte = this.filteredPLZWerte?.[plz];
-            if (plzWerte) {
-              umsatzNetto = (plzWerte.umsatz || 0) + (plzWerte.ra || 0) +
-                            (plzWerte.onlineshop || 0) + (plzWerte.pluscard || 0);
-            }
-          }
-        }
-        const wkPercent   = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
-        const unfU        = unfilteredUmsatzByPLZ[plz] ?? 0;
-        const wkNachbarn  = unfU > 0 ? Number(((hzKosten / unfU) * 100).toFixed(1)) : 0;
-        const avgPotHz    = entry.potHzCount > 0 ? entry.potHzSum / entry.potHzCount : 0;
-        const potHzPct    = umsatzNetto > 0 ? Number(((avgPotHz / umsatzNetto) * 100).toFixed(1)) : 0;
+
+        // WK%-Nenner ist immer der Gesamtumsatz der PLZ (alle NLs zusammen).
+        // BW liefert Umsatz auf Nachbar-NL-Rows und HZ-Kosten auf der eigenen NL-Row —
+        // der NL-Filter würde sonst den Umsatzteil wegschneiden und WK%=0 erzeugen.
+        const umsatzGesamt = unfilteredUmsatzByPLZ[plz] ?? 0;
+        // Angezeigter Umsatz in Tabelle/Popup: gefilterter Wert (was die selektierte NL sieht),
+        // Fallback auf Gesamtumsatz wenn gefiltert 0
+        const umsatzNetto = entry.umsatzNetto > 0 ? entry.umsatzNetto : umsatzGesamt;
+        // WK% Nenner = Gesamtumsatz PLZ (inkl. Nachbar-NLs) — so wie BW-Analyse
+        const wkPercent  = umsatzGesamt > 0 ? Number(((hzKosten / umsatzGesamt) * 100).toFixed(2)) : 0;
+        // wkNachbarn = gleich wie wkPercent (beide auf Gesamtumsatz)
+        const wkNachbarn = wkPercent;
+        const avgPotHz   = entry.potHzCount > 0 ? entry.potHzSum / entry.potHzCount : 0;
+        const potHzPct   = umsatzGesamt > 0 ? Number(((avgPotHz / umsatzGesamt) * 100).toFixed(2)) : 0;
         const baseEntry   = base[plz] || {};
         const old         = this.filteredPLZWerte?.[plz] || {};
 
