@@ -70,7 +70,7 @@
    *           → "1. 20.04–03.05"
    */
   function fmtNummer(raw) {
-    if (!raw) return raw;
+    if (raw == null) return '';
     const s = String(raw).replace(/\s/g, '');
     if (!s || /^0+$/.test(s)) return '0. Laufendes Jahr';
     // Von hinten lesen: letzte 8 Stellen = DDMMDDMM, davor 1+ Stellen = Nummer
@@ -1888,7 +1888,7 @@
     }
 
     zoomToFilteredPLZ() {
-      if (!this._layerByPLZ || !this.plzImRadius || this.plzImRadius.size === 0) return;
+      if (!this.map || !this._layerByPLZ || !this.plzImRadius || this.plzImRadius.size === 0) return;
       const bounds = L.latLngBounds([]);
       this.plzImRadius.forEach(plz => {
         const layer = this._layerByPLZ[plz];
@@ -2640,7 +2640,7 @@
       }
       if (activeNLCoords.length === 0) return;
 
-      const RADIUS_KM = 100;
+      const RADIUS_KM = 60;
       const toRad = d => d * Math.PI / 180;
       const haversine = (lat1, lon1, lat2, lon2) => {
         const R = 6371;
@@ -4243,6 +4243,7 @@
 
       this._activeFilter = { erhID, jahr, nummer };
       this._fullDataLoaded = true;
+      this._sortState = { column: null, direction: 'asc' };  // Sortierung für neue Erhebung zurücksetzen
 
       const loadStart = Date.now();
       if (this._loadSecTimer) this._clearInterval(this._loadSecTimer);
