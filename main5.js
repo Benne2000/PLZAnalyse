@@ -2917,6 +2917,9 @@
       let symbol = '📍';
       if (daten?.isCritical) symbol = '⚠️'; else if (daten?.isHZ) symbol = '✅';
 
+      const isHZ = !!daten?.isHZ;
+
+      // Basis-Felder immer anzeigen
       const beschreibungen = {
         value_hr_n_umsatz_0:      'Umsatz Brutto (hochgerechnet)',
         value_umsatz_p_hh_0:      'Umsatz p. HH',
@@ -2931,6 +2934,12 @@
         value_bon_erhebung_0:     'Ø-Bon',
         value_auflage_0:          'Auflage'
       };
+
+      // Potentielle WK nur bei nicht-bestreuten PLZs anzeigen
+      const beschreibungenPot = !isHZ ? {
+        value_hz_potentiell_0:   'Pot. HZ-Werbekosten',
+        value_wk_potentiell_0:   'Pot. WK (%)',
+      } : {};
 
       // Lokale Kopie — nie filteredKennwerte direkt mutieren
       const d = { ...daten };
@@ -2950,7 +2959,7 @@
       const hhFields = new Set(['value_umsatz_p_hh_0']);
 
       let rowsHtml = '';
-      Object.entries(beschreibungen).forEach(([id, label], idx) => {
+      const renderRow = (id, label) => {
         const raw = d?.[id]?.raw;
         let wert;
         if (typeof raw !== 'number') {
@@ -2962,9 +2971,20 @@
         } else {
           wert = raw.toLocaleString('de-DE');
         }
+        return `<tr><td class="label-cell">${escapeHtml(label)}</td><td class="value-cell">${escapeHtml(wert)}</td></tr>`;
+      };
+
+      Object.entries(beschreibungen).forEach(([id, label], idx) => {
         if (idx === 8) rowsHtml += `<tr><td colspan="2" class="section-title">Erhebungsdaten</td></tr>`;
-        rowsHtml += `<tr><td class="label-cell">${escapeHtml(label)}</td><td class="value-cell">${escapeHtml(wert)}</td></tr>`;
+        rowsHtml += renderRow(id, label);
       });
+
+      if (!isHZ && Object.keys(beschreibungenPot).length > 0) {
+        rowsHtml += `<tr><td colspan="2" class="section-title" style="color:var(--red)">Potential (nicht bestreut)</td></tr>`;
+        Object.entries(beschreibungenPot).forEach(([id, label]) => {
+          rowsHtml += renderRow(id, label);
+        });
+      }
 
       const popup = this.$('side-popup');
       popup.innerHTML = `
@@ -3770,8 +3790,17 @@
 
       for (const plz of Object.keys(aggregated)) {
         const entry = aggregated[plz];
-        const umsatzNetto = entry.umsatzNetto;
         const hzKosten    = entry.hzKosten;
+        // Fallback: wenn value_hr_n_umsatz_0 = 0 auf allen Rows, Gesamtumsatz aus
+        // prepareUmsatzPLZWerte nehmen (Summe der Kategorie-Umsätze)
+        let umsatzNetto = entry.umsatzNetto;
+        if (umsatzNetto === 0) {
+          const plzWerte = this.filteredPLZWerte?.[plz];
+          if (plzWerte) {
+            umsatzNetto = (plzWerte.umsatz || 0) + (plzWerte.ra || 0) +
+                          (plzWerte.onlineshop || 0) + (plzWerte.pluscard || 0);
+          }
+        }
         const wkPercent   = umsatzNetto > 0 ? Number(((hzKosten / umsatzNetto) * 100).toFixed(1)) : 0;
         const unfU        = unfilteredUmsatzByPLZ[plz] ?? 0;
         const wkNachbarn  = unfU > 0 ? Number(((hzKosten / unfU) * 100).toFixed(1)) : 0;
