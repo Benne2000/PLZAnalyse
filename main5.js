@@ -2238,8 +2238,10 @@
       this.computeWKKennwerte();
       this.computeStreuverlust();
       this.updateGeoLayer();
-      this.renderDataTable(this.filteredKennwerte);
-      this._rerenderActivePopup();
+      if (this._activeFilter) {
+        this.renderDataTable(this.filteredKennwerte);
+        this._rerenderActivePopup();
+      }
     }
 
     // ── Map-Initialisierung + Event-Wiring des Control-Panels ──────────
@@ -3817,7 +3819,7 @@
         const umsatzRef  = hasNLFilter ? (nlFilteredUmsatzByPLZ[plz] ?? 0)
                                        : (unfilteredUmsatzByPLZ[plz]  ?? 0);
 
-        const hzKosten   = entry.hzKosten > 0 ? entry.hzKosten : refBucket.hzKosten;
+        const hzKosten   = (entry.hzKosten > 0 ? entry.hzKosten : refBucket.hzKosten) * 10;
         // isHZ gilt nur wenn die selektierte NL die HZ-Bestreuung hat.
         // Wenn NL-Filter aktiv und die HZ-NL rausgefiltert ist → isHZ=false,
         // PLZ erscheint als nicht bestreut → potentielle WK werden angezeigt.
@@ -3832,7 +3834,7 @@
         const wkPercent  = umsatzGesamt > 0 ? Number(((hzKosten / umsatzGesamt) * 100).toFixed(2)) : 0;
         // wkNachbarn = gleich wie wkPercent (beide auf Gesamtumsatz)
         const wkNachbarn = wkPercent;
-        const avgPotHz   = entry.potHzCount > 0 ? entry.potHzSum / entry.potHzCount : 0;
+        const avgPotHz   = (entry.potHzCount > 0 ? entry.potHzSum / entry.potHzCount : 0) * 10;
         const potHzPct   = umsatzGesamt > 0 ? Number(((avgPotHz / umsatzGesamt) * 100).toFixed(2)) : 0;
         const baseEntry   = base[plz] || {};
         const old         = this.filteredPLZWerte?.[plz] || {};
