@@ -266,6 +266,127 @@
       .nl-info-row.table-row-selected td:first-child { border-left: 3px solid var(--red); }
       .filter-container.nl-info-active .table-wrapper { transform: translateY(-100%); }
 
+      /* ─── Partner-Erhebung-Picker (Phase 1) ───────────────────────── */
+      #partner-erh-picker {
+        flex-shrink: 0;
+        border-bottom: 1px solid var(--gray-200);
+        background: var(--gray-50);
+        overflow: hidden;
+      }
+      #partner-erh-picker-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 12px;
+        cursor: pointer; user-select: none;
+        transition: background 0.15s;
+      }
+      #partner-erh-picker-header:hover { background: var(--gray-100); }
+      .partner-picker-icon { font-size: 0.95rem; line-height: 1; flex-shrink: 0; }
+      .partner-picker-title-block {
+        display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0;
+      }
+      .partner-picker-label {
+        font-size: 0.72rem; font-weight: 700; color: var(--gray-700);
+        letter-spacing: 0.04em; text-transform: uppercase;
+      }
+      .partner-picker-subtitle {
+        font-size: 0.67rem; color: var(--gray-500); font-weight: 400;
+      }
+      .partner-picker-count {
+        font-size: 0.66rem; font-weight: 700; color: var(--red);
+        background: var(--red-bg); border: 1px solid var(--red-border);
+        padding: 2px 7px; border-radius: 8px;
+        white-space: nowrap; flex-shrink: 0;
+      }
+      .partner-picker-chevron {
+        font-size: 0.8rem; color: var(--gray-500); flex-shrink: 0;
+        transition: transform 0.28s var(--ease-out);
+        transform: rotate(180deg); line-height: 1;
+      }
+      #partner-erh-picker.collapsed .partner-picker-chevron { transform: rotate(0deg); }
+      #partner-erh-picker-body {
+        max-height: 240px;
+        overflow-y: auto; overflow-x: hidden;
+        transition: max-height 0.32s var(--ease-out),
+                    border-top-color 0.2s ease, opacity 0.2s ease;
+        border-top: 1px solid var(--gray-200);
+        scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
+      }
+      #partner-erh-picker-body::-webkit-scrollbar       { width: 5px; }
+      #partner-erh-picker-body::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+      #partner-erh-picker.collapsed #partner-erh-picker-body {
+        max-height: 0; border-top-color: transparent; opacity: 0;
+      }
+      .partner-erh-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 7px 12px;
+        cursor: pointer; user-select: none;
+        border-bottom: 1px solid var(--gray-100);
+        transition: background 0.12s;
+      }
+      .partner-erh-row:last-child { border-bottom: none; }
+      .partner-erh-row:hover { background: var(--red-bg); }
+      .partner-erh-row.is-base {
+        cursor: not-allowed; opacity: 0.8;
+        background: linear-gradient(to right, var(--red-bg) 0%, transparent 100%);
+      }
+      .partner-erh-row.is-base:hover { background: linear-gradient(to right, var(--red-bg) 0%, transparent 100%); }
+      .partner-erh-checkbox {
+        width: 16px; height: 16px;
+        border: 1.5px solid var(--gray-400);
+        border-radius: 3px;
+        flex-shrink: 0;
+        display: flex; align-items: center; justify-content: center;
+        background: var(--white);
+        transition: all 0.15s;
+      }
+      .partner-erh-row.checked .partner-erh-checkbox {
+        background: var(--red); border-color: var(--red);
+      }
+      .partner-erh-row.checked .partner-erh-checkbox::after {
+        content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; line-height: 1;
+      }
+      .partner-erh-row.is-base .partner-erh-checkbox {
+        background: var(--red); border-color: var(--red);
+      }
+      .partner-erh-row.is-base .partner-erh-checkbox::after {
+        content: '★'; color: white; font-size: 0.6rem; line-height: 1;
+      }
+      .partner-erh-name {
+        flex: 1; font-size: 0.78rem; color: var(--gray-700);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      }
+      .partner-erh-row.is-base .partner-erh-name { font-weight: 700; }
+      .partner-erh-badge {
+        font-size: 0.62rem; color: var(--gray-500);
+        background: var(--gray-100); padding: 2px 6px;
+        border-radius: 10px; flex-shrink: 0;
+      }
+      .partner-erh-row.checked .partner-erh-badge {
+        color: var(--red); background: var(--red-bg);
+      }
+      #partner-erh-empty {
+        padding: 14px 12px; font-size: 0.74rem; color: var(--gray-500);
+        text-align: center; font-style: italic;
+      }
+      /* Cross-GF-Doppelbestreuungs-Toggle */
+      .partner-cross-doppel-row {
+        display: flex; align-items: center; gap: 8px;
+        padding: 8px 12px;
+        border-top: 1.5px solid var(--gray-200);
+        background: linear-gradient(to right, transparent 0%, var(--red-bg) 100%);
+        cursor: pointer; user-select: none;
+      }
+      .partner-cross-doppel-row:hover { filter: brightness(0.98); }
+      .partner-cross-doppel-row .partner-erh-name {
+        font-size: 0.72rem; color: var(--gray-700); font-weight: 600;
+      }
+      .partner-cross-doppel-row.checked .partner-erh-checkbox {
+        background: var(--red); border-color: var(--red);
+      }
+      .partner-cross-doppel-row.checked .partner-erh-checkbox::after {
+        content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; line-height: 1;
+      }
+
       /* ─── Map ───────────────────────────────────────────────────── */
       .map-container { width: 70%; height: 100%; position: relative; z-index: 10; isolation: isolate; }
       #map { height: 100%; width: 100%; background: #e8ecf0; }
@@ -1217,6 +1338,17 @@
       this.hzFlags               = {};
       this.extraNLs              = [];
 
+      // ── Multi-Erhebungs-Aggregation (Phase 1) ─────────────────────────
+      // _activeErhebungen[]: aktiv kombinierte Erhebungen.
+      // _erhebungRowsCache: BW-Rows pro Erhebung gecacht (vermeidet Reload).
+      // _erhebungAggregatesCache: pre-aggregierte PLZ-Buckets pro Erhebung
+      //   für inkrementelle Updates ohne Full-Recompute.
+      // _crossGfDoppelAktiv: zeigt PLZs die in 2+ aktiven Erhebungen HZ=X sind.
+      this._activeErhebungen        = [];   // [{ erhID, jahr, nummer }, ...]
+      this._erhebungRowsCache       = new Map();   // key 'erhID|jahr|nummer' → rows[]
+      this._erhebungAggregatesCache = new Map();   // key → { byPLZ: {...} }
+      this._crossGfDoppelAktiv      = false;
+
       // Status-Flags
       this._bootstrapDone          = false;
       this._fullIndexReady         = false;
@@ -1569,6 +1701,14 @@
 
     // ── Erhebungs-Index (ein Pass über alle Rohdaten) ──────────────────
     // Für Fremd-Erhebungen nur HZ=X Rows → 80-90% kleinerer Index.
+    //
+    // Domain-Frage 5 (geklärt, mit Vorbehalt für Zukunft): Aktuell wird ein
+    // einzelner GF-Bereich + Doppelbestreuungs-Erkennung über Fremd-Erhebungen
+    // ausgewertet. Wenn später mehrere GF-Bereiche gleichzeitig analysiert
+    // werden sollen (Streuverlust durch Nachbar-GF-Bereiche, Cross-GF-Umsatz-
+    // Aggregation), reicht der HZ=X-Filter NICHT mehr — dann müssen auch
+    // Nachbar-NL-Rows der Fremd-Erhebungen behalten werden. Im aktuellen
+    // Use-Case wäre das aber Speicher-Verschwendung.
     _buildErhebungIndex(aktErhID) {
       const data = this._myDataSource?.data;
       if (!Array.isArray(data)) { this._erhebungIndex = {}; return; }
@@ -1595,6 +1735,108 @@
     _getErhebungRows(erhID, jahr, nummer) {
       if (!this._erhebungIndex) this._buildErhebungIndex(erhID);
       return this._erhebungIndex[erhID + '|' + jahr + '|' + nummer] || [];
+    }
+
+    // ── Multi-Erhebungs-Helper (Phase 1) ────────────────────────────────
+    // Iterator über die Rows aller aktiv-kombinierten Erhebungen.
+    // Reihenfolge: Basis-Erhebung zuerst, dann zugeschaltete in Auswahl-Order.
+    _getAllActiveRows() {
+      if (!this._activeErhebungen || this._activeErhebungen.length === 0) {
+        // Backwards-compat: wenn keine Multi-Liste, nutze _activeFilter.
+        if (!this._activeFilter) return [];
+        const { erhID, jahr, nummer } = this._activeFilter;
+        return this._getErhebungRows(erhID, jahr, nummer);
+      }
+      // Single-Erhebung: direkter Rückgabewert ohne Allocation.
+      if (this._activeErhebungen.length === 1) {
+        const { erhID, jahr, nummer } = this._activeErhebungen[0];
+        return this._getErhebungRows(erhID, jahr, nummer);
+      }
+      // Multi: Konkatenation. Bei N Erhebungen × ~27k Rows entsteht ein Array
+      // mit N×27k Refs (kein Datenkopier, nur Pointer). Performance ok bis ~10.
+      const out = [];
+      for (const { erhID, jahr, nummer } of this._activeErhebungen) {
+        const rows = this._getErhebungRows(erhID, jahr, nummer);
+        for (let i = 0, len = rows.length; i < len; i++) out.push(rows[i]);
+      }
+      return out;
+    }
+
+    // Liste der Partner-Erhebungen (gleiches Jahr+Nummer wie Basis, aber andere
+    // ErhID). Quelle: _erhData via setupFilterDropdowns aufgebaut.
+    _getPartnerErhebungen() {
+      const base = this._activeErhebungen?.[0];
+      if (!base) return [];
+      const partners = [];
+      const erhData = this._erhData || {};
+      for (const erhID of Object.keys(erhData)) {
+        if (erhID === base.erhID) continue;
+        const jahre = erhData[erhID];
+        const nummern = jahre?.[base.jahr];
+        if (!nummern) continue;
+        const arr = nummern instanceof Set ? [...nummern] : nummern;
+        if (arr.includes(base.nummer)) {
+          partners.push({ erhID, jahr: base.jahr, nummer: base.nummer });
+        }
+      }
+      return partners;
+    }
+
+    _isErhebungActive(erhID) {
+      return this._activeErhebungen?.some(e => e.erhID === erhID) || false;
+    }
+
+    _erhKey(e) { return e.erhID + '|' + e.jahr + '|' + e.nummer; }
+
+    // ── Partner-Erhebung zu/wegschalten (Phase 1) ──────────────────────
+    // Lädt eine zusätzliche Erhebung mit gleichem Jahr+Nummer wie die Basis
+    // dazu (BW-Multi-Filter), oder entfernt sie aus der aktiven Liste.
+    //
+    // Performance: BW-Roundtrip nötig nur beim Hinzufügen (Multi-Filter
+    // anpassen). Entfernen geht client-seitig, weil die Rows im Cache /
+    // _erhebungIndex bleiben — wir filtern sie nur aus der Aggregation raus.
+    //
+    // Cache-Strategie: nach BW-Reload bleiben alte Rows der nicht-aktiven
+    // Erhebungen im Index erhalten, solange BW sie liefert (was es im Multi-
+    // Filter-Modus tut). Wenn der User mehrere Erhebungen dazuschaltet und
+    // wieder entfernt, ist der Index in einem konsistenten Zustand.
+    async togglePartnerErhebung(erhID) {
+      if (!this._activeFilter || !this._activeErhebungen?.length) return;
+      const base = this._activeErhebungen[0];
+      if (erhID === base.erhID) return;   // Basis darf nicht entfernt werden
+
+      const idx = this._activeErhebungen.findIndex(e => e.erhID === erhID);
+      const wasActive = idx >= 0;
+
+      if (wasActive) {
+        // Wegschalten — kein BW-Roundtrip nötig, _activeErhebungen verkleinern.
+        // Der BW-Filter muss aber angepasst werden, sonst landen Rows der
+        // entfernten Erhebung weiter in _erhebungIndex (Speicherverschwendung,
+        // aber keine logischen Fehler weil _getAllActiveRows nur über
+        // _activeErhebungen iteriert).
+        this._activeErhebungen.splice(idx, 1);
+      } else {
+        // Dazuschalten — Erhebung mit Basis-Jahr/Nummer hinzufügen
+        this._activeErhebungen.push({ erhID, jahr: base.jahr, nummer: base.nummer });
+      }
+
+      // BW-Filter aktualisieren mit neuer ErhID-Liste
+      const allErhIDs = this._activeErhebungen.map(e => e.erhID);
+      const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
+
+      if (switched) {
+        // Daten werden nachgeladen, dann triggert _scheduleDataPoll → render()
+        this._fullDataLoaded = true;
+        if (!this._renderInProgress) this._scheduleDataPoll();
+      } else {
+        // Fallback: BW nicht erreichbar, lokal neu aggregieren
+        this.filteredData = this._getAllActiveRows();
+        this.applyRadiusFilter(Number(this.$('radius-slider')?.value ?? 40));
+        this.updateGeoLayer();
+        this.renderDataTable(this.filteredKennwerte);
+      }
+      // UI-Update: Partner-Picker re-rendern
+      this._renderPartnerErhebungPicker();
     }
 
     // Gemeinsame Struktur-Ableitung: {erhID: {jahr: Set<nummer>}}
@@ -1677,13 +1919,21 @@
     // Wechsel der BW-Filter vor dem removeDimensionFilter für PLZ.
     // Doppelbestreuung aus → ErhebungsID + Jahr + Nummer (nur eigene Erhebung).
     // Doppelbestreuung ein → nur Jahr + Nummer (alle Erhebungen).
+    //
+    // Phase-1-Erweiterung: erhID kann String ODER Array sein. Bei Array werden
+    // alle angegebenen ErhIDs gleichzeitig per Multi-Select in den BW-Filter
+    // gesetzt (Jahr + Nummer bleiben einheitlich). Bei _doppelbestreuungAktiv
+    // wird der ErhID-Filter weiterhin weggelassen (alle Erhebungen aller GFs).
     _switchToErhebungFilter(erhID, jahr, nummer) {
       const ds = this._getDataSource();
       if (!ds) return false;
       const t0 = performance.now();
 
+      // erhID-Liste normalisieren: String → [String]
+      const erhIDs = Array.isArray(erhID) ? erhID.filter(Boolean) : (erhID ? [erhID] : []);
+
       if (!this._doppelbestreuungAktiv) {
-        const kE = this._trySetFilter(ds, ERH_FILTER_KEYS,    [erhID]);
+        const kE = this._trySetFilter(ds, ERH_FILTER_KEYS,    erhIDs);
         const kJ = this._trySetFilter(ds, JAHR_FILTER_KEYS,   [jahr]);
         const kN = this._trySetFilter(ds, NUMMER_FILTER_KEYS, [nummer]);
         this._erhIDFilterKey  = kE;
@@ -1710,7 +1960,7 @@
       }
       if (removed) {
         this._filterSwitchTime = Date.now();
-        console.info(`[PLZ-Widget] Filter-Switch in ${(performance.now() - t0).toFixed(0)}ms`);
+        console.info(`[PLZ-Widget] Filter-Switch (${erhIDs.length} ErhID) in ${(performance.now() - t0).toFixed(0)}ms`);
       }
       return removed;
     }
@@ -2100,9 +2350,15 @@
         totalErhebungUmsatz += umsatz;
         if (!hasRad || !radius.has(plz)) streuverlustUmsatz += umsatz;
       }
+      // Domain-Frage 3 (geklärt): negative Saldo-Summen werden zu 0
+      // normalisiert. Einzelne Storno-Rows fließen vorher mit ihrem Vorzeichen
+      // in die Aggregation ein (Stornos verringern korrekt den Saldo);
+      // erst am Ende clampen wir, damit keine negativen Anzeigen entstehen.
+      const sumStreu = streuverlustUmsatz > 0 ? streuverlustUmsatz : 0;
+      const sumTotal = totalErhebungUmsatz > 0 ? totalErhebungUmsatz : 0;
       this.streuverlust = {
-        umsatz: streuverlustUmsatz,
-        anteil: totalErhebungUmsatz > 0 ? streuverlustUmsatz / totalErhebungUmsatz : 0
+        umsatz: sumStreu,
+        anteil: sumTotal > 0 ? sumStreu / sumTotal : 0
       };
     }
 
@@ -2827,13 +3083,19 @@
       });
 
       // Critical-Marker für Doppelbestreuung
-      const showCritical = this.currentMapMode === 'wk' && this.showCritical;
+      // Phase-1: Multi-Modus erweitert die Trigger:
+      // - showCritical: bestehende Doppelbestreuungs-Checkbox (Map-Panel)
+      // - _crossGfDoppelAktiv: Cross-GF-Marker im Multi-Modus
+      const showCritical    = this.currentMapMode === 'wk' && this.showCritical;
+      const showCrossGfDoppel = !!this._crossGfDoppelAktiv;
+      const showMarker      = showCritical || showCrossGfDoppel;
       const isCriticalIntern = !!this.filteredKennwerte?.[plz]?.isCritical;
       const isCriticalCross  = !!(this._crossErhebungPLZ?.[plz] &&
                                   Object.keys(this._crossErhebungPLZ[plz]).length > 0);
-      const isCritical = isCriticalIntern || isCriticalCross;
+      const isCrossGfDoppel  = !!this._crossGfDoppel?.[plz];
+      const isCritical = isCriticalIntern || isCriticalCross || isCrossGfDoppel;
 
-      if (!showCritical || !isCritical) { this._removeCriticalMarker(plz); return; }
+      if (!showMarker || !isCritical) { this._removeCriticalMarker(plz); return; }
 
       if (!this.criticalMarkers[plz]) {
         const center = layer.getBounds().getCenter();
@@ -2905,7 +3167,16 @@
     updateGeoLayer() {
       if (!this._geoLayer) return;
       this.computeMaxValue();
+      // Single-Modus: Standard-Cross-Erhebungs-Detection wenn Doppelbestreuung
+      // aktiv und WK-Modus.
+      // Multi-Modus: Cross-GF-Doppel (separat schaltbar) markiert PLZs, die
+      // in 2+ aktiv-kombinierten Erhebungen mit HZ=X bestreut werden.
       if (this.currentMapMode === 'wk' && this.showCritical) this._computeCrossErhebungDoppel();
+      if (this._crossGfDoppelAktiv && this._activeErhebungen?.length > 1) {
+        this._computeCrossGfDoppel();
+      } else if (this._crossGfDoppel) {
+        this._crossGfDoppel = null;
+      }
 
       this._triggerSweepAnimation();
       if (this._layerByPLZ) {
@@ -3880,12 +4151,17 @@
     // ── Erhebungs-Info (NL-Tabelle) ────────────────────────────────────
     prepareErhebungsInfo() {
       this.erhebungsInfo = {};
-      const { erhID, jahr, nummer } = this._activeFilter || {};
-      if (!erhID) return;
-      const erhData = this._getErhebungRows(erhID, jahr, nummer);
+      if (!this._activeFilter) return;
+      // Phase-1: iteriert über alle aktiv-kombinierten Erhebungen.
+      // Wenn dieselbe NL-ID in zwei Erhebungen auftaucht, werden ihre
+      // Kennzahlen aufaddiert (üblicherweise sind NL-IDs aber eindeutig
+      // pro GF-Bereich).
+      const erhData = this._getAllActiveRows();
       if (!erhData.length) return;
 
       const jahresumsatz = {}, erfasst_total = {}, erfasst_valid = {};
+      // Welcher NL gehört zu welcher Erhebung? Wichtig für UI-Gruppierung.
+      const nlToErh = {};
       for (const row of erhData) {
         const nl = row['dimension_niederlassung_0']?.id?.trim();
         if (!nl) continue;
@@ -3897,13 +4173,15 @@
         erfasst_valid[nl] ||= 0;
         erfasst_total[nl] += uE;
         if (plz !== '00000') { jahresumsatz[nl] += uJ; erfasst_valid[nl] += uE; }
+        if (!nlToErh[nl]) nlToErh[nl] = row['dimension_erhebung_0']?.id?.trim();
       }
       for (const nl of Object.keys(erfasst_total)) {
         const j = jahresumsatz[nl]  || 0;
         const t = erfasst_total[nl] || 0;
         const v = erfasst_valid[nl] || 0;
         this.erhebungsInfo[nl] = {
-          nl, jahresumsatz: j, erfasst_total: t, erfasst_valid: v,
+          nl, erhID: nlToErh[nl],
+          jahresumsatz: j, erfasst_total: t, erfasst_valid: v,
           pct_erfassung:   j > 0 ? t / j : 0,
           pct_valid:       t > 0 ? v / t : 0,
           pct_hochrechnung: j > 0 ? v / j : 0,
@@ -3915,9 +4193,23 @@
       const container = this.$('nl-info-container');
       if (!container) return;
       container.innerHTML = '';
+
+      // Phase-1: Partner-Erhebungs-Picker oberhalb der NL-Tabelle.
+      // Nur einbauen wenn überhaupt Partner-Kandidaten existieren — sonst
+      // verschwenden wir Platz und verwirren den User.
+      const partners = this._getPartnerErhebungen();
+      if (partners.length > 0 || this._activeErhebungen.length > 1) {
+        const picker = this._buildPartnerErhebungPicker();
+        container.appendChild(picker);
+      }
+
       const scroll = document.createElement('div'); scroll.classList.add('nl-info-scroll');
       const table  = document.createElement('table'); table.classList.add('nl-info-table');
       const thead  = document.createElement('thead'); const headerRow = document.createElement('tr');
+      // Phase-1: Im Multi-Modus die GF-Spalte WEGLASSEN — wir verwenden
+      // stattdessen GF-Gruppen-Header-Zeilen über der ganzen Breite, das
+      // ist platzschonender und übersichtlicher.
+      const isMulti = this._activeErhebungen && this._activeErhebungen.length > 1;
       const headers = [
         { label: 'NL' },
         { label: 'Umsatz\n(Hochrechn.)' },
@@ -3942,27 +4234,164 @@
         this.toggleNLSelection(tr.dataset.nl);
       });
 
-      for (const info of Object.values(this.erhebungsInfo)) {
-        const tr = document.createElement('tr');
-        tr.classList.add('nl-info-row');
-        tr.dataset.nl = info.nl;
-        const cells = [
-          info.nl,
-          Math.round(info.jahresumsatz).toLocaleString('de-DE'),
-          Math.round(info.erfasst_total).toLocaleString('de-DE'),
-          (info.pct_erfassung * 100).toFixed(1) + '%',
-          Math.round(info.erfasst_valid).toLocaleString('de-DE'),
-          (info.pct_hochrechnung * 100).toFixed(1) + '%',
-        ];
-        cells.forEach((val, i) => {
-          const td = document.createElement('td');
-          td.textContent = val;
-          tr.appendChild(td);
-        });
-        tbody.appendChild(tr);
+      // Body-Aufbau
+      if (isMulti) {
+        // Im Multi-Modus: NL gruppiert nach erhID, Basis zuerst
+        const byErh = {};
+        for (const info of Object.values(this.erhebungsInfo)) {
+          const eid = info.erhID || '(unbekannt)';
+          (byErh[eid] ||= []).push(info);
+        }
+        // Reihenfolge: Basis-Erhebung zuerst, dann Partner in Auswahl-Order
+        const order = this._activeErhebungen.map(e => e.erhID);
+        for (let i = 0; i < order.length; i++) {
+          const eid = order[i];
+          const items = byErh[eid];
+          if (!items || items.length === 0) continue;
+          // Gruppen-Header-Zeile über alle Spalten
+          const headTr = document.createElement('tr');
+          headTr.classList.add('nl-gf-group-header');
+          const headTd = document.createElement('td');
+          headTd.setAttribute('colspan', headers.length);
+          const isBase = (i === 0);
+          headTd.innerHTML =
+            `<span class="nl-gf-group-icon">${isBase ? '★' : '🔀'}</span>` +
+            `<span class="nl-gf-group-name">${escapeHtml(this._fmtGF ? this._fmtGF(eid) : eid)}</span>` +
+            `<span class="nl-gf-group-count">${items.length} NL${items.length === 1 ? '' : 's'}</span>`;
+          headTr.appendChild(headTd);
+          tbody.appendChild(headTr);
+          // NL-Zeilen sortieren nach NL-Name innerhalb der Gruppe
+          items.sort((a, b) => a.nl.localeCompare(b.nl));
+          for (const info of items) tbody.appendChild(this._buildNLInfoRow(info, headers.length));
+        }
+      } else {
+        // Single-Modus: einfache Liste
+        for (const info of Object.values(this.erhebungsInfo)) {
+          tbody.appendChild(this._buildNLInfoRow(info, headers.length));
+        }
       }
       table.appendChild(tbody); scroll.appendChild(table); container.appendChild(scroll);
       this.updateNLSelectionUI();
+    }
+
+    // NL-Tabellen-Zeile bauen (extrahiert für Wiederverwendbarkeit mit GF-Gruppen)
+    _buildNLInfoRow(info, colCount) {
+      const tr = document.createElement('tr');
+      tr.classList.add('nl-info-row');
+      tr.dataset.nl = info.nl;
+      const cells = [
+        info.nl,
+        Math.round(info.jahresumsatz).toLocaleString('de-DE'),
+        Math.round(info.erfasst_total).toLocaleString('de-DE'),
+        (info.pct_erfassung * 100).toFixed(1) + '%',
+        Math.round(info.erfasst_valid).toLocaleString('de-DE'),
+        (info.pct_hochrechnung * 100).toFixed(1) + '%',
+      ];
+      for (const val of cells) {
+        const td = document.createElement('td');
+        td.textContent = val;
+        tr.appendChild(td);
+      }
+      return tr;
+    }
+
+    // ── Partner-Erhebungs-Picker (Phase 1) ──────────────────────────────
+    // Baut die UI für den Multi-GF-Modus: zeigt Basis-Erhebung (★, nicht
+    // wegklickbar) + alle Partner-Erhebungen (gleiches Jahr+Nummer) mit
+    // Checkboxes zum Dazu-/Wegschalten.
+    _buildPartnerErhebungPicker() {
+      const wrapper = document.createElement('div');
+      wrapper.id = 'partner-erh-picker';
+      // Per Default eingeklappt — User klickt Header zum Aufklappen
+      wrapper.classList.add('collapsed');
+
+      const partners = this._getPartnerErhebungen();
+      const activeCount = this._activeErhebungen?.length || 1;
+      const totalCount  = partners.length + 1;   // +1 für Basis
+
+      const header = document.createElement('div');
+      header.id = 'partner-erh-picker-header';
+      header.innerHTML = `
+        <span class="partner-picker-icon">🔀</span>
+        <div class="partner-picker-title-block">
+          <span class="partner-picker-label">Weitere GF-Bereiche kombinieren</span>
+          <span class="partner-picker-subtitle">Gleiches Jahr und gleiche Erhebungsnummer</span>
+        </div>
+        <span class="partner-picker-count">${activeCount}/${totalCount} aktiv</span>
+        <span class="partner-picker-chevron">▾</span>
+      `;
+      wrapper.appendChild(header);
+      this._on(header, 'click', () => wrapper.classList.toggle('collapsed'));
+
+      const body = document.createElement('div');
+      body.id = 'partner-erh-picker-body';
+      wrapper.appendChild(body);
+
+      // Basis-Erhebung (Star-Marker, nicht abwählbar)
+      const base = this._activeErhebungen?.[0];
+      if (base) {
+        const baseRow = document.createElement('div');
+        baseRow.className = 'partner-erh-row is-base';
+        baseRow.innerHTML = `
+          <div class="partner-erh-checkbox"></div>
+          <div class="partner-erh-name">${escapeHtml(this._fmtGF ? this._fmtGF(base.erhID) : base.erhID)}</div>
+          <span class="partner-erh-badge">Basis</span>
+        `;
+        body.appendChild(baseRow);
+      }
+
+      // Partner-Erhebungen
+      if (partners.length === 0) {
+        const empty = document.createElement('div');
+        empty.id = 'partner-erh-empty';
+        empty.textContent = 'Keine weiteren Erhebungen mit gleichem Jahr und gleicher Nummer verfügbar.';
+        body.appendChild(empty);
+      } else {
+        for (const p of partners) {
+          const isActive = this._isErhebungActive(p.erhID);
+          const row = document.createElement('div');
+          row.className = 'partner-erh-row' + (isActive ? ' checked' : '');
+          row.dataset.erhid = p.erhID;
+          row.innerHTML = `
+            <div class="partner-erh-checkbox"></div>
+            <div class="partner-erh-name">${escapeHtml(this._fmtGF ? this._fmtGF(p.erhID) : p.erhID)}</div>
+            <span class="partner-erh-badge">${isActive ? 'aktiv' : 'inaktiv'}</span>
+          `;
+          this._on(row, 'click', () => this.togglePartnerErhebung(p.erhID));
+          body.appendChild(row);
+        }
+
+        // Cross-GF-Doppelbestreuungs-Toggle (separat ein-/ausschaltbar, Default aus)
+        const crossRow = document.createElement('div');
+        crossRow.className = 'partner-cross-doppel-row' + (this._crossGfDoppelAktiv ? ' checked' : '');
+        crossRow.innerHTML = `
+          <div class="partner-erh-checkbox"></div>
+          <div class="partner-erh-name">▲ Cross-GF-Doppelbestreuung markieren</div>
+        `;
+        this._on(crossRow, 'click', () => {
+          this._crossGfDoppelAktiv = !this._crossGfDoppelAktiv;
+          crossRow.classList.toggle('checked', this._crossGfDoppelAktiv);
+          // Karten-Layer neu zeichnen, ohne Daten neu zu laden
+          this.updateGeoLayer();
+        });
+        body.appendChild(crossRow);
+      }
+
+      return wrapper;
+    }
+
+    // Nur Picker-UI neu rendern (z.B. nach togglePartnerErhebung), ohne die
+    // NL-Tabelle anzufassen. Die NL-Tabelle wird sowieso durch das danach
+    // laufende render() neu aufgebaut.
+    _renderPartnerErhebungPicker() {
+      const existing = this.$('partner-erh-picker');
+      if (!existing) return;
+      const fresh = this._buildPartnerErhebungPicker();
+      // Eingeklappt-Status erhalten beim Re-Render
+      if (!existing.classList.contains('collapsed')) {
+        fresh.classList.remove('collapsed');
+      }
+      existing.replaceWith(fresh);
     }
 
     updateNLSelectionUI() {
@@ -3983,9 +4412,11 @@
 
     // ── Umsatz-Aggregation ─────────────────────────────────────────────
     prepareUmsatzPLZWerte() {
-      const { erhID, jahr, nummer } = this._activeFilter || {};
-      if (!erhID || !jahr || !nummer) return;
-      const rows = this._getErhebungRows(erhID, jahr, nummer);
+      // Phase-1-Erweiterung: iteriert über alle aktiv-kombinierten Erhebungen
+      // (Multi-GF-Aggregation). Fällt für Single-Erhebung auf die Rows der
+      // einen Erhebung zurück.
+      if (!this._activeFilter) return;
+      const rows = this._getAllActiveRows();
       if (!rows.length) return;
 
       const safe = (x) => {
@@ -4051,6 +4482,22 @@
         v.haushalte      = v._hhValues.length > 0 ? v._hhValues.reduce((a, b) => a + b, 0) / v._hhValues.length : 0;
         v.kaufkraftIndex = v._kkValues.length > 0 ? v._kkValues.reduce((a, b) => a + b, 0) / v._kkValues.length : 0;
         delete v._hhValues; delete v._kkValues;
+        // Domain-Frage 3 (geklärt): Negative Umsätze (Stornos im Saldo) werden
+        // zu 0 normalisiert. Konsistent zu computeWKKennwerte.
+        const clamp = x => x > 0 ? x : 0;
+        v.umsatz     = clamp(v.umsatz);
+        v.ra         = clamp(v.ra);
+        v.onlineshop = clamp(v.onlineshop);
+        v.pluscard   = clamp(v.pluscard);
+        v.umsatzWerbung     = clamp(v.umsatzWerbung);
+        v.raWerbung         = clamp(v.raWerbung);
+        v.onlineshopWerbung = clamp(v.onlineshopWerbung);
+        v.pluscardWerbung   = clamp(v.pluscardWerbung);
+        v.umsatzZusatz      = clamp(v.umsatzZusatz);
+        v.raZusatz          = clamp(v.raZusatz);
+        v.onlineshopZusatz  = clamp(v.onlineshopZusatz);
+        v.pluscardZusatz    = clamp(v.pluscardZusatz);
+
         const hh = v.haushalte;
         const perHH = (val) => hh > 0 ? val / hh : 0;
         v.umsatzProHaushalt         = perHH(v.umsatz);
@@ -4155,8 +4602,16 @@
         if (hzFlag) entry.hzCount++;
         entry.umsatzNetto += umsatz;
         entry.hzKosten    += hzKosten;
+        // potHz: NL-Rows mit 0 werden nicht mitgezählt (Datenausfälle bzw. NLs
+        // die bewusst 0 als potentielle Werbekosten haben). Sonst zieht ein
+        // einzelner 0-Wert den Durchschnitt fälschlich runter.
+        // Annahme (siehe Domain-Antwort): potHz ist PLZ-Stammdatum, alle
+        // gültigen NL-Rows liefern denselben Wert > 0.
         const potHz = row['value_hz_potentiell_0']?.raw;
-        if (typeof potHz === 'number') { entry.potHzSum += potHz; entry.potHzCount++; }
+        if (typeof potHz === 'number' && potHz > 0) {
+          entry.potHzSum += potHz;
+          entry.potHzCount++;
+        }
       }
 
       const base = this.filteredKennwerte || {};
@@ -4189,8 +4644,11 @@
 
         // WK%-Nenner = Umsatz im gewählten NL-Scope (alle NLs oder nur selektierte)
         const umsatzGesamt = umsatzRef;
-        // Angezeigter Umsatz: gefilterter Wert (inkl. Radius), Fallback auf Scope-Umsatz
-        const umsatzNetto = entry.umsatzNetto > 0 ? entry.umsatzNetto : umsatzGesamt;
+        // Domain-Frage 3 (geklärt): 0 wird angezeigt, negative Werte (Stornos
+        // im Saldo) werden zu 0 normalisiert. Kein Fallback mehr auf umsatzGesamt
+        // wenn entry.umsatzNetto = 0 — das hatte vorher bei NL-Filter+Radius
+        // einen ungefilterten Wert eingeschmuggelt.
+        const umsatzNetto = entry.umsatzNetto > 0 ? entry.umsatzNetto : 0;
         // WK% Nenner = Gesamtumsatz PLZ (inkl. Nachbar-NLs) — so wie BW-Analyse
         const wkPercent  = umsatzGesamt > 0 ? Number(((hzKosten / umsatzGesamt) * 100).toFixed(2)) : 0;
         // wkNachbarn = gleich wie wkPercent (beide auf Gesamtumsatz)
@@ -4253,6 +4711,35 @@
     }
 
     // ── Cross-Erhebungs-Doppelbestreuung ───────────────────────────────
+    // ── Cross-GF-Doppelbestreuung im Multi-Modus (Phase 1) ─────────────
+    // Findet PLZs, die in 2+ aktiv-kombinierten Erhebungen mit HZ=X bestreut
+    // werden. Unterschied zu _computeCrossErhebungDoppel: dort werden Fremd-
+    // Erhebungen GEGEN die aktive geprüft; hier alle aktiven UNTEREINANDER.
+    _computeCrossGfDoppel() {
+      this._crossGfDoppel = {};
+      if (!this._activeErhebungen || this._activeErhebungen.length < 2) return;
+
+      // Pro PLZ: welche ErhIDs haben HZ=X? Wenn >1, ist die PLZ cross-bestreut.
+      const plzToErhSet = {};
+      for (const e of this._activeErhebungen) {
+        const rows = this._getErhebungRows(e.erhID, e.jahr, e.nummer);
+        for (let i = 0, len = rows.length; i < len; i++) {
+          const row = rows[i];
+          if (row['dimension_hzflag_0']?.id?.trim() !== 'X') continue;
+          const plz = this._normalizePLZ(row['dimension_plz_0']?.id ?? row['dimension_plz_0']?.raw);
+          if (!plz || plz === '00000') continue;
+          if (!plzToErhSet[plz]) plzToErhSet[plz] = new Set();
+          plzToErhSet[plz].add(e.erhID);
+        }
+      }
+      for (const plz of Object.keys(plzToErhSet)) {
+        const erhSet = plzToErhSet[plz];
+        if (erhSet.size >= 2) {
+          this._crossGfDoppel[plz] = [...erhSet];
+        }
+      }
+    }
+
     _computeCrossErhebungDoppel() {
       this._crossErhebungPLZ = {};
       if (!this._activeFilter || !this._myDataSource?.data) return;
@@ -4338,7 +4825,14 @@
             if (!isNaN(lat) && !isNaN(lon)) nlK[nlKey] = { lat, lon };
           }
         }
-        if (plz) hzF[plz] = hz;
+        if (plz) {
+          // Phase-1: im Multi-Modus kann dieselbe PLZ in mehreren Erhebungen
+          // auftauchen. HZ=X soll "sticky" sein — sobald IRGENDEINE Erhebung
+          // die PLZ bestreut, gilt die PLZ als bestreut. Sonst würde die
+          // letzte iterierte Row die HZ-Info überschreiben.
+          if (hz) hzF[plz] = true;
+          else if (hzF[plz] === undefined) hzF[plz] = false;
+        }
       }
     }
 
@@ -4676,6 +5170,16 @@
       this._updateLoaderPhase(1, 'Erhebungsdaten werden geladen…');
 
       this._activeFilter = { erhID, jahr, nummer };
+      // Multi-Erhebungs-Modell: Liste aktiver Erhebungen mit dieser Basis-Erhebung
+      // als einzigem Eintrag. Im Erhebungs-Layout kann der User weitere via
+      // togglePartnerErhebung() dazu- oder wegschalten (gleiches Jahr+Nummer).
+      this._activeErhebungen = [{ erhID, jahr, nummer }];
+      // Cache-Reset: bei Wechsel der Basis-Erhebung gehören alte Pre-Aggregate
+      // zu einer anderen "Session". Rows-Cache darf bleiben, um schnelles Zurück
+      // zu früheren Erhebungen zu ermöglichen, aber Aggregate-Cache muss frisch
+      // sein weil sich Radius/NL-Filter mit der neuen Erhebung änderen können.
+      this._erhebungAggregatesCache.clear();
+      this._crossGfDoppelAktiv = false;
       this._fullDataLoaded = true;
       this._sortState = { column: null, direction: 'asc' };  // Sortierung für neue Erhebung zurücksetzen
 
@@ -4808,9 +5312,12 @@
         this.setupFilterDropdowns();
         this.restoreDropdownSelections();
 
-        const filteredData = this._getErhebungRows(erhID, jahr, nummer);
+        // Phase-1: filteredData enthält die Rows aller aktiv-kombinierten
+        // Erhebungen (Multi-GF-Modus). Bei Single-Erhebung identisch zu
+        // _getErhebungRows der Basis-Erhebung.
+        const filteredData = this._getAllActiveRows();
         this.filteredData = filteredData;
-        console.info(`Index: ${filteredData.length} Rows für aktive Erhebung`);
+        console.info(`Index: ${filteredData.length} Rows für ${this._activeErhebungen.length} aktive Erhebung(en)`);
 
         progress(2, 25, 'Karte wird vorbereitet…', filteredData.length);
         await yieldFrame();
@@ -4873,6 +5380,11 @@
       this._renderToken = (this._renderToken || 0) + 1;
 
       this._activeFilter       = null;
+      // Multi-Erhebungs-Reset: Liste der aktiven Erhebungen, Cross-GF-Flag.
+      // Rows-Cache bleibt für schnelles Zurück zu vorigen Erhebungen erhalten.
+      this._activeErhebungen     = [];
+      this._crossGfDoppelAktiv   = false;
+      this._erhebungAggregatesCache?.clear();
       this.filteredData        = null;
       this.filteredKennwerte   = {};
       this.filteredPLZWerte    = {};
