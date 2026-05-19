@@ -264,6 +264,31 @@
       .nl-info-row:hover td { background: var(--red-bg); }
       .nl-info-row.table-row-selected td             { background: #fff3f3; }
       .nl-info-row.table-row-selected td:first-child { border-left: 3px solid var(--red); }
+
+      /* GF-Gruppen-Header in NL-Tabelle (Multi-Modus) */
+      .nl-gf-group-header td {
+        background: linear-gradient(to right, var(--red-bg) 0%, transparent 100%);
+        padding: 8px 12px;
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.04em; text-transform: uppercase;
+        color: var(--gray-700);
+        border-bottom: 1.5px solid var(--red);
+        border-top: 1px solid var(--gray-200);
+        cursor: default;
+      }
+      .nl-gf-group-header:first-child td { border-top: none; }
+      .nl-gf-group-header:hover td { background: linear-gradient(to right, var(--red-bg) 0%, transparent 100%); }
+      .nl-gf-group-icon { display: inline-block; margin-right: 6px; color: var(--red); font-size: 0.85rem; }
+      .nl-gf-group-name { color: var(--gray-800); font-weight: 700; }
+      .nl-gf-group-count {
+        float: right;
+        font-size: 0.62rem; font-weight: 600;
+        background: white; color: var(--red);
+        padding: 1px 7px; border-radius: 10px;
+        border: 1px solid var(--red-border);
+        text-transform: none; letter-spacing: 0;
+        margin-top: 1px;
+      }
       .filter-container.nl-info-active .table-wrapper { transform: translateY(-100%); }
 
       /* ─── Partner-Erhebung-Picker (Phase 1) ───────────────────────── */
@@ -1825,6 +1850,11 @@
       const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
 
       if (switched) {
+        // Phase-1: User-Feedback — Loader während BW reload läuft, sonst
+        // wirkt der Click "stumm" für 2-5 Sekunden.
+        this._showCinematicLoader?.();
+        const action = wasActive ? 'wird entfernt' : 'wird hinzugefügt';
+        this._updateLoaderPhase?.(1, `${erhID} ${action}…`);
         // Daten werden nachgeladen, dann triggert _scheduleDataPoll → render()
         this._fullDataLoaded = true;
         if (!this._renderInProgress) this._scheduleDataPoll();
@@ -4198,7 +4228,7 @@
       // Nur einbauen wenn überhaupt Partner-Kandidaten existieren — sonst
       // verschwenden wir Platz und verwirren den User.
       const partners = this._getPartnerErhebungen();
-      if (partners.length > 0 || this._activeErhebungen.length > 1) {
+      if (partners.length > 0 || (this._activeErhebungen?.length || 0) > 1) {
         const picker = this._buildPartnerErhebungPicker();
         container.appendChild(picker);
       }
@@ -4302,12 +4332,14 @@
     _buildPartnerErhebungPicker() {
       const wrapper = document.createElement('div');
       wrapper.id = 'partner-erh-picker';
-      // Per Default eingeklappt — User klickt Header zum Aufklappen
-      wrapper.classList.add('collapsed');
 
       const partners = this._getPartnerErhebungen();
       const activeCount = this._activeErhebungen?.length || 1;
       const totalCount  = partners.length + 1;   // +1 für Basis
+
+      // Default-State: aufgeklappt wenn Partner aktiv sind (User sieht direkt
+      // den Multi-Modus), eingeklappt wenn nur die Basis-Erhebung läuft.
+      if (activeCount <= 1) wrapper.classList.add('collapsed');
 
       const header = document.createElement('div');
       header.id = 'partner-erh-picker-header';
@@ -4891,11 +4923,20 @@
     }
 
     // ── Doppelbestreuung-Tooltip ───────────────────────────────────────
+    // Phase-1: zeigt sowohl Single-Erhebung-Doppelbestreuung (crossErhebungPLZ
+    // — Fremd-Erhebungen) als auch Cross-GF-Doppelbestreuung (crossGfDoppel
+    // — aktive Multi-Erhebungen) an. Beide können gleichzeitig aktiv sein.
     _showDoppelTooltip(plz, event, container) {
       this._hideDoppelTooltip();
-      const crossInfo = this._crossErhebungPLZ?.[plz] || {};
+      const crossInfo = { ...(this._crossErhebungPLZ?.[plz] || {}) };
+      // Sets in crossInfo sind shared mit _crossErhebungPLZ — wir wollen sie
+      // nicht modifizieren. Daher kopieren wir die Sets:
+      for (const eid of Object.keys(crossInfo)) {
+        crossInfo[eid] = new Set(crossInfo[eid]);
+      }
       const { erhID: aktErhID } = this._activeFilter || {};
 
+      // Fallback: wenn keine Cross-Daten gecacht, aus filteredData ableiten
       if (Object.keys(crossInfo).length === 0 && aktErhID && this.filteredData) {
         crossInfo[aktErhID] = new Set();
         for (const row of this.filteredData) {
@@ -4907,16 +4948,51 @@
         }
       }
 
-      const allNLs = [...new Set(Object.values(crossInfo).flatMap(s => [...s]))].join(', ') || '—';
+      // Phase-1: Cross-GF-Doppel-Info ergänzen — pro PLZ alle aktiven
+      // Erhebungen mit HZ=X auflisten, gruppiert pro NL.
+      const crossGfErhIDs = this._crossGfDoppel?.[plz];
+      if (crossGfErhIDs && this._activeErhebungen?.length >= 2) {
+        for (const e of this._activeErhebungen) {
+          if (!crossGfErhIDs.includes(e.erhID)) continue;
+          const rows = this._getErhebungRows(e.erhID, e.jahr, e.nummer);
+          for (const row of rows) {
+            const p = this._normalizePLZ(row['dimension_plz_0']?.id ?? row['dimension_plz_0']?.raw);
+            if (p !== plz) continue;
+            if (row['dimension_hzflag_0']?.id?.trim() !== 'X') continue;
+            const nl = row['dimension_niederlassung_0']?.id?.trim();
+            if (!nl) continue;
+            if (!crossInfo[e.erhID]) crossInfo[e.erhID] = new Set();
+            crossInfo[e.erhID].add(nl);
+          }
+        }
+      }
+
+      // Pro Erhebung gruppiert ausgeben (übersichtlicher als flat-Liste)
+      const erhIDs = Object.keys(crossInfo).filter(e => crossInfo[e]?.size > 0);
+      let bodyHtml;
+      if (erhIDs.length === 0) {
+        bodyHtml = `<div style="color:var(--gray-500);font-size:0.76rem">Keine NL-Details verfügbar.</div>`;
+      } else if (erhIDs.length === 1) {
+        const nls = [...crossInfo[erhIDs[0]]].join(', ');
+        bodyHtml = `<div style="color:var(--gray-500);font-size:0.76rem">
+          Durch NLs: <strong style="color:var(--gray-800)">${escapeHtml(nls)}</strong>
+        </div>`;
+      } else {
+        bodyHtml = erhIDs.map(eid => {
+          const nls = [...crossInfo[eid]].join(', ');
+          const gfLabel = this._fmtGF ? this._fmtGF(eid) : eid;
+          return `<div style="color:var(--gray-500);font-size:0.74rem;margin-top:2px">
+            <span style="color:var(--red);font-weight:600">${escapeHtml(gfLabel)}:</span>
+            <strong style="color:var(--gray-800)">${escapeHtml(nls)}</strong>
+          </div>`;
+        }).join('');
+      }
+
       const el = document.createElement('div');
       el.className = 'doppel-tooltip';
       el.innerHTML = `
         <div class="doppel-tooltip-title">⚠️ Doppelbestreuung · PLZ ${escapeHtml(plz)}</div>
-        <div class="doppel-tooltip-row">
-          <div style="color:var(--gray-500);font-size:0.76rem">
-            Durch NLs: <strong style="color:var(--gray-800)">${escapeHtml(allNLs)}</strong>
-          </div>
-        </div>`;
+        <div class="doppel-tooltip-row">${bodyHtml}</div>`;
       el.style.position = 'absolute';
       el.style.pointerEvents = 'none';
       container?.appendChild(el);
@@ -5242,6 +5318,10 @@
 
             requestAnimationFrame(() => {
               this.prepareErhebungsInfo();
+              const nlBox = this.$('nl-info-container');
+              if (nlBox?.classList.contains('show')) {
+                this.renderErhebungsInfoTable();
+              }
               this.$('map-interaction-block')?.classList.add('hidden');
               this.showOverviewPopup();
               this.updateCompetitorMarkers();
@@ -5361,6 +5441,14 @@
         requestAnimationFrame(() => {
           if (isStale()) return;   // Home wurde inzwischen geklickt
           this.prepareErhebungsInfo();
+          // Phase-1: Wenn die Erhebungsübersicht-Tabelle gerade geöffnet ist,
+          // live neu rendern (z.B. nach togglePartnerErhebung). Sonst würde
+          // der User noch die alte NL-Liste sehen, bis er die Tabelle
+          // manuell schließt und wieder öffnet.
+          const nlBox = this.$('nl-info-container');
+          if (nlBox?.classList.contains('show')) {
+            this.renderErhebungsInfoTable();
+          }
           this.$('map-interaction-block')?.classList.add('hidden');
           this.showOverviewPopup();
           this.updateCompetitorMarkers();
