@@ -176,10 +176,40 @@
         font-family: var(--font); font-weight: 600; color: var(--red);
         background: transparent; border: 1.5px solid var(--red-border);
         border-radius: var(--radius-md); cursor: pointer;
-        transition: background 0.18s, border-color 0.18s;
+        transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
         display: flex; align-items: center; justify-content: center; gap: 6px;
+        position: relative;
       }
       .info-toggle-btn:hover { background: var(--red-bg); border-color: var(--red); }
+      .info-toggle-label { display: inline-flex; align-items: center; }
+
+      /* Badge im Erhebungsübersicht-Button (Phase 1):
+         - badge-multi: aktiver Multi-Modus → kräftig rot
+         - badge-hint:  Partner verfügbar aber nicht aktiv → dezent grau */
+      .info-toggle-badge:empty { display: none; }
+      .info-toggle-badge {
+        display: inline-flex; align-items: center;
+        font-size: 0.66rem; font-weight: 700;
+        padding: 1px 7px; border-radius: 10px;
+        letter-spacing: 0.02em; line-height: 1.4;
+        transition: background 0.18s, color 0.18s, border-color 0.18s;
+      }
+      .info-toggle-badge.badge-multi {
+        background: var(--red); color: white;
+        border: 1px solid var(--red);
+        box-shadow: 0 0 0 2px var(--red-bg);
+      }
+      .info-toggle-badge.badge-hint {
+        background: var(--gray-100); color: var(--gray-600);
+        border: 1px dashed var(--gray-300);
+      }
+      /* Multi-Modus: ganze Button-Optik etwas prominenter */
+      .info-toggle-btn.has-badge-multi {
+        background: linear-gradient(180deg, var(--red-bg) 0%, var(--white) 100%);
+        border-color: var(--red);
+        box-shadow: 0 1px 3px rgba(180,24,33,0.12);
+      }
+      .info-toggle-btn.has-badge-multi:hover { background: var(--red-bg); }
 
       /* ─── Tabelle ───────────────────────────────────────────────── */
       .table-container {
@@ -1734,11 +1764,28 @@
     // Aggregation), reicht der HZ=X-Filter NICHT mehr — dann müssen auch
     // Nachbar-NL-Rows der Fremd-Erhebungen behalten werden. Im aktuellen
     // Use-Case wäre das aber Speicher-Verschwendung.
-    _buildErhebungIndex(aktErhID) {
+    // ── Erhebungs-Index (ein Pass über alle Rohdaten) ──────────────────
+    // Für **aktive** Erhebungen werden alle Rows behalten (Vollumsatz).
+    // Für **fremde** Erhebungen nur HZ=X Rows → 80-90% kleinerer Index.
+    //
+    // Phase 1 (Multi-GF): wenn der User Partner-Erhebungen dazuschaltet,
+    // sind diese ebenfalls "aktiv" — ohne diese Unterscheidung würden
+    // Nachbar-NL-Umsätze der Partner-GFs verloren gehen (siehe Punkt 2-Bug).
+    //
+    // Argument akzeptiert sowohl einen einzelnen String (Backwards-Compat)
+    // als auch ein Array von ErhIDs.
+    _buildErhebungIndex(activeErhIDs) {
       const data = this._myDataSource?.data;
       if (!Array.isArray(data)) { this._erhebungIndex = {}; return; }
       const idx = {};
-      const hasAktFilter = !!aktErhID;
+      // Aktive ErhIDs normalisieren in ein Set für O(1)-Lookups.
+      let activeSet = null;
+      if (Array.isArray(activeErhIDs)) {
+        if (activeErhIDs.length > 0) activeSet = new Set(activeErhIDs);
+      } else if (activeErhIDs) {
+        activeSet = new Set([activeErhIDs]);
+      }
+      const hasActiveFilter = !!activeSet;
       for (let i = 0, len = data.length; i < len; i++) {
         const row = data[i];
         // Bug-Fix B19: trim() konsistent — _buildStrukturFromRows nutzt ihn auch.
@@ -1747,8 +1794,8 @@
         const yr  = row['dimension_jahr_0']?.id?.trim();
         const nr  = row['dimension_erhebungsnummer_0']?.id?.trim();
         if (isNull(eID) || isNull(yr) || isNull(nr)) continue;
-        // Fremd-Erhebung: nur HZ=X Rows speichern
-        if (hasAktFilter && eID !== aktErhID) {
+        // Fremd-Erhebung (= nicht in der aktiven Liste): nur HZ=X Rows speichern
+        if (hasActiveFilter && !activeSet.has(eID)) {
           if (row['dimension_hzflag_0']?.id?.trim() !== 'X') continue;
         }
         const key = eID + '|' + yr + '|' + nr;
@@ -1758,7 +1805,14 @@
     }
 
     _getErhebungRows(erhID, jahr, nummer) {
-      if (!this._erhebungIndex) this._buildErhebungIndex(erhID);
+      if (!this._erhebungIndex) {
+        // Phase-1: Wenn der Index lazy aufgebaut wird, alle aktiven Erhebungen
+        // mit reinnehmen, sonst gehen Nachbar-NL-Umsätze der Partner-GFs verloren.
+        const activeIDs = (this._activeErhebungen?.length || 0) > 0
+          ? this._activeErhebungen.map(e => e.erhID)
+          : [erhID];
+        this._buildErhebungIndex(activeIDs);
+      }
       return this._erhebungIndex[erhID + '|' + jahr + '|' + nummer] || [];
     }
 
@@ -1849,6 +1903,16 @@
       const allErhIDs = this._activeErhebungen.map(e => e.erhID);
       const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
 
+      // Phase-1 (Punkt 2-Bug): Index muss mit der neuen aktiven Liste neu
+      // gebaut werden — sonst sind die neu hinzugekommenen Erhebungen noch
+      // im "fremd"-Modus (nur HZ=X) und Nachbar-NL-Umsätze fehlen. Bei einem
+      // BW-Reload würde render() das ohnehin neu machen, aber das verhindert
+      // einen Zwischenzustand mit falschen Zahlen.
+      // Aggregat-Cache invalidieren — die Pre-Aggregate sind jetzt veraltet
+      // (Partner-Daten haben sich geändert).
+      this._erhebungIndex = null;
+      this._erhebungAggregatesCache?.clear();
+
       if (switched) {
         // Phase-1: User-Feedback — Loader während BW reload läuft, sonst
         // wirkt der Click "stumm" für 2-5 Sekunden.
@@ -1859,7 +1923,9 @@
         this._fullDataLoaded = true;
         if (!this._renderInProgress) this._scheduleDataPoll();
       } else {
-        // Fallback: BW nicht erreichbar, lokal neu aggregieren
+        // Fallback: BW nicht erreichbar, lokal neu aggregieren.
+        // Index ist null → _getAllActiveRows triggert _buildErhebungIndex
+        // mit der neuen Active-Liste → korrekte Daten.
         this.filteredData = this._getAllActiveRows();
         this.applyRadiusFilter(Number(this.$('radius-slider')?.value ?? 40));
         this.updateGeoLayer();
@@ -4146,7 +4212,11 @@
         infoBtn.id = 'info-toggle-btn';
         infoBtn.className = 'info-toggle-btn';
         infoBtn.type = 'button';
-        infoBtn.innerHTML = '↕ Erhebungsübersicht';
+        // Phase-1: Label + Badge mit GF-Count (Hinweis auf Multi-GF-Picker).
+        // Wird via _updateOverviewBtnBadge() bei jeder Änderung aktualisiert.
+        infoBtn.innerHTML = `
+          <span class="info-toggle-label">↕ Erhebungsübersicht</span>
+          <span class="info-toggle-badge" id="info-toggle-badge"></span>`;
         this._on(infoBtn, 'click', () => {
           const nlBox = this.$('nl-info-container');
           const filter = this._shadowRoot.querySelector('.filter-container');
@@ -4162,6 +4232,35 @@
           }
         });
         this._shadowRoot.querySelector('.filter-container').appendChild(infoBtn);
+      }
+    }
+
+    // ── Erhebungsübersicht-Badge aktualisieren (Phase 1) ────────────────
+    // Zeigt im "↕ Erhebungsübersicht"-Button rechts ein Badge mit der Anzahl
+    // aktiver GF-Bereiche, sobald 2+ aktiv sind. Bei Single-Erhebung wird
+    // ein dezenter "+ weitere GF"-Hinweis gezeigt (falls Partner verfügbar
+    // sind), damit der User weiß, dass es im Menü etwas zu entdecken gibt.
+    _updateOverviewBtnBadge() {
+      const badge = this.$('info-toggle-badge');
+      if (!badge) return;
+      const btn = this.$('info-toggle-btn');
+      const count = this._activeErhebungen?.length || 0;
+      const partners = this._getPartnerErhebungen?.() || [];
+
+      // Erst aufräumen
+      badge.classList.remove('badge-multi', 'badge-hint', 'badge-pulse');
+      badge.textContent = '';
+      btn?.classList.remove('has-badge-multi');
+
+      if (count >= 2) {
+        // Multi-Modus aktiv → klares Badge mit Anzahl
+        badge.textContent = `${count} GF`;
+        badge.classList.add('badge-multi');
+        btn?.classList.add('has-badge-multi');
+      } else if (count === 1 && partners.length > 0) {
+        // Hinweis: weitere GF-Bereiche verfügbar (subtiler)
+        badge.textContent = `+${partners.length}`;
+        badge.classList.add('badge-hint');
       }
     }
 
@@ -4424,6 +4523,8 @@
         fresh.classList.remove('collapsed');
       }
       existing.replaceWith(fresh);
+      // Badge im Erhebungsübersicht-Button mitziehen
+      this._updateOverviewBtnBadge();
     }
 
     updateNLSelectionUI() {
@@ -5322,6 +5423,7 @@
               if (nlBox?.classList.contains('show')) {
                 this.renderErhebungsInfoTable();
               }
+              this._updateOverviewBtnBadge();
               this.$('map-interaction-block')?.classList.add('hidden');
               this.showOverviewPopup();
               this.updateCompetitorMarkers();
@@ -5387,7 +5489,12 @@
         await yieldFrame();
         if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
 
-        this._buildErhebungIndex(erhID);
+        // Phase-1: Index baut mit ALLEN aktiven Erhebungen — sonst gehen
+        // Nachbar-NL-Umsätze der Partner-GFs verloren (Punkt 2-Bug).
+        const activeIDs = (this._activeErhebungen?.length || 0) > 0
+          ? this._activeErhebungen.map(e => e.erhID)
+          : [erhID];
+        this._buildErhebungIndex(activeIDs);
         this._erhData = this._cachedBootstrapStruktur ?? this.buildErhebungsStruktur(rawData);
         this.setupFilterDropdowns();
         this.restoreDropdownSelections();
@@ -5449,6 +5556,9 @@
           if (nlBox?.classList.contains('show')) {
             this.renderErhebungsInfoTable();
           }
+          // Badge im Erhebungsübersicht-Button aktualisieren (zeigt
+          // GF-Count im Multi-Modus + Hinweis bei verfügbaren Partnern).
+          this._updateOverviewBtnBadge();
           this.$('map-interaction-block')?.classList.add('hidden');
           this.showOverviewPopup();
           this.updateCompetitorMarkers();
@@ -5491,6 +5601,8 @@
       this.$('map-control-panel')?.classList.remove('panel-large', 'panel-medium');
       // Doppelbestreuungs-Bar im Hauptmenü wieder aufklappen
       this.$('doppel-toggle-bar')?.classList.remove('collapsed');
+      // Erhebungsübersicht-Badge zurücksetzen
+      this._updateOverviewBtnBadge();
       this.filteredGroup?.clearLayers();
       this.neighbourGroup?.clearLayers();
       this.radiusGroup?.clearLayers();
