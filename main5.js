@@ -298,17 +298,18 @@
         background: var(--gray-200); color: var(--gray-700);
       }
 
-      /* ─── Linke Spalte komplett ausgeblendet (Pane-Hide-Modus) ──────────
-         Wird durch Klick auf das "👁 Ausblenden"-Tab aktiviert. Filter-Spalte
-         schrumpft auf 0, Karte wird Vollbild. Reopen via #left-pane-reopen-btn. */
-      .filter-container.pane-collapsed {
+      /* "Nichts aktiv"-Modus: Filter-Spalte komplett kollabieren.
+         Die schwebende Tab-Bar (#sidebar-rail-floating) wird gleichzeitig
+         über der Karte links oben sichtbar — der User kann von dort aus
+         jeden View wieder aktivieren. Die Karte ist dann effektiv Vollbild. */
+      .filter-container.no-view-active {
         width: 0 !important;
         padding-left: 0; padding-right: 0;
         border-right: none;
         overflow: hidden;
         box-shadow: none;
       }
-      .filter-container.pane-collapsed > * {
+      .filter-container.no-view-active > * {
         opacity: 0; pointer-events: none;
       }
       .filter-container {
@@ -318,114 +319,35 @@
         transition: opacity 0.22s ease;
       }
 
-      /* Reopen-Button auf der Karte: nur sichtbar wenn die Spalte ausgeblendet ist. */
-      #left-pane-reopen-btn {
+      /* Schwebende Tab-Bar über der Karte: nur sichtbar, wenn die Filter-
+         Spalte kollabiert ist (Vollbild-Karten-Modus). Sitzt links oben,
+         unterhalb des Radius-Sliders, mit weißem Hintergrund + Schatten. */
+      .sidebar-rail-floating {
         position: absolute;
-        top: 64px;
+        top: 64px;        /* unterhalb des Radius-Slider-Containers */
         left: 12px;
         z-index: 600;
-        display: none;
-        width: 38px; height: 38px;
-        padding: 0;
+        display: none;    /* default versteckt; nur bei no-view-active sichtbar */
+        flex-direction: row;
+        gap: 4px;
+        padding: 6px;
         background: var(--white);
-        border: 1.5px solid var(--gray-200);
+        border: 1px solid var(--gray-200);
         border-radius: var(--radius-md);
         box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-        cursor: pointer;
-        align-items: center; justify-content: center;
-        transition: background 0.15s, border-color 0.15s, transform 0.12s;
       }
-      #left-pane-reopen-btn:hover {
-        background: var(--red-bg); border-color: var(--red);
-        transform: scale(1.04);
+      /* Sichtbarkeit wird vom JS-Code via .filter-container.no-view-active
+         im map-container-Geschwisterelement kontrolliert. Da Shadow-DOM
+         kein :has() ohne neuere Browser-Versionen, machen wir das per
+         dedizierter Klasse, die wir in _switchSidebarView setzen. */
+      .map-container.show-floating-rail .sidebar-rail-floating {
+        display: flex;
       }
-      .map-container.left-pane-hidden #left-pane-reopen-btn {
-        display: inline-flex;
+      .sidebar-rail-floating .sidebar-icon {
+        min-width: 64px;
+        padding: 6px 8px;
+        background: var(--white);
       }
-
-      /* ─── Filter-Maske einklappbar ─────────────────────────────────────
-         Sub-State innerhalb der linken Spalte: Filter-Felder werden versteckt,
-         oben erscheint stattdessen ein kompakter Info-Bar mit der aktuellen
-         Auswahl. Hauptinhalt (PLZ-Tabelle etc) nimmt dadurch mehr Höhe ein. */
-      .filter-fields {
-        display: flex; flex-direction: column;
-        transition: max-height 0.32s var(--ease-out), opacity 0.22s ease,
-                    margin 0.22s ease;
-        max-height: 600px;
-        overflow: hidden;
-      }
-      .filter-container.fields-collapsed .filter-fields {
-        max-height: 0; opacity: 0; margin: 0;
-        pointer-events: none;
-      }
-      .filter-button-row {
-        display: flex; gap: 6px; align-items: stretch;
-      }
-      .filter-button-row #filter-button {
-        flex: 1;
-      }
-      #filter-fields-toggle {
-        flex-shrink: 0;
-        width: 36px;
-        font-family: var(--font); font-size: 0.85rem;
-        font-weight: 700; color: var(--gray-600);
-        background: var(--white); border: 1.5px solid var(--gray-200);
-        border-radius: var(--radius-md);
-        cursor: pointer; line-height: 1;
-        transition: background 0.15s, border-color 0.15s, color 0.15s;
-      }
-      #filter-fields-toggle:hover {
-        background: var(--red-bg); border-color: var(--red); color: var(--red);
-      }
-      /* Im Hauptmenü (vor Erhebungs-Auswahl) macht "Filter ausblenden" keinen
-         Sinn — Button wird ausgeblendet sobald kein _activeFilter da ist. */
-      #filter-fields-toggle.disabled {
-        display: none;
-      }
-
-      /* Info-Bar oben in der Spalte: kompakte Anzeige der aktuellen Auswahl,
-         sichtbar nur wenn Filter eingeklappt sind. */
-      #filter-info-bar {
-        display: flex; align-items: center; gap: 8px;
-        margin-bottom: 6px;
-        padding: 9px 11px;
-        background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
-        color: white;
-        border-radius: var(--radius-md);
-        font-size: 0.78rem; font-weight: 600;
-        box-shadow: 0 1px 4px rgba(180,24,33,0.18);
-      }
-      #filter-info-bar.hidden { display: none; }
-      .filter-info-icon { font-size: 0.95rem; line-height: 1; flex-shrink: 0; }
-      .filter-info-text {
-        flex: 1; min-width: 0;
-        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-        letter-spacing: 0.02em;
-      }
-      .filter-info-badge {
-        flex-shrink: 0;
-        background: rgba(255,255,255,0.22);
-        font-size: 0.66rem; font-weight: 700;
-        padding: 2px 7px; border-radius: 10px;
-        letter-spacing: 0.04em;
-      }
-      .filter-info-badge:empty { display: none; }
-      #filter-info-expand {
-        flex-shrink: 0;
-        background: transparent; border: none; color: white;
-        cursor: pointer; padding: 0 2px;
-        font-size: 0.85rem; font-weight: 700;
-        line-height: 1;
-        opacity: 0.85;
-      }
-      #filter-info-expand:hover { opacity: 1; }
-
-      /* Spezial-Tab "Ausblenden": etwas anderer Look (kein roter Active-State,
-         weil es kein View ist sondern eine Aktion). */
-      .sidebar-icon-hide {
-        color: var(--gray-600);
-      }
-      .sidebar-icon-hide .sidebar-icon-glyph { opacity: 0.85; }
 
       /* ─── NL-Info-Container (jetzt statisch in eigenem View) ──────── */
       #nl-info-container {
@@ -1608,31 +1530,13 @@
 
     <div class="layout">
       <div class="filter-container">
-
-        <!-- Info-Bar ganz oben: zeigt aktuelle Erhebungs-Auswahl wenn die
-             Filter-Maske eingeklappt ist. Sonst versteckt. -->
-        <div id="filter-info-bar" class="hidden">
-          <span class="filter-info-icon">📍</span>
-          <span class="filter-info-text" id="filter-info-text">—</span>
-          <span class="filter-info-badge" id="filter-info-badge"></span>
-          <button type="button" id="filter-info-expand" title="Filter wieder einblenden">▾</button>
-        </div>
-
-        <!-- Filter-Felder. Zusammen ein-/ausklappbar via #filter-fields-toggle. -->
-        <div class="filter-fields" id="filter-fields">
-          <label for="erhebung-select">ErhebungsID</label>
-          <select id="erhebung-select"></select>
-          <label for="jahr-select">Jahr</label>
-          <select id="jahr-select" disabled></select>
-          <label for="nummer-select">Erhebungsnummer</label>
-          <select id="nummer-select" disabled></select>
-          <div class="filter-button-row">
-            <button id="filter-button">Anzeigen</button>
-            <!-- Filter-Maske einklappen. Erscheint nur wenn eine Erhebung
-                 geladen ist (sonst nichts zu verbergen). -->
-            <button id="filter-fields-toggle" type="button" title="Filter ausblenden">▴</button>
-          </div>
-        </div>
+        <label for="erhebung-select">ErhebungsID</label>
+        <select id="erhebung-select"></select>
+        <label for="jahr-select">Jahr</label>
+        <select id="jahr-select" disabled></select>
+        <label for="nummer-select">Erhebungsnummer</label>
+        <select id="nummer-select" disabled></select>
+        <button id="filter-button">Anzeigen</button>
 
         <!-- Hauptinhalts-Container füllt den verbleibenden Platz unter dem
              Filter-Bereich. Tab-Leiste sitzt am unteren Rand. Beim Wechsel
@@ -1653,8 +1557,8 @@
             <!-- View: Erweiterte Analyse (Partner-Picker, Vergleich-Platzhalter) -->
             <div class="sidebar-view" id="sidebar-view-analysis"></div>
           </div>
-          <!-- Tab-Bar: horizontale Reiter unten. Genau ein View muss aktiv sein
-               (außer wenn ganze Spalte ausgeblendet ist via 👁 Tab). -->
+          <!-- Tab-Bar: horizontale Reiter unten, jeder mit Icon + Label.
+               Klick auf aktives Tab schaltet die View aus → Karte wird breiter. -->
           <div class="sidebar-rail" id="sidebar-rail">
             <button class="sidebar-icon" data-view="docs" title="Anleitung" type="button">
               <span class="sidebar-icon-glyph">📖</span>
@@ -1676,13 +1580,6 @@
               <span class="sidebar-icon-label">Analyse</span>
               <span class="sidebar-icon-badge" id="sidebar-badge-analysis"></span>
             </button>
-            <!-- Spezial-Tab: blendet die komplette linke Spalte aus. Klick öffnet
-                 sie wieder über den Reopen-Button auf der Karte. -->
-            <button class="sidebar-icon sidebar-icon-hide" data-action="hide-pane"
-                    title="Menü ausblenden" type="button">
-              <span class="sidebar-icon-glyph">👁</span>
-              <span class="sidebar-icon-label">Ausblenden</span>
-            </button>
           </div>
         </div>
       </div>
@@ -1699,12 +1596,32 @@
         <div id="legend-toggle-btn" title="Legende"></div>
         <div id="heatmap-legend" class="heatmap-legend hidden"></div>
 
-        <!-- Reopen-Button: nur sichtbar wenn die ganze linke Spalte
-             ausgeblendet ist. Klick blendet sie wieder ein. Position
-             oben links, klein und dezent. -->
-        <button id="left-pane-reopen-btn" type="button" title="Menü einblenden">
-          <span style="font-size:1rem;line-height:1;">📑</span>
-        </button>
+        <!-- Schwebende Tab-Bar über der Karte. Nur sichtbar wenn die
+             Filter-Spalte links kollabiert ist (no-view-active). Klick
+             auf ein Tab klappt die Filter-Spalte wieder auf und schaltet
+             den entsprechenden View. -->
+        <div class="sidebar-rail-floating" id="sidebar-rail-floating">
+          <button class="sidebar-icon" data-view="docs" title="Anleitung" type="button">
+            <span class="sidebar-icon-glyph">📖</span>
+            <span class="sidebar-icon-label">Anleitung</span>
+            <span class="sidebar-icon-badge" id="sidebar-badge-docs-float"></span>
+          </button>
+          <button class="sidebar-icon" data-view="plz" title="PLZ-Tabelle" type="button" disabled>
+            <span class="sidebar-icon-glyph">📋</span>
+            <span class="sidebar-icon-label">PLZ</span>
+            <span class="sidebar-icon-badge" id="sidebar-badge-plz-float"></span>
+          </button>
+          <button class="sidebar-icon" data-view="overview" title="Erhebungsübersicht" type="button" disabled>
+            <span class="sidebar-icon-glyph">📊</span>
+            <span class="sidebar-icon-label">Übersicht</span>
+            <span class="sidebar-icon-badge" id="sidebar-badge-overview-float"></span>
+          </button>
+          <button class="sidebar-icon" data-view="analysis" title="Erweiterte Analyse" type="button" disabled>
+            <span class="sidebar-icon-glyph">🔬</span>
+            <span class="sidebar-icon-label">Analyse</span>
+            <span class="sidebar-icon-badge" id="sidebar-badge-analysis-float"></span>
+          </button>
+        </div>
       </div>
 
       <div id="side-popup"          class="side-popup hidden"></div>
@@ -2185,8 +2102,6 @@
       this._docsViewInitialized  = false;
       this._sidebarView          = null;
       this._analysisOpenState    = null;
-      this._leftPaneVisible      = true;
-      this._filterFieldsCollapsed = false;
     }
 
     // Tracked setTimeout/Interval — werden in disconnectedCallback aufgeräumt
@@ -2623,9 +2538,6 @@
       // Die anderen Views (PLZ / Erhebungsübersicht / Erweiterte Analyse)
       // werden erst nach loadErhebung() aktiviert.
       this._setSidebarEnabled(false);
-      // Pane-State sicherstellen: Spalte sichtbar, Filter nicht eingeklappt
-      this._setLeftPaneVisible(true);
-      this._setFilterFieldsCollapsed(false);
       if (this._sidebarView == null) {
         this._switchSidebarView('docs');
       }
@@ -4516,39 +4428,41 @@
     // Methode behält den alten Namen `_updateOverviewBtnBadge` aus Backwards-
     // Compat, kümmert sich aber jetzt um beide Icon-Badges.
     _updateOverviewBtnBadge() {
-      const overviewBadge = this.$('sidebar-badge-overview');
-      const analysisBadge = this.$('sidebar-badge-analysis');
+      // Beide Tab-Bars haben separate Badge-Elemente (suffix '-float' für die
+      // schwebende). Wir aktualisieren synchron.
+      const overviewBadge       = this.$('sidebar-badge-overview');
+      const analysisBadge       = this.$('sidebar-badge-analysis');
+      const overviewBadgeFloat  = this.$('sidebar-badge-overview-float');
+      const analysisBadgeFloat  = this.$('sidebar-badge-analysis-float');
       const count = this._activeErhebungen?.length || 0;
       const partners = this._getPartnerErhebungen?.() || [];
 
-      // Reset
-      [overviewBadge, analysisBadge].forEach(b => {
+      // Reset alle
+      [overviewBadge, analysisBadge, overviewBadgeFloat, analysisBadgeFloat].forEach(b => {
         if (!b) return;
         b.classList.remove('badge-hint');
         b.textContent = '';
       });
 
-      // 📊 Erhebungsübersicht-Badge
-      if (overviewBadge && count >= 2) {
-        overviewBadge.textContent = String(count);
-      }
+      // 📊 Erhebungsübersicht-Badges
+      const overviewText = count >= 2 ? String(count) : '';
+      if (overviewBadge)      overviewBadge.textContent = overviewText;
+      if (overviewBadgeFloat) overviewBadgeFloat.textContent = overviewText;
 
-      // 🔬 Erweiterte-Analyse-Badge
-      if (analysisBadge) {
-        if (count >= 2) {
-          analysisBadge.textContent = String(count);
-        } else if (count === 1 && partners.length > 0) {
-          analysisBadge.textContent = `+${partners.length}`;
-          analysisBadge.classList.add('badge-hint');
-        }
+      // 🔬 Erweiterte-Analyse-Badges
+      let analysisText = '';
+      let analysisHint = false;
+      if (count >= 2) {
+        analysisText = String(count);
+      } else if (count === 1 && partners.length > 0) {
+        analysisText = `+${partners.length}`;
+        analysisHint = true;
       }
-
-      // Info-Bar oben (sichtbar bei eingeklappter Filter-Maske)
-      // bei jedem Badge-Update mit aktualisieren — auch dort steht ein
-      // Multi-GF-Indikator.
-      if (this._filterFieldsCollapsed) {
-        this._updateFilterInfoBar();
-      }
+      [analysisBadge, analysisBadgeFloat].forEach(b => {
+        if (!b) return;
+        b.textContent = analysisText;
+        if (analysisHint) b.classList.add('badge-hint');
+      });
     }
 
     restoreDropdownSelections() {
@@ -5755,12 +5669,8 @@
     // ── loadErhebung ───────────────────────────────────────────────────
     async loadErhebung(erhID, jahr, nummer) {
       this.$('heatmap-legend')?.classList.add('hidden');
-      // Phase 2: Sidebar aktivieren, Default-View = PLZ-Tabelle, Spalte
-      // sichtbar machen falls vorher ausgeblendet. Filter-Maske wird beim
-      // Laden nicht automatisch eingeklappt — der User kann das selbst per
-      // Knopfdruck steuern.
+      // Phase 2: Sidebar aktivieren, Default-View = PLZ-Tabelle
       this._setSidebarEnabled(true);
-      this._setLeftPaneVisible(true);
       this._switchSidebarView('plz');
       // Doppelbestreuungs-Bar collapsed während der Erhebung —
       // gibt der PLZ-Tabelle mehr vertikalen Platz.
@@ -6378,90 +6288,82 @@
     }
 
     // ── Sidebar-View-Management (Phase 2) ──────────────────────────────
-    // Steuert den Hauptinhalt der linken Spalte. Genau ein View muss immer
-    // aktiv sein, solange die linke Spalte überhaupt sichtbar ist. Klick auf
-    // das "👁 Ausblenden"-Tab blendet die ganze Spalte aus (orthogonal zur
-    // View-Auswahl) — über _setLeftPaneVisible().
+    // Steuert den Hauptinhalt der linken Spalte. Genau ein View aktiv oder
+    // keiner (null) → linke Spalte kollabiert, Karte wird breiter.
     //
     // Views:
     //   'docs'     = Anleitung (mit Sub-Akkordeons)
     //   'plz'      = PLZ-Tabelle
     //   'overview' = Erhebungsübersicht (NL-Tabelle, GF-gruppiert)
     //   'analysis' = Erweiterte Analyse (Partner-Picker, Vergleich-Platzhalter)
+    //   null       = nichts aktiv, Karte hat mehr Platz
+    // ── Sidebar-Click-Handler (Phase 2) ─────────────────────────────────
+    // Wird früh in connectedCallback aufgerufen, sodass die Sidebar schon
+    // klickbar ist bevor Leaflet vollständig geladen ist. Bei Re-Connect
+    // wurde der vorige Listener via AbortController aufgegeben — wir setzen
+    // das Bound-Flag zurück und binden frisch.
     _setupSidebarHandlers() {
-      // Tab-Bar-Click: View wechseln (oder ausblenden-Aktion).
+      // Shared Click-Handler für beide Tab-Bars: die eingebettete Tab-Bar
+      // im Filter-Container und die schwebende über der Karte. Beide haben
+      // dieselben data-view-Werte, also kann ein einziger Delegate-Handler
+      // beide bedienen.
+      const handler = (ev) => {
+        const btn = ev.target.closest('.sidebar-icon');
+        if (!btn || btn.disabled) return;
+        const view = btn.dataset.view;
+        // Klick auf aktives Icon = ausschalten (null)
+        const next = (this._sidebarView === view) ? null : view;
+        this._switchSidebarView(next);
+      };
+      // Embedded Tab-Bar (im Filter-Container)
       const rail = this.$('sidebar-rail');
       if (rail) {
         delete rail.dataset.bound;
-        this._on(rail, 'click', (ev) => {
-          const btn = ev.target.closest('.sidebar-icon');
-          if (!btn || btn.disabled) return;
-          // Spezial-Aktion: linke Spalte komplett ausblenden
-          if (btn.dataset.action === 'hide-pane') {
-            this._setLeftPaneVisible(false);
-            return;
-          }
-          const view = btn.dataset.view;
-          if (!view) return;
-          // Genau ein View muss aktiv sein: Klick auf aktives Tab macht
-          // nichts. Wechsel nur bei anderem View.
-          if (this._sidebarView === view) return;
-          this._switchSidebarView(view);
-        });
+        this._on(rail, 'click', handler);
         rail.dataset.bound = '1';
       }
-
-      // Reopen-Button auf der Karte → blendet die linke Spalte wieder ein
-      const reopenBtn = this.$('left-pane-reopen-btn');
-      if (reopenBtn) {
-        delete reopenBtn.dataset.bound;
-        this._on(reopenBtn, 'click', () => this._setLeftPaneVisible(true));
-        reopenBtn.dataset.bound = '1';
-      }
-
-      // Filter-Maske ein-/ausklappen-Button (rechts neben "Anzeigen")
-      const fieldsToggle = this.$('filter-fields-toggle');
-      if (fieldsToggle) {
-        delete fieldsToggle.dataset.bound;
-        this._on(fieldsToggle, 'click', () => this._setFilterFieldsCollapsed(true));
-        fieldsToggle.dataset.bound = '1';
-      }
-
-      // Info-Bar "▾" Button → Filter wieder einblenden
-      const infoExpand = this.$('filter-info-expand');
-      if (infoExpand) {
-        delete infoExpand.dataset.bound;
-        this._on(infoExpand, 'click', () => this._setFilterFieldsCollapsed(false));
-        infoExpand.dataset.bound = '1';
+      // Floating Tab-Bar (über der Karte)
+      const floatRail = this.$('sidebar-rail-floating');
+      if (floatRail) {
+        delete floatRail.dataset.bound;
+        this._on(floatRail, 'click', handler);
+        floatRail.dataset.bound = '1';
       }
     }
 
     _switchSidebarView(key) {
-      // Tab "ausblenden" ist kein View → blockiere falsche Werte
-      if (!['docs', 'plz', 'overview', 'analysis'].includes(key)) return;
       this._sidebarView = key;
-      const views = ['docs', 'plz', 'overview', 'analysis'];
+      const filter = this._shadowRoot.querySelector('.filter-container');
+      const mapContainer = this._shadowRoot.querySelector('.map-container');
+      const views  = ['docs', 'plz', 'overview', 'analysis'];
 
       // Views ein/ausblenden
       for (const k of views) {
         const el = this.$('sidebar-view-' + k);
         if (el) el.classList.toggle('active', k === key);
       }
-      // Tab-Bar-Icons: active-Klasse setzen (nur auf data-view-Tabs,
-      // nicht auf das hide-pane-Tab)
+      // Beide Tab-Bars synchronisieren (active-Klasse)
       const icons = this._shadowRoot.querySelectorAll('.sidebar-icon');
       for (const icon of icons) {
-        if (icon.dataset.action === 'hide-pane') continue;
         icon.classList.toggle('active', icon.dataset.view === key);
       }
+      // Filter-Container kollabieren wenn null
+      if (filter) filter.classList.toggle('no-view-active', key === null);
+      // Floating-Rail nur sichtbar wenn Filter-Spalte kollabiert ist.
+      // Wir setzen die Klasse auf den map-container, weil die Floating-Rail
+      // dessen Kind ist.
+      if (mapContainer) mapContainer.classList.toggle('show-floating-rail', key === null);
 
       // Beim Wechsel zu einem View: ggf. Inhalt neu rendern
       if (key === 'overview') {
+        // NL-Tabelle frisch rendern (z.B. nach NL-Filter-Änderung)
         this.prepareErhebungsInfo?.();
         this.renderErhebungsInfoTable?.();
       } else if (key === 'analysis') {
+        // Erweiterte Analyse aktualisieren (Partner-Picker, etc.)
         this._renderAnalysisView?.();
       } else if (key === 'docs') {
+        // Anleitung: nur einmal initialisieren
         if (!this._docsViewInitialized) {
           this._renderDocsView?.();
           this._docsViewInitialized = true;
@@ -6469,66 +6371,12 @@
       }
 
       // Leaflet bemerkt Container-Größen-Änderungen nicht automatisch.
-      // Nach dem CSS-Transition-Ende (~320ms) invalidateSize aufrufen.
+      // Nach dem CSS-Transition-Ende (~320ms) müssen wir invalidateSize()
+      // aufrufen, sonst zeigt die Karte einen verzerrten Ausschnitt.
       if (this.map) {
         this._setTimeout(() => {
           try { this.map.invalidateSize({ animate: false }); } catch (e) { /* swallow */ }
         }, 340);
-      }
-    }
-
-    // ── Linke Spalte ein/ausblenden (orthogonal zur View-Auswahl) ───────
-    // Wenn ausgeblendet: Filter-Container schrumpft auf 0, Karte Vollbild.
-    // Reopen via Map-Overlay-Button #left-pane-reopen-btn.
-    _setLeftPaneVisible(visible) {
-      this._leftPaneVisible = !!visible;
-      const filter = this._shadowRoot.querySelector('.filter-container');
-      const mapContainer = this._shadowRoot.querySelector('.map-container');
-      if (filter) filter.classList.toggle('pane-collapsed', !visible);
-      if (mapContainer) mapContainer.classList.toggle('left-pane-hidden', !visible);
-      // Leaflet invalidieren nach Transition
-      if (this.map) {
-        this._setTimeout(() => {
-          try { this.map.invalidateSize({ animate: false }); } catch (e) { /* swallow */ }
-        }, 340);
-      }
-    }
-
-    // ── Filter-Maske ein/ausklappen (Sub-State innerhalb der linken Spalte)
-    // Eingeklappt: Filter-Felder verschwinden, Info-Bar oben erscheint
-    // mit kompakter Anzeige der aktuellen Erhebungs-Auswahl.
-    _setFilterFieldsCollapsed(collapsed) {
-      // Nur sinnvoll wenn eine Erhebung geladen ist — sonst gibt's nichts
-      // zu zeigen im Info-Bar.
-      if (collapsed && !this._activeFilter) return;
-      this._filterFieldsCollapsed = !!collapsed;
-      const filter = this._shadowRoot.querySelector('.filter-container');
-      const infoBar = this.$('filter-info-bar');
-      if (filter) filter.classList.toggle('fields-collapsed', !!collapsed);
-      if (infoBar) {
-        if (collapsed) {
-          this._updateFilterInfoBar();
-          infoBar.classList.remove('hidden');
-        } else {
-          infoBar.classList.add('hidden');
-        }
-      }
-    }
-
-    // Info-Bar-Inhalt aus _activeFilter und _activeErhebungen aufbauen
-    _updateFilterInfoBar() {
-      const textEl  = this.$('filter-info-text');
-      const badgeEl = this.$('filter-info-badge');
-      if (!textEl) return;
-      const f = this._activeFilter;
-      if (!f) { textEl.textContent = '—'; if (badgeEl) badgeEl.textContent = ''; return; }
-      // Kompaktes Format: "GF-NORD · 2025 · 03"
-      const gfLabel = this._fmtGF ? this._fmtGF(f.erhID) : f.erhID;
-      textEl.textContent = `${gfLabel} · ${f.jahr} · ${f.nummer}`;
-      // Multi-GF-Badge: bei aktiven Partnern "+N"
-      const count = this._activeErhebungen?.length || 0;
-      if (badgeEl) {
-        badgeEl.textContent = count >= 2 ? `+${count - 1}` : '';
       }
     }
 
@@ -6536,20 +6384,20 @@
     _setSidebarEnabled(enabled) {
       const icons = this._shadowRoot.querySelectorAll('.sidebar-icon');
       for (const icon of icons) {
-        // Anleitung ist immer verfügbar; der "Ausblenden"-Button auch.
-        if (icon.dataset.view === 'docs')           { icon.disabled = false; continue; }
-        if (icon.dataset.action === 'hide-pane')    { icon.disabled = false; continue; }
+        // Anleitung ist immer verfügbar; die anderen erst nach Erhebungs-Load
+        if (icon.dataset.view === 'docs') {
+          icon.disabled = false;
+          continue;
+        }
         icon.disabled = !enabled;
       }
-      // Defensive: wenn die Sidebar deaktiviert wird und der gerade aktive
-      // View ist einer der nun-disabled, erzwinge Wechsel auf 'docs'.
+      // Bug 14 Fix: Defensive — wenn die Sidebar deaktiviert wird und der
+      // gerade aktive View ist einer der nun-disabled (plz/overview/analysis),
+      // erzwinge Wechsel auf 'docs'. Sonst zeigt die UI einen View, der laut
+      // Icon-State gar nicht verfügbar sein sollte.
       if (!enabled && this._sidebarView && this._sidebarView !== 'docs') {
         this._switchSidebarView('docs');
       }
-      // Filter-Maske-Toggle-Button nur aktivieren wenn eine Erhebung läuft —
-      // im Hauptmenü gibt's nichts zu verbergen.
-      const fieldsToggle = this.$('filter-fields-toggle');
-      if (fieldsToggle) fieldsToggle.classList.toggle('disabled', !enabled);
     }
 
     // ── Home-Reset ─────────────────────────────────────────────────────
@@ -6585,10 +6433,6 @@
       this.closeNLTable();
       this._setSidebarEnabled(false);
       this._switchSidebarView('docs');
-      // Pane-State: Spalte sichtbar und Filter ausgeklappt (sonst wäre der
-      // User nach Home-Reset in einem ungewollten kollabierten Zustand).
-      this._setLeftPaneVisible(true);
-      this._setFilterFieldsCollapsed(false);
       this.$('heatmap-legend')?.classList.add('hidden');
       this.$('map-control-panel')?.classList.remove('panel-large', 'panel-medium');
       // Doppelbestreuungs-Bar im Hauptmenü wieder aufklappen
