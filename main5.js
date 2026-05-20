@@ -221,44 +221,68 @@
 
       /* ─── Sidebar-Layout (Phase 2) ─────────────────────────────────── */
       /* Layout-Konzept:
-         filter-container = ganze linke Spalte (Filter + Sidebar + Inhalt).
-         sidebar-layout   = flex-row: Icon-Rail links, Inhalts-Container rechts.
-         Bei "nichts aktiv" kollabiert filter-container auf ~70 px Gesamtbreite
-         (Filter-Dropdowns bleiben sichtbar, Sidebar-Rail bleibt sichtbar,
-         Inhalts-Container schrumpft auf 0). Die Karte gewinnt den Platz. */
+         filter-container = ganze linke Spalte (Filter + Inhalt + Tab-Leiste).
+         sidebar-layout   = flex-column: Inhalts-Container oben, Tab-Bar unten.
+         Bei "nichts aktiv" (kein Tab selektiert) kollabiert der Inhalts-Container
+         vertikal auf 0 — Tab-Leiste bleibt sichtbar, Filter bleibt sichtbar. */
       .sidebar-layout {
         flex: 1; min-height: 0; margin-top: 10px;
-        display: flex; flex-direction: row; gap: 8px;
+        display: flex; flex-direction: column; gap: 8px;
         overflow: hidden;
       }
+      .sidebar-content {
+        flex: 1; min-height: 0;
+        overflow: hidden;
+        transition: flex-basis 0.32s var(--ease-out), opacity 0.22s ease;
+      }
+      .sidebar-view {
+        display: none;
+        height: 100%;
+        flex-direction: column; min-height: 0;
+      }
+      .sidebar-view.active { display: flex; }
+
+      /* Tab-Bar am unteren Rand: jeder Tab hat Icon + Label untereinander. */
       .sidebar-rail {
-        flex-shrink: 0; width: 46px;
-        display: flex; flex-direction: column; gap: 6px;
-        padding-top: 2px;
+        flex-shrink: 0;
+        display: flex; flex-direction: row; gap: 4px;
+        padding-top: 6px;
+        border-top: 1px solid var(--gray-200);
       }
       .sidebar-icon {
         position: relative;
-        width: 100%; height: 42px;
-        display: flex; align-items: center; justify-content: center;
+        flex: 1; min-width: 0;
+        padding: 6px 2px;
+        display: flex; flex-direction: column; align-items: center;
+        justify-content: center; gap: 1px;
         background: transparent; border: 1.5px solid var(--gray-200);
         border-radius: var(--radius-md);
         cursor: pointer; user-select: none;
         font-family: var(--font);
-        transition: background 0.18s, border-color 0.18s, transform 0.12s;
+        transition: background 0.18s, border-color 0.18s, color 0.18s;
       }
       .sidebar-icon:hover:not(:disabled):not(.active) {
         background: var(--gray-50); border-color: var(--red-border);
       }
       .sidebar-icon:disabled {
-        opacity: 0.35; cursor: not-allowed;
+        opacity: 0.4; cursor: not-allowed;
         background: var(--gray-50); border-color: var(--gray-100);
       }
       .sidebar-icon.active {
         background: linear-gradient(180deg, var(--red-bg) 0%, var(--white) 100%);
-        border-color: var(--red); border-left-width: 4px;
-        box-shadow: 0 1px 3px rgba(180,24,33,0.12);
+        border-color: var(--red);
+        box-shadow: 0 -2px 0 var(--red) inset, 0 1px 3px rgba(180,24,33,0.12);
+        color: var(--red);
       }
-      .sidebar-icon-glyph { font-size: 1.1rem; line-height: 1; }
+      .sidebar-icon-glyph { font-size: 1.05rem; line-height: 1; }
+      .sidebar-icon-label {
+        font-size: 0.6rem; font-weight: 600; line-height: 1.1;
+        color: var(--gray-600); letter-spacing: 0.02em;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        max-width: 100%;
+      }
+      .sidebar-icon.active .sidebar-icon-label { color: var(--red); }
+      .sidebar-icon:disabled .sidebar-icon-label { color: var(--gray-400); }
       .sidebar-icon-badge:empty { display: none; }
       .sidebar-icon-badge {
         position: absolute; top: -4px; right: -4px;
@@ -274,36 +298,56 @@
         background: var(--gray-200); color: var(--gray-700);
       }
 
-      .sidebar-content {
-        flex: 1; min-width: 0;
-        overflow: hidden;
-        transition: flex-basis 0.32s var(--ease-out), opacity 0.22s ease;
-      }
-      .sidebar-view {
-        display: none;
-        height: 100%;
-        flex-direction: column; min-height: 0;
-      }
-      .sidebar-view.active { display: flex; }
-
-      /* "Nichts aktiv"-Modus: Filter-Container schrumpft auf Sidebar-Breite.
-         Sidebar-Rail (46px) + Padding (12px+12px) = 70px, plus 2px Safety. */
+      /* "Nichts aktiv"-Modus: Filter-Spalte komplett kollabieren.
+         Die schwebende Tab-Bar (#sidebar-rail-floating) wird gleichzeitig
+         über der Karte links oben sichtbar — der User kann von dort aus
+         jeden View wieder aktivieren. Die Karte ist dann effektiv Vollbild. */
       .filter-container.no-view-active {
-        width: 72px;
+        width: 0 !important;
+        padding-left: 0; padding-right: 0;
+        border-right: none;
+        overflow: hidden;
+        box-shadow: none;
       }
-      .filter-container.no-view-active .sidebar-layout {
-        gap: 0;
+      .filter-container.no-view-active > * {
+        opacity: 0; pointer-events: none;
       }
-      .filter-container.no-view-active .sidebar-content {
-        flex: 0 0 0 !important; opacity: 0; pointer-events: none; min-width: 0;
+      .filter-container {
+        transition: width 0.32s var(--ease-out), padding 0.32s var(--ease-out);
       }
-      .filter-container.no-view-active label,
-      .filter-container.no-view-active select,
-      .filter-container.no-view-active #filter-button,
-      .filter-container.no-view-active #doppel-toggle-bar {
-        display: none;
+      .filter-container > * {
+        transition: opacity 0.22s ease;
       }
-      .filter-container { transition: width 0.32s var(--ease-out); }
+
+      /* Schwebende Tab-Bar über der Karte: nur sichtbar, wenn die Filter-
+         Spalte kollabiert ist (Vollbild-Karten-Modus). Sitzt links oben,
+         unterhalb des Radius-Sliders, mit weißem Hintergrund + Schatten. */
+      .sidebar-rail-floating {
+        position: absolute;
+        top: 64px;        /* unterhalb des Radius-Slider-Containers */
+        left: 12px;
+        z-index: 600;
+        display: none;    /* default versteckt; nur bei no-view-active sichtbar */
+        flex-direction: row;
+        gap: 4px;
+        padding: 6px;
+        background: var(--white);
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      }
+      /* Sichtbarkeit wird vom JS-Code via .filter-container.no-view-active
+         im map-container-Geschwisterelement kontrolliert. Da Shadow-DOM
+         kein :has() ohne neuere Browser-Versionen, machen wir das per
+         dedizierter Klasse, die wir in _switchSidebarView setzen. */
+      .map-container.show-floating-rail .sidebar-rail-floating {
+        display: flex;
+      }
+      .sidebar-rail-floating .sidebar-icon {
+        min-width: 64px;
+        padding: 6px 8px;
+        background: var(--white);
+      }
 
       /* ─── NL-Info-Container (jetzt statisch in eigenem View) ──────── */
       #nl-info-container {
@@ -1494,29 +1538,11 @@
         <select id="nummer-select" disabled></select>
         <button id="filter-button">Anzeigen</button>
 
-        <!-- Sidebar + Hauptinhalts-Container: füllen den verbleibenden Platz
-             unter dem Filter-Bereich. Sidebar links (Icons), Hauptinhalt rechts.
-             Bei "nichts aktiv" (kein Icon selektiert) kollabiert der Hauptinhalt
-             auf 0 px Breite → Karte rechts wird breiter. -->
+        <!-- Hauptinhalts-Container füllt den verbleibenden Platz unter dem
+             Filter-Bereich. Tab-Leiste sitzt am unteren Rand. Beim Wechsel
+             zwischen Views wird der Hauptinhalt umgeschaltet; bei "nichts
+             aktiv" kollabiert der Inhalt auf 0 → Karte wird breiter. -->
         <div class="sidebar-layout">
-          <div class="sidebar-rail" id="sidebar-rail">
-            <button class="sidebar-icon" data-view="docs" title="Anleitung" type="button">
-              <span class="sidebar-icon-glyph">📖</span>
-              <span class="sidebar-icon-badge" id="sidebar-badge-docs"></span>
-            </button>
-            <button class="sidebar-icon" data-view="plz" title="PLZ-Tabelle" type="button" disabled>
-              <span class="sidebar-icon-glyph">📋</span>
-              <span class="sidebar-icon-badge" id="sidebar-badge-plz"></span>
-            </button>
-            <button class="sidebar-icon" data-view="overview" title="Erhebungsübersicht" type="button" disabled>
-              <span class="sidebar-icon-glyph">📊</span>
-              <span class="sidebar-icon-badge" id="sidebar-badge-overview"></span>
-            </button>
-            <button class="sidebar-icon" data-view="analysis" title="Erweiterte Analyse" type="button" disabled>
-              <span class="sidebar-icon-glyph">🔬</span>
-              <span class="sidebar-icon-badge" id="sidebar-badge-analysis"></span>
-            </button>
-          </div>
           <div class="sidebar-content" id="sidebar-content">
             <!-- View: Anleitung -->
             <div class="sidebar-view" id="sidebar-view-docs"></div>
@@ -1530,6 +1556,30 @@
             </div>
             <!-- View: Erweiterte Analyse (Partner-Picker, Vergleich-Platzhalter) -->
             <div class="sidebar-view" id="sidebar-view-analysis"></div>
+          </div>
+          <!-- Tab-Bar: horizontale Reiter unten, jeder mit Icon + Label.
+               Klick auf aktives Tab schaltet die View aus → Karte wird breiter. -->
+          <div class="sidebar-rail" id="sidebar-rail">
+            <button class="sidebar-icon" data-view="docs" title="Anleitung" type="button">
+              <span class="sidebar-icon-glyph">📖</span>
+              <span class="sidebar-icon-label">Anleitung</span>
+              <span class="sidebar-icon-badge" id="sidebar-badge-docs"></span>
+            </button>
+            <button class="sidebar-icon" data-view="plz" title="PLZ-Tabelle" type="button" disabled>
+              <span class="sidebar-icon-glyph">📋</span>
+              <span class="sidebar-icon-label">PLZ</span>
+              <span class="sidebar-icon-badge" id="sidebar-badge-plz"></span>
+            </button>
+            <button class="sidebar-icon" data-view="overview" title="Erhebungsübersicht" type="button" disabled>
+              <span class="sidebar-icon-glyph">📊</span>
+              <span class="sidebar-icon-label">Übersicht</span>
+              <span class="sidebar-icon-badge" id="sidebar-badge-overview"></span>
+            </button>
+            <button class="sidebar-icon" data-view="analysis" title="Erweiterte Analyse" type="button" disabled>
+              <span class="sidebar-icon-glyph">🔬</span>
+              <span class="sidebar-icon-label">Analyse</span>
+              <span class="sidebar-icon-badge" id="sidebar-badge-analysis"></span>
+            </button>
           </div>
         </div>
       </div>
@@ -1545,6 +1595,33 @@
         <div id="map"></div>
         <div id="legend-toggle-btn" title="Legende"></div>
         <div id="heatmap-legend" class="heatmap-legend hidden"></div>
+
+        <!-- Schwebende Tab-Bar über der Karte. Nur sichtbar wenn die
+             Filter-Spalte links kollabiert ist (no-view-active). Klick
+             auf ein Tab klappt die Filter-Spalte wieder auf und schaltet
+             den entsprechenden View. -->
+        <div class="sidebar-rail-floating" id="sidebar-rail-floating">
+          <button class="sidebar-icon" data-view="docs" title="Anleitung" type="button">
+            <span class="sidebar-icon-glyph">📖</span>
+            <span class="sidebar-icon-label">Anleitung</span>
+            <span class="sidebar-icon-badge" id="sidebar-badge-docs-float"></span>
+          </button>
+          <button class="sidebar-icon" data-view="plz" title="PLZ-Tabelle" type="button" disabled>
+            <span class="sidebar-icon-glyph">📋</span>
+            <span class="sidebar-icon-label">PLZ</span>
+            <span class="sidebar-icon-badge" id="sidebar-badge-plz-float"></span>
+          </button>
+          <button class="sidebar-icon" data-view="overview" title="Erhebungsübersicht" type="button" disabled>
+            <span class="sidebar-icon-glyph">📊</span>
+            <span class="sidebar-icon-label">Übersicht</span>
+            <span class="sidebar-icon-badge" id="sidebar-badge-overview-float"></span>
+          </button>
+          <button class="sidebar-icon" data-view="analysis" title="Erweiterte Analyse" type="button" disabled>
+            <span class="sidebar-icon-glyph">🔬</span>
+            <span class="sidebar-icon-label">Analyse</span>
+            <span class="sidebar-icon-badge" id="sidebar-badge-analysis-float"></span>
+          </button>
+        </div>
       </div>
 
       <div id="side-popup"          class="side-popup hidden"></div>
@@ -4351,35 +4428,41 @@
     // Methode behält den alten Namen `_updateOverviewBtnBadge` aus Backwards-
     // Compat, kümmert sich aber jetzt um beide Icon-Badges.
     _updateOverviewBtnBadge() {
-      const overviewBadge = this.$('sidebar-badge-overview');
-      const analysisBadge = this.$('sidebar-badge-analysis');
+      // Beide Tab-Bars haben separate Badge-Elemente (suffix '-float' für die
+      // schwebende). Wir aktualisieren synchron.
+      const overviewBadge       = this.$('sidebar-badge-overview');
+      const analysisBadge       = this.$('sidebar-badge-analysis');
+      const overviewBadgeFloat  = this.$('sidebar-badge-overview-float');
+      const analysisBadgeFloat  = this.$('sidebar-badge-analysis-float');
       const count = this._activeErhebungen?.length || 0;
       const partners = this._getPartnerErhebungen?.() || [];
 
-      // Reset
-      [overviewBadge, analysisBadge].forEach(b => {
+      // Reset alle
+      [overviewBadge, analysisBadge, overviewBadgeFloat, analysisBadgeFloat].forEach(b => {
         if (!b) return;
         b.classList.remove('badge-hint');
         b.textContent = '';
       });
 
-      // 📊 Erhebungsübersicht-Badge
-      if (overviewBadge) {
-        if (count >= 2) {
-          overviewBadge.textContent = `${count}`;
-        }
+      // 📊 Erhebungsübersicht-Badges
+      const overviewText = count >= 2 ? String(count) : '';
+      if (overviewBadge)      overviewBadge.textContent = overviewText;
+      if (overviewBadgeFloat) overviewBadgeFloat.textContent = overviewText;
+
+      // 🔬 Erweiterte-Analyse-Badges
+      let analysisText = '';
+      let analysisHint = false;
+      if (count >= 2) {
+        analysisText = String(count);
+      } else if (count === 1 && partners.length > 0) {
+        analysisText = `+${partners.length}`;
+        analysisHint = true;
       }
-      // 🔬 Erweiterte-Analyse-Badge: dezenter Hinweis bei verfügbaren Partnern
-      if (analysisBadge) {
-        if (count >= 2) {
-          // Multi-Modus aktiv → Badge mit Anzahl
-          analysisBadge.textContent = `${count}`;
-        } else if (count === 1 && partners.length > 0) {
-          // Hinweis: weitere GF-Bereiche verfügbar
-          analysisBadge.textContent = `+${partners.length}`;
-          analysisBadge.classList.add('badge-hint');
-        }
-      }
+      [analysisBadge, analysisBadgeFloat].forEach(b => {
+        if (!b) return;
+        b.textContent = analysisText;
+        if (analysisHint) b.classList.add('badge-hint');
+      });
     }
 
     restoreDropdownSelections() {
@@ -6220,25 +6303,38 @@
     // wurde der vorige Listener via AbortController aufgegeben — wir setzen
     // das Bound-Flag zurück und binden frisch.
     _setupSidebarHandlers() {
-      const rail = this.$('sidebar-rail');
-      if (!rail) return;
-      // Frisch binden: alter Listener ist nach disconnectedCallback eh
-      // abgebrochen via AbortController.
-      delete rail.dataset.bound;
-      this._on(rail, 'click', (ev) => {
+      // Shared Click-Handler für beide Tab-Bars: die eingebettete Tab-Bar
+      // im Filter-Container und die schwebende über der Karte. Beide haben
+      // dieselben data-view-Werte, also kann ein einziger Delegate-Handler
+      // beide bedienen.
+      const handler = (ev) => {
         const btn = ev.target.closest('.sidebar-icon');
         if (!btn || btn.disabled) return;
         const view = btn.dataset.view;
         // Klick auf aktives Icon = ausschalten (null)
         const next = (this._sidebarView === view) ? null : view;
         this._switchSidebarView(next);
-      });
-      rail.dataset.bound = '1';
+      };
+      // Embedded Tab-Bar (im Filter-Container)
+      const rail = this.$('sidebar-rail');
+      if (rail) {
+        delete rail.dataset.bound;
+        this._on(rail, 'click', handler);
+        rail.dataset.bound = '1';
+      }
+      // Floating Tab-Bar (über der Karte)
+      const floatRail = this.$('sidebar-rail-floating');
+      if (floatRail) {
+        delete floatRail.dataset.bound;
+        this._on(floatRail, 'click', handler);
+        floatRail.dataset.bound = '1';
+      }
     }
 
     _switchSidebarView(key) {
       this._sidebarView = key;
       const filter = this._shadowRoot.querySelector('.filter-container');
+      const mapContainer = this._shadowRoot.querySelector('.map-container');
       const views  = ['docs', 'plz', 'overview', 'analysis'];
 
       // Views ein/ausblenden
@@ -6246,13 +6342,17 @@
         const el = this.$('sidebar-view-' + k);
         if (el) el.classList.toggle('active', k === key);
       }
-      // Sidebar-Icon-Status
+      // Beide Tab-Bars synchronisieren (active-Klasse)
       const icons = this._shadowRoot.querySelectorAll('.sidebar-icon');
       for (const icon of icons) {
         icon.classList.toggle('active', icon.dataset.view === key);
       }
       // Filter-Container kollabieren wenn null
       if (filter) filter.classList.toggle('no-view-active', key === null);
+      // Floating-Rail nur sichtbar wenn Filter-Spalte kollabiert ist.
+      // Wir setzen die Klasse auf den map-container, weil die Floating-Rail
+      // dessen Kind ist.
+      if (mapContainer) mapContainer.classList.toggle('show-floating-rail', key === null);
 
       // Beim Wechsel zu einem View: ggf. Inhalt neu rendern
       if (key === 'overview') {
@@ -6268,6 +6368,15 @@
           this._renderDocsView?.();
           this._docsViewInitialized = true;
         }
+      }
+
+      // Leaflet bemerkt Container-Größen-Änderungen nicht automatisch.
+      // Nach dem CSS-Transition-Ende (~320ms) müssen wir invalidateSize()
+      // aufrufen, sonst zeigt die Karte einen verzerrten Ausschnitt.
+      if (this.map) {
+        this._setTimeout(() => {
+          try { this.map.invalidateSize({ animate: false }); } catch (e) { /* swallow */ }
+        }, 340);
       }
     }
 
