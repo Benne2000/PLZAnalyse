@@ -171,58 +171,19 @@
       #filter-button.ready:hover  { background: var(--red-light); box-shadow: var(--shadow-red); transform: translateY(-1px); }
       #filter-button.ready:active { transform: translateY(0); box-shadow: none; }
 
-      .info-toggle-btn {
-        width: 100%; margin-top: 8px; padding: 7px 12px; font-size: 0.8rem;
-        font-family: var(--font); font-weight: 600; color: var(--red);
-        background: transparent; border: 1.5px solid var(--red-border);
-        border-radius: var(--radius-md); cursor: pointer;
-        transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
-        display: flex; align-items: center; justify-content: center; gap: 6px;
-        position: relative;
-      }
-      .info-toggle-btn:hover { background: var(--red-bg); border-color: var(--red); }
-      .info-toggle-label { display: inline-flex; align-items: center; }
-
-      /* Badge im Erhebungsübersicht-Button (Phase 1):
-         - badge-multi: aktiver Multi-Modus → kräftig rot
-         - badge-hint:  Partner verfügbar aber nicht aktiv → dezent grau */
-      .info-toggle-badge:empty { display: none; }
-      .info-toggle-badge {
-        display: inline-flex; align-items: center;
-        font-size: 0.66rem; font-weight: 700;
-        padding: 1px 7px; border-radius: 10px;
-        letter-spacing: 0.02em; line-height: 1.4;
-        transition: background 0.18s, color 0.18s, border-color 0.18s;
-      }
-      .info-toggle-badge.badge-multi {
-        background: var(--red); color: white;
-        border: 1px solid var(--red);
-        box-shadow: 0 0 0 2px var(--red-bg);
-      }
-      .info-toggle-badge.badge-hint {
-        background: var(--gray-100); color: var(--gray-600);
-        border: 1px dashed var(--gray-300);
-      }
-      /* Multi-Modus: ganze Button-Optik etwas prominenter */
-      .info-toggle-btn.has-badge-multi {
-        background: linear-gradient(180deg, var(--red-bg) 0%, var(--white) 100%);
-        border-color: var(--red);
-        box-shadow: 0 1px 3px rgba(180,24,33,0.12);
-      }
-      .info-toggle-btn.has-badge-multi:hover { background: var(--red-bg); }
+      /* (info-toggle-btn-Styles wurden mit dem Sidebar-Refactor entfernt —
+         Erhebungsübersicht ist jetzt ein Sidebar-Icon.) */
 
       /* ─── Tabelle ───────────────────────────────────────────────── */
-      .table-container {
-        margin-top: 10px; background: var(--white); border-radius: var(--radius-lg);
-        border: 1px solid var(--gray-200); box-shadow: var(--shadow-xs);
-        position: relative; overflow: hidden;
-        display: flex; flex-direction: column; flex: 1; min-height: 0;
-        transition: box-shadow 0.2s;
-      }
-      .table-container:hover { box-shadow: var(--shadow-sm); }
+      /* Hinweis: die alte .table-container-Hülle ist mit dem Sidebar-Refactor
+         entfallen. Die Styles wurden in .sidebar-view bzw. #table-container
+         migriert; hier bleibt ein schlanker Block für rein tabellen-spezifische
+         Selektoren (th/td/tbody-Hover etc.). */
       .table-wrapper {
         flex: 1; display: flex; flex-direction: column; min-height: 0;
-        transition: transform 0.36s var(--ease-out); overflow: hidden;
+        overflow: hidden;
+        background: var(--white); border-radius: var(--radius-lg);
+        border: 1px solid var(--gray-200); box-shadow: var(--shadow-xs);
       }
       .table-scroll {
         flex: 1; overflow-y: auto; min-height: 0;
@@ -231,23 +192,23 @@
       .table-scroll::-webkit-scrollbar       { width: 5px; }
       .table-scroll::-webkit-scrollbar-track { background: var(--gray-100); }
       .table-scroll::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
-      .table-container table { width: 100%; border-collapse: collapse; table-layout: fixed; }
-      .table-container thead { position: sticky; top: 0; z-index: 2; }
-      .table-container th {
+      .table-wrapper table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+      .table-wrapper thead { position: sticky; top: 0; z-index: 2; }
+      .table-wrapper th {
         background: var(--red); color: var(--white); padding: 8px 10px;
         text-align: left; font-size: 0.72rem; font-weight: 700;
         letter-spacing: 0.05em; text-transform: uppercase; white-space: pre-line;
         cursor: pointer; user-select: none; transition: background 0.15s;
       }
-      .table-container th:hover { background: var(--red-dark); }
-      .table-container td {
+      .table-wrapper th:hover { background: var(--red-dark); }
+      .table-wrapper td {
         padding: 6px 10px; border-bottom: 1px solid var(--gray-100);
         text-align: left; font-size: 0.8rem; color: var(--gray-700);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         transition: background 0.12s;
       }
-      .table-container tbody tr        { transition: background 0.12s; cursor: pointer; }
-      .table-container tbody tr:hover td { background: var(--red-bg); color: var(--gray-900); }
+      .table-wrapper tbody tr        { transition: background 0.12s; cursor: pointer; }
+      .table-wrapper tbody tr:hover td { background: var(--red-bg); color: var(--gray-900); }
       .table-row-selected td { background: #fff3f3 !important; }
       .table-row-selected td:first-child { border-left: 3px solid var(--red) !important; }
 
@@ -258,18 +219,100 @@
       }
       #streuverlust-box strong { color: var(--red); }
 
-      /* ─── NL-Info-Panel ─────────────────────────────────────────── */
-      #nl-info-container {
-        position: absolute; left: 0; right: 0; bottom: 0;
-        height: 100%; max-height: 100%;
-        background: var(--white); border-top: 2px solid var(--red);
-        box-shadow: 0 -4px 20px rgba(0,0,0,0.1);
-        transform: translateY(102%); opacity: 0;
-        transition: transform 0.36s var(--ease-out), opacity 0.28s ease;
-        display: flex; flex-direction: column; overflow: hidden; z-index: 10;
-        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      /* ─── Sidebar-Layout (Phase 2) ─────────────────────────────────── */
+      /* Layout-Konzept:
+         filter-container = ganze linke Spalte (Filter + Sidebar + Inhalt).
+         sidebar-layout   = flex-row: Icon-Rail links, Inhalts-Container rechts.
+         Bei "nichts aktiv" kollabiert filter-container auf ~70 px Gesamtbreite
+         (Filter-Dropdowns bleiben sichtbar, Sidebar-Rail bleibt sichtbar,
+         Inhalts-Container schrumpft auf 0). Die Karte gewinnt den Platz. */
+      .sidebar-layout {
+        flex: 1; min-height: 0; margin-top: 10px;
+        display: flex; flex-direction: row; gap: 8px;
+        overflow: hidden;
       }
-      #nl-info-container.show { transform: translateY(0); opacity: 1; }
+      .sidebar-rail {
+        flex-shrink: 0; width: 46px;
+        display: flex; flex-direction: column; gap: 6px;
+        padding-top: 2px;
+      }
+      .sidebar-icon {
+        position: relative;
+        width: 100%; height: 42px;
+        display: flex; align-items: center; justify-content: center;
+        background: transparent; border: 1.5px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        cursor: pointer; user-select: none;
+        font-family: var(--font);
+        transition: background 0.18s, border-color 0.18s, transform 0.12s;
+      }
+      .sidebar-icon:hover:not(:disabled):not(.active) {
+        background: var(--gray-50); border-color: var(--red-border);
+      }
+      .sidebar-icon:disabled {
+        opacity: 0.35; cursor: not-allowed;
+        background: var(--gray-50); border-color: var(--gray-100);
+      }
+      .sidebar-icon.active {
+        background: linear-gradient(180deg, var(--red-bg) 0%, var(--white) 100%);
+        border-color: var(--red); border-left-width: 4px;
+        box-shadow: 0 1px 3px rgba(180,24,33,0.12);
+      }
+      .sidebar-icon-glyph { font-size: 1.1rem; line-height: 1; }
+      .sidebar-icon-badge:empty { display: none; }
+      .sidebar-icon-badge {
+        position: absolute; top: -4px; right: -4px;
+        min-width: 16px; height: 16px;
+        padding: 0 4px;
+        background: var(--red); color: white;
+        font-size: 0.6rem; font-weight: 700;
+        border: 1.5px solid white; border-radius: 10px;
+        display: inline-flex; align-items: center; justify-content: center;
+        line-height: 1;
+      }
+      .sidebar-icon-badge.badge-hint {
+        background: var(--gray-200); color: var(--gray-700);
+      }
+
+      .sidebar-content {
+        flex: 1; min-width: 0;
+        overflow: hidden;
+        transition: flex-basis 0.32s var(--ease-out), opacity 0.22s ease;
+      }
+      .sidebar-view {
+        display: none;
+        height: 100%;
+        flex-direction: column; min-height: 0;
+      }
+      .sidebar-view.active { display: flex; }
+
+      /* "Nichts aktiv"-Modus: Filter-Container schrumpft auf Sidebar-Breite.
+         Sidebar-Rail (46px) + Padding (12px+12px) = 70px, plus 2px Safety. */
+      .filter-container.no-view-active {
+        width: 72px;
+      }
+      .filter-container.no-view-active .sidebar-layout {
+        gap: 0;
+      }
+      .filter-container.no-view-active .sidebar-content {
+        flex: 0 0 0 !important; opacity: 0; pointer-events: none; min-width: 0;
+      }
+      .filter-container.no-view-active label,
+      .filter-container.no-view-active select,
+      .filter-container.no-view-active #filter-button,
+      .filter-container.no-view-active #doppel-toggle-bar {
+        display: none;
+      }
+      .filter-container { transition: width 0.32s var(--ease-out); }
+
+      /* ─── NL-Info-Container (jetzt statisch in eigenem View) ──────── */
+      #nl-info-container {
+        flex: 1; min-height: 0;
+        background: var(--white); border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-xs);
+        display: flex; flex-direction: column; overflow: hidden;
+      }
       .nl-info-scroll {
         flex: 1; min-height: 0; overflow-y: auto;
         scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
@@ -319,7 +362,8 @@
         text-transform: none; letter-spacing: 0;
         margin-top: 1px;
       }
-      .filter-container.nl-info-active .table-wrapper { transform: translateY(-100%); }
+      /* (nl-info-active CSS-Translation entfernt — NL-Tabelle ist jetzt
+         eigener Sidebar-View, kein Overlay über der PLZ-Tabelle mehr) */
 
       /* ─── Partner-Erhebung-Picker (Phase 1) ───────────────────────── */
       #partner-erh-picker {
@@ -423,6 +467,83 @@
         padding: 14px 12px; font-size: 0.74rem; color: var(--gray-500);
         text-align: center; font-style: italic;
       }
+
+      /* Pending-State: Partner-Zeile mit ausstehender Änderung. Wird durch
+         einen orangenen linken Streifen und ein anderes Badge markiert. */
+      .partner-erh-row.pending {
+        border-left: 3px solid #f0a500;
+        padding-left: 9px;   /* statt 12px, gleicht den Border aus */
+      }
+      .partner-erh-row.pending-add .partner-erh-checkbox {
+        background: rgba(240,165,0,0.18);
+        border-color: #f0a500;
+        border-style: dashed;
+      }
+      .partner-erh-row.pending-add .partner-erh-checkbox::after {
+        content: '+'; color: #f0a500; font-weight: 700; font-size: 0.85rem; line-height: 1;
+      }
+      .partner-erh-row.pending-remove .partner-erh-checkbox {
+        background: rgba(240,165,0,0.18);
+        border-color: #f0a500;
+        border-style: dashed;
+      }
+      .partner-erh-row.pending-remove .partner-erh-checkbox::after {
+        content: '−'; color: #f0a500; font-weight: 700; font-size: 0.95rem; line-height: 1;
+      }
+      .partner-erh-row.pending .partner-erh-badge {
+        background: rgba(240,165,0,0.18);
+        color: #b56e00;
+        font-weight: 600;
+      }
+
+      /* Bestätigungsbutton-Leiste */
+      #partner-erh-actions {
+        display: flex; flex-direction: column; gap: 8px;
+        padding: 10px 12px;
+        background: linear-gradient(180deg, rgba(240,165,0,0.08) 0%, var(--white) 100%);
+        border-top: 1px solid rgba(240,165,0,0.4);
+      }
+      .partner-actions-info {
+        display: flex; align-items: center; gap: 6px;
+        font-size: 0.72rem; color: var(--gray-700);
+      }
+      .partner-actions-icon {
+        color: #f0a500; font-size: 0.6rem; line-height: 1;
+        animation: pendingDot 1.4s ease-in-out infinite;
+      }
+      @keyframes pendingDot {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.4; }
+      }
+      .partner-actions-text { font-weight: 600; }
+      .partner-actions-buttons {
+        display: flex; gap: 6px;
+      }
+      .partner-action-cancel,
+      .partner-action-apply {
+        flex: 1;
+        padding: 7px 10px;
+        font-size: 0.74rem; font-family: var(--font); font-weight: 600;
+        border-radius: var(--radius-md);
+        cursor: pointer;
+        transition: background 0.15s, border-color 0.15s, box-shadow 0.18s;
+      }
+      .partner-action-cancel {
+        background: var(--white); color: var(--gray-600);
+        border: 1.5px solid var(--gray-200);
+      }
+      .partner-action-cancel:hover {
+        background: var(--gray-50); border-color: var(--gray-400);
+      }
+      .partner-action-apply {
+        background: var(--red); color: white;
+        border: 1.5px solid var(--red);
+        box-shadow: 0 1px 3px rgba(180,24,33,0.18);
+      }
+      .partner-action-apply:hover {
+        background: var(--red-dark); border-color: var(--red-dark);
+      }
+
       /* Cross-GF-Doppelbestreuungs-Toggle */
       .partner-cross-doppel-row {
         display: flex; align-items: center; gap: 8px;
@@ -443,7 +564,7 @@
       }
 
       /* ─── Map ───────────────────────────────────────────────────── */
-      .map-container { width: 70%; height: 100%; position: relative; z-index: 10; isolation: isolate; }
+      .map-container { flex: 1; min-width: 0; height: 100%; position: relative; z-index: 10; isolation: isolate; }
       #map { height: 100%; width: 100%; background: #e8ecf0; }
 
       #map-interaction-block {
@@ -1095,67 +1216,7 @@
       }
       .doppel-tooltip-row:last-child { border-bottom: none; }
 
-      /* ─── Welcome-Guide + ausführliche Doku im Hauptmenü ───────── */
-      .welcome-guide {
-        padding: 20px 14px 14px;
-        flex: 1;
-        display: flex; flex-direction: column; gap: 14px;
-        overflow-y: auto; min-height: 0;
-        scrollbar-width: thin;
-        scrollbar-color: var(--red) var(--gray-100);
-      }
-      .welcome-guide::-webkit-scrollbar       { width: 5px; }
-      .welcome-guide::-webkit-scrollbar-track { background: var(--gray-100); }
-      .welcome-guide::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
-      .welcome-guide-card {
-        display: flex; gap: 9px; align-items: flex-start;
-        padding: 7px 9px;
-        background: var(--gray-50);
-        border-radius: var(--radius-md);
-        border: 1px solid var(--gray-100);
-      }
-      .welcome-guide-card-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-      .welcome-guide-card-title { font-size: 0.76rem; font-weight: 700; color: var(--gray-700); }
-      .welcome-guide-card-desc { font-size: 0.7rem; color: var(--gray-500); margin-top: 2px; line-height: 1.45; }
-      .welcome-guide-section-label {
-        font-size: 0.68rem; font-weight: 700; letter-spacing: 0.07em;
-        text-transform: uppercase; color: var(--gray-400);
-        margin-top: 2px; margin-bottom: 2px;
-      }
-
-      /* Ausklappbare ausführliche Doku */
-      .docs-section {
-        border: 1px solid var(--gray-200);
-        border-radius: var(--radius-md);
-        background: var(--white);
-        overflow: hidden;
-        flex-shrink: 0;
-      }
-      .docs-section-header {
-        display: flex; align-items: center; gap: 8px;
-        padding: 9px 11px;
-        cursor: pointer; user-select: none;
-        background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
-        color: white;
-        transition: filter 0.15s;
-      }
-      .docs-section-header:hover { filter: brightness(1.05); }
-      .docs-section-icon { font-size: 0.95rem; line-height: 1; flex-shrink: 0; }
-      .docs-section-title {
-        flex: 1; font-size: 0.74rem; font-weight: 700;
-        letter-spacing: 0.05em; text-transform: uppercase;
-      }
-      .docs-section-chevron {
-        font-size: 0.78rem; line-height: 1; flex-shrink: 0;
-        transition: transform 0.28s var(--ease-out);
-      }
-      .docs-section.open .docs-section-chevron { transform: rotate(180deg); }
-      .docs-section-body {
-        max-height: 0; overflow: hidden;
-        transition: max-height 0.4s var(--ease-out);
-        font-size: 0.74rem; color: var(--gray-700); line-height: 1.55;
-      }
-      .docs-section.open .docs-section-body { max-height: 4000px; }
+      /* docs-content (genutzt von _buildRechnungslogikHtml-Strings) */
       .docs-content { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
       .docs-content h4 {
         margin: 6px 0 2px;
@@ -1191,6 +1252,197 @@
         line-height: 1.55;
       }
       .docs-key-block strong { color: var(--red); }
+
+      /* ─── Anleitung-View (Sidebar) ─────────────────────────────────── */
+      .docs-content-wrap {
+        flex: 1; overflow-y: auto; min-height: 0;
+        padding: 4px 4px 14px;
+        scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
+        display: flex; flex-direction: column; gap: 10px;
+      }
+      .docs-content-wrap::-webkit-scrollbar       { width: 5px; }
+      .docs-content-wrap::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+
+      .docs-hero {
+        text-align: center; padding: 12px 8px 6px;
+        background: linear-gradient(180deg, var(--red-bg) 0%, transparent 100%);
+        border-radius: var(--radius-md);
+      }
+      .docs-hero-icon { font-size: 2.2rem; margin-bottom: 4px; }
+      .docs-hero-title {
+        font-size: 0.95rem; font-weight: 700; color: var(--gray-800);
+      }
+      .docs-hero-subtitle {
+        font-size: 0.72rem; color: var(--gray-500); margin-top: 2px;
+      }
+
+      .docs-accordion {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        background: var(--white);
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .docs-accordion-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 9px 11px;
+        cursor: pointer; user-select: none;
+        background: var(--gray-50);
+        color: var(--gray-800);
+        transition: background 0.15s;
+        font-size: 0.78rem; font-weight: 700;
+      }
+      .docs-accordion-header:hover { background: var(--red-bg); }
+      .docs-accordion.open .docs-accordion-header {
+        background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
+        color: white;
+      }
+      .docs-accordion-icon { font-size: 0.95rem; line-height: 1; flex-shrink: 0; }
+      .docs-accordion-title {
+        flex: 1; letter-spacing: 0.04em;
+      }
+      .docs-accordion-chevron {
+        font-size: 0.8rem; line-height: 1; flex-shrink: 0;
+        transition: transform 0.28s var(--ease-out);
+      }
+      .docs-accordion.open .docs-accordion-chevron { transform: rotate(180deg); }
+      .docs-accordion-body {
+        max-height: 0; overflow: hidden;
+        transition: max-height 0.4s var(--ease-out);
+      }
+      .docs-accordion.open .docs-accordion-body { max-height: 4000px; }
+      .docs-accordion-inner {
+        padding: 12px 14px;
+        font-size: 0.74rem; color: var(--gray-700); line-height: 1.55;
+        display: flex; flex-direction: column; gap: 10px;
+      }
+      .docs-accordion-inner h4 {
+        margin: 4px 0 2px;
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.05em; text-transform: uppercase;
+        color: var(--red);
+      }
+      .docs-accordion-inner h4:first-child { margin-top: 0; }
+      .docs-accordion-inner p { margin: 0; }
+      .docs-accordion-inner ul, .docs-accordion-inner ol {
+        margin: 0; padding-left: 18px;
+        display: flex; flex-direction: column; gap: 3px;
+      }
+      .docs-accordion-inner li { line-height: 1.5; }
+      .docs-accordion-inner code {
+        font-family: 'Consolas', 'Courier New', monospace;
+        background: var(--gray-100);
+        padding: 1px 5px; border-radius: 3px;
+        font-size: 0.92em; color: var(--red-dark);
+      }
+      .docs-accordion-inner strong { color: var(--gray-900); font-weight: 700; }
+
+      /* Streuplan-Inhalte */
+      .streuplan-termine-list {
+        list-style: none; margin: 0; padding: 0;
+        display: flex; flex-direction: column; gap: 4px;
+      }
+      .streuplan-termine-list li {
+        display: flex; align-items: center; gap: 8px;
+        padding: 6px 9px;
+        background: var(--gray-50); border-radius: 4px;
+        font-size: 0.74rem;
+      }
+      .streu-datum { font-weight: 700; color: var(--gray-800); min-width: 78px; }
+      .streu-kw {
+        font-size: 0.65rem; font-weight: 600;
+        background: var(--red-bg); color: var(--red);
+        padding: 1px 6px; border-radius: 8px;
+      }
+      .streu-beschr { color: var(--gray-600); font-size: 0.72rem; flex: 1; }
+      .streuplan-partner-table {
+        width: 100%; border-collapse: collapse; font-size: 0.72rem;
+      }
+      .streuplan-partner-table th {
+        background: var(--gray-100); padding: 5px 7px;
+        text-align: left; font-weight: 700; color: var(--gray-700);
+        font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.05em;
+      }
+      .streuplan-partner-table td {
+        padding: 5px 7px; border-bottom: 1px solid var(--gray-100);
+        color: var(--gray-700);
+      }
+
+      /* ─── Erweiterte Analyse View ──────────────────────────────────── */
+      .analysis-content {
+        flex: 1; overflow-y: auto; min-height: 0;
+        padding: 4px 4px 14px;
+        scrollbar-width: thin; scrollbar-color: var(--red) var(--gray-100);
+        display: flex; flex-direction: column; gap: 10px;
+      }
+      .analysis-content::-webkit-scrollbar       { width: 5px; }
+      .analysis-content::-webkit-scrollbar-thumb { background: var(--red); border-radius: 10px; }
+
+      .analysis-section {
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-md);
+        background: var(--white);
+        overflow: hidden; flex-shrink: 0;
+      }
+      .analysis-section-header {
+        display: flex; align-items: center; gap: 8px;
+        padding: 9px 11px;
+        cursor: pointer; user-select: none;
+        background: var(--gray-50);
+        transition: background 0.15s;
+        font-size: 0.74rem; font-weight: 700;
+        color: var(--gray-700);
+      }
+      .analysis-section-header:hover { background: var(--red-bg); }
+      .analysis-section.open .analysis-section-header {
+        background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
+        color: white;
+      }
+      .analysis-section-icon { font-size: 0.95rem; flex-shrink: 0; line-height: 1; }
+      .analysis-section-title {
+        flex: 1; letter-spacing: 0.04em; text-transform: uppercase;
+      }
+      .analysis-section-status {
+        font-size: 0.6rem; font-weight: 700;
+        background: var(--gray-200); color: var(--gray-600);
+        padding: 1px 6px; border-radius: 8px;
+        text-transform: uppercase; letter-spacing: 0.04em;
+      }
+      .analysis-section.open .analysis-section-status {
+        background: rgba(255,255,255,0.25); color: white;
+      }
+      .analysis-section-chevron {
+        font-size: 0.8rem; line-height: 1; flex-shrink: 0;
+        transition: transform 0.28s var(--ease-out);
+      }
+      .analysis-section.open .analysis-section-chevron { transform: rotate(180deg); }
+      .analysis-section-body {
+        max-height: 0; overflow: hidden;
+        transition: max-height 0.4s var(--ease-out);
+      }
+      .analysis-section.open .analysis-section-body { max-height: 2000px; }
+      .analysis-section-body > * { padding: 0; }
+      .analysis-section-body > #analysis-partner-body,
+      .analysis-section-body > .analysis-empty {
+        padding: 8px 10px;
+      }
+      .analysis-empty {
+        font-size: 0.74rem; color: var(--gray-500);
+        background: var(--gray-50); border-radius: 4px;
+        padding: 10px 12px; line-height: 1.5;
+      }
+      .analysis-empty strong { color: var(--gray-700); }
+      .analysis-empty ul { margin: 6px 0 0; padding-left: 18px; }
+
+      /* Embedded-Picker: wenn Partner-Picker innerhalb einer analysis-section
+         lebt, übernimmt diese die Klapp-Funktion → Picker-Header verstecken,
+         um Doppel-Akkordeon zu vermeiden. Border auch entfernen weil
+         analysis-section ihn schon umrahmt. */
+      #partner-erh-picker.embedded-in-section { border: none; }
+      #partner-erh-picker.embedded-in-section #partner-erh-picker-header { display: none; }
+      #partner-erh-picker.embedded-in-section #partner-erh-picker-body {
+        max-height: none; overflow: visible; padding: 0;
+      }
 
       /* ─── Buttons ───────────────────────────────────────────────── */
       /* ─── Mitbewerber-Tooltip ───────────────────────────────────────── */
@@ -1242,9 +1494,43 @@
         <select id="nummer-select" disabled></select>
         <button id="filter-button">Anzeigen</button>
 
-        <div class="table-container">
-          <div class="table-wrapper" id="table-container"></div>
-          <div id="nl-info-container"></div>
+        <!-- Sidebar + Hauptinhalts-Container: füllen den verbleibenden Platz
+             unter dem Filter-Bereich. Sidebar links (Icons), Hauptinhalt rechts.
+             Bei "nichts aktiv" (kein Icon selektiert) kollabiert der Hauptinhalt
+             auf 0 px Breite → Karte rechts wird breiter. -->
+        <div class="sidebar-layout">
+          <div class="sidebar-rail" id="sidebar-rail">
+            <button class="sidebar-icon" data-view="docs" title="Anleitung" type="button">
+              <span class="sidebar-icon-glyph">📖</span>
+              <span class="sidebar-icon-badge" id="sidebar-badge-docs"></span>
+            </button>
+            <button class="sidebar-icon" data-view="plz" title="PLZ-Tabelle" type="button" disabled>
+              <span class="sidebar-icon-glyph">📋</span>
+              <span class="sidebar-icon-badge" id="sidebar-badge-plz"></span>
+            </button>
+            <button class="sidebar-icon" data-view="overview" title="Erhebungsübersicht" type="button" disabled>
+              <span class="sidebar-icon-glyph">📊</span>
+              <span class="sidebar-icon-badge" id="sidebar-badge-overview"></span>
+            </button>
+            <button class="sidebar-icon" data-view="analysis" title="Erweiterte Analyse" type="button" disabled>
+              <span class="sidebar-icon-glyph">🔬</span>
+              <span class="sidebar-icon-badge" id="sidebar-badge-analysis"></span>
+            </button>
+          </div>
+          <div class="sidebar-content" id="sidebar-content">
+            <!-- View: Anleitung -->
+            <div class="sidebar-view" id="sidebar-view-docs"></div>
+            <!-- View: PLZ-Tabelle -->
+            <div class="sidebar-view" id="sidebar-view-plz">
+              <div class="table-wrapper" id="table-container"></div>
+            </div>
+            <!-- View: Erhebungsübersicht (NL-Tabelle, GF-gruppiert) -->
+            <div class="sidebar-view" id="sidebar-view-overview">
+              <div id="nl-info-container"></div>
+            </div>
+            <!-- View: Erweiterte Analyse (Partner-Picker, Vergleich-Platzhalter) -->
+            <div class="sidebar-view" id="sidebar-view-analysis"></div>
+          </div>
         </div>
       </div>
 
@@ -1432,6 +1718,12 @@
         this._abortCtrl = new AbortController();
         this._signal    = this._abortCtrl.signal;
       }
+
+      // Bug 17 Fix: Sidebar-Click-Handler früh registrieren — vor Leaflet-Load.
+      // Sonst kann der User im Hauptmenü auf die Anleitung klicken, bevor das
+      // Setup (in _wireControlPanel) gelaufen ist.
+      this._setupSidebarHandlers();
+
       // GeoJSON + Competitor-Daten parallel vorladen
       this._geoJsonPromise = fetch(GEOJSON_URL, { cache: 'force-cache' })
         .then(r => r.json())
@@ -1584,43 +1876,75 @@
         { brand: 'HAG', name: 'Hagebau 49733 Haren (Ems)',             lat: '52.7921', lon: '7.2456' },
       ];
 
-      const applyCompetitorData = (raw) => {
+      const applyCompetitorData = (raw, source) => {
         const brandAlias = { HOR: 'Hornbach', OBI: 'OBI', GLO: 'Globus', HEL: 'Hellweg', TOO: 'Toom', HAG: 'Hagebau' };
-        const entries = Array.isArray(raw)
-          ? raw
-          : Object.entries(raw).map(([name, v]) => ({ name, ...v }));
+        let entries;
+        if (Array.isArray(raw)) {
+          entries = raw;
+        } else if (raw && typeof raw === 'object') {
+          // Erlaubte Object-Formate:
+          //   { "name1": { brand, lat, lon }, "name2": {...} }
+          //   { "mitbewerber": [...] } oder { "data": [...] } → unwrap
+          if (Array.isArray(raw.mitbewerber)) entries = raw.mitbewerber;
+          else if (Array.isArray(raw.data))   entries = raw.data;
+          else if (Array.isArray(raw.competitors)) entries = raw.competitors;
+          else entries = Object.entries(raw).map(([name, v]) => ({ name, ...v }));
+        } else {
+          console.warn('[PLZ-Widget] competitor: unerwartetes Format', typeof raw);
+          entries = [];
+        }
         this._competitorData = entries.map(v => ({
           name:  v.name  ?? '–',
           brand: brandAlias[v.brand] ?? v.brand ?? 'Unbekannt',
           lat:   Number(v.lat),
           lon:   Number(v.lon),
         })).filter(c => Number.isFinite(c.lat) && Number.isFinite(c.lon));
-        console.info(`[PLZ-Widget] Mitbewerber: ${this._competitorData.length} Einträge`);
+        console.info(`[PLZ-Widget] Mitbewerber [${source}]: ${this._competitorData.length} valide Einträge (von ${entries.length} Rohzeilen)`);
         if (this.showCompetitors && this.map) this.updateCompetitorMarkers();
       };
 
-      fetch(COMPETITORS_URL, { cache: 'force-cache' })
+      // Fetch mit explizit deaktiviertem HTTP-Cache.
+      // 'force-cache' hatte das Problem, dass eine einmalig fehlgeschlagene
+      // Response (z.B. eine 404 von vor dem File-Upload) für die ganze
+      // Browser-Session gecacht blieb, sodass auch nach erfolgreichem
+      // File-Upload immer der Fallback griff.
+      console.info(`[PLZ-Widget] competitor.json Fetch beginnt: ${COMPETITORS_URL}`);
+      fetch(COMPETITORS_URL, { cache: 'no-cache' })
         .then(r => {
           console.info(`[PLZ-Widget] competitor.json HTTP ${r.status} | Content-Type: ${r.headers.get('content-type')}`);
+          if (!r.ok) {
+            // HTTP-Fehler → explizit als solchen behandeln, statt erst auf Text-Inhalt zu prüfen
+            throw new Error(`HTTP ${r.status}`);
+          }
           return r.text();
         })
         .then(text => {
           const clean = text.replace(/^\uFEFF/, '').trim();
+          // GitHub Raw liefert manchmal HTML statt 404 (z.B. wenn der Branch
+          // nicht existiert). Defensive Erkennung.
+          if (!clean) {
+            console.warn('[PLZ-Widget] competitor.json: leere Response — nutze Fallback');
+            applyCompetitorData(COMPETITOR_FALLBACK, 'Fallback');
+            return;
+          }
           if (clean.startsWith('<') || clean === '404: Not Found') {
-            console.warn('[PLZ-Widget] competitor.json nicht erreichbar — nutze Fallback-Daten');
-            applyCompetitorData(COMPETITOR_FALLBACK);
+            console.warn('[PLZ-Widget] competitor.json: HTML/404-Response statt JSON — nutze Fallback');
+            console.warn('[PLZ-Widget] Erste 200 Zeichen:', clean.slice(0, 200));
+            applyCompetitorData(COMPETITOR_FALLBACK, 'Fallback');
             return;
           }
           try {
-            applyCompetitorData(JSON.parse(clean));
+            const parsed = JSON.parse(clean);
+            applyCompetitorData(parsed, 'GitHub');
           } catch (parseErr) {
             console.error('[PLZ-Widget] competitor.json Parse-Fehler — nutze Fallback:', parseErr.message);
-            applyCompetitorData(COMPETITOR_FALLBACK);
+            console.error('[PLZ-Widget] Erste 200 Zeichen des Body:', clean.slice(0, 200));
+            applyCompetitorData(COMPETITOR_FALLBACK, 'Fallback');
           }
         })
         .catch(err => {
-          console.warn('[PLZ-Widget] competitor.json Fetch-Fehler — nutze Fallback:', err.message);
-          applyCompetitorData(COMPETITOR_FALLBACK);
+          console.warn(`[PLZ-Widget] competitor.json Fetch-Fehler (${err.name}: ${err.message}) — nutze Fallback`);
+          applyCompetitorData(COMPETITOR_FALLBACK, 'Fallback');
         });
 
       this._showCinematicLoader();
@@ -1695,6 +2019,12 @@
       this._dataPollTimer        = null;
       this._loadSecTimer         = null;
       this._previewInterval      = null;
+      // Phase 2: Sidebar-State zurücksetzen für sauberen Re-Connect.
+      // Bei Re-Connect ist das Shadow-DOM-Template wieder frisch, also dürfen
+      // die View-Container nicht als "schon gerendert" markiert sein.
+      this._docsViewInitialized  = false;
+      this._sidebarView          = null;
+      this._analysisOpenState    = null;
     }
 
     // Tracked setTimeout/Interval — werden in disconnectedCallback aufgeräumt
@@ -1881,58 +2211,69 @@
     // wieder entfernt, ist der Index in einem konsistenten Zustand.
     async togglePartnerErhebung(erhID) {
       if (!this._activeFilter || !this._activeErhebungen?.length) return;
-      const base = this._activeErhebungen[0];
-      if (erhID === base.erhID) return;   // Basis darf nicht entfernt werden
-
-      const idx = this._activeErhebungen.findIndex(e => e.erhID === erhID);
-      const wasActive = idx >= 0;
-
-      if (wasActive) {
-        // Wegschalten — kein BW-Roundtrip nötig, _activeErhebungen verkleinern.
-        // Der BW-Filter muss aber angepasst werden, sonst landen Rows der
-        // entfernten Erhebung weiter in _erhebungIndex (Speicherverschwendung,
-        // aber keine logischen Fehler weil _getAllActiveRows nur über
-        // _activeErhebungen iteriert).
-        this._activeErhebungen.splice(idx, 1);
-      } else {
-        // Dazuschalten — Erhebung mit Basis-Jahr/Nummer hinzufügen
-        this._activeErhebungen.push({ erhID, jahr: base.jahr, nummer: base.nummer });
+      // Bug 22 Fix: Double-Click-Schutz. Wenn ein BW-Reload für eine vorige
+      // Partner-Toggle-Aktion läuft, blockieren wir weitere Klicks — sonst
+      // gibt es Race Conditions zwischen den Reloads.
+      if (this._partnerToggleInProgress) {
+        console.info('[PLZ-Widget] togglePartnerErhebung blockiert: vorige Aktion läuft noch');
+        return;
       }
+      this._partnerToggleInProgress = true;
+      try {
+        const base = this._activeErhebungen[0];
+        if (erhID === base.erhID) return;   // Basis darf nicht entfernt werden
 
-      // BW-Filter aktualisieren mit neuer ErhID-Liste
-      const allErhIDs = this._activeErhebungen.map(e => e.erhID);
-      const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
+        const idx = this._activeErhebungen.findIndex(e => e.erhID === erhID);
+        const wasActive = idx >= 0;
 
-      // Phase-1 (Punkt 2-Bug): Index muss mit der neuen aktiven Liste neu
-      // gebaut werden — sonst sind die neu hinzugekommenen Erhebungen noch
-      // im "fremd"-Modus (nur HZ=X) und Nachbar-NL-Umsätze fehlen. Bei einem
-      // BW-Reload würde render() das ohnehin neu machen, aber das verhindert
-      // einen Zwischenzustand mit falschen Zahlen.
-      // Aggregat-Cache invalidieren — die Pre-Aggregate sind jetzt veraltet
-      // (Partner-Daten haben sich geändert).
-      this._erhebungIndex = null;
-      this._erhebungAggregatesCache?.clear();
+        if (wasActive) {
+          this._activeErhebungen.splice(idx, 1);
+        } else {
+          this._activeErhebungen.push({ erhID, jahr: base.jahr, nummer: base.nummer });
+        }
 
-      if (switched) {
-        // Phase-1: User-Feedback — Loader während BW reload läuft, sonst
-        // wirkt der Click "stumm" für 2-5 Sekunden.
-        this._showCinematicLoader?.();
-        const action = wasActive ? 'wird entfernt' : 'wird hinzugefügt';
-        this._updateLoaderPhase?.(1, `${erhID} ${action}…`);
-        // Daten werden nachgeladen, dann triggert _scheduleDataPoll → render()
-        this._fullDataLoaded = true;
-        if (!this._renderInProgress) this._scheduleDataPoll();
-      } else {
-        // Fallback: BW nicht erreichbar, lokal neu aggregieren.
-        // Index ist null → _getAllActiveRows triggert _buildErhebungIndex
-        // mit der neuen Active-Liste → korrekte Daten.
-        this.filteredData = this._getAllActiveRows();
-        this.applyRadiusFilter(Number(this.$('radius-slider')?.value ?? 40));
-        this.updateGeoLayer();
-        this.renderDataTable(this.filteredKennwerte);
+        // BW-Filter aktualisieren mit neuer ErhID-Liste
+        const allErhIDs = this._activeErhebungen.map(e => e.erhID);
+        const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
+
+        // Phase-1 (Punkt 2-Bug): Index muss mit der neuen aktiven Liste neu
+        // gebaut werden — sonst sind die neu hinzugekommenen Erhebungen noch
+        // im "fremd"-Modus (nur HZ=X) und Nachbar-NL-Umsätze fehlen. Bei einem
+        // BW-Reload würde render() das ohnehin neu machen, aber das verhindert
+        // einen Zwischenzustand mit falschen Zahlen.
+        // Aggregat-Cache invalidieren — die Pre-Aggregate sind jetzt veraltet
+        // (Partner-Daten haben sich geändert).
+        this._erhebungIndex = null;
+        this._erhebungAggregatesCache?.clear();
+
+        if (switched) {
+          // Phase-1: User-Feedback — Loader während BW reload läuft, sonst
+          // wirkt der Click "stumm" für 2-5 Sekunden.
+          this._showCinematicLoader?.();
+          const action = wasActive ? 'wird entfernt' : 'wird hinzugefügt';
+          this._updateLoaderPhase?.(1, `${erhID} ${action}…`);
+          // Daten werden nachgeladen, dann triggert _scheduleDataPoll → render()
+          this._fullDataLoaded = true;
+          if (!this._renderInProgress) this._scheduleDataPoll();
+        } else {
+          // Fallback: BW nicht erreichbar, lokal neu aggregieren.
+          // Index ist null → _getAllActiveRows triggert _buildErhebungIndex
+          // mit der neuen Active-Liste → korrekte Daten.
+          this.filteredData = this._getAllActiveRows();
+          this.applyRadiusFilter(Number(this.$('radius-slider')?.value ?? 40));
+          this.updateGeoLayer();
+          this.renderDataTable(this.filteredKennwerte);
+        }
+        // UI-Update: Partner-Picker re-rendern
+        this._renderPartnerErhebungPicker();
+      } finally {
+        // Flag wird mit kleinem Delay zurückgesetzt, damit der BW-Reload
+        // wirklich starten kann bevor der nächste Klick verarbeitet wird.
+        // Das render() setzt _renderInProgress, was der primäre Schutz ist —
+        // dieses Flag schützt nur den kurzen Moment zwischen Click und
+        // Reload-Start.
+        this._setTimeout(() => { this._partnerToggleInProgress = false; }, 400);
       }
-      // UI-Update: Partner-Picker re-rendern
-      this._renderPartnerErhebungPicker();
     }
 
     // Gemeinsame Struktur-Ableitung: {erhID: {jahr: Set<nummer>}}
@@ -2116,9 +2457,13 @@
       this.$('panel-home-btn')?.setAttribute('disabled', '');
       this.$('panel-overview-btn')?.setAttribute('disabled', '');
 
-      // Welcome-Guide rendern (sonst bleibt der Tabellen-Container leer
-      // bis _resetToHome aufgerufen wird).
-      this.renderDataTableFromEntries([]);
+      // Phase 2: Sidebar im Hauptmenü → nur Anleitung verfügbar.
+      // Die anderen Views (PLZ / Erhebungsübersicht / Erweiterte Analyse)
+      // werden erst nach loadErhebung() aktiviert.
+      this._setSidebarEnabled(false);
+      if (this._sidebarView == null) {
+        this._switchSidebarView('docs');
+      }
 
       console.info(`[PLZ-Widget] Bootstrap: ${rows.length} Rows in ${(performance.now() - t0).toFixed(0)}ms`);
     }
@@ -2494,249 +2839,29 @@
       });
     }
 
-    _renderWelcomeGuide(container) {
-      const guide = document.createElement('div');
-      guide.className = 'welcome-guide';
-      const modes = [
-        ['📊', 'WK-Analyse',         'Werbekosten-Anteile je PLZ. Grün = HZ-bestreut, Blau = potentiell nicht bestreut. Klicke auf eine PLZ für Detailwerte.'],
-        ['💶', 'Umsatz-Analyse',     'Umsatzverteilung nach Kategorien (Stationär, Pluscard, R&A, KUBE OS). Absolut-, Pro-HH- oder Werbeanteil-Darstellung.'],
-        ['⚠️', 'Doppelbestreuung',   'Im WK-Modus: zeigt PLZs, die von mehreren Erhebungen (gleicher Jahr/Nummer) gleichzeitig bestreut werden.'],
-        ['📍', 'Bestreuungs-Overlay', 'Im Umsatz-Modus: pulsierende Konturen für HZ-bestreute Gebiete.'],
-      ];
-      const tools = [
-        ['🔴', 'Radius-Slider',     'Oben in der Mitte: Einzugsgebiet festlegen. Nur PLZs im Radius werden ausgewertet.'],
-        ['🏢', 'NL-Filter',          '↕ Erhebungsübersicht: alle NLs mit Umsatz-Kennzahlen. Klick filtert auf diese NL; Mehrfachauswahl möglich.'],
-        ['🗺️', 'Kartenebenen',       'Karten-Button: OpenStreetMap ein-/ausblenden. Legende-Button: Farbskala anzeigen.'],
-        ['📋', 'Tabelle sortieren', 'Klick auf Spalten-Header sortiert. Klick auf Zeile markiert die PLZ auf der Karte.'],
-      ];
-      const card = (icon, title, desc) => {
-        const div = document.createElement('div');
-        div.className = 'welcome-guide-card';
-        div.innerHTML = `
-          <div class="welcome-guide-card-icon">${icon}</div>
-          <div>
-            <div class="welcome-guide-card-title">${escapeHtml(title)}</div>
-            <div class="welcome-guide-card-desc">${escapeHtml(desc)}</div>
-          </div>`;
-        return div;
-      };
-
-      // Hero
-      const hero = document.createElement('div');
-      hero.style.cssText = 'text-align:center;padding:12px 0 6px;';
-      hero.innerHTML = `
-        <div style="font-size:2.2rem;margin-bottom:6px;">🗺️</div>
-        <div style="font-size:0.9rem;font-weight:700;color:var(--gray-700);margin-bottom:3px;">Willkommen zur PLZ-Analyse</div>
-        <div style="font-size:0.76rem;color:var(--gray-500);line-height:1.6;">
-          Wähle oben <strong style="color:var(--gray-700)">ErhebungsID → Jahr → Nummer</strong>
-          und klicke auf <strong style="color:var(--red)">Anzeigen</strong>.
-        </div>`;
-      guide.appendChild(hero);
-
-      // Schnellstart
-      const quickstart = document.createElement('div');
-      quickstart.style.cssText = 'background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius-md);padding:8px 11px;font-size:0.74rem;color:var(--gray-600);line-height:1.6;';
-      quickstart.innerHTML = `
-        <strong style="color:var(--red);display:block;margin-bottom:3px;">⚡ Schnellstart</strong>
-        <ol style="margin:0;padding-left:16px;display:flex;flex-direction:column;gap:2px;">
-          <li>ErhebungsID im ersten Dropdown wählen</li>
-          <li>Jahr auswählen → Erhebungsnummer auswählen</li>
-          <li><strong>Anzeigen</strong> klicken</li>
-          <li>PLZ auf Karte oder Tabelle anklicken</li>
-        </ol>`;
-      guide.appendChild(quickstart);
-
-      // Modi
-      const modesLabel = document.createElement('div');
-      modesLabel.className = 'welcome-guide-section-label';
-      modesLabel.textContent = 'Analyse-Modi';
-      guide.appendChild(modesLabel);
-      const modesGrid = document.createElement('div');
-      modesGrid.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
-      modes.forEach(m => modesGrid.appendChild(card(...m)));
-      guide.appendChild(modesGrid);
-
-      // Tools
-      const toolsLabel = document.createElement('div');
-      toolsLabel.className = 'welcome-guide-section-label';
-      toolsLabel.textContent = 'Werkzeuge';
-      guide.appendChild(toolsLabel);
-      const toolsGrid = document.createElement('div');
-      toolsGrid.style.cssText = 'display:flex;flex-direction:column;gap:6px;';
-      tools.forEach(t => toolsGrid.appendChild(card(...t)));
-      guide.appendChild(toolsGrid);
-
-      // Tipp
-      const tipBox = document.createElement('div');
-      tipBox.style.cssText = 'padding:8px 10px;background:var(--gray-50);border-radius:var(--radius-md);border:1px solid var(--gray-100);font-size:0.7rem;color:var(--gray-500);line-height:1.5;margin-top:2px;';
-      tipBox.innerHTML = `💡 <strong style="color:var(--gray-600)">Tipp:</strong> Zoom in die Karte — ab Zoom-Stufe ${LABEL_ZOOM_MIN} werden PLZ-Namen direkt eingeblendet.`;
-      guide.appendChild(tipBox);
-
-      // ── Ausklappbare ausführliche Doku ──
-      guide.appendChild(this._buildDocsSection());
-
-      container.appendChild(guide);
-    }
-
-    _buildDocsSection() {
-      const section = document.createElement('div');
-      section.className = 'docs-section';
-      section.id = 'docs-section';
-
-      const header = document.createElement('div');
-      header.className = 'docs-section-header';
-      header.innerHTML = `
-        <span class="docs-section-icon">📖</span>
-        <span class="docs-section-title">Ausführliche Anleitung</span>
-        <span class="docs-section-chevron">▾</span>`;
-      section.appendChild(header);
-
-      const body = document.createElement('div');
-      body.className = 'docs-section-body';
-      const content = document.createElement('div');
-      content.className = 'docs-content';
-      content.innerHTML = `
-        <h4>Was zeigt das Widget?</h4>
-        <p>
-          Die <strong>PLZ-Analyse</strong> visualisiert die Werbe-Effizienz einer Erhebung
-          auf Postleitzahl-Ebene. Du siehst auf der Karte, welche PLZs durch eine
-          Niederlassung bestreut werden, wie hoch der Werbekosten-Anteil (WK%) ausfällt
-          und wie sich der Umsatz nach Vertriebskanälen verteilt.
-        </p>
-
-        <h4>Schritt 1 – Erhebung auswählen</h4>
-        <p>
-          Oben links wählst du nacheinander <strong>ErhebungsID</strong>,
-          <strong>Jahr</strong> und <strong>Erhebungsnummer</strong>. Sobald alle drei
-          Dropdowns gefüllt sind, wird der <strong>Anzeigen</strong>-Button aktiv.
-        </p>
-        <div class="docs-key-block">
-          <strong>Doppelbestreuung aus</strong> (Standard) lädt nur die ausgewählte
-          Erhebung — schnell, ~1–3 s.<br>
-          <strong>Doppelbestreuung ein</strong> lädt zusätzlich alle anderen Erhebungen
-          mit gleichem Jahr und gleicher Nummer, um Überschneidungen zu erkennen.
-          Längere Ladezeit, dafür siehst du auf der Karte (▲ orange Marker), welche PLZs
-          mehrfach bestreut werden.
-        </div>
-
-        <h4>Schritt 2 – Analyse-Modus</h4>
-        <p>
-          Unten rechts auf der Karte schaltest du zwischen <strong>📊 WK</strong>
-          (Werbekosten-Anteil) und <strong>💶 Umsatz</strong> um.
-        </p>
-        <ul>
-          <li><strong>WK-Modus:</strong> Heatmap nach WK%. Grün = HZ-bestreut, Blau = nicht
-            bestreut (potentielle WK), Grau = keine Daten. Doppelbestreuung-Checkbox
-            blendet ▲-Marker ein.</li>
-          <li><strong>Umsatz-Modus:</strong> Heatmap nach Umsatzhöhe. Im Panel kannst du
-            zwischen <em>Umsatz</em> (gesamt) und <em>Werbeumsatz</em> (mit optionalem
-            Mitkauf) wechseln, sowie zwischen <em>Absolut</em>, <em>pro Haushalt</em>
-            und <em>Werbeanteil</em>. Die vier Kategorie-Toggle-Buttons (Stationär,
-            Pluscard, R&amp;A, KUBE OS) lassen dich einzelne Vertriebskanäle ein- und
-            ausblenden.</li>
-        </ul>
-
-        <h4>Schritt 3 – Radius einstellen</h4>
-        <p>
-          Der <strong>Radius-Slider</strong> oben in der Mitte (10–100 km) definiert
-          das Einzugsgebiet rund um die Niederlassung(en) der Erhebung. Nur PLZs
-          innerhalb dieses Radius gehen in die Tabelle und in die Streuverlust-
-          Berechnung ein.
-        </p>
-
-        <h4>Schritt 4 – PLZ inspizieren</h4>
-        <ul>
-          <li>Klick auf eine PLZ in der <strong>Tabelle</strong> oder auf der
-            <strong>Karte</strong> öffnet das Detail-Popup rechts.</li>
-          <li>Das <strong>Übersichts-Popup</strong> (📋-Button im Footer) zeigt
-            Aggregate für die gesamte Erhebung — Umsatz, Anzahl HZ-PLZs,
-            Streuverlust-Quote.</li>
-          <li>Die Tabellen-Spalten sind <strong>sortierbar</strong> per Klick auf den
-            Spalten-Header.</li>
-        </ul>
-
-        <h4>NL-Filter (Erhebungsübersicht)</h4>
-        <p>
-          Der <strong>↕ Erhebungsübersicht</strong>-Button am unteren Rand des
-          Filter-Bereichs öffnet eine Tabelle mit allen Niederlassungen der Erhebung
-          und ihren Erfassungs-Kennzahlen. Klick auf eine NL filtert die Karte und
-          alle Berechnungen auf diese eine Niederlassung. Mehrfachauswahl möglich
-          (Klick auf weitere NLs). Erneuter Klick deselektiert.
-        </p>
-
-        <h4>Kennzahlen verstehen</h4>
-        <ul>
-          <li><strong>WK %:</strong> Werbekosten geteilt durch Umsatz, in Prozent.
-            Niedrig = effizient.</li>
-          <li><strong>Umsatz Brutto (hochger.):</strong> Hochgerechneter Umsatz aus
-            der Erhebung — Basis für alle WK-Berechnungen.</li>
-          <li><strong>HZ:</strong> ● grün = Hauszustellung erfolgte. ▲ orange =
-            mehrfache HZ-Bestreuung (Doppelbestreuung). Kein Symbol = nicht
-            bestreut.</li>
-          <li><strong>Streuverlust:</strong> Umsatz, der außerhalb des Radius
-            entstanden ist — geht ins Werbe-Gebiet aber nicht in die Reichweite ein.</li>
-        </ul>
-
-        <h4>Karten-Tools</h4>
-        <ul>
-          <li><strong>🗺️ Kartenstil</strong> (rechts unten): OpenStreetMap-Hintergrund
-            ein- oder ausblenden.</li>
-          <li><strong>☰ Legende</strong> (links unten): Farbskala für die aktuelle
-            Heatmap einblenden.</li>
-          <li><strong>← Hauptmenü</strong> im Panel-Footer: zurück zum Startbildschirm,
-            Filter werden zurückgesetzt.</li>
-          <li><strong>Mitbewerber-Checkbox</strong>: blendet bekannte
-            Wettbewerber-Standorte (Hornbach, OBI, Globus, Hellweg, Toom, Hagebau)
-            als 🔨-Marker ein.</li>
-        </ul>
-
-        <h4>Tipps für die Praxis</h4>
-        <ul>
-          <li>Bei <strong>vielen NLs</strong> in einer Erhebung lohnt es sich, den
-            Radius auf 20–30 km zu reduzieren — sonst überlappen sich die
-            Einzugsgebiete stark.</li>
-          <li>Im <strong>Umsatz-Modus / Werbeanteil</strong> siehst du, wie groß der
-            Anteil des werbeinduzierten Umsatzes pro PLZ ist — gut für die Bewertung
-            einer einzelnen Kampagne.</li>
-          <li>Beim <strong>Wechsel zwischen Erhebungen</strong> bleiben Radius- und
-            Kategorie-Einstellungen erhalten — Modus-Auswahl wird auf WK
-            zurückgesetzt.</li>
-        </ul>
-
-        <h4>Bei Problemen</h4>
-        <p>
-          Wenn die Karte leer bleibt oder Daten fehlen: Erhebung erneut auswählen,
-          Browser-Tab neu laden, oder im SAC-Backend prüfen, ob die DataSource Daten
-          für die gewählte Kombination liefert. Der Bootstrap-Status wird in der
-          Browser-Konsole geloggt (<code>[PLZ-Widget]</code>-Präfix).
-        </p>
-      `;
-      body.appendChild(content);
-      section.appendChild(body);
-
-      // Toggle
-      this._on(header, 'click', () => {
-        section.classList.toggle('open');
-      });
-
-      return section;
-    }
 
     renderDataTableFromEntries(entries) {
       const container = this.$('table-container');
       if (!container) return;
       container.innerHTML = '';
-      // (Die nötigen Layout-Properties – display:flex, flex-direction:column,
-      // min-height:0, height:100% – kommen bereits aus der .table-wrapper-Regel.
-      // Frühere Versionen setzten diese hier inline; das überschrieb die
-      // nl-info-active-Translation und führte zu Flackern beim NL-Tabellen-Toggle.)
+      // (Layout-Properties kommen aus .table-wrapper-CSS-Regel.)
 
       entries = entries.filter(([plz]) => plz !== '00000');
       if (this.plzImRadius && this.plzImRadius.size > 0) {
         entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
       }
 
-      if (!this._activeFilter) { this._renderWelcomeGuide(container); return; }
+      // Phase 2: Kein Welcome-Guide mehr im PLZ-Tabellen-Container.
+      // Im Hauptmenü ist der PLZ-View ohnehin nicht aktiv (Anleitung-View
+      // ist Default). Wenn doch jemand hier ankommt ohne aktive Erhebung,
+      // zeigen wir nur einen kurzen Hinweis.
+      if (!this._activeFilter) {
+        const empty = document.createElement('div');
+        empty.style.cssText = 'padding:24px;text-align:center;color:#adb5bd;font-size:0.85rem;';
+        empty.textContent = 'Bitte zuerst eine Erhebung auswählen.';
+        container.appendChild(empty);
+        return;
+      }
 
       if (!entries.length) {
         const empty = document.createElement('div');
@@ -2999,6 +3124,12 @@
       this._on(this.$('legend-toggle-btn'),   'click', () => this.$('heatmap-legend').classList.toggle('hidden'));
       this._on(this.$('panel-home-btn'),      'click', () => this._resetToHome());
       this._on(this.$('panel-overview-btn'),  'click', () => this.showOverviewPopup());
+
+      // Sidebar-Icon-Klicks (Phase 2): Hauptinhalt zwischen den 4 Bereichen
+      // umschalten. Klick auf aktives Icon deselektiert es → Karte breit.
+      // Sidebar-Click-Handler: zentral via _setupSidebarHandlers früh
+      // in connectedCallback registriert (siehe Bug 17 Fix). Doppel-Setup
+      // wäre redundant.
 
       const refreshMapAndPopup = () => {
         this._refreshAll();
@@ -4206,61 +4337,48 @@
         });
       }
 
-      // Erhebungsübersicht-Toggle
-      if (!this.$('info-toggle-btn')) {
-        const infoBtn = document.createElement('button');
-        infoBtn.id = 'info-toggle-btn';
-        infoBtn.className = 'info-toggle-btn';
-        infoBtn.type = 'button';
-        // Phase-1: Label + Badge mit GF-Count (Hinweis auf Multi-GF-Picker).
-        // Wird via _updateOverviewBtnBadge() bei jeder Änderung aktualisiert.
-        infoBtn.innerHTML = `
-          <span class="info-toggle-label">↕ Erhebungsübersicht</span>
-          <span class="info-toggle-badge" id="info-toggle-badge"></span>`;
-        this._on(infoBtn, 'click', () => {
-          const nlBox = this.$('nl-info-container');
-          const filter = this._shadowRoot.querySelector('.filter-container');
-          if (!nlBox) return;
-          if (nlBox.classList.contains('show')) {
-            nlBox.classList.remove('show');
-            filter.classList.remove('nl-info-active');
-          } else {
-            this.prepareErhebungsInfo();
-            this.renderErhebungsInfoTable();
-            nlBox.classList.add('show');
-            filter.classList.add('nl-info-active');
-          }
-        });
-        this._shadowRoot.querySelector('.filter-container').appendChild(infoBtn);
-      }
+      // Phase 2: Der alte "↕ Erhebungsübersicht"-Button im Filter-Bereich
+      // ist mit dem Sidebar-Refactor obsolet — die NL-Tabelle wird jetzt
+      // über das Sidebar-Icon 📊 erreicht. Das Badge mit dem GF-Count
+      // sitzt jetzt am Sidebar-Icon (siehe _updateOverviewBtnBadge).
     }
 
-    // ── Erhebungsübersicht-Badge aktualisieren (Phase 1) ────────────────
-    // Zeigt im "↕ Erhebungsübersicht"-Button rechts ein Badge mit der Anzahl
-    // aktiver GF-Bereiche, sobald 2+ aktiv sind. Bei Single-Erhebung wird
-    // ein dezenter "+ weitere GF"-Hinweis gezeigt (falls Partner verfügbar
-    // sind), damit der User weiß, dass es im Menü etwas zu entdecken gibt.
+    // ── Sidebar-Icon-Badges aktualisieren (Phase 2) ─────────────────────
+    // - Erhebungsübersicht-Icon (📊): zeigt GF-Count im Multi-Modus oder
+    //   '+N' wenn weitere Partner verfügbar sind aber noch nicht aktiv.
+    // - Erweiterte-Analyse-Icon (🔬): dezenter Punkt-Hinweis wenn Partner
+    //   verfügbar sind und der User die Analyse-View noch nicht geöffnet hat.
+    // Methode behält den alten Namen `_updateOverviewBtnBadge` aus Backwards-
+    // Compat, kümmert sich aber jetzt um beide Icon-Badges.
     _updateOverviewBtnBadge() {
-      const badge = this.$('info-toggle-badge');
-      if (!badge) return;
-      const btn = this.$('info-toggle-btn');
+      const overviewBadge = this.$('sidebar-badge-overview');
+      const analysisBadge = this.$('sidebar-badge-analysis');
       const count = this._activeErhebungen?.length || 0;
       const partners = this._getPartnerErhebungen?.() || [];
 
-      // Erst aufräumen
-      badge.classList.remove('badge-multi', 'badge-hint', 'badge-pulse');
-      badge.textContent = '';
-      btn?.classList.remove('has-badge-multi');
+      // Reset
+      [overviewBadge, analysisBadge].forEach(b => {
+        if (!b) return;
+        b.classList.remove('badge-hint');
+        b.textContent = '';
+      });
 
-      if (count >= 2) {
-        // Multi-Modus aktiv → klares Badge mit Anzahl
-        badge.textContent = `${count} GF`;
-        badge.classList.add('badge-multi');
-        btn?.classList.add('has-badge-multi');
-      } else if (count === 1 && partners.length > 0) {
-        // Hinweis: weitere GF-Bereiche verfügbar (subtiler)
-        badge.textContent = `+${partners.length}`;
-        badge.classList.add('badge-hint');
+      // 📊 Erhebungsübersicht-Badge
+      if (overviewBadge) {
+        if (count >= 2) {
+          overviewBadge.textContent = `${count}`;
+        }
+      }
+      // 🔬 Erweiterte-Analyse-Badge: dezenter Hinweis bei verfügbaren Partnern
+      if (analysisBadge) {
+        if (count >= 2) {
+          // Multi-Modus aktiv → Badge mit Anzahl
+          analysisBadge.textContent = `${count}`;
+        } else if (count === 1 && partners.length > 0) {
+          // Hinweis: weitere GF-Bereiche verfügbar
+          analysisBadge.textContent = `+${partners.length}`;
+          analysisBadge.classList.add('badge-hint');
+        }
       }
     }
 
@@ -4323,14 +4441,10 @@
       if (!container) return;
       container.innerHTML = '';
 
-      // Phase-1: Partner-Erhebungs-Picker oberhalb der NL-Tabelle.
-      // Nur einbauen wenn überhaupt Partner-Kandidaten existieren — sonst
-      // verschwenden wir Platz und verwirren den User.
-      const partners = this._getPartnerErhebungen();
-      if (partners.length > 0 || (this._activeErhebungen?.length || 0) > 1) {
-        const picker = this._buildPartnerErhebungPicker();
-        container.appendChild(picker);
-      }
+      // Phase 2: Der Partner-Erhebungs-Picker ist mit dem Sidebar-Refactor in
+      // die "Erweiterte Analyse"-View umgezogen. Die NL-Tabelle zeigt jetzt
+      // nur noch die NL-Daten — sauberere Trennung von Auswertung und
+      // GF-Verwaltung. Der Picker bleibt aufrufbar über das 🔬-Sidebar-Icon.
 
       const scroll = document.createElement('div'); scroll.classList.add('nl-info-scroll');
       const table  = document.createElement('table'); table.classList.add('nl-info-table');
@@ -4478,52 +4592,194 @@
         empty.textContent = 'Keine weiteren Erhebungen mit gleichem Jahr und gleicher Nummer verfügbar.';
         body.appendChild(empty);
       } else {
+        // Phase 2 — Bestätigungsbutton-Workflow:
+        // Statt jeden Klick sofort an BW zu schicken, sammeln wir Pending-
+        // Änderungen in `this._pendingPartners`. Erst beim "Anwenden"-Klick
+        // wird ein einziger BW-Roundtrip ausgelöst. Initial = aktueller State.
+        if (!this._pendingPartners) {
+          this._pendingPartners = new Set(this._activeErhebungen.slice(1).map(e => e.erhID));
+        }
+
         for (const p of partners) {
-          const isActive = this._isErhebungActive(p.erhID);
+          const isCurrentlyActive = this._isErhebungActive(p.erhID);
+          const isPending = this._pendingPartners.has(p.erhID);
+          // Visueller Status:
+          //   checked + pending-add  → wird hinzugefügt (war vorher inaktiv)
+          //   checked + active       → aktiv und bleibt
+          //   unchecked + active     → wird entfernt
+          //   unchecked + inaktiv    → inaktiv und bleibt
+          const willChange = isCurrentlyActive !== isPending;
+          let badgeText, classes = ['partner-erh-row'];
+          if (isPending) classes.push('checked');
+          if (willChange) classes.push('pending');
+          if (isPending && !isCurrentlyActive) {
+            classes.push('pending-add');
+            badgeText = 'wird hinzugefügt';
+          } else if (!isPending && isCurrentlyActive) {
+            classes.push('pending-remove');
+            badgeText = 'wird entfernt';
+          } else if (isCurrentlyActive) {
+            badgeText = 'aktiv';
+          } else {
+            badgeText = 'inaktiv';
+          }
           const row = document.createElement('div');
-          row.className = 'partner-erh-row' + (isActive ? ' checked' : '');
+          row.className = classes.join(' ');
           row.dataset.erhid = p.erhID;
           row.innerHTML = `
             <div class="partner-erh-checkbox"></div>
             <div class="partner-erh-name">${escapeHtml(this._fmtGF ? this._fmtGF(p.erhID) : p.erhID)}</div>
-            <span class="partner-erh-badge">${isActive ? 'aktiv' : 'inaktiv'}</span>
+            <span class="partner-erh-badge">${badgeText}</span>
           `;
-          this._on(row, 'click', () => this.togglePartnerErhebung(p.erhID));
+          // Click toggelt nur den Pending-State, kein BW-Reload
+          this._on(row, 'click', () => this._togglePendingPartner(p.erhID));
           body.appendChild(row);
         }
 
-        // Cross-GF-Doppelbestreuungs-Toggle (separat ein-/ausschaltbar, Default aus)
-        const crossRow = document.createElement('div');
-        crossRow.className = 'partner-cross-doppel-row' + (this._crossGfDoppelAktiv ? ' checked' : '');
-        crossRow.innerHTML = `
-          <div class="partner-erh-checkbox"></div>
-          <div class="partner-erh-name">▲ Cross-GF-Doppelbestreuung markieren</div>
-        `;
-        this._on(crossRow, 'click', () => {
-          this._crossGfDoppelAktiv = !this._crossGfDoppelAktiv;
-          crossRow.classList.toggle('checked', this._crossGfDoppelAktiv);
-          // Karten-Layer neu zeichnen, ohne Daten neu zu laden
-          this.updateGeoLayer();
-        });
-        body.appendChild(crossRow);
+        // Bug 10 Fix: Cross-GF-Doppelbestreuungs-Toggle nur sichtbar, wenn 2+
+        // Erhebungen aktuell aktiv sind (auf Basis des realen State, nicht
+        // Pending — sonst wäre die Logik mit "hat noch keine Multi-Daten"
+        // inkonsistent).
+        if (activeCount >= 2) {
+          const crossRow = document.createElement('div');
+          crossRow.className = 'partner-cross-doppel-row' + (this._crossGfDoppelAktiv ? ' checked' : '');
+          crossRow.innerHTML = `
+            <div class="partner-erh-checkbox"></div>
+            <div class="partner-erh-name">▲ Cross-GF-Doppelbestreuung markieren</div>
+          `;
+          this._on(crossRow, 'click', () => {
+            this._crossGfDoppelAktiv = !this._crossGfDoppelAktiv;
+            crossRow.classList.toggle('checked', this._crossGfDoppelAktiv);
+            // Karten-Layer neu zeichnen, ohne Daten neu zu laden
+            this.updateGeoLayer();
+          });
+          body.appendChild(crossRow);
+        }
+
+        // ── Bestätigungsbutton-Leiste ─────────────────────────────────
+        // Wird nur sichtbar, wenn sich der Pending-State vom realen State
+        // unterscheidet. Bei keiner Änderung bleibt sie ausgeblendet → das
+        // Standard-Aussehen des Pickers ist identisch zum vorigen Verhalten.
+        const currentActiveSet = new Set(this._activeErhebungen.slice(1).map(e => e.erhID));
+        const hasChanges = this._pendingPartners.size !== currentActiveSet.size
+          || [...this._pendingPartners].some(id => !currentActiveSet.has(id));
+        if (hasChanges) {
+          const actionBar = document.createElement('div');
+          actionBar.id = 'partner-erh-actions';
+          // Zähle was sich ändert
+          const toAdd = [...this._pendingPartners].filter(id => !currentActiveSet.has(id));
+          const toRemove = [...currentActiveSet].filter(id => !this._pendingPartners.has(id));
+          const parts = [];
+          if (toAdd.length)    parts.push(`+${toAdd.length}`);
+          if (toRemove.length) parts.push(`−${toRemove.length}`);
+          actionBar.innerHTML = `
+            <div class="partner-actions-info">
+              <span class="partner-actions-icon">●</span>
+              <span class="partner-actions-text">Änderungen ausstehend (${parts.join(', ')})</span>
+            </div>
+            <div class="partner-actions-buttons">
+              <button type="button" class="partner-action-cancel" id="partner-action-cancel">Abbrechen</button>
+              <button type="button" class="partner-action-apply" id="partner-action-apply">Anwenden</button>
+            </div>
+          `;
+          body.appendChild(actionBar);
+          this._on(actionBar.querySelector('#partner-action-cancel'), 'click', () => this._cancelPendingPartners());
+          this._on(actionBar.querySelector('#partner-action-apply'),  'click', () => this._applyPendingPartners());
+        }
       }
 
       return wrapper;
+    }
+
+    // ── Pending-Partner-Workflow (Phase 2) ──────────────────────────────
+    // Klicks auf Partner-Zeilen toggeln nur den Pending-State, lokal.
+    // Erst "Anwenden" schickt einen einzigen BW-Reload mit allen Änderungen.
+    _togglePendingPartner(erhID) {
+      if (!this._pendingPartners) {
+        this._pendingPartners = new Set(this._activeErhebungen.slice(1).map(e => e.erhID));
+      }
+      if (this._pendingPartners.has(erhID)) {
+        this._pendingPartners.delete(erhID);
+      } else {
+        this._pendingPartners.add(erhID);
+      }
+      // Nur Picker-UI neu rendern, kein BW-Reload
+      if (this._sidebarView === 'analysis') this._renderAnalysisView();
+    }
+
+    _cancelPendingPartners() {
+      // Pending-Set verwerfen → Sync mit echtem State
+      this._pendingPartners = new Set(this._activeErhebungen.slice(1).map(e => e.erhID));
+      if (this._sidebarView === 'analysis') this._renderAnalysisView();
+    }
+
+    async _applyPendingPartners() {
+      if (!this._activeFilter || !this._activeErhebungen?.length || !this._pendingPartners) return;
+      if (this._partnerToggleInProgress) {
+        console.info('[PLZ-Widget] _applyPendingPartners blockiert: vorige Aktion läuft noch');
+        return;
+      }
+      this._partnerToggleInProgress = true;
+      try {
+        const base = this._activeErhebungen[0];
+        // Neue Liste aufbauen: Basis + alle pending-Partner
+        // (Reihenfolge: Basis zuerst, dann Partner in Pending-Reihenfolge)
+        const newList = [base];
+        for (const pid of this._pendingPartners) {
+          newList.push({ erhID: pid, jahr: base.jahr, nummer: base.nummer });
+        }
+
+        // Check: hat sich überhaupt was geändert?
+        const oldIds = this._activeErhebungen.map(e => e.erhID).join('|');
+        const newIds = newList.map(e => e.erhID).join('|');
+        if (oldIds === newIds) {
+          this._pendingPartners = null;
+          if (this._sidebarView === 'analysis') this._renderAnalysisView();
+          return;
+        }
+
+        this._activeErhebungen = newList;
+        // Pending-Set zurücksetzen → wird beim nächsten Render aus dem
+        // neuen Active-State neu initialisiert
+        this._pendingPartners = null;
+
+        const allErhIDs = newList.map(e => e.erhID);
+        const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
+
+        // Index + Aggregat-Cache invalidieren (siehe Punkt-2-Bug Phase 1)
+        this._erhebungIndex = null;
+        this._erhebungAggregatesCache?.clear();
+
+        if (switched) {
+          this._showCinematicLoader?.();
+          this._updateLoaderPhase?.(1, `${newList.length} GF-Bereiche werden geladen…`);
+          this._fullDataLoaded = true;
+          if (!this._renderInProgress) this._scheduleDataPoll();
+        } else {
+          // Fallback ohne BW
+          this.filteredData = this._getAllActiveRows();
+          this.applyRadiusFilter(Number(this.$('radius-slider')?.value ?? 40));
+          this.updateGeoLayer();
+          this.renderDataTable(this.filteredKennwerte);
+        }
+        this._renderPartnerErhebungPicker();
+      } finally {
+        this._setTimeout(() => { this._partnerToggleInProgress = false; }, 400);
+      }
     }
 
     // Nur Picker-UI neu rendern (z.B. nach togglePartnerErhebung), ohne die
     // NL-Tabelle anzufassen. Die NL-Tabelle wird sowieso durch das danach
     // laufende render() neu aufgebaut.
     _renderPartnerErhebungPicker() {
-      const existing = this.$('partner-erh-picker');
-      if (!existing) return;
-      const fresh = this._buildPartnerErhebungPicker();
-      // Eingeklappt-Status erhalten beim Re-Render
-      if (!existing.classList.contains('collapsed')) {
-        fresh.classList.remove('collapsed');
+      // Phase 2: Picker lebt jetzt in der Erweiterte-Analyse-View. Wenn diese
+      // gerade aktiv ist, einfach komplett neu rendern (einfacher und sicherer
+      // als selektives Picker-Replacement). Wenn nicht aktiv, ist nichts zu tun
+      // — beim nächsten Öffnen baut _renderAnalysisView den Picker frisch auf.
+      if (this._sidebarView === 'analysis') {
+        this._renderAnalysisView();
       }
-      existing.replaceWith(fresh);
-      // Badge im Erhebungsübersicht-Button mitziehen
+      // Sidebar-Icon-Badges in jedem Fall aktualisieren
       this._updateOverviewBtnBadge();
     }
 
@@ -4538,8 +4794,9 @@
     }
 
     closeNLTable() {
-      this.$('nl-info-container')?.classList.remove('show');
-      this._shadowRoot.querySelector('.filter-container')?.classList.remove('nl-info-active');
+      // Phase 2: Im neuen Sidebar-Layout ist die NL-Tabelle ein eigener View,
+      // kein Overlay mehr. Diese Methode bleibt als No-op-Stub erhalten für
+      // bestehende Aufrufer, die sie defensiv aufrufen.
     }
 
 
@@ -5329,7 +5586,9 @@
     // ── loadErhebung ───────────────────────────────────────────────────
     async loadErhebung(erhID, jahr, nummer) {
       this.$('heatmap-legend')?.classList.add('hidden');
-      this.closeNLTable();
+      // Phase 2: Sidebar aktivieren, Default-View = PLZ-Tabelle
+      this._setSidebarEnabled(true);
+      this._switchSidebarView('plz');
       // Doppelbestreuungs-Bar collapsed während der Erhebung —
       // gibt der PLZ-Tabelle mehr vertikalen Platz.
       this.$('doppel-toggle-bar')?.classList.add('collapsed');
@@ -5357,8 +5616,15 @@
       // sein weil sich Radius/NL-Filter mit der neuen Erhebung änderen können.
       this._erhebungAggregatesCache.clear();
       this._crossGfDoppelAktiv = false;
+      // Pending-Partners-Set verwerfen — gehört zur alten Erhebungs-Session.
+      // Beim nächsten Picker-Render wird es aus dem neuen Active-State initialisiert.
+      this._pendingPartners = null;
       this._fullDataLoaded = true;
       this._sortState = { column: null, direction: 'asc' };  // Sortierung für neue Erhebung zurücksetzen
+      // Bug 28 Fix: Sidebar-Icon-Badges sofort aktualisieren — der echte
+      // Render-Pass macht das später nochmal, aber so vermeidet man einen
+      // kurzzeitigen "leeren Badge"-Zustand zwischen Klick und render-Ende.
+      this._updateOverviewBtnBadge?.();
 
       const loadStart = Date.now();
       if (this._loadSecTimer) this._clearInterval(this._loadSecTimer);
@@ -5419,9 +5685,10 @@
 
             requestAnimationFrame(() => {
               this.prepareErhebungsInfo();
-              const nlBox = this.$('nl-info-container');
-              if (nlBox?.classList.contains('show')) {
+              if (this._sidebarView === 'overview') {
                 this.renderErhebungsInfoTable();
+              } else if (this._sidebarView === 'analysis') {
+                this._renderAnalysisView();
               }
               this._updateOverviewBtnBadge();
               this.$('map-interaction-block')?.classList.add('hidden');
@@ -5548,13 +5815,12 @@
         requestAnimationFrame(() => {
           if (isStale()) return;   // Home wurde inzwischen geklickt
           this.prepareErhebungsInfo();
-          // Phase-1: Wenn die Erhebungsübersicht-Tabelle gerade geöffnet ist,
-          // live neu rendern (z.B. nach togglePartnerErhebung). Sonst würde
-          // der User noch die alte NL-Liste sehen, bis er die Tabelle
-          // manuell schließt und wieder öffnet.
-          const nlBox = this.$('nl-info-container');
-          if (nlBox?.classList.contains('show')) {
+          // Phase 2: View-spezifisch live-aktualisieren nach BW-Reload.
+          // 'overview' = NL-Tabelle, 'analysis' = Partner-Picker mit Cross-GF.
+          if (this._sidebarView === 'overview') {
             this.renderErhebungsInfoTable();
+          } else if (this._sidebarView === 'analysis') {
+            this._renderAnalysisView();
           }
           // Badge im Erhebungsübersicht-Button aktualisieren (zeigt
           // GF-Count im Multi-Modus + Hinweis bei verfügbaren Partnern).
@@ -5571,6 +5837,460 @@
       }
     }
 
+    // ── Erweiterte Analyse View rendern ────────────────────────────────
+    // Sektion 1: Weitere GF-Bereiche (Partner-Picker)
+    // Sektion 2: Vergleich (Phase 2, Platzhalter)
+    _renderAnalysisView() {
+      const container = this.$('sidebar-view-analysis');
+      if (!container) return;
+      // Bug 12 Fix: Open-State der Akkordeon-Sektionen über Re-Renders erhalten.
+      // Default beim allerersten Aufruf: Sektion 1 (Partner) offen, Sektion 2
+      // (Vergleich) geschlossen. Diese Init-Werte werden danach durch
+      // User-Toggles überschrieben und bleiben gespeichert.
+      this._analysisOpenState ||= { partner: true, compare: false };
+      const openState = this._analysisOpenState;
+
+      // Vor Re-Render aktuellen Zustand aus DOM lesen (falls vorhanden)
+      const oldPartner = container.querySelector('.analysis-section.partner-section');
+      const oldCompare = container.querySelector('.analysis-section.compare-section');
+      if (oldPartner) openState.partner = oldPartner.classList.contains('open');
+      if (oldCompare) openState.compare = oldCompare.classList.contains('open');
+
+      container.innerHTML = '';
+
+      const inner = document.createElement('div');
+      inner.className = 'analysis-content';
+
+      // ── Sektion 1: Weitere GF-Bereiche ─────────────────────────────
+      const partnerSection = document.createElement('div');
+      partnerSection.className = 'analysis-section partner-section' + (openState.partner ? ' open' : '');
+      partnerSection.innerHTML = `
+        <div class="analysis-section-header">
+          <span class="analysis-section-icon">🔀</span>
+          <span class="analysis-section-title">Weitere GF-Bereiche</span>
+          <span class="analysis-section-chevron">▾</span>
+        </div>
+        <div class="analysis-section-body" id="analysis-partner-body"></div>`;
+      inner.appendChild(partnerSection);
+      // Accordion-Toggle für Sektion
+      const partnerHeader = partnerSection.querySelector('.analysis-section-header');
+      this._on(partnerHeader, 'click', () => {
+        partnerSection.classList.toggle('open');
+        openState.partner = partnerSection.classList.contains('open');
+      });
+
+      // Partner-Picker-Inhalte einfügen
+      const partnerBody = partnerSection.querySelector('#analysis-partner-body');
+      if (this._activeErhebungen?.length > 0) {
+        const picker = this._buildPartnerErhebungPicker();
+        // Im neuen View immer aufgeklappt — Wrapper-Toggle macht das Accordion
+        picker.classList.remove('collapsed');
+        // Bug 8 Fix: Picker hat einen eigenen klickbaren Header mit eigenem
+        // Collapse. Im Analyse-View ist der Picker schon in einer Accordion-
+        // Sektion — Doppel-Toggle wäre verwirrend. Header daher ausblenden,
+        // die äußere Sektion übernimmt das Ein-/Ausklappen.
+        picker.classList.add('embedded-in-section');
+        partnerBody.appendChild(picker);
+      } else {
+        partnerBody.innerHTML = `<div class="analysis-empty">Erst eine Erhebung laden, dann sind weitere GF-Bereiche dazuschaltbar.</div>`;
+      }
+
+      // ── Sektion 2: Vergleich (Phase 2 – Platzhalter) ────────────────
+      const compareSection = document.createElement('div');
+      compareSection.className = 'analysis-section compare-section' + (openState.compare ? ' open' : '');
+      compareSection.innerHTML = `
+        <div class="analysis-section-header">
+          <span class="analysis-section-icon">📈</span>
+          <span class="analysis-section-title">Vergleich</span>
+          <span class="analysis-section-status">In Entwicklung</span>
+          <span class="analysis-section-chevron">▾</span>
+        </div>
+        <div class="analysis-section-body">
+          <div class="analysis-empty">
+            Hier kommt der <strong>Vergleichs-Modus</strong> hin: zwei oder mehr
+            Erhebungen mit unterschiedlichem Jahr/Nummer/GF-Bereich nebeneinander
+            mit Diff-Heatmap auf der Karte und A/B/Δ-Spalten in der Tabelle.
+            <br><br>
+            Geplante Funktionen:
+            <ul style="margin-top:6px;padding-left:18px;">
+              <li>Erhebung A vs. Erhebung B auswählen</li>
+              <li>Diff-Heatmap (rot = verschlechtert, grün = verbessert)</li>
+              <li>Bestreuungs-Differential (4-Farben-Karte)</li>
+              <li>Tabelle mit A/B/Δ-Spalten</li>
+            </ul>
+          </div>
+        </div>`;
+      inner.appendChild(compareSection);
+      const cmpHeader = compareSection.querySelector('.analysis-section-header');
+      this._on(cmpHeader, 'click', () => {
+        compareSection.classList.toggle('open');
+        openState.compare = compareSection.classList.contains('open');
+      });
+
+      container.appendChild(inner);
+    }
+
+    // ── Anleitung View rendern ─────────────────────────────────────────
+    // 4 Sub-Akkordeons: Schnellstart / Streuplan & Streupartner /
+    // Rechnungslogik / Funktionen im Detail
+    _renderDocsView() {
+      const container = this.$('sidebar-view-docs');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const inner = document.createElement('div');
+      inner.className = 'docs-content-wrap';
+
+      // ── Hero ─────────────────────────────────────────────────────────
+      const hero = document.createElement('div');
+      hero.className = 'docs-hero';
+      hero.innerHTML = `
+        <div class="docs-hero-icon">🗺️</div>
+        <div class="docs-hero-title">PLZ-Analyse</div>
+        <div class="docs-hero-subtitle">Auswertung der Werbe-Effizienz auf Postleitzahl-Ebene</div>`;
+      inner.appendChild(hero);
+
+      // ── Sub-Akkordeon: Schnellstart (default aufgeklappt) ──────────
+      const quickstart = this._buildDocsAccordion(
+        '⚡', 'Schnellstart', true,
+        `<ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
+           <li>Im Filter-Bereich <strong>ErhebungsID</strong> wählen.</li>
+           <li><strong>Jahr</strong> auswählen → <strong>Erhebungsnummer</strong> auswählen.</li>
+           <li><strong>Anzeigen</strong>-Button klicken.</li>
+           <li>Wahlweise <strong>📋 PLZ-Tabelle</strong>, <strong>📊 Erhebungsübersicht</strong> oder <strong>🔬 Erweiterte Analyse</strong> über die Sidebar-Icons öffnen.</li>
+           <li>Auf Karte oder Tabelle klicken für PLZ-Details im Side-Popup.</li>
+         </ol>
+         <div class="docs-key-block" style="margin-top:8px;">
+           <strong>💡 Tipp:</strong> Erneuter Klick auf ein aktives Sidebar-Icon schaltet
+           den Inhalt aus → die Karte wird breiter. Sehr nützlich für die Karten-Inspektion.
+         </div>`);
+      inner.appendChild(quickstart);
+
+      // ── Sub-Akkordeon: Streuplan & Streupartner ────────────────────
+      const streuplan = this._buildDocsAccordion(
+        '📍', 'Streuplan & Streupartner', false,
+        `<div id="streuplan-content"><div class="analysis-empty">Daten werden geladen…</div></div>`);
+      inner.appendChild(streuplan);
+
+      // ── Sub-Akkordeon: Rechnungslogik ──────────────────────────────
+      const rechnung = this._buildDocsAccordion(
+        '🧮', 'Rechnungslogik', false, this._buildRechnungslogikHtml());
+      inner.appendChild(rechnung);
+
+      // ── Sub-Akkordeon: Funktionen im Detail ────────────────────────
+      const detail = this._buildDocsAccordion(
+        '📖', 'Funktionen im Detail', false, this._buildFunktionenDetailHtml());
+      inner.appendChild(detail);
+
+      container.appendChild(inner);
+
+      // Streuplan-Daten lazy laden (leise scheitern bei Fehler)
+      this._loadAndRenderStreuplan();
+    }
+
+    // Helper: ein Sub-Akkordeon-Element bauen
+    _buildDocsAccordion(icon, title, openByDefault, contentHtml) {
+      const section = document.createElement('div');
+      section.className = 'docs-accordion' + (openByDefault ? ' open' : '');
+      section.innerHTML = `
+        <div class="docs-accordion-header">
+          <span class="docs-accordion-icon">${icon}</span>
+          <span class="docs-accordion-title">${escapeHtml(title)}</span>
+          <span class="docs-accordion-chevron">▾</span>
+        </div>
+        <div class="docs-accordion-body">
+          <div class="docs-accordion-inner">${contentHtml}</div>
+        </div>`;
+      const header = section.querySelector('.docs-accordion-header');
+      this._on(header, 'click', () => section.classList.toggle('open'));
+      return section;
+    }
+
+    _buildRechnungslogikHtml() {
+      return `
+        <h4>Hochrechnung</h4>
+        <p>
+          Aus der laufenden Bon-Erfassung wird der Gesamt-Brutto-Umsatz einer PLZ
+          hochgerechnet. Grundlage ist das Verhältnis <code>erfasster Umsatz / 
+          valider Umsatz</code> über alle NLs der Erhebung. Das Ergebnis steht im
+          Feld <code>value_hr_n_umsatz_0</code> (BW-Dimension) bzw. <em>Umsatz Brutto
+          (hochger.)</em> in der UI. Ohne Hochrechnung würden nur erfasste Stichprobe
+          gezeigt, nicht der echte Markt.
+        </p>
+
+        <h4>Werbekosten-Anteil (WK %)</h4>
+        <p>
+          <code>WK% = HZ-Kosten / Gesamtumsatz × 100</code>. Der Nenner ist der
+          <strong>Gesamtumsatz aller aktiven NLs in dieser PLZ</strong> — inklusive
+          Nachbar-NLs, die nicht selbst beworben haben. So zeigt der WK% die echte
+          Werbe-Effizienz im Markt: Wenn Nachbar-NLs vom Marketing der HZ-NL
+          profitieren, sinkt der WK% — das ist gewollt.
+        </p>
+        <div class="docs-key-block">
+          <strong>Beispiel:</strong> NL Köln macht 60.000 € Umsatz und 800 € HZ-Kosten,
+          Nachbar-NL Bonn macht 25.000 € Umsatz ohne Werbung in derselben PLZ.<br>
+          WK% = 800 / (60.000 + 25.000) = <strong>0,94 %</strong>.
+        </div>
+
+        <h4>Potentielle Werbekosten (pot. WK)</h4>
+        <p>
+          Für nicht-bestreute PLZs werden potentielle Werbekosten geschätzt — also
+          was die Bestreuung kosten würde, wenn man sie zusätzlich bewerben würde.
+          Wird aus <code>value_hz_potentiell_0</code> als Durchschnitt über alle
+          NL-Rows einer PLZ aggregiert (PLZ-Stammdatum, daher Mittelwert statt Summe).
+          NL-Rows mit Wert 0 werden vom Durchschnitt ausgeschlossen.
+        </p>
+
+        <h4>Streuverlust</h4>
+        <p>
+          Umsatz, der <strong>außerhalb</strong> des aktuellen Radius angefallen ist
+          — also durch Werbung erreichbar gewesen wäre, aber nicht im Einzugsgebiet
+          der bestreuenden NL liegt. <code>Streuverlust % = Umsatz_außerhalb_Radius /
+          Umsatz_gesamt × 100</code>.
+        </p>
+
+        <h4>Werbeanteil</h4>
+        <p>
+          <code>Werbeanteil = Werbeumsatz / Gesamtumsatz × 100</code>. Wird ausschließlich
+          mit dem direkt durch Werbung verursachten Umsatz berechnet; Mitkauf-Umsatz
+          ("Zusatz") fließt nicht ein, auch wenn die "Mitgekauft"-Checkbox aktiv ist
+          (die ändert nur die Anzeige der absoluten Werte).
+        </p>
+
+        <h4>Negative Umsätze und Stornos</h4>
+        <p>
+          Einzelne Storno-Rows fließen mit ihrem Vorzeichen in die Aggregation ein
+          (Stornos reduzieren also korrekt den Saldo). Wenn der Saldo einer PLZ
+          oder Kategorie am Ende negativ wird, wird er für die Anzeige auf 0
+          gesetzt — keine negativen Beträge in Tabelle oder Popups.
+        </p>`;
+    }
+
+    _buildFunktionenDetailHtml() {
+      return `
+        <h4>Filter-Bereich (oben links)</h4>
+        <p>
+          ErhebungsID → Jahr → Erhebungsnummer wählen, dann <strong>Anzeigen</strong>.
+          Die Doppelbestreuungs-Bar darunter lädt zusätzlich alle anderen Erhebungen
+          mit gleichem Jahr/Nummer, um Cross-Erhebungs-Überschneidungen zu erkennen
+          (langsamer, mehr Daten).
+        </p>
+
+        <h4>Sidebar (links)</h4>
+        <ul>
+          <li><strong>📖 Anleitung</strong> — Dieser Bereich.</li>
+          <li><strong>📋 PLZ-Tabelle</strong> — sortierbare Tabelle aller PLZs im
+            Radius mit WK%, Umsatz und HZ-Status.</li>
+          <li><strong>📊 Erhebungsübersicht</strong> — NL-Tabelle mit Erfassungs-
+            Kennzahlen. Klick auf eine NL filtert Karte und Berechnungen.</li>
+          <li><strong>🔬 Erweiterte Analyse</strong> — Multi-GF-Aggregation und
+            (bald) Vergleichs-Modus.</li>
+        </ul>
+        <p>
+          Klick auf ein aktives Icon deaktiviert es → der Hauptinhalt verschwindet,
+          die Karte wird breiter.
+        </p>
+
+        <h4>Analyse-Modi (Karten-Panel rechts unten)</h4>
+        <ul>
+          <li><strong>📊 WK</strong> — Heatmap nach Werbekosten-Anteil. Grün =
+            HZ-bestreut, Blau = nicht bestreut (potentielle WK), Grau = keine Daten.</li>
+          <li><strong>💶 Umsatz</strong> — Heatmap nach Umsatzhöhe. Im Panel
+            schaltbar: Umsatz/Werbeumsatz, Absolut/pro HH/Werbeanteil,
+            Kategorie-Toggles (Stationär/Pluscard/R&amp;A/KUBE OS).</li>
+        </ul>
+
+        <h4>Karten-Tools</h4>
+        <ul>
+          <li><strong>🔴 Radius-Slider</strong> (oben Mitte): 10–100 km
+            Einzugsgebiet um aktive NLs.</li>
+          <li><strong>🗺️ Kartenstil</strong> (rechts unten): OpenStreetMap-
+            Hintergrund ein/aus.</li>
+          <li><strong>☰ Legende</strong> (links unten): Farbskala für die
+            aktuelle Heatmap.</li>
+          <li><strong>Mitbewerber-Checkbox</strong>: zeigt bekannte Standorte
+            (Hornbach/OBI/Globus/Hellweg/Toom/Hagebau) als 🔨-Marker.</li>
+        </ul>
+
+        <h4>Tipps für die Praxis</h4>
+        <ul>
+          <li>Bei vielen NLs in einer Erhebung Radius auf 20–30 km reduzieren —
+            sonst überlappen sich Einzugsgebiete stark.</li>
+          <li>Im Umsatz-Modus / Werbeanteil zeigt sich die Effizienz einer
+            Kampagne pro PLZ.</li>
+          <li>Beim Wechsel zwischen Erhebungen bleiben Radius- und Kategorie-
+            Einstellungen erhalten, Modus wird auf WK zurückgesetzt.</li>
+        </ul>
+
+        <h4>Bei Problemen</h4>
+        <p>
+          Erhebung neu auswählen oder Browser-Tab neu laden. Konsolen-Log mit
+          Präfix <code>[PLZ-Widget]</code> zeigt Bootstrap- und Lade-Status.
+        </p>`;
+    }
+
+    // ── Streuplan-JSON laden und in den Anleitung-View rendern ────────
+    // Leise scheitern bei Fehler (laut User-Vorgabe).
+    async _loadAndRenderStreuplan() {
+      const target = this.$('streuplan-content');
+      if (!target) return;
+      // TODO: Diesen Raw-URL durch den echten GitHub-Pfad ersetzen.
+      // Beispiel: 'https://raw.githubusercontent.com/USER/REPO/main/streuplan.json'
+      const url = 'https://raw.githubusercontent.com/USER/REPO/main/streuplan.json';
+      try {
+        const resp = await fetch(url, { cache: 'no-cache' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const data = await resp.json();
+        target.innerHTML = this._renderStreuplanHtml(data);
+      } catch (err) {
+        console.warn('[PLZ-Widget] Streuplan-Datei nicht verfügbar:', err.message);
+        target.innerHTML = `<div class="analysis-empty">Keine Streuplan-Daten verfügbar.</div>`;
+      }
+    }
+
+    _renderStreuplanHtml(data) {
+      const termine = Array.isArray(data?.termine) ? data.termine : [];
+      const partner = Array.isArray(data?.partner) ? data.partner : [];
+      let html = '';
+
+      if (termine.length > 0) {
+        html += `<h4>Streutermine</h4>`;
+        // Termine sortiert nach Datum
+        const sorted = [...termine].sort((a, b) => (a.datum || '').localeCompare(b.datum || ''));
+        html += `<ul class="streuplan-termine-list">`;
+        for (const t of sorted) {
+          const datum = t.datum ? this._fmtStreudatum(t.datum) : '–';
+          const kw = t.kw ? `<span class="streu-kw">KW ${t.kw}</span>` : '';
+          const beschr = t.beschreibung ? escapeHtml(t.beschreibung) : '';
+          html += `<li>
+            <span class="streu-datum">${datum}</span>
+            ${kw}
+            <span class="streu-beschr">${beschr}</span>
+          </li>`;
+        }
+        html += `</ul>`;
+      } else {
+        html += `<div class="analysis-empty">Keine Streutermine erfasst.</div>`;
+      }
+
+      if (partner.length > 0) {
+        html += `<h4 style="margin-top:14px">Streupartner-Zusammenschlüsse</h4>`;
+        html += `<p style="margin:4px 0 8px;font-size:0.74rem;color:var(--gray-600);">
+          Diese NL-Gruppen bestreuen gemeinsam PLZs. In der Auswertung werden die
+          Umsätze der Haupt-NL zugeordnet.
+        </p>`;
+        html += `<table class="streuplan-partner-table">
+          <thead><tr><th>Haupt-NL</th><th>Partner-NLs</th><th>Beschreibung</th></tr></thead>
+          <tbody>`;
+        for (const p of partner) {
+          const partnerList = Array.isArray(p.partner_nls) ? p.partner_nls.join(', ') : '';
+          html += `<tr>
+            <td><strong>${escapeHtml(p.haupt_nl || '–')}</strong></td>
+            <td>${escapeHtml(partnerList)}</td>
+            <td>${escapeHtml(p.beschreibung || '')}</td>
+          </tr>`;
+        }
+        html += `</tbody></table>`;
+      } else {
+        html += `<div class="analysis-empty" style="margin-top:10px;">Keine Streupartner-Zusammenschlüsse hinterlegt.</div>`;
+      }
+      return html;
+    }
+
+    _fmtStreudatum(iso) {
+      // ISO "2025-03-14" → "14.03.2025"
+      const m = String(iso).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return iso;
+      return `${m[3]}.${m[2]}.${m[1]}`;
+    }
+
+    // ── Sidebar-View-Management (Phase 2) ──────────────────────────────
+    // Steuert den Hauptinhalt der linken Spalte. Genau ein View aktiv oder
+    // keiner (null) → linke Spalte kollabiert, Karte wird breiter.
+    //
+    // Views:
+    //   'docs'     = Anleitung (mit Sub-Akkordeons)
+    //   'plz'      = PLZ-Tabelle
+    //   'overview' = Erhebungsübersicht (NL-Tabelle, GF-gruppiert)
+    //   'analysis' = Erweiterte Analyse (Partner-Picker, Vergleich-Platzhalter)
+    //   null       = nichts aktiv, Karte hat mehr Platz
+    // ── Sidebar-Click-Handler (Phase 2) ─────────────────────────────────
+    // Wird früh in connectedCallback aufgerufen, sodass die Sidebar schon
+    // klickbar ist bevor Leaflet vollständig geladen ist. Bei Re-Connect
+    // wurde der vorige Listener via AbortController aufgegeben — wir setzen
+    // das Bound-Flag zurück und binden frisch.
+    _setupSidebarHandlers() {
+      const rail = this.$('sidebar-rail');
+      if (!rail) return;
+      // Frisch binden: alter Listener ist nach disconnectedCallback eh
+      // abgebrochen via AbortController.
+      delete rail.dataset.bound;
+      this._on(rail, 'click', (ev) => {
+        const btn = ev.target.closest('.sidebar-icon');
+        if (!btn || btn.disabled) return;
+        const view = btn.dataset.view;
+        // Klick auf aktives Icon = ausschalten (null)
+        const next = (this._sidebarView === view) ? null : view;
+        this._switchSidebarView(next);
+      });
+      rail.dataset.bound = '1';
+    }
+
+    _switchSidebarView(key) {
+      this._sidebarView = key;
+      const filter = this._shadowRoot.querySelector('.filter-container');
+      const views  = ['docs', 'plz', 'overview', 'analysis'];
+
+      // Views ein/ausblenden
+      for (const k of views) {
+        const el = this.$('sidebar-view-' + k);
+        if (el) el.classList.toggle('active', k === key);
+      }
+      // Sidebar-Icon-Status
+      const icons = this._shadowRoot.querySelectorAll('.sidebar-icon');
+      for (const icon of icons) {
+        icon.classList.toggle('active', icon.dataset.view === key);
+      }
+      // Filter-Container kollabieren wenn null
+      if (filter) filter.classList.toggle('no-view-active', key === null);
+
+      // Beim Wechsel zu einem View: ggf. Inhalt neu rendern
+      if (key === 'overview') {
+        // NL-Tabelle frisch rendern (z.B. nach NL-Filter-Änderung)
+        this.prepareErhebungsInfo?.();
+        this.renderErhebungsInfoTable?.();
+      } else if (key === 'analysis') {
+        // Erweiterte Analyse aktualisieren (Partner-Picker, etc.)
+        this._renderAnalysisView?.();
+      } else if (key === 'docs') {
+        // Anleitung: nur einmal initialisieren
+        if (!this._docsViewInitialized) {
+          this._renderDocsView?.();
+          this._docsViewInitialized = true;
+        }
+      }
+    }
+
+    // Sidebar-Icons aktivieren/deaktivieren (z.B. nach Erhebungs-Load)
+    _setSidebarEnabled(enabled) {
+      const icons = this._shadowRoot.querySelectorAll('.sidebar-icon');
+      for (const icon of icons) {
+        // Anleitung ist immer verfügbar; die anderen erst nach Erhebungs-Load
+        if (icon.dataset.view === 'docs') {
+          icon.disabled = false;
+          continue;
+        }
+        icon.disabled = !enabled;
+      }
+      // Bug 14 Fix: Defensive — wenn die Sidebar deaktiviert wird und der
+      // gerade aktive View ist einer der nun-disabled (plz/overview/analysis),
+      // erzwinge Wechsel auf 'docs'. Sonst zeigt die UI einen View, der laut
+      // Icon-State gar nicht verfügbar sein sollte.
+      if (!enabled && this._sidebarView && this._sidebarView !== 'docs') {
+        this._switchSidebarView('docs');
+      }
+    }
+
     // ── Home-Reset ─────────────────────────────────────────────────────
     _resetToHome() {
       // Token erhöhen, damit eine eventuell laufende render()-Pipeline merkt,
@@ -5582,6 +6302,7 @@
       // Rows-Cache bleibt für schnelles Zurück zu vorigen Erhebungen erhalten.
       this._activeErhebungen     = [];
       this._crossGfDoppelAktiv   = false;
+      this._pendingPartners      = null;
       this._erhebungAggregatesCache?.clear();
       this.filteredData        = null;
       this.filteredKennwerte   = {};
@@ -5596,7 +6317,13 @@
       this._nlSelectionInitialized = false;
 
       this.closeAllPopups();
+      // Phase 2: Sidebar zurück auf Anleitung, andere Views disablen.
+      // closeNLTable() ist im neuen Layout nicht mehr nötig (NL-Tabelle ist
+      // eigener View, kein Overlay), aber wir rufen sie defensiv mit auf,
+      // falls noch alte Klassen hängen.
       this.closeNLTable();
+      this._setSidebarEnabled(false);
+      this._switchSidebarView('docs');
       this.$('heatmap-legend')?.classList.add('hidden');
       this.$('map-control-panel')?.classList.remove('panel-large', 'panel-medium');
       // Doppelbestreuungs-Bar im Hauptmenü wieder aufklappen
