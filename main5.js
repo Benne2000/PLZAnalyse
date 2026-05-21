@@ -3648,6 +3648,13 @@
         renderer: this._canvasRenderer,
         zoomAnimation: true,
         markerZoomAnimation: true,
+        // Leaflets eingebaute Controls weglassen — die Zoom-Buttons oben
+        // links würden den Reopen-Pfeil verdecken wenn die linke Spalte
+        // ausgeblendet ist. Zoom geht weiterhin über Mausrad / Pinch /
+        // Doppelklick. Attribution bleibt klein unten rechts (nicht
+        // entfernen, da OSM-Lizenz das verlangt) — sie wird beim Tile-Layer
+        // gesetzt und ist standardmäßig ohnehin sichtbar.
+        zoomControl: false,
       }).setView([51.2, 12.5], 6);
 
       // Default-State konsolidiert im Constructor; hier nur LayerGroups
