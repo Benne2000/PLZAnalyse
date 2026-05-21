@@ -498,49 +498,16 @@
         transition: opacity 0.22s ease;
       }
 
-      /* Schließen-Pfeil oben rechts in der Spalte. Pendant zum Reopen-Button
-         auf der Karte: kleiner (passt in die Spalte), gleiche vertikale
-         Position. Pfeil ◀ zeigt nach links — Richtung die er bewirkt. */
-      #pane-close-btn {
-        position: absolute;
-        top: 18px;
-        right: 8px;
-        z-index: 50;
-        width: 28px; height: 28px;
-        padding: 0;
-        background: var(--white);
-        border: 1.5px solid var(--gray-200);
-        border-radius: 50%;
-        cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        color: var(--gray-600);
-        font-size: 0.75rem; line-height: 1;
-        transition: background 0.18s var(--ease-out),
-                    border-color 0.18s var(--ease-out),
-                    color 0.18s var(--ease-out),
-                    transform 0.18s var(--ease-out);
-      }
-      #pane-close-btn:hover {
-        background: var(--red-bg); border-color: var(--red); color: var(--red);
-        transform: scale(1.08) translateX(-2px);
-      }
-      .pane-close-arrow { line-height: 1; }
-      /* Wenn die Spalte komplett ausgeblendet ist, ist der Schließen-Button
-         eh nicht erreichbar. Der Reopen-Button auf der Karte übernimmt dann. */
-      .filter-container.pane-collapsed #pane-close-btn { display: none; }
-
       /* Reopen-Button auf der Karte: nur sichtbar wenn die Spalte ausgeblendet
-         ist. Größer als der Schließen-Pfeil im offenen Modus, gleiche
-         vertikale Position. Pfeil zeigt nach rechts (öffnet die Spalte). */
+         ist. Hamburger-Menü-Icon (3 waagrechte Striche) — Standard-Pattern
+         für "Menü öffnen". Position + Größe wie beim vorigen Pfeil. */
       #left-pane-reopen-btn {
         position: absolute;
-        /* Position so wählen dass er auf gleicher vertikaler Höhe sitzt
-           wie der Schließen-Pfeil im offenen Modus (siehe pane-close-btn). */
         top: 24px;
         left: 12px;
         z-index: 600;
         display: none;
-        width: 52px; height: 52px;     /* deutlich größer als der Schließen-Pfeil */
+        width: 52px; height: 52px;
         padding: 0;
         background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
         border: none;
@@ -554,15 +521,23 @@
                     box-shadow 0.18s var(--ease-out);
       }
       #left-pane-reopen-btn:hover {
-        transform: scale(1.06) translateX(2px);
+        transform: scale(1.06);
         box-shadow: 0 8px 24px rgba(180,24,33,0.35);
       }
       #left-pane-reopen-btn:active {
         transform: scale(0.98);
       }
-      #left-pane-reopen-btn .reopen-arrow {
-        font-size: 1.5rem; line-height: 1; font-weight: 700;
-        /* Subtile bounce-Animation um auf den Button aufmerksam zu machen */
+      /* Hamburger-Striche: 3 horizontale Balken, mittig im Button.
+         Gebaut via Pseudo-Elemente + Box-Shadow, damit kein extra DOM nötig. */
+      .reopen-hamburger {
+        position: relative;
+        display: block;
+        width: 22px; height: 2.5px;
+        background: white;
+        border-radius: 2px;
+        box-shadow:
+          0 -7px 0 0 white,
+          0  7px 0 0 white;
       }
       .map-container.left-pane-hidden #left-pane-reopen-btn {
         display: inline-flex;
@@ -691,12 +666,22 @@
         transform: rotate(180deg);
       }
 
-      /* Spezial-Tab "Ausblenden": etwas anderer Look (kein roter Active-State,
-         weil es kein View ist sondern eine Aktion). */
+      /* Spezial-Tab "Ausblenden": Pfeil ◀, kein roter Active-State weil es
+         kein View ist sondern eine direkte Aktion. Etwas auffälliger als
+         disabled-Tabs damit der User den Pfeil als klickbar erkennt. */
       .sidebar-icon-hide {
         color: var(--gray-600);
       }
-      .sidebar-icon-hide .sidebar-icon-glyph { opacity: 0.85; }
+      .sidebar-icon-hide .sidebar-icon-glyph {
+        opacity: 0.7;
+        font-size: 0.9rem;
+        transition: opacity 0.22s var(--ease-out), transform 0.22s var(--ease-out);
+      }
+      .sidebar-icon-hide:hover:not(:disabled) .sidebar-icon-glyph {
+        opacity: 1; transform: translateX(-3px);
+      }
+      /* Indikator-Strich am unteren Rand soll bei Hide-Tab nie erscheinen */
+      .sidebar-icon-hide::after { display: none; }
 
       /* ─── NL-Info-Container (jetzt statisch in eigenem View) ──────── */
       #nl-info-container {
@@ -1961,14 +1946,6 @@
     <div class="layout">
       <div class="filter-container">
 
-        <!-- Schließen-Pfeil oben rechts in der Spalte: Pendant zum Reopen-
-             Button auf der Karte. Pfeil ◀ zeigt nach links — Richtung die
-             er bewirkt: Spalte wird nach links ausgeblendet. Gleiche
-             vertikale Position wie der Reopen-Button (top: 24px). -->
-        <button id="pane-close-btn" type="button" title="Menü ausblenden">
-          <span class="pane-close-arrow">◀</span>
-        </button>
-
         <!-- Info-Bar ganz oben: zeigt aktuelle Erhebungs-Auswahl wenn die
              Filter-Maske eingeklappt ist. Sonst versteckt. -->
         <div id="filter-info-bar" class="hidden">
@@ -2036,11 +2013,11 @@
               <span class="sidebar-icon-label">Analyse</span>
               <span class="sidebar-icon-badge" id="sidebar-badge-analysis"></span>
             </button>
-            <!-- Spezial-Tab: blendet die komplette linke Spalte aus. Klick öffnet
-                 sie wieder über den Reopen-Button auf der Karte. -->
+            <!-- Spezial-Tab: blendet die komplette linke Spalte aus.
+                 Pfeil ◀ zeigt die Richtung an (Spalte verschwindet nach links). -->
             <button class="sidebar-icon sidebar-icon-hide" data-action="hide-pane"
                     title="Menü ausblenden" type="button">
-              <span class="sidebar-icon-glyph">👁</span>
+              <span class="sidebar-icon-glyph">◀</span>
               <span class="sidebar-icon-label">Ausblenden</span>
             </button>
           </div>
@@ -2062,8 +2039,8 @@
         <!-- Reopen-Button: nur sichtbar wenn die ganze linke Spalte
              ausgeblendet ist. Pfeil ▶ zeigt nach rechts (Richtung die er
              bewirkt: Menü wird nach rechts ausgeklappt). -->
-        <button id="left-pane-reopen-btn" type="button" title="Menü einblenden">
-          <span class="reopen-arrow">▶</span>
+        <button id="left-pane-reopen-btn" type="button" title="Menü einblenden" aria-label="Menü öffnen">
+          <span class="reopen-hamburger"></span>
         </button>
       </div>
 
@@ -7100,14 +7077,6 @@
         reopenBtn.dataset.bound = '1';
       }
 
-      // Schließen-Pfeil oben in der Spalte (Pendant zum Reopen-Pfeil)
-      const closeBtn = this.$('pane-close-btn');
-      if (closeBtn) {
-        delete closeBtn.dataset.bound;
-        this._on(closeBtn, 'click', () => this._setLeftPaneVisible(false));
-        closeBtn.dataset.bound = '1';
-      }
-
       // Filter-Maske ein-/ausklappen-Button (rechts neben "Anzeigen")
       const fieldsToggle = this.$('filter-fields-toggle');
       if (fieldsToggle) {
@@ -7204,17 +7173,18 @@
       }
     }
 
-    // Info-Bar-Inhalt aus _activeFilter und _activeErhebungen aufbauen
+    // Info-Bar-Inhalt aus _activeFilter und _activeErhebungen aufbauen.
+    // Zeigt dasselbe Format wie der Filter (GF-Bereich XYZ · Jahr · Nummer),
+    // damit der User die Auswahl 1:1 wiedererkennt.
     _updateFilterInfoBar() {
       const textEl  = this.$('filter-info-text');
       const badgeEl = this.$('filter-info-badge');
       if (!textEl) return;
       const f = this._activeFilter;
       if (!f) { textEl.textContent = '—'; if (badgeEl) badgeEl.textContent = ''; return; }
-      // Kompaktes Format: "<erhID> · <jahr> · <nummer>".
-      // _fmtGF würde "GF-Bereich XYZ" ergeben — für den schmalen Info-Bar
-      // zu lang. Daher direkt die ID.
-      textEl.textContent = `${f.erhID} · ${f.jahr} · ${f.nummer}`;
+      // Identisches Format wie im Filter-Dropdown.
+      const gfLabel = this._fmtGF ? this._fmtGF(f.erhID) : f.erhID;
+      textEl.textContent = `${gfLabel} · ${f.jahr} · ${f.nummer}`;
       // Multi-GF-Badge: bei aktiven Partnern "+N"
       const count = this._activeErhebungen?.length || 0;
       if (badgeEl) {
