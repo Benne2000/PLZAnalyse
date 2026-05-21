@@ -122,10 +122,11 @@
 
       .filter-container {
         width: 30%; padding: 14px 12px;
-        background: var(--white); border-right: 1px solid var(--gray-200);
+        background: var(--white);
         display: flex; flex-direction: column; height: 100%;
         position: relative; z-index: 2;
-        box-shadow: 2px 0 12px rgba(0,0,0,0.04);
+        /* Weicher Schatten als Separator zur Karte — kein harter Border. */
+        box-shadow: 4px 0 16px rgba(0,0,0,0.05), 1px 0 0 rgba(0,0,0,0.03);
       }
       .filter-container::before {
         content: ''; display: block; height: 3px;
@@ -201,16 +202,49 @@
         cursor: pointer; user-select: none; transition: background 0.15s;
       }
       .table-wrapper th:hover { background: var(--red-dark); }
+      .table-wrapper th .sort-icon {
+        font-size: 9px;
+        opacity: 0.5;
+        margin-left: 4px;
+        display: inline-block;
+        transition: opacity 0.18s ease, transform 0.22s var(--ease-out);
+      }
+      .table-wrapper th:hover .sort-icon { opacity: 0.85; }
+      .table-wrapper th .sort-icon.sort-icon-active {
+        opacity: 1;
+        font-size: 10px;
+        text-shadow: 0 0 4px rgba(255,255,255,0.6);
+      }
       .table-wrapper td {
         padding: 6px 10px; border-bottom: 1px solid var(--gray-100);
         text-align: left; font-size: 0.8rem; color: var(--gray-700);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         transition: background 0.12s;
       }
-      .table-wrapper tbody tr        { transition: background 0.12s; cursor: pointer; }
+      .table-wrapper tbody tr        {
+        transition: background 0.22s var(--ease-out);
+        cursor: pointer;
+        position: relative;
+      }
       .table-wrapper tbody tr:hover td { background: var(--red-bg); color: var(--gray-900); }
-      .table-row-selected td { background: #fff3f3 !important; }
-      .table-row-selected td:first-child { border-left: 3px solid var(--red) !important; }
+      /* Selected: Slide-In-Border + kurzer Background-Pulse beim ersten Klick.
+         Wir nutzen ein ::before-Pseudo-Element auf der ersten Zelle, weil
+         <tr> selbst keine zuverlässigen Pseudo-Elemente erlaubt (rendering quirks). */
+      .table-row-selected td {
+        background: #fff3f3 !important;
+        transition: background 0.32s var(--ease-out);
+      }
+      .table-row-selected td:first-child {
+        position: relative;
+        border-left: 3px solid var(--red) !important;
+        /* Animation: Border-Slide + Background-Pulse */
+        animation: tableRowEnter 0.5s var(--ease-out) both;
+      }
+      @keyframes tableRowEnter {
+        0%   { background-color: var(--red-bg); box-shadow: inset 6px 0 0 0 var(--red); }
+        50%  { background-color: #ffe5e7; }
+        100% { background-color: #fff3f3; box-shadow: inset 3px 0 0 0 var(--red); }
+      }
 
       #streuverlust-box {
         flex-shrink: 0; background: var(--red-bg); border-top: 2px solid var(--red);
@@ -239,10 +273,19 @@
         display: none;
         height: 100%;
         flex-direction: column; min-height: 0;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: opacity 0.22s var(--ease-out),
+                    transform 0.28s var(--ease-out);
       }
-      .sidebar-view.active { display: flex; }
+      .sidebar-view.active {
+        display: flex;
+        opacity: 1;
+        transform: translateY(0);
+      }
 
-      /* Tab-Bar am unteren Rand: jeder Tab hat Icon + Label untereinander. */
+      /* Tab-Bar am unteren Rand: jeder Tab hat Icon + Label untereinander.
+         Der aktive Tab bekommt einen animierten roten Strich am unteren Rand. */
       .sidebar-rail {
         flex-shrink: 0;
         display: flex; flex-direction: row; gap: 4px;
@@ -259,10 +302,29 @@
         border-radius: var(--radius-md);
         cursor: pointer; user-select: none;
         font-family: var(--font);
-        transition: background 0.18s, border-color 0.18s, color 0.18s;
+        transition: background 0.22s var(--ease-out),
+                    border-color 0.22s var(--ease-out),
+                    color 0.22s var(--ease-out),
+                    transform 0.18s var(--ease-out);
+        overflow: hidden;
       }
+      /* Animierter Indikator-Strich am unteren Rand des aktiven Tabs.
+         Wir nutzen ein ::after-Pseudo statt box-shadow inset, damit der
+         Strich smooth animieren kann (scaleX). */
+      .sidebar-icon::after {
+        content: '';
+        position: absolute; left: 8%; right: 8%; bottom: -1px;
+        height: 3px;
+        background: var(--red); border-radius: 3px 3px 0 0;
+        transform: scaleX(0);
+        transform-origin: center;
+        transition: transform 0.32s var(--ease-out);
+        pointer-events: none;
+      }
+      .sidebar-icon.active::after { transform: scaleX(1); }
       .sidebar-icon:hover:not(:disabled):not(.active) {
         background: var(--gray-50); border-color: var(--red-border);
+        transform: translateY(-1px);
       }
       .sidebar-icon:disabled {
         opacity: 0.4; cursor: not-allowed;
@@ -271,18 +333,30 @@
       .sidebar-icon.active {
         background: linear-gradient(180deg, var(--red-bg) 0%, var(--white) 100%);
         border-color: var(--red);
-        box-shadow: 0 -2px 0 var(--red) inset, 0 1px 3px rgba(180,24,33,0.12);
+        box-shadow: 0 1px 3px rgba(180,24,33,0.12);
         color: var(--red);
       }
-      .sidebar-icon-glyph { font-size: 1.05rem; line-height: 1; }
+      /* Pulse-Hint für gerade aktivierte Tabs (nach loadErhebung) —
+         läuft 2 Pulses lang, dann aus. Klasse wird via JS gesetzt. */
+      .sidebar-icon.just-enabled {
+        animation: sidebarTabHint 1.6s ease-out 0s 2 both;
+      }
+      @keyframes sidebarTabHint {
+        0%, 100% { box-shadow: 0 0 0 0 rgba(180,24,33,0); border-color: var(--gray-200); }
+        50%      { box-shadow: 0 0 0 6px rgba(180,24,33,0); border-color: var(--red-border); }
+      }
+      .sidebar-icon-glyph { font-size: 1.05rem; line-height: 1; transition: transform 0.18s var(--ease-out); }
+      .sidebar-icon.active .sidebar-icon-glyph { transform: scale(1.06); }
       .sidebar-icon-label {
         font-size: 0.6rem; font-weight: 600; line-height: 1.1;
         color: var(--gray-600); letter-spacing: 0.02em;
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         max-width: 100%;
+        transition: color 0.22s var(--ease-out);
       }
       .sidebar-icon.active .sidebar-icon-label { color: var(--red); }
       .sidebar-icon:disabled .sidebar-icon-label { color: var(--gray-400); }
+      /* Badge: erscheint mit scale(0→1) + opacity, statt instant pop */
       .sidebar-icon-badge:empty { display: none; }
       .sidebar-icon-badge {
         position: absolute; top: -4px; right: -4px;
@@ -293,10 +367,116 @@
         border: 1.5px solid white; border-radius: 10px;
         display: inline-flex; align-items: center; justify-content: center;
         line-height: 1;
+        animation: badgePop 0.4s var(--ease-out) both;
+      }
+      @keyframes badgePop {
+        0%   { transform: scale(0) rotate(-12deg); opacity: 0; }
+        60%  { transform: scale(1.12) rotate(2deg); opacity: 1; }
+        100% { transform: scale(1) rotate(0); opacity: 1; }
       }
       .sidebar-icon-badge.badge-hint {
         background: var(--gray-200); color: var(--gray-700);
       }
+
+      /* ─── Skeleton-Loading (Phase 2, Bug #4) ───────────────────────────
+         Während Daten laden, zeigen wir animierte Platzhalter statt leere
+         Container — fühlt sich "lebendiger" an als ein nackter Spinner. */
+      @keyframes skeletonShimmer {
+        0%   { background-position: -200% 0; }
+        100% { background-position:  200% 0; }
+      }
+      .skeleton-shimmer {
+        background: linear-gradient(90deg,
+          rgba(0,0,0,0.04) 0%,
+          rgba(0,0,0,0.08) 50%,
+          rgba(0,0,0,0.04) 100%);
+        background-size: 200% 100%;
+        animation: skeletonShimmer 1.4s ease-in-out infinite;
+        border-radius: var(--radius-sm);
+      }
+      .skeleton-table {
+        display: flex; flex-direction: column;
+        padding: 12px;
+      }
+      .skeleton-table-row {
+        display: flex; gap: 8px; padding: 8px 0;
+        border-bottom: 1px solid var(--gray-100);
+      }
+      .skeleton-table-row:last-child { border-bottom: none; }
+      .skeleton-table-row > div {
+        height: 12px;
+      }
+      .skeleton-table-row > div:nth-child(1) { flex: 0 0 28%; }
+      .skeleton-table-row > div:nth-child(2) { flex: 0 0 22%; }
+      .skeleton-table-row > div:nth-child(3) { flex: 0 0 22%; }
+      .skeleton-table-row > div:nth-child(4) { flex: 1; }
+
+      .skeleton-map-overlay {
+        position: absolute; inset: 0;
+        z-index: 400;
+        pointer-events: none;
+        background: rgba(248,249,250,0.45);
+        backdrop-filter: blur(1px);
+        display: flex; align-items: center; justify-content: center;
+        opacity: 0;
+        transition: opacity 0.22s ease;
+      }
+      .skeleton-map-overlay.active { opacity: 1; }
+      .skeleton-map-pulse {
+        width: 64px; height: 64px;
+        border-radius: 50%;
+        background: var(--red);
+        opacity: 0.18;
+        animation: mapPulse 1.6s ease-out infinite;
+      }
+      @keyframes mapPulse {
+        0%   { transform: scale(0.6); opacity: 0.18; }
+        70%  { transform: scale(2.2); opacity: 0; }
+        100% { transform: scale(2.2); opacity: 0; }
+      }
+
+      /* Map-Sweep-Overlay: wandernder horizontaler Gradient-Streifen, der
+         beim ersten Daten-Load über die Karte zieht. Filmischer Reveal-Effekt. */
+      .map-sweep-overlay {
+        position: absolute; inset: 0;
+        z-index: 380;
+        pointer-events: none;
+        overflow: hidden;
+      }
+      .map-sweep-overlay::before {
+        content: '';
+        position: absolute;
+        top: -50%; bottom: -50%;
+        left: -30%;
+        width: 60%;
+        background: linear-gradient(90deg,
+          rgba(180,24,33,0) 0%,
+          rgba(180,24,33,0.10) 20%,
+          rgba(212,32,48,0.18) 50%,
+          rgba(180,24,33,0.10) 80%,
+          rgba(180,24,33,0) 100%);
+        transform: skewX(-12deg);
+        animation: mapSweep 1.1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      }
+      @keyframes mapSweep {
+        0%   { left: -30%; opacity: 0; }
+        15%  { opacity: 1; }
+        85%  { opacity: 1; }
+        100% { left: 130%; opacity: 0; }
+      }
+
+      /* Heatmap-Transition-Overlay: weißer Schleier der beim Modus-Wechsel
+         (WK → Umsatz etc.) kurz über die Karte fadet, um den abrupten
+         Farb-Tausch der PLZ-Flächen zu kaschieren. Canvas-Renderer hat
+         keine native CSS-Color-Transition, also fingieren wir es. */
+      #map-mode-fade {
+        position: absolute; inset: 0;
+        z-index: 350;
+        background: rgba(255,255,255,0);
+        pointer-events: none;
+        transition: background 0.18s ease-out;
+      }
+      #map-mode-fade.fade-active { background: rgba(255,255,255,0.55); }
 
       /* ─── Linke Spalte komplett ausgeblendet (Pane-Hide-Modus) ──────────
          Wird durch Klick auf das "👁 Ausblenden"-Tab aktiviert. Filter-Spalte
@@ -318,29 +498,84 @@
         transition: opacity 0.22s ease;
       }
 
-      /* Reopen-Button auf der Karte: nur sichtbar wenn die Spalte ausgeblendet ist. */
-      #left-pane-reopen-btn {
+      /* Schließen-Pfeil oben rechts in der Spalte. Pendant zum Reopen-Button
+         auf der Karte: kleiner (passt in die Spalte), gleiche vertikale
+         Position. Pfeil ◀ zeigt nach links — Richtung die er bewirkt. */
+      #pane-close-btn {
         position: absolute;
-        top: 64px;
-        left: 12px;
-        z-index: 600;
-        display: none;
-        width: 38px; height: 38px;
+        top: 18px;
+        right: 8px;
+        z-index: 50;
+        width: 28px; height: 28px;
         padding: 0;
         background: var(--white);
         border: 1.5px solid var(--gray-200);
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--gray-600);
+        font-size: 0.75rem; line-height: 1;
+        transition: background 0.18s var(--ease-out),
+                    border-color 0.18s var(--ease-out),
+                    color 0.18s var(--ease-out),
+                    transform 0.18s var(--ease-out);
+      }
+      #pane-close-btn:hover {
+        background: var(--red-bg); border-color: var(--red); color: var(--red);
+        transform: scale(1.08) translateX(-2px);
+      }
+      .pane-close-arrow { line-height: 1; }
+      /* Wenn die Spalte komplett ausgeblendet ist, ist der Schließen-Button
+         eh nicht erreichbar. Der Reopen-Button auf der Karte übernimmt dann. */
+      .filter-container.pane-collapsed #pane-close-btn { display: none; }
+
+      /* Reopen-Button auf der Karte: nur sichtbar wenn die Spalte ausgeblendet
+         ist. Größer als der Schließen-Pfeil im offenen Modus, gleiche
+         vertikale Position. Pfeil zeigt nach rechts (öffnet die Spalte). */
+      #left-pane-reopen-btn {
+        position: absolute;
+        /* Position so wählen dass er auf gleicher vertikaler Höhe sitzt
+           wie der Schließen-Pfeil im offenen Modus (siehe pane-close-btn). */
+        top: 24px;
+        left: 12px;
+        z-index: 600;
+        display: none;
+        width: 52px; height: 52px;     /* deutlich größer als der Schließen-Pfeil */
+        padding: 0;
+        background: linear-gradient(135deg, var(--red) 0%, var(--red-light) 100%);
+        border: none;
         border-radius: var(--radius-md);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        box-shadow: var(--shadow-red);
         cursor: pointer;
         align-items: center; justify-content: center;
-        transition: background 0.15s, border-color 0.15s, transform 0.12s;
+        color: white;
+        transition: background 0.18s var(--ease-out),
+                    transform 0.18s var(--ease-out),
+                    box-shadow 0.18s var(--ease-out);
       }
       #left-pane-reopen-btn:hover {
-        background: var(--red-bg); border-color: var(--red);
-        transform: scale(1.04);
+        transform: scale(1.06) translateX(2px);
+        box-shadow: 0 8px 24px rgba(180,24,33,0.35);
+      }
+      #left-pane-reopen-btn:active {
+        transform: scale(0.98);
+      }
+      #left-pane-reopen-btn .reopen-arrow {
+        font-size: 1.5rem; line-height: 1; font-weight: 700;
+        /* Subtile bounce-Animation um auf den Button aufmerksam zu machen */
       }
       .map-container.left-pane-hidden #left-pane-reopen-btn {
         display: inline-flex;
+        animation: reopenSlideIn 0.42s var(--ease-out) both,
+                   reopenPulse 1.6s ease-out 0.5s 3 both;
+      }
+      @keyframes reopenSlideIn {
+        from { opacity: 0; transform: translateX(-30px); }
+        to   { opacity: 1; transform: translateX(0); }
+      }
+      @keyframes reopenPulse {
+        0%, 100% { box-shadow: var(--shadow-red); }
+        50%      { box-shadow: 0 0 0 12px rgba(180,24,33,0); }
       }
 
       /* ─── Filter-Maske einklappbar ─────────────────────────────────────
@@ -350,13 +585,18 @@
       .filter-fields {
         display: flex; flex-direction: column;
         transition: max-height 0.32s var(--ease-out), opacity 0.22s ease,
-                    margin 0.22s ease;
+                    margin 0.22s ease, visibility 0s 0s;
         max-height: 600px;
         overflow: hidden;
       }
       .filter-container.fields-collapsed .filter-fields {
         max-height: 0; opacity: 0; margin: 0;
         pointer-events: none;
+        /* visibility: hidden mit Delay, damit die Transition noch sichtbar
+           durchlaufen kann bevor wir den Tab-Fokus entziehen. */
+        visibility: hidden;
+        transition: max-height 0.32s var(--ease-out), opacity 0.22s ease,
+                    margin 0.22s ease, visibility 0s 0.32s;
       }
       .filter-button-row {
         display: flex; gap: 6px; align-items: stretch;
@@ -384,7 +624,8 @@
       }
 
       /* Info-Bar oben in der Spalte: kompakte Anzeige der aktuellen Auswahl,
-         sichtbar nur wenn Filter eingeklappt sind. */
+         sichtbar nur wenn Filter eingeklappt sind. Erscheint mit Crossfade
+         und leichtem Slide-down. */
       #filter-info-bar {
         display: flex; align-items: center; gap: 8px;
         margin-bottom: 6px;
@@ -394,8 +635,27 @@
         border-radius: var(--radius-md);
         font-size: 0.78rem; font-weight: 600;
         box-shadow: 0 1px 4px rgba(180,24,33,0.18);
+        opacity: 1; max-height: 60px;
+        transform: translateY(0);
+        transition: opacity 0.24s var(--ease-out) 0.10s,
+                    max-height 0.30s var(--ease-out),
+                    transform 0.28s var(--ease-out) 0.10s,
+                    margin 0.24s ease,
+                    padding 0.24s ease;
+        overflow: hidden;
       }
-      #filter-info-bar.hidden { display: none; }
+      #filter-info-bar.hidden {
+        opacity: 0; max-height: 0;
+        margin-bottom: 0; padding-top: 0; padding-bottom: 0;
+        transform: translateY(-6px);
+        pointer-events: none;
+        /* Beim Ausblenden direkt fade ohne Delay */
+        transition: opacity 0.18s ease,
+                    max-height 0.28s var(--ease-out),
+                    transform 0.20s ease,
+                    margin 0.24s ease,
+                    padding 0.24s ease;
+      }
       .filter-info-icon { font-size: 0.95rem; line-height: 1; flex-shrink: 0; }
       .filter-info-text {
         flex: 1; min-width: 0;
@@ -408,8 +668,9 @@
         font-size: 0.66rem; font-weight: 700;
         padding: 2px 7px; border-radius: 10px;
         letter-spacing: 0.04em;
+        animation: badgePop 0.4s var(--ease-out) both;
       }
-      .filter-info-badge:empty { display: none; }
+      .filter-info-badge:empty { display: none; animation: none; }
       #filter-info-expand {
         flex-shrink: 0;
         background: transparent; border: none; color: white;
@@ -417,8 +678,18 @@
         font-size: 0.85rem; font-weight: 700;
         line-height: 1;
         opacity: 0.85;
+        transition: opacity 0.18s, transform 0.24s var(--ease-out);
       }
-      #filter-info-expand:hover { opacity: 1; }
+      #filter-info-expand:hover { opacity: 1; transform: scale(1.15); }
+
+      /* Filter-Toggle-Button (▴ in der Filter-Maske): rotiert je nach State */
+      #filter-fields-toggle .filter-toggle-arrow {
+        display: inline-block;
+        transition: transform 0.28s var(--ease-out);
+      }
+      .filter-container.fields-collapsed #filter-fields-toggle .filter-toggle-arrow {
+        transform: rotate(180deg);
+      }
 
       /* Spezial-Tab "Ausblenden": etwas anderer Look (kein roter Active-State,
          weil es kein View ist sondern eine Aktion). */
@@ -542,7 +813,11 @@
         padding: 7px 12px;
         cursor: pointer; user-select: none;
         border-bottom: 1px solid var(--gray-100);
-        transition: background 0.12s;
+        border-left: 3px solid transparent;   /* Platz für Pending-Indicator */
+        padding-left: 9px;
+        transition: background 0.22s var(--ease-out),
+                    border-left-color 0.32s var(--ease-out),
+                    padding-left 0.22s var(--ease-out);
       }
       .partner-erh-row:last-child { border-bottom: none; }
       .partner-erh-row:hover { background: var(--red-bg); }
@@ -558,13 +833,21 @@
         flex-shrink: 0;
         display: flex; align-items: center; justify-content: center;
         background: var(--white);
-        transition: all 0.15s;
+        transition: background 0.28s var(--ease-out),
+                    border-color 0.28s var(--ease-out),
+                    border-style 0.18s ease;
       }
       .partner-erh-row.checked .partner-erh-checkbox {
         background: var(--red); border-color: var(--red);
       }
       .partner-erh-row.checked .partner-erh-checkbox::after {
         content: '✓'; color: white; font-size: 0.7rem; font-weight: 700; line-height: 1;
+        animation: checkboxPop 0.32s var(--ease-out) both;
+      }
+      @keyframes checkboxPop {
+        0%   { transform: scale(0); opacity: 0; }
+        70%  { transform: scale(1.2); opacity: 1; }
+        100% { transform: scale(1); opacity: 1; }
       }
       .partner-erh-row.is-base .partner-erh-checkbox {
         background: var(--red); border-color: var(--red);
@@ -575,12 +858,14 @@
       .partner-erh-name {
         flex: 1; font-size: 0.78rem; color: var(--gray-700);
         white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        transition: color 0.22s var(--ease-out);
       }
       .partner-erh-row.is-base .partner-erh-name { font-weight: 700; }
       .partner-erh-badge {
         font-size: 0.62rem; color: var(--gray-500);
         background: var(--gray-100); padding: 2px 6px;
         border-radius: 10px; flex-shrink: 0;
+        transition: background 0.32s var(--ease-out), color 0.32s var(--ease-out);
       }
       .partner-erh-row.checked .partner-erh-badge {
         color: var(--red); background: var(--red-bg);
@@ -591,10 +876,11 @@
       }
 
       /* Pending-State: Partner-Zeile mit ausstehender Änderung. Wird durch
-         einen orangenen linken Streifen und ein anderes Badge markiert. */
+         einen orangenen linken Streifen und ein anderes Badge markiert.
+         Border-Color transitionet von transparent → orange (siehe partner-erh-row). */
       .partner-erh-row.pending {
-        border-left: 3px solid #f0a500;
-        padding-left: 9px;   /* statt 12px, gleicht den Border aus */
+        border-left-color: #f0a500;
+        background: rgba(240,165,0,0.04);
       }
       .partner-erh-row.pending-add .partner-erh-checkbox {
         background: rgba(240,165,0,0.18);
@@ -618,12 +904,18 @@
         font-weight: 600;
       }
 
-      /* Bestätigungsbutton-Leiste */
+      /* Bestätigungsbutton-Leiste — slidet von unten herein wenn Änderungen
+         entstehen, statt abrupt zu erscheinen. */
       #partner-erh-actions {
         display: flex; flex-direction: column; gap: 8px;
         padding: 10px 12px;
         background: linear-gradient(180deg, rgba(240,165,0,0.08) 0%, var(--white) 100%);
         border-top: 1px solid rgba(240,165,0,0.4);
+        animation: partnerActionSlideIn 0.36s var(--ease-out) both;
+      }
+      @keyframes partnerActionSlideIn {
+        from { opacity: 0; transform: translateY(12px); max-height: 0; padding-top: 0; padding-bottom: 0; }
+        to   { opacity: 1; transform: translateY(0); max-height: 120px; }
       }
       .partner-actions-info {
         display: flex; align-items: center; gap: 6px;
@@ -634,10 +926,19 @@
         animation: pendingDot 1.4s ease-in-out infinite;
       }
       @keyframes pendingDot {
-        0%, 100% { opacity: 1; }
-        50%      { opacity: 0.4; }
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50%      { opacity: 0.4; transform: scale(0.75); }
       }
       .partner-actions-text { font-weight: 600; }
+      /* Number-Animation: wenn sich die +N/−N-Zahl ändert, kurzes Scale-Pop */
+      .partner-actions-text.bump {
+        animation: numberBump 0.32s var(--ease-out) both;
+      }
+      @keyframes numberBump {
+        0%   { transform: scale(1); }
+        40%  { transform: scale(1.18); color: var(--red); }
+        100% { transform: scale(1); }
+      }
       .partner-actions-buttons {
         display: flex; gap: 6px;
       }
@@ -648,8 +949,15 @@
         font-size: 0.74rem; font-family: var(--font); font-weight: 600;
         border-radius: var(--radius-md);
         cursor: pointer;
-        transition: background 0.15s, border-color 0.15s, box-shadow 0.18s;
+        transition: background 0.18s var(--ease-out),
+                    border-color 0.18s var(--ease-out),
+                    box-shadow 0.18s var(--ease-out),
+                    transform 0.15s var(--ease-out);
       }
+      .partner-action-cancel:hover { transform: translateY(-1px); }
+      .partner-action-apply:hover  { transform: translateY(-1px); }
+      .partner-action-cancel:active,
+      .partner-action-apply:active { transform: scale(0.97); }
       .partner-action-cancel {
         background: var(--white); color: var(--gray-600);
         border: 1.5px solid var(--gray-200);
@@ -1057,16 +1365,43 @@
         letter-spacing: 0.08em; text-transform: uppercase;
         color: var(--gray-400); margin-bottom: 2px;
       }
-      .switch-row { display: flex; gap: 6px; }
-      .switch-btn {
-        flex: 1; padding: 8px 10px; border-radius: var(--radius-md);
-        border: 1.5px solid var(--gray-200); background: var(--white); color: var(--gray-600);
-        font-weight: 600; font-size: 0.83rem; font-family: var(--font); cursor: pointer;
-        transition: all 0.18s var(--ease-in-out);
-        display: flex; align-items: center; justify-content: center; gap: 5px;
+      /* iOS-Style-Slider: ein Pill-Hintergrund gleitet zwischen den Buttons.
+         Buttons selbst werden transparent — der Hintergrund visualisiert
+         den aktiven Zustand via Position. */
+      .switch-row {
+        display: flex; gap: 0;
+        position: relative;
+        background: var(--gray-100);
+        border-radius: var(--radius-md);
+        padding: 3px;
       }
-      .switch-btn:hover:not(.active) { border-color: var(--red-border); background: var(--red-bg); color: var(--red); }
-      .switch-btn.active { background: var(--red); border-color: var(--red); color: var(--white); box-shadow: 0 2px 8px var(--red-shadow); }
+      .switch-row::before {
+        content: '';
+        position: absolute;
+        top: 3px; bottom: 3px; left: 3px;
+        width: calc(50% - 3px);
+        background: var(--red);
+        border-radius: calc(var(--radius-md) - 2px);
+        box-shadow: 0 2px 6px var(--red-shadow);
+        transition: transform 0.32s var(--ease-out);
+        z-index: 0;
+      }
+      /* Wenn der 2. Button (Umsatz) aktiv: Slider nach rechts */
+      .switch-row.switch-right::before {
+        transform: translateX(100%);
+      }
+      .switch-btn {
+        flex: 1; padding: 8px 10px; border-radius: calc(var(--radius-md) - 2px);
+        border: none; background: transparent; color: var(--gray-600);
+        font-weight: 600; font-size: 0.83rem; font-family: var(--font); cursor: pointer;
+        transition: color 0.24s var(--ease-out);
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+        position: relative; z-index: 1;
+      }
+      .switch-btn:hover:not(.active) { color: var(--red); }
+      .switch-btn.active {
+        color: var(--white);
+      }
       .option-row {
         display: flex; gap: 10px; font-size: 0.82rem;
         color: var(--gray-600); align-items: center;
@@ -1567,7 +1902,7 @@
       }
 
       /* ─── Buttons ───────────────────────────────────────────────── */
-      /* ─── Mitbewerber-Tooltip ───────────────────────────────────────── */
+      /* ─── Mitbewerber-Tooltip + Cluster ─────────────────────────────── */
       .competitor-tooltip {
         background: var(--white); border: 1.5px solid #f26522;
         border-radius: var(--radius-md); padding: 6px 10px;
@@ -1575,6 +1910,23 @@
         box-shadow: var(--shadow-md); line-height: 1.5;
       }
       .competitor-tooltip::before { display: none; }
+      .competitor-cluster {
+        background: linear-gradient(135deg, #f26522 0%, #e94e1b 100%);
+        color: white; font-weight: 700;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.85);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        text-align: center;
+        font-family: var(--font);
+        cursor: pointer;
+        animation: clusterPop 0.36s var(--ease-out) both;
+        transition: transform 0.18s var(--ease-out);
+      }
+      .competitor-cluster:hover { transform: scale(1.10); }
+      @keyframes clusterPop {
+        from { opacity: 0; transform: scale(0.4); }
+        to   { opacity: 1; transform: scale(1); }
+      }
 
       .hidden { display: none; }
 
@@ -1609,6 +1961,14 @@
     <div class="layout">
       <div class="filter-container">
 
+        <!-- Schließen-Pfeil oben rechts in der Spalte: Pendant zum Reopen-
+             Button auf der Karte. Pfeil ◀ zeigt nach links — Richtung die
+             er bewirkt: Spalte wird nach links ausgeblendet. Gleiche
+             vertikale Position wie der Reopen-Button (top: 24px). -->
+        <button id="pane-close-btn" type="button" title="Menü ausblenden">
+          <span class="pane-close-arrow">◀</span>
+        </button>
+
         <!-- Info-Bar ganz oben: zeigt aktuelle Erhebungs-Auswahl wenn die
              Filter-Maske eingeklappt ist. Sonst versteckt. -->
         <div id="filter-info-bar" class="hidden">
@@ -1630,7 +1990,7 @@
             <button id="filter-button">Anzeigen</button>
             <!-- Filter-Maske einklappen. Erscheint nur wenn eine Erhebung
                  geladen ist (sonst nichts zu verbergen). -->
-            <button id="filter-fields-toggle" type="button" title="Filter ausblenden">▴</button>
+            <button id="filter-fields-toggle" type="button" title="Filter ausblenden"><span class="filter-toggle-arrow">▴</span></button>
           </div>
         </div>
 
@@ -1700,10 +2060,10 @@
         <div id="heatmap-legend" class="heatmap-legend hidden"></div>
 
         <!-- Reopen-Button: nur sichtbar wenn die ganze linke Spalte
-             ausgeblendet ist. Klick blendet sie wieder ein. Position
-             oben links, klein und dezent. -->
+             ausgeblendet ist. Pfeil ▶ zeigt nach rechts (Richtung die er
+             bewirkt: Menü wird nach rechts ausgeklappt). -->
         <button id="left-pane-reopen-btn" type="button" title="Menü einblenden">
-          <span style="font-size:1rem;line-height:1;">📑</span>
+          <span class="reopen-arrow">▶</span>
         </button>
       </div>
 
@@ -2156,6 +2516,7 @@
       this.competitorGroup = null;   // Mitbewerber-Marker
       this._competitorData = null;   // geladene competitor.json
       this._previewGroup   = null;
+      this._radiusPreviewGroup = null;   // Live-Radius-Preview-Kreise
 
       // Caches freigeben
       this._plzNormCache = null;
@@ -2179,6 +2540,9 @@
       this._dataPollTimer        = null;
       this._loadSecTimer         = null;
       this._previewInterval      = null;
+      this._homeResetSafetyTimer = null;
+      this._homeResetPending     = false;
+      this._partnerToggleInProgress = false;
       // Phase 2: Sidebar-State zurücksetzen für sauberen Re-Connect.
       // Bei Re-Connect ist das Shadow-DOM-Template wieder frisch, also dürfen
       // die View-Container nicht als "schon gerendert" markiert sein.
@@ -2371,6 +2735,12 @@
     // Erhebungen im Index erhalten, solange BW sie liefert (was es im Multi-
     // Filter-Modus tut). Wenn der User mehrere Erhebungen dazuschaltet und
     // wieder entfernt, ist der Index in einem konsistenten Zustand.
+    // ── Legacy: togglePartnerErhebung ───────────────────────────────────
+    // Diese Methode war der ursprüngliche Sofort-Toggle-Mechanismus, der
+    // mit Phase 2 durch den Pending+Apply-Workflow ersetzt wurde. Sie ist
+    // erhalten geblieben für externe Aufrufer (z.B. SAC-Scripting) und
+    // wird intern NICHT mehr aufgerufen — die Picker-UI nutzt jetzt
+    // _togglePendingPartner + _applyPendingPartners.
     async togglePartnerErhebung(erhID) {
       if (!this._activeFilter || !this._activeErhebungen?.length) return;
       // Bug 22 Fix: Double-Click-Schutz. Wenn ein BW-Reload für eine vorige
@@ -2653,7 +3023,11 @@
 
         this._geoLayer = L.geoJSON(geoData, {
           renderer: this._canvasRenderer,
-          style: () => ({ fillColor: '#e9ecef', weight: 0.8, opacity: 1, color: 'white', fillOpacity: 0.35 }),
+          // Initialer Style — Opacity richtet sich nach Tile-Sichtbarkeit
+          style: () => ({
+            fillColor: '#e9ecef', weight: 0.8, opacity: 1, color: 'white',
+            fillOpacity: this._plzFillOpacity('empty'),
+          }),
         }).addTo(this.map);
 
         // Index: plz → layer
@@ -2723,6 +3097,17 @@
       const schedule = () => this._scheduleLabelUpdate();
       this.map.on('zoomend', schedule);
       this.map.on('moveend', schedule);
+      // Mitbewerber-Cluster bei Zoom-Wechsel neu berechnen (Cluster greifen
+      // bei zoom < 9, einzeln darüber). Debounced damit nicht bei jedem
+      // Zwischen-Frame neu gerechnet wird.
+      const recluster = () => {
+        if (!this.showCompetitors) return;
+        if (this._competitorReclusterTimer) this._clearTimeout(this._competitorReclusterTimer);
+        this._competitorReclusterTimer = this._setTimeout(() => {
+          this.updateCompetitorMarkers();
+        }, 120);
+      };
+      this.map.on('zoomend', recluster);
       // Sofort initial rendern
       schedule();
     }
@@ -2859,7 +3244,34 @@
 
 
     // ── Karte: Styling, Highlighting ───────────────────────────────────
-    applyMapMode(mode) { this.currentMapMode = mode; this.updateGeoLayer(); }
+    applyMapMode(mode) {
+      // Wenn echter Modus-Wechsel: kurzen Fade-Overlay einblenden, damit
+      // der Color-Tausch der PLZ-Flächen nicht abrupt wirkt.
+      if (mode !== this.currentMapMode) {
+        this._flashMapTransition();
+      }
+      this.currentMapMode = mode;
+      this.updateGeoLayer();
+    }
+
+    // Kurz weißer Schleier über die Karte → Mode-Switch → Schleier weg.
+    _flashMapTransition() {
+      const mc = this._shadowRoot.querySelector('.map-container');
+      if (!mc) return;
+      let fade = this.$('map-mode-fade');
+      if (!fade) {
+        fade = document.createElement('div');
+        fade.id = 'map-mode-fade';
+        mc.appendChild(fade);
+      }
+      // Aktivieren → Reflow → Deaktivieren
+      void fade.offsetWidth;
+      fade.classList.add('fade-active');
+      this._setTimeout(() => {
+        fade.classList.remove('fade-active');
+        this._setTimeout(() => { try { fade.remove(); } catch (e) {} }, 220);
+      }, 180);
+    }
 
     highlightTableRow(rowElement) {
       if (this._lastHighlightedRow) this._lastHighlightedRow.classList.remove('table-row-selected');
@@ -2884,7 +3296,7 @@
         this.applyStyleToLayer(this._lastHighlightedLayer);
       }
       this._highlightedPLZ = plz;
-      target.setStyle({ weight: 3, color: '#f0a500', fillOpacity: 0.72 });
+      target.setStyle({ weight: 3, color: '#f0a500', fillOpacity: this._plzFillOpacity('hover') });
       this._lastHighlightedLayer = target;
     }
 
@@ -3000,7 +3412,14 @@
     updateSortIcons(activeIndex) {
       const headers = this._shadowRoot.querySelectorAll('th .sort-icon');
       headers.forEach((icon, i) => {
-        icon.textContent = i === activeIndex ? (this._sortState.direction === 'asc' ? '▲' : '▼') : '';
+        if (i === activeIndex) {
+          icon.textContent = this._sortState.direction === 'asc' ? '▲' : '▼';
+          icon.classList.add('sort-icon-active');
+        } else {
+          // Default-Indikator: dezenter Doppelpfeil ⇅, signalisiert "klickbar"
+          icon.textContent = '⇅';
+          icon.classList.remove('sort-icon-active');
+        }
       });
     }
 
@@ -3058,7 +3477,7 @@
       const headerRow = document.createElement('tr');
       headers.forEach(({ label, width }, i) => {
         const th = document.createElement('th');
-        th.innerHTML = `${escapeHtml(label)} <span class="sort-icon" style="font-size:9px;opacity:0.7"></span>`;
+        th.innerHTML = `${escapeHtml(label)} <span class="sort-icon">⇅</span>`;
         th.style.width = width;
         th.style.whiteSpace = 'pre-line';
         this._on(th, 'click', () => this.sortTableByColumn(i));
@@ -3174,11 +3593,15 @@
       for (let i = 0, len = plzList.length; i < len; i++) {
         const plz = plzList[i];
         if (!centerCache[plz]) {
-          const b = layerByPLZ[plz].getBounds();
-          centerCache[plz] = {
-            lat: (b._southWest.lat + b._northEast.lat) / 2,
-            lng: (b._southWest.lng + b._northEast.lng) / 2
-          };
+          // Bug R4 Fix: statt der internen _southWest/_northEast (undocumented
+          // Leaflet API) lieber getBounds().getCenter() — stabiler. Defensiv
+          // gegen leere/zerstörte Layer.
+          try {
+            const center = layerByPLZ[plz].getBounds().getCenter();
+            centerCache[plz] = { lat: center.lat, lng: center.lng };
+          } catch (e) {
+            continue;   // Layer ohne valide Bounds → skip
+          }
         }
         const { lat: lat1, lng: lng1 } = centerCache[plz];
         const rlat1 = toRad(lat1);
@@ -3303,8 +3726,11 @@
 
       // WK-Modus
       this._on(btnWK, 'click', () => {
+        if (this.currentMapMode !== 'wk') this._flashMapTransition();
         this.closeAllPopups();
         btnWK.classList.add('active'); btnUmsatz.classList.remove('active');
+        // iOS-Slider-Position: links (Default, ohne switch-right)
+        btnWK.closest('.switch-row')?.classList.remove('switch-right');
         this.currentMapMode = 'wk'; 
         wkExtra.style.display = ''; umsatzOptionsRow.classList.add('hidden');
         umsatzPanel.classList.add('hidden');
@@ -3332,8 +3758,12 @@
 
       // Umsatz-Modus
       this._on(btnUmsatz, 'click', () => {
+        const isModeChange = this.currentMapMode === 'wk';
+        if (isModeChange) this._flashMapTransition();
         typeSwitch.classList.remove('active-right'); typeSwitch.classList.add('active-left');
         btnUmsatz.classList.add('active'); btnWK.classList.remove('active');
+        // iOS-Slider-Position: rechts
+        btnUmsatz.closest('.switch-row')?.classList.add('switch-right');
         this.closeAllPopups();
         this.currentMapMode = 'umsatz-multi'; 
         if (this._activeFilter) { this.prepareUmsatzPLZWerte(); this.computeWKKennwerte(); }
@@ -3449,6 +3879,26 @@
 
 
     // ── Layer-Styling ──────────────────────────────────────────────────
+    // Wenn die OSM-Hintergrundkarte aktiv ist, werden die PLZ-Flächen
+    // transparenter dargestellt, damit man die Hintergrundkarte
+    // (Straßen, Städte) noch lesen kann. Sonst (Karte aus, weißer Hintergrund)
+    // dürfen die Flächen kräftiger sein.
+    _plzFillOpacity(state) {
+      const tiles = !!this._tilesVisible;
+      switch (state) {
+        case 'value':        // PLZ mit Wert (im Radius)
+          return tiles ? 0.45 : 0.72;
+        case 'empty':        // PLZ ohne Wert / außer Radius
+          return tiles ? 0.18 : 0.35;
+        case 'hover':        // Hover-Highlight
+          return tiles ? 0.55 : 0.72;
+        case 'click-empty':  // Klick auf eine empty PLZ (Stammdaten-Anzeige)
+          return tiles ? 0.18 : 0.3;
+        default:
+          return tiles ? 0.45 : 0.7;
+      }
+    }
+
     applyStyleToLayer(layer) {
       const plz = String(layer.feature?.properties?.plz ?? '').padStart(5, '0');
       const v   = this.filteredPLZWerte?.[plz];
@@ -3462,14 +3912,18 @@
       }
 
       if (!v || !inRadius) {
-        layer.setStyle({ fillColor: '#e9ecef', fillOpacity: 0.35, color: '#ffffff', weight: 0.8 });
+        layer.setStyle({
+          fillColor: '#e9ecef',
+          fillOpacity: this._plzFillOpacity('empty'),
+          color: '#ffffff', weight: 0.8,
+        });
         this._removeCriticalMarker(plz);
         return;
       }
 
       layer.setStyle({
         fillColor: this.computeFillColor(plz),
-        fillOpacity: 0.72,
+        fillOpacity: this._plzFillOpacity('value'),
         color: '#ffffff',
         weight: 0.8,
       });
@@ -3589,14 +4043,31 @@
       if (!this._geoLayer) return;
       const container = this._geoLayer.getPane?.() || this._geoLayer._map?.getPanes?.()?.overlayPane;
       if (!container) return;
+
+      // Bestehender Fade: Pane geht kurz auf 0.1 → 1.0, damit der
+      // Color-Tausch der PLZ-Flächen weich aussieht.
       container.style.transition = 'opacity 0.05s';
       container.style.opacity = '0.1';
       requestAnimationFrame(() => {
         this._setTimeout(() => {
-          container.style.transition = 'opacity 0.35s var(--ease-out)';
+          container.style.transition = 'opacity 0.55s var(--ease-out)';
           container.style.opacity = '1';
         }, 50);
       });
+
+      // Zusätzlicher Sweep-Overlay: ein wandernder Gradient-Streifen über
+      // die Karte. Wirkt wie ein "Scan" — kurz und filmisch. Wird nach der
+      // Animation automatisch entfernt.
+      const mc = this._shadowRoot.querySelector('.map-container');
+      if (!mc) return;
+      // Doppelte Sweeps verhindern: falls schon einer läuft, abbrechen.
+      const existing = mc.querySelector('.map-sweep-overlay');
+      if (existing) existing.remove();
+      const sweep = document.createElement('div');
+      sweep.className = 'map-sweep-overlay';
+      mc.appendChild(sweep);
+      // Nach Animation-Ende entfernen
+      this._setTimeout(() => { try { sweep.remove(); } catch (e) {} }, 1200);
     }
 
     updateBestreuungMarkers() {
@@ -3659,46 +4130,117 @@
       };
       const defaultConfig = { color: '#888', label: '???', size: 24 };
 
+      // Vorfilter: nur Mitbewerber im RADIUS_KM einer aktiven NL behalten
+      const visible = [];
       for (const comp of this._competitorData) {
-        const { brand, name, lat, lon } = comp;
+        const { lat, lon } = comp;
         if (typeof lat !== 'number' || typeof lon !== 'number') continue;
-
-        // Minimale Distanz zu einer aktiven NL berechnen
         let minDist = Infinity;
         for (const nl of activeNLCoords) {
           const d = haversine(nl.lat, nl.lon, lat, lon);
           if (d < minDist) minDist = d;
         }
         if (minDist > RADIUS_KM) continue;
+        visible.push({ ...comp, minDist });
+      }
 
-        const cfg = brandConfig[brand] ?? defaultConfig;
-        const distLabel = minDist < 999 ? `${Math.round(minDist)} km zur nächsten NL` : '';
+      // Clustering: bei niedrigem Zoom-Level Marker zusammenfassen, die in
+      // Pixel-Nähe (~40px) zueinander stehen. Einfaches Greedy-Clustering —
+      // kein externes Plugin nötig. Bei zoom >= 9 wird nicht geclustert
+      // (alle Marker einzeln sichtbar).
+      const zoom = this.map?.getZoom() ?? 9;
+      const clusterPxThreshold = 36;
+      const groups = [];   // Array<{ lat, lon, items: [comp...] }>
+      if (zoom < 9 && this.map) {
+        const used = new Array(visible.length).fill(false);
+        for (let i = 0; i < visible.length; i++) {
+          if (used[i]) continue;
+          used[i] = true;
+          const grp = { items: [visible[i]] };
+          const pi = this.map.latLngToContainerPoint([visible[i].lat, visible[i].lon]);
+          for (let j = i + 1; j < visible.length; j++) {
+            if (used[j]) continue;
+            const pj = this.map.latLngToContainerPoint([visible[j].lat, visible[j].lon]);
+            const dx = pi.x - pj.x, dy = pi.y - pj.y;
+            if (Math.sqrt(dx * dx + dy * dy) < clusterPxThreshold) {
+              used[j] = true;
+              grp.items.push(visible[j]);
+            }
+          }
+          // Cluster-Center = Mittelwert der Punkte
+          const cLat = grp.items.reduce((s, x) => s + x.lat, 0) / grp.items.length;
+          const cLon = grp.items.reduce((s, x) => s + x.lon, 0) / grp.items.length;
+          grp.lat = cLat; grp.lon = cLon;
+          groups.push(grp);
+        }
+      } else {
+        for (const c of visible) groups.push({ lat: c.lat, lon: c.lon, items: [c] });
+      }
 
-        const icon = L.divIcon({
-          html: `<div style="
-            width:${cfg.size}px; height:${cfg.size}px;
-            background:${cfg.color};
-            opacity:0.72;
-            border-radius:50% 50% 50% 0;
-            transform:rotate(-45deg);
-            box-shadow:-1px 2px 4px rgba(0,0,0,0.25);
-            display:flex; align-items:center; justify-content:center;
-            border:1.5px solid rgba(255,255,255,0.6);
-          "><span style="transform:rotate(45deg);font-size:8px;font-weight:700;color:white;
-            font-family:system-ui;letter-spacing:-0.02em;line-height:1">${escapeHtml(cfg.label)}</span></div>`,
-          className: '',
-          iconSize:   [0, 0],
-          iconAnchor: [0, 0],
-        });
+      for (const grp of groups) {
+        if (grp.items.length > 1) {
+          // Cluster-Marker: kompakter Kreis mit Anzahl
+          const size = Math.min(36, 22 + grp.items.length * 2);
+          const icon = L.divIcon({
+            html: `<div class="competitor-cluster" style="
+              width:${size}px; height:${size}px;
+              line-height:${size - 4}px;
+              font-size:${Math.max(11, size / 2.4)}px;
+            ">${grp.items.length}</div>`,
+            className: '',
+            iconSize:   [0, 0],
+            iconAnchor: [0, 0],
+          });
+          const marker = L.marker([grp.lat, grp.lon], { icon, interactive: true, zIndexOffset: 60 });
+          // Tooltip mit Liste der Mitbewerber im Cluster
+          const lines = grp.items.slice(0, 8).map(c =>
+            `<span style="color:${(brandConfig[c.brand] ?? defaultConfig).color}">●</span> ${escapeHtml(c.brand)} — ${escapeHtml(c.name)}`
+          );
+          const more = grp.items.length > 8 ? `<br><em>… ${grp.items.length - 8} weitere</em>` : '';
+          marker.bindTooltip(
+            `<strong>${grp.items.length} Mitbewerber</strong><br>${lines.join('<br>')}${more}`,
+            { direction: 'top', offset: [0, -size / 2], className: 'competitor-tooltip' }
+          );
+          // Klick zoomt auf den Cluster-Bereich
+          marker.on('click', () => {
+            if (this.map) this.map.setView([grp.lat, grp.lon], zoom + 2, { animate: true });
+          });
+          this.competitorGroup.addLayer(marker);
+        } else {
+          const comp = grp.items[0];
+          const { brand, name, lat, lon, minDist } = comp;
+          const cfg = brandConfig[brand] ?? defaultConfig;
+          const distLabel = minDist < 999 ? `${Math.round(minDist)} km zur nächsten NL` : '';
 
-        const marker = L.marker([lat, lon], { icon, interactive: true, zIndexOffset: 50 });
-        marker.bindTooltip(
-          `<strong style="color:${cfg.color}">${escapeHtml(brand)}</strong><br>
-           ${escapeHtml(name)}<br>
-           <span style="font-size:0.85em;color:#666">${escapeHtml(distLabel)}</span>`,
-          { direction: 'top', offset: [0, -cfg.size / 2], className: 'competitor-tooltip' }
-        );
-        this.competitorGroup.addLayer(marker);
+          const icon = L.divIcon({
+            html: `<div style="
+              width:${cfg.size}px; height:${cfg.size}px;
+              background:${cfg.color};
+              opacity:0.72;
+              border-radius:50% 50% 50% 0;
+              transform:rotate(-45deg);
+              box-shadow:-1px 2px 4px rgba(0,0,0,0.25);
+              display:flex; align-items:center; justify-content:center;
+              border:1.5px solid rgba(255,255,255,0.6);
+              transition: opacity 0.18s ease, transform 0.18s ease;
+            "><span style="transform:rotate(45deg);font-size:8px;font-weight:700;color:white;
+              font-family:system-ui;letter-spacing:-0.02em;line-height:1">${escapeHtml(cfg.label)}</span></div>`,
+            className: '',
+            iconSize:   [0, 0],
+            iconAnchor: [0, 0],
+          });
+
+          const marker = L.marker([lat, lon], { icon, interactive: true, zIndexOffset: 50 });
+          // Tooltip mit Vollname (statt nur 3-Buchstaben-Code) — bei Hover
+          // sieht der User sofort welches Geschäft das ist.
+          marker.bindTooltip(
+            `<strong style="color:${cfg.color}">${escapeHtml(brand)}</strong><br>
+             ${escapeHtml(name)}<br>
+             <span style="font-size:0.85em;color:#666">${escapeHtml(distLabel)}</span>`,
+            { direction: 'top', offset: [0, -cfg.size / 2], className: 'competitor-tooltip' }
+          );
+          this.competitorGroup.addLayer(marker);
+        }
       }
     }
 
@@ -3714,6 +4256,14 @@
     toggleMapTiles() {
       if (this._tilesVisible) { this.removeMapTiles();     this._tilesVisible = false; }
       else                     { this.initializeMapTiles(); this._tilesVisible = true;  }
+      // Tile-Toggle ändert die Default-Opacity der PLZ-Flächen → alle
+      // sichtbaren Layer neu zeichnen, damit der Unterschied sofort sichtbar
+      // wird (ohne dass der User Radius/Modus ändern muss).
+      if (this._layerByPLZ) {
+        for (const plz of Object.keys(this._layerByPLZ)) {
+          this.applyStyleToLayer(this._layerByPLZ[plz]);
+        }
+      }
     }
 
     // ── Niederlassungen / Marker ───────────────────────────────────────
@@ -3872,7 +4422,10 @@
       this._on(slider, 'input', () => {
         const radius = Number(slider.value);
         valueLabel.textContent = radius; updateFill();
-        // Vorherigen Debounce-Timer aus beiden Stellen entfernen
+        // Live-Preview: halbtransparente Kreise um aktive NLs während des
+        // Schiebens — gibt visuelles Feedback ohne die teure Aggregation
+        // erneut zu rechnen. Wird debounced angewendet (echte Filterung).
+        this._showRadiusPreview(radius);
         if (debounceTimer != null) {
           clearTimeout(debounceTimer);
           this._timers.delete(debounceTimer);
@@ -3880,10 +4433,48 @@
         }
         debounceTimer = this._setTimeout(() => {
           debounceTimer = null;
+          this._hideRadiusPreview();
           this.applyRadiusFilter(radius);
           if (this._activeFilter) this.showOverviewPopup();
         }, 80);
       });
+      // Bei Loslassen Preview auch wegmachen (falls noch da)
+      this._on(slider, 'change', () => this._hideRadiusPreview());
+      this._on(slider, 'mouseup',   () => this._hideRadiusPreview());
+      this._on(slider, 'touchend',  () => this._hideRadiusPreview());
+    }
+
+    // Live-Preview-Kreise um aktive NLs während des Slider-Drags
+    _showRadiusPreview(radiusKm) {
+      if (!this.map || !this._activeFilter) return;
+      if (!this._radiusPreviewGroup) {
+        this._radiusPreviewGroup = L.layerGroup().addTo(this.map);
+      }
+      this._radiusPreviewGroup.clearLayers();
+      const selNLs = this._selectedNLs;
+      const allSelected = !selNLs || selNLs.size === 0 ||
+                          selNLs.size === (this.allNLs?.length ?? 0);
+      for (const [nl, coords] of Object.entries(this.nlKoordinaten || {})) {
+        if (!allSelected && !selNLs.has(nl)) continue;
+        if (typeof coords.lat !== 'number' || typeof coords.lon !== 'number') continue;
+        const circle = L.circle([coords.lat, coords.lon], {
+          radius: radiusKm * 1000,    // km → m
+          color: '#b41821',
+          weight: 1.5,
+          opacity: 0.55,
+          fillColor: '#b41821',
+          fillOpacity: 0.05,
+          interactive: false,
+          className: 'radius-preview-circle',
+        });
+        this._radiusPreviewGroup.addLayer(circle);
+      }
+    }
+
+    _hideRadiusPreview() {
+      if (this._radiusPreviewGroup) {
+        this._radiusPreviewGroup.clearLayers();
+      }
     }
 
 
@@ -4869,6 +5460,19 @@
           body.appendChild(actionBar);
           this._on(actionBar.querySelector('#partner-action-cancel'), 'click', () => this._cancelPendingPartners());
           this._on(actionBar.querySelector('#partner-action-apply'),  'click', () => this._applyPendingPartners());
+          // Number-Bump: bei Re-Render mit aktualisierter Zahl kurz pulsieren.
+          // Da die Action-Bar ohnehin frisch gerendert wird, geht das einfach
+          // mit einer .bump-Klasse die nach der Animation entfernt wird.
+          const textEl = actionBar.querySelector('.partner-actions-text');
+          if (textEl && (this._lastPartnerActionText !== textEl.textContent)) {
+            textEl.classList.add('bump');
+            this._setTimeout(() => textEl.classList.remove('bump'), 360);
+          }
+          this._lastPartnerActionText = textEl ? textEl.textContent : '';
+        } else {
+          // Keine Änderungen mehr → letzten Text-Snapshot leeren, damit der
+          // nächste Bump beim Re-Erscheinen wieder triggert.
+          this._lastPartnerActionText = '';
         }
       }
 
@@ -4926,6 +5530,9 @@
         // Pending-Set zurücksetzen → wird beim nächsten Render aus dem
         // neuen Active-State neu initialisiert
         this._pendingPartners = null;
+        // Bug R5: Token inkrementieren, damit ein noch-laufender render()
+        // der vorigen Active-Liste als stale erkannt wird.
+        this._renderToken = (this._renderToken || 0) + 1;
 
         const allErhIDs = newList.map(e => e.erhID);
         const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
@@ -5568,6 +6175,47 @@
     }
 
     // ── Cinematic Loader ───────────────────────────────────────────────
+    // ── Skeleton-Loading (Phase 2) ──────────────────────────────────────
+    // Während BW-Daten laden, zeigen wir animierte Platzhalter in der PLZ-
+    // Tabelle (statt leerem Container) + einen dezenten Pulse-Overlay auf
+    // der Karte. Wirkt "lebendiger" und kommuniziert "etwas passiert hier".
+    _showSkeletonTable() {
+      const container = this.$('table-container');
+      if (!container) return;
+      let html = '<div class="skeleton-table">';
+      for (let i = 0; i < 12; i++) {
+        html += `<div class="skeleton-table-row">
+          <div class="skeleton-shimmer"></div>
+          <div class="skeleton-shimmer"></div>
+          <div class="skeleton-shimmer"></div>
+          <div class="skeleton-shimmer"></div>
+        </div>`;
+      }
+      html += '</div>';
+      container.innerHTML = html;
+    }
+    _showSkeletonMapOverlay() {
+      const mapContainer = this._shadowRoot.querySelector('.map-container');
+      if (!mapContainer) return;
+      let ov = this.$('skeleton-map-overlay');
+      if (!ov) {
+        ov = document.createElement('div');
+        ov.id = 'skeleton-map-overlay';
+        ov.className = 'skeleton-map-overlay';
+        ov.innerHTML = '<div class="skeleton-map-pulse"></div>';
+        mapContainer.appendChild(ov);
+      }
+      // Reflow erzwingen damit die Transition triggert
+      void ov.offsetWidth;
+      ov.classList.add('active');
+    }
+    _hideSkeletonMapOverlay() {
+      const ov = this.$('skeleton-map-overlay');
+      if (!ov) return;
+      ov.classList.remove('active');
+      this._setTimeout(() => { try { ov.remove(); } catch (e) {} }, 250);
+    }
+
     _showCinematicLoader() {
       this._hideCinematicLoader(true);
       const overlay = document.createElement('div');
@@ -5637,6 +6285,8 @@
 
     _hideCinematicLoader(immediate = false) {
       const loader = this.$('cinematic-loader');
+      // Skeleton-Map-Overlay zusammen mit dem Cinematic-Loader weg
+      this._hideSkeletonMapOverlay?.();
       if (!loader) return;
       if (immediate) { loader.remove(); return; }
       loader.classList.add('fade-out');
@@ -5792,6 +6442,15 @@
 
       this._showCinematicLoader();
       this._updateLoaderPhase(1, 'Erhebungsdaten werden geladen…');
+      // Skeleton-Loading: PLZ-Tabelle mit Shimmer-Placeholders, Karten-Pulse
+      this._showSkeletonTable();
+      this._showSkeletonMapOverlay();
+
+      // Bug R5 Fix: Token inkrementieren, damit ein eventuell noch laufender
+      // render() der vorigen Erhebung beim nächsten yieldFrame als "stale"
+      // erkannt wird und abbricht. Sonst überschreibt der alte Render-Pass
+      // die UI nach dem neuen loadErhebung-Aufruf.
+      this._renderToken = (this._renderToken || 0) + 1;
 
       this._activeFilter = { erhID, jahr, nummer };
       // Multi-Erhebungs-Modell: Liste aktiver Erhebungen mit dieser Basis-Erhebung
@@ -6434,6 +7093,14 @@
         reopenBtn.dataset.bound = '1';
       }
 
+      // Schließen-Pfeil oben in der Spalte (Pendant zum Reopen-Pfeil)
+      const closeBtn = this.$('pane-close-btn');
+      if (closeBtn) {
+        delete closeBtn.dataset.bound;
+        this._on(closeBtn, 'click', () => this._setLeftPaneVisible(false));
+        closeBtn.dataset.bound = '1';
+      }
+
       // Filter-Maske ein-/ausklappen-Button (rechts neben "Anzeigen")
       const fieldsToggle = this.$('filter-fields-toggle');
       if (fieldsToggle) {
@@ -6537,9 +7204,10 @@
       if (!textEl) return;
       const f = this._activeFilter;
       if (!f) { textEl.textContent = '—'; if (badgeEl) badgeEl.textContent = ''; return; }
-      // Kompaktes Format: "GF-NORD · 2025 · 03"
-      const gfLabel = this._fmtGF ? this._fmtGF(f.erhID) : f.erhID;
-      textEl.textContent = `${gfLabel} · ${f.jahr} · ${f.nummer}`;
+      // Kompaktes Format: "<erhID> · <jahr> · <nummer>".
+      // _fmtGF würde "GF-Bereich XYZ" ergeben — für den schmalen Info-Bar
+      // zu lang. Daher direkt die ID.
+      textEl.textContent = `${f.erhID} · ${f.jahr} · ${f.nummer}`;
       // Multi-GF-Badge: bei aktiven Partnern "+N"
       const count = this._activeErhebungen?.length || 0;
       if (badgeEl) {
@@ -6550,11 +7218,28 @@
     // Sidebar-Icons aktivieren/deaktivieren (z.B. nach Erhebungs-Load)
     _setSidebarEnabled(enabled) {
       const icons = this._shadowRoot.querySelectorAll('.sidebar-icon');
+      // Welche Tabs gerade von disabled → enabled wechseln? Diese kriegen
+      // einen Pulse-Hint, damit der User sieht "hier kannst du jetzt hin".
+      const newlyEnabled = [];
       for (const icon of icons) {
         // Anleitung ist immer verfügbar; der "Ausblenden"-Button auch.
         if (icon.dataset.view === 'docs')           { icon.disabled = false; continue; }
         if (icon.dataset.action === 'hide-pane')    { icon.disabled = false; continue; }
+        const wasDisabled = icon.disabled;
         icon.disabled = !enabled;
+        if (wasDisabled && enabled) newlyEnabled.push(icon);
+      }
+      // Pulse-Hint anwenden + nach Animation-Ende wieder entfernen
+      if (newlyEnabled.length) {
+        for (const icon of newlyEnabled) {
+          icon.classList.remove('just-enabled');   // reset falls schon dran
+          // Reflow erzwingen, damit re-add die Animation neu startet
+          void icon.offsetWidth;
+          icon.classList.add('just-enabled');
+        }
+        this._setTimeout(() => {
+          for (const icon of newlyEnabled) icon.classList.remove('just-enabled');
+        }, 3300);   // 2 × 1.6s + Buffer
       }
       // Defensive: wenn die Sidebar deaktiviert wird und der gerade aktive
       // View ist einer der nun-disabled, erzwinge Wechsel auf 'docs'.
@@ -6615,11 +7300,13 @@
       this.radiusGroup?.clearLayers();
       this.bestreuungGroup?.clearLayers();
       this.competitorGroup?.clearLayers();
+      this._radiusPreviewGroup?.clearLayers();
       this._clearDoppelMarkers();
 
       if (this._geoLayer) {
+        const op = this._plzFillOpacity('empty');
         this._geoLayer.eachLayer(layer => {
-          layer.setStyle({ fillColor: '#e9ecef', fillOpacity: 0.3, color: '#ffffff', weight: 0.8 });
+          layer.setStyle({ fillColor: '#e9ecef', fillOpacity: op, color: '#ffffff', weight: 0.8 });
         });
       }
       // Click-Handler bleiben gebunden – _handlePolygonClick prüft _activeFilter
@@ -6630,6 +7317,8 @@
       this.umsatzMainMode = 'gesamt'; this.umsatzDarstellung = 'abs';
       this.$('btn-wk')?.classList.add('active');
       this.$('btn-umsatz')?.classList.remove('active');
+      // iOS-Slider-Position: links (Default)
+      this.$('btn-wk')?.closest('.switch-row')?.classList.remove('switch-right');
       this.$('umsatz-panel')?.classList.add('hidden');
       const wkExtra = this.$('wk-extra');
       if (wkExtra?.style) wkExtra.style.display = '';
