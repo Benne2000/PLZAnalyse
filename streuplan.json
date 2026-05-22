@@ -1,0 +1,18 @@
+{
+  "termine": [
+    { "datum": "2026-01-31", "kw": 6,  "beschreibung": "16-Seiter A4" },
+    { "datum": "2026-02-28", "kw": 10, "beschreibung": "32-Seiter A4" },
+    { "datum": "2026-03-28", "kw": 14, "beschreibung": "32-Seiter A4" },
+    { "datum": "2026-04-11", "kw": 16, "beschreibung": "16-Seiter A4" },
+    { "datum": "2026-05-02", "kw": 19, "beschreibung": "24-Seiter A4" },
+    { "datum": "2026-05-16", "kw": 21, "beschreibung": "16-Seiter A4" },
+    { "datum": "2026-05-30", "kw": 23, "beschreibung": "24-Seiter A4" },
+    { "datum": "2026-07-18", "kw": 30, "beschreibung": "8-Seiter A4" },
+    { "datum": "2026-08-29", "kw": 36, "beschreibung": "16-Seiter A4" },
+    { "datum": "2026-09-12", "kw": 38, "beschreibung": "16-Seiter A4" },
+    { "datum": "2026-10-02", "kw": 41, "beschreibung": "40-Seiter A4" },
+    { "datum": "2026-10-30", "kw": 45, "beschreibung": "24-Seiter A4" },
+    { "datum": "2026-11-28", "kw": 49, "beschreibung": "32-Seiter A4" }
+  ],
+  "partner": []
+}
