@@ -267,21 +267,36 @@
       .sidebar-content {
         flex: 1; min-height: 0;
         overflow: hidden;
+        position: relative;        /* Container für absolute-positionierte Views */
         transition: flex-basis 0.32s var(--ease-out), opacity 0.22s ease;
       }
+      /* Alle Views liegen übereinander (position absolute) — der aktive ist
+         opacity 1, alle anderen opacity 0 + pointer-events: none. Damit gibt
+         es einen echten Crossfade beim View-Wechsel statt eines abrupten
+         display:none-Tausches. */
       .sidebar-view {
-        display: none;
-        height: 100%;
+        position: absolute;
+        inset: 0;
+        display: flex;             /* Statt none — alle Views sind layoutet */
         flex-direction: column; min-height: 0;
         opacity: 0;
-        transform: translateY(8px);
-        transition: opacity 0.22s var(--ease-out),
-                    transform 0.28s var(--ease-out);
+        transform: translateY(8px) scale(0.995);
+        pointer-events: none;
+        visibility: hidden;
+        transition: opacity 0.24s var(--ease-out),
+                    transform 0.32s var(--ease-out),
+                    visibility 0s 0.32s;
       }
       .sidebar-view.active {
-        display: flex;
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+        visibility: visible;
+        z-index: 2;
+        /* Beim Aktivieren: visibility sofort sichtbar (delay 0), nicht erst nach Transition */
+        transition: opacity 0.28s var(--ease-out) 0.05s,
+                    transform 0.36s var(--ease-out) 0.05s,
+                    visibility 0s 0s;
       }
 
       /* Tab-Bar am unteren Rand: jeder Tab hat Icon + Label untereinander.
@@ -575,22 +590,40 @@
       }
       .filter-button-row {
         display: flex; gap: 6px; align-items: stretch;
+        margin-top: 10px;   /* gleicher Top-Margin wie filter-button vorher */
       }
       .filter-button-row #filter-button {
         flex: 1;
+        margin-top: 0;      /* Margin ist jetzt auf der .filter-button-row */
       }
       #filter-fields-toggle {
         flex-shrink: 0;
-        width: 36px;
-        font-family: var(--font); font-size: 0.85rem;
-        font-weight: 700; color: var(--gray-600);
-        background: var(--white); border: 1.5px solid var(--gray-200);
+        /* Gleiche Optik wie der Anzeigen-Button: rot, gleiches Padding,
+           gleiche Höhe. Padding 9px 12px → Höhe matched mit filter-button. */
+        padding: 9px 12px;
+        font-family: var(--font); font-size: 0.87rem; font-weight: 600;
+        color: var(--white); background: var(--red); border: none;
         border-radius: var(--radius-md);
-        cursor: pointer; line-height: 1;
-        transition: background 0.15s, border-color 0.15s, color 0.15s;
+        cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+        line-height: 1;
+        position: relative; overflow: hidden;
+        transition: background 0.22s var(--ease-in-out),
+                    transform 0.12s, box-shadow 0.18s;
+      }
+      /* Subtiler Inner-Highlight wie beim Anzeigen-Button.ready */
+      #filter-fields-toggle::after {
+        content: ''; position: absolute; inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%);
+        pointer-events: none;
       }
       #filter-fields-toggle:hover {
-        background: var(--red-bg); border-color: var(--red); color: var(--red);
+        background: var(--red-light);
+        box-shadow: var(--shadow-red);
+        transform: translateY(-1px);
+      }
+      #filter-fields-toggle:active {
+        transform: translateY(0); box-shadow: none;
       }
       /* Im Hauptmenü (vor Erhebungs-Auswahl) macht "Filter ausblenden" keinen
          Sinn — Button wird ausgeblendet sobald kein _activeFilter da ist. */
@@ -660,6 +693,8 @@
       /* Filter-Toggle-Button (▴ in der Filter-Maske): rotiert je nach State */
       #filter-fields-toggle .filter-toggle-arrow {
         display: inline-block;
+        font-size: 0.95rem;
+        line-height: 1;
         transition: transform 0.28s var(--ease-out);
       }
       .filter-container.fields-collapsed #filter-fields-toggle .filter-toggle-arrow {
@@ -7174,7 +7209,7 @@
     }
 
     // Info-Bar-Inhalt aus _activeFilter und _activeErhebungen aufbauen.
-    // Zeigt dasselbe Format wie der Filter (GF-Bereich XYZ · Jahr · Nummer),
+    // Zeigt dasselbe Format wie der Filter (GF-Bereich XYZ · Jahr · 1. 20.04–03.05),
     // damit der User die Auswahl 1:1 wiedererkennt.
     _updateFilterInfoBar() {
       const textEl  = this.$('filter-info-text');
@@ -7182,9 +7217,12 @@
       if (!textEl) return;
       const f = this._activeFilter;
       if (!f) { textEl.textContent = '—'; if (badgeEl) badgeEl.textContent = ''; return; }
-      // Identisches Format wie im Filter-Dropdown.
+      // Identisches Format wie im Filter-Dropdown:
+      // - ErhID via _fmtGF → "GF-Bereich XYZ"
+      // - Nummer via fmtNummer → "1. 20.04–03.05" (siehe Modul-Top)
       const gfLabel = this._fmtGF ? this._fmtGF(f.erhID) : f.erhID;
-      textEl.textContent = `${gfLabel} · ${f.jahr} · ${f.nummer}`;
+      const nrLabel = (typeof fmtNummer === 'function') ? fmtNummer(f.nummer) : f.nummer;
+      textEl.textContent = `${gfLabel} · ${f.jahr} · ${nrLabel}`;
       // Multi-GF-Badge: bei aktiven Partnern "+N"
       const count = this._activeErhebungen?.length || 0;
       if (badgeEl) {
