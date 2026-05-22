@@ -203,16 +203,15 @@
       }
       .table-wrapper th:hover { background: var(--red-dark); }
       .table-wrapper th .sort-icon {
-        font-size: 9px;
-        opacity: 0.5;
-        margin-left: 4px;
+        font-size: 10px;
         display: inline-block;
+        margin-left: 0;
+        opacity: 0;
         transition: opacity 0.18s ease, transform 0.22s var(--ease-out);
       }
-      .table-wrapper th:hover .sort-icon { opacity: 0.85; }
       .table-wrapper th .sort-icon.sort-icon-active {
         opacity: 1;
-        font-size: 10px;
+        margin-left: 4px;
         text-shadow: 0 0 4px rgba(255,255,255,0.6);
       }
       .table-wrapper td {
@@ -3428,8 +3427,9 @@
           icon.textContent = this._sortState.direction === 'asc' ? '▲' : '▼';
           icon.classList.add('sort-icon-active');
         } else {
-          // Default-Indikator: dezenter Doppelpfeil ⇅, signalisiert "klickbar"
-          icon.textContent = '⇅';
+          // Im default-State leer — kein Indikator. Erst bei aktiver Sortierung
+          // erscheint ▲ oder ▼ auf der aktiven Spalte.
+          icon.textContent = '';
           icon.classList.remove('sort-icon-active');
         }
       });
@@ -3481,7 +3481,7 @@
         { label: 'PLZ',                    width: '44px' },
         { label: 'Gemeinde',               width: '88px' },
         { label: 'HZ',                     width: '22px' },
-        { label: 'Umsatz Brutto\n(hochger.)', width: '58px' },
+        { label: 'Umsatz\n(Hochgerechnet)', width: '58px' },
         { label: lastColLabel,             width: '46px' }
       ];
 
@@ -3489,7 +3489,9 @@
       const headerRow = document.createElement('tr');
       headers.forEach(({ label, width }, i) => {
         const th = document.createElement('th');
-        th.innerHTML = `${escapeHtml(label)} <span class="sort-icon">⇅</span>`;
+        // Sort-Icon-Span wird leer gerendert — Inhalt setzt updateSortIcons
+        // erst bei aktiver Sortierung (▲ oder ▼). Vorher kein Indikator.
+        th.innerHTML = `${escapeHtml(label)}<span class="sort-icon"></span>`;
         th.style.width = width;
         th.style.whiteSpace = 'pre-line';
         this._on(th, 'click', () => this.sortTableByColumn(i));
