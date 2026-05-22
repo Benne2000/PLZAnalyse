@@ -4531,7 +4531,7 @@
 
       // Basis-Felder immer anzeigen
       const beschreibungen = {
-        value_hr_n_umsatz_0:      'Umsatz Brutto (hochgerechnet)',
+        value_hr_n_umsatz_0:      'Umsatz (hochgerechnet)',
         value_umsatz_p_hh_0:      'Umsatz p. HH',
         value_wk_in_percent_0:    'Werbekosten (%)',
         value_wk_nachbar_0:       'WK (%) inkl. Nachb.',
@@ -4870,7 +4870,7 @@
 
           <div class="section-title">WK-Kennwerte</div>
           <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px;font-size:0.82rem;">
-            <div style="color:var(--gray-600);font-weight:500">Umsatz Brutto (hochgerechnet)</div>
+            <div style="color:var(--gray-600);font-weight:500">Umsatz (hochgerechnet)</div>
             <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fmtNum(totalUmsatzHR)} €</div>
             <div style="color:var(--gray-600);font-weight:500">HZ-Werbekosten</div>
             <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fmtNum(totalHZKosten)} €</div>
@@ -5125,7 +5125,16 @@
       if (filterBtn) {
         this._on(filterBtn, 'click', () => {
           if (!filterBtn.classList.contains('ready')) return;
+          // Bug E15 Fix: Double-Click-Schutz — Button kurz disabled markieren
+          // bis loadErhebung das Token inkrementiert hat. Sonst gibt's bei
+          // schnellem Doppelklick zwei parallele BW-Reloads mit konkurrierenden
+          // render()-Passes.
+          if (filterBtn.dataset.loading === '1') return;
+          filterBtn.dataset.loading = '1';
           this.loadErhebung(erhSelect.value, jahrSelect.value, nummerSelect.value);
+          // Lock nach 800ms wieder freigeben (Token ist dann längst gesetzt,
+          // Cinematic-Loader sichtbar — Button visual disabled durch Loader).
+          this._setTimeout(() => { delete filterBtn.dataset.loading; }, 800);
         });
       }
 
@@ -6440,6 +6449,19 @@
 
     // ── loadErhebung ───────────────────────────────────────────────────
     async loadErhebung(erhID, jahr, nummer) {
+      // Bug E19 Fix: Wenn dieselbe Erhebung bereits geladen ist, kein
+      // unnötiger BW-Reload. Vergleich auf rohe Werte (Basis-Erhebung,
+      // ignoriert Partner-Erhebungen — diese werden über _applyPendingPartners
+      // verwaltet). Falls der User mit Partnern arbeitet und dieselbe Basis
+      // erneut lädt, wird er trotzdem auf den Single-GF-Modus zurückgesetzt,
+      // sieht er aber nichts Falsches.
+      const cur = this._activeFilter;
+      if (cur && cur.erhID === erhID && cur.jahr === jahr && cur.nummer === nummer
+          && (this._activeErhebungen?.length || 0) <= 1) {
+        console.info('[PLZ-Widget] loadErhebung: identische Erhebung — skip');
+        return;
+      }
+
       this.$('heatmap-legend')?.classList.add('hidden');
       // Phase 2: Sidebar aktivieren, Default-View = PLZ-Tabelle, Spalte
       // sichtbar machen falls vorher ausgeblendet. Filter-Maske wird beim
@@ -6487,6 +6509,55 @@
       // Pending-Partners-Set verwerfen — gehört zur alten Erhebungs-Session.
       // Beim nächsten Picker-Render wird es aus dem neuen Active-State initialisiert.
       this._pendingPartners = null;
+      // Bug E2 Fix: NL-Selektion und Kategorie-Selektion zurücksetzen.
+      // Andernfalls bleiben NL-IDs der alten Erhebung selektiert, die in der
+      // neuen Erhebung gar nicht existieren — führt zu leeren Filter-Resultaten
+      // bis der nächste render()-Pass die _selectedNLs überschreibt.
+      this._selectedNLs = new Set();
+      this._nlSelectionInitialized = false;
+      this.activeCategories = new Set(CATEGORIES);
+      // Bug E3 Fix: alle abgeleiteten Container-States invalidieren, sonst
+      // greift z.B. eine alte filteredPLZWerte zwischen loadErhebung und
+      // erstem render()-Pass auf alte PLZs zurück.
+      this.filteredPLZWerte = {};
+      this.filteredKennwerte = {};
+      this.maxFilteredValue = 0;
+      // Highlighted PLZ + offene Popups schließen — gehörten zur alten Erhebung
+      if (this._highlightedPLZ) {
+        const layer = this._layerByPLZ?.[this._highlightedPLZ];
+        if (layer && this._geoLayer) this.applyStyleToLayer(layer);
+        this._highlightedPLZ = null;
+      }
+      this._lastHighlightedLayer = null;
+      this.closeAllPopups?.();
+      // Bug E6 Fix: Critical-Marker (⚠️ Doppelbestreuung, ✅ HZ) der alten
+      // Erhebung wegmachen — sonst hängen sie kurz auf der Karte bis der
+      // nächste applyStyleToLayer-Pass durchgelaufen ist.
+      this._clearDoppelMarkers?.();
+      // Bestreuungs-Marker und Radius-Preview ebenfalls clearen.
+      this.bestreuungGroup?.clearLayers();
+      this.competitorGroup?.clearLayers();
+      this._radiusPreviewGroup?.clearLayers();
+      // Bug E7 Fix: falls der User vorher Home angeklickt hatte (Reset-Pending)
+      // und nun direkt eine neue Erhebung lädt, das Pending-Flag verwerfen —
+      // sonst würde der Poll-Tick die neue Erhebung womöglich als "abgebrochen"
+      // werten oder die alte Home-Logik triggern.
+      this._homeResetPending = false;
+      if (this._homeResetSafetyTimer) {
+        this._clearTimeout(this._homeResetSafetyTimer);
+        this._homeResetSafetyTimer = null;
+      }
+      // Bug E8 Fix: Partner-Toggle-Lock zurücksetzen — gehörte zur alten
+      // Erhebung. Falls noch ein 400ms-Reset-Timer aus _applyPendingPartners
+      // läuft, der ist harmlos (setzt das Flag eh nur auf false).
+      this._partnerToggleInProgress = false;
+      // Bug E10 Fix: Cache-Detection im Poll-Tick (Zeile ~7525) vergleicht
+      // rowCount mit _totalRowCount um "noch alte Daten"-Loops zu vermeiden.
+      // Bei Erhebungs-Wechsel könnte die neue Erhebung zufällig gleiche
+      // Zeilenzahl haben — dann würde der Poll fälschlich looping bleiben.
+      // → _totalRowCount auf -1 zurücksetzen, damit der nächste Vergleich
+      // garantiert "ungleich" ist.
+      this._totalRowCount = -1;
       this._fullDataLoaded = true;
       this._sortState = { column: null, direction: 'asc' };  // Sortierung für neue Erhebung zurücksetzen
       // Bug 28 Fix: Sidebar-Icon-Badges sofort aktualisieren — der echte
@@ -7134,6 +7205,10 @@
     _switchSidebarView(key) {
       // Tab "ausblenden" ist kein View → blockiere falsche Werte
       if (!['docs', 'plz', 'overview', 'analysis'].includes(key)) return;
+      // Early-Return wenn View schon aktiv — sonst läuft die Crossfade-
+      // Animation unnötig durch (View kurz auf opacity 0 dann wieder 1)
+      // und im 'overview'/'analysis'-Fall würden unnötige Re-Renders laufen.
+      if (this._sidebarView === key) return;
       this._sidebarView = key;
       const views = ['docs', 'plz', 'overview', 'analysis'];
 
