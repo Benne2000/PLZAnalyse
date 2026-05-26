@@ -7874,46 +7874,42 @@
       if (this._dataPollTimer) return;
       this._updateLoaderPhase(1, 'Warte auf Daten…');
       const start = Date.now();
-      const mode = this._fullDataLoaded
-        ? (this._doppelbestreuungAktiv ? 'Phase 2 – mit Doppelbestreuung' : 'Phase 2 – ohne Doppelbestreuung')
-        : 'Phase 1 – Bootstrap';
+      // Snapshot zum Zeitpunkt des Poll-Starts: _fullDataLoaded kann sich
+      // ändern während der Poll läuft (render() setzt es auf false) — wir
+      // frieren den Mode ein damit der Tick immer korrekt entscheidet.
+      const isBootstrapPoll = !this._fullDataLoaded;
+      const mode = isBootstrapPoll
+        ? 'Phase 1 – Bootstrap'
+        : (this._doppelbestreuungAktiv ? 'Phase 2 – mit Doppelbestreuung' : 'Phase 2 – ohne Doppelbestreuung');
       console.info(`[PLZ-Widget] ⏳ Poll gestartet [${mode}]`);
 
       const tick = () => {
         if (this._myDataSource?.state === 'success') {
           const rowCount = this._myDataSource?.data?.length ?? 0;
 
-          // Cache-Detection 1: gleiche Row-Anzahl UND gleiche ErhID wie letzter Render
-          // → SAC gibt den gecachten Datenstand zurück, BW hat noch nicht geliefert.
-          // Wenn ErhID unterschiedlich, ist Row-Anzahl-Gleichheit Zufall und kein Cache.
-          if (this._fullDataLoaded && rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
-            const sameErh = !this._activeFilter || this._totalRowCountErhID === this._activeFilter.erhID;
-            if (sameErh) return;
-          }
-
-          // Cache-Detection 2: Bootstrap-Rows noch gecacht
-          if (this._fullDataLoaded) {
+          if (!isBootstrapPoll) {
+            // ── Phase-2-Poll: Cache-Detections ──────────────────────────
+            // D1: gleiche Row-Anzahl + gleiche ErhID → SAC-Cache
+            if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
+              const sameErh = !this._activeFilter || this._totalRowCountErhID === this._activeFilter.erhID;
+              if (sameErh) return;
+            }
+            // D2: Bootstrap-Row-Count → SAC hat noch 00000-Daten
             const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
             const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
             if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
-              console.info(`[PLZ-Widget] Tick: Bootstrap-Cache (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte weiter`);
+              console.info(`[PLZ-Widget] Tick: Bootstrap-Cache (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
               return;
             }
-          }
-
-          // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten
-          if (this._fullDataLoaded && this._activeFilter && rowCount > 0) {
-            const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
-            if (staleErh) {
-              const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 0;
-              console.info(`[PLZ-Widget] Tick: ErhID-Cache ("${staleErh}" ≠ "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte weiter`);
-              return;
+            // D3: erste Row gehört zu anderer ErhID
+            if (this._activeFilter && rowCount > 0) {
+              const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
+              if (staleErh) {
+                console.info(`[PLZ-Widget] Tick: ErhID-Cache ("${staleErh}" ≠ "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
+                return;
+              }
             }
-          }
-
-          // Cache-Detection 4: Row-Anzahl nach Filter-Switch noch nicht geändert
-          if (this._fullDataLoaded) {
-            const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
+            // D4: Row-Anzahl hat sich seit Filter-Switch noch nicht geändert
             if (msSinceSwitch < 30000) {
               if (this._lastRowCountSinceSwitch === undefined) {
                 this._lastRowCountSinceSwitch = rowCount;
@@ -7921,24 +7917,22 @@
                 return;
               }
               if (rowCount === this._lastRowCountSinceSwitch) {
-                // Alle 3s einen Log-Eintrag damit der User weiss es läuft noch
                 const secs = Math.floor(msSinceSwitch / 1000);
                 if (secs !== this._lastPollSecs) {
                   this._lastPollSecs = secs;
-                  console.info(`[PLZ-Widget] Tick: Post-Switch unverändert (${rowCount} Rows, ${secs}s) – warte weiter`);
+                  console.info(`[PLZ-Widget] Tick: Post-Switch unverändert (${rowCount} Rows, ${secs}s) – warte`);
                 }
                 return;
               }
               console.info(`[PLZ-Widget] Tick: Row-Änderung ${this._lastRowCountSinceSwitch} → ${rowCount} (${(msSinceSwitch/1000).toFixed(1)}s) ✓`);
               this._lastRowCountSinceSwitch = undefined;
             }
-          }
-
-          // Cache-Detection Home-Reset: noch alte Erhebungs-Rows da?
-          if (this._homeResetPending && !this._fullDataLoaded) {
-            const expected = 200; // PLZ=00000 liefert ~164 Rows
-            if (rowCount > expected) return;
-            this._homeResetPending = false;
+          } else {
+            // ── Bootstrap-Poll: Home-Reset-Detection ────────────────────
+            if (this._homeResetPending) {
+              if (rowCount > 200) return;
+              this._homeResetPending = false;
+            }
           }
 
           this._clearInterval(this._dataPollTimer);
@@ -7947,7 +7941,7 @@
           const waited = ((Date.now() - start) / 1000).toFixed(1);
           console.info(`[PLZ-Widget] ✅ BW-Daten empfangen [${mode}] – ${rowCount} Rows in ${waited}s`);
 
-          if (!this._fullDataLoaded) {
+          if (isBootstrapPoll) {
             if (!this._bootstrapDone) this._bootstrapFromPLZ00000(this._myDataSource.data);
           } else {
             if (!this._renderInProgress) {
@@ -7963,7 +7957,7 @@
           const secs = Math.floor((Date.now() - start) / 1000);
           if (secs !== this._lastPollSecs) {
             this._lastPollSecs = secs;
-            if (!this._fullDataLoaded) {
+            if (isBootstrapPoll) {
               this._updateLoaderPhase(1, `Warte auf Daten… (${secs}s)`);
             } else {
               const currentRows = this._myDataSource?.data?.length ?? 0;
