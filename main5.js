@@ -750,28 +750,6 @@
       .nl-info-row.table-row-selected td             { background: #fff3f3; }
       .nl-info-row.table-row-selected td:first-child { border-left: 3px solid var(--red); }
 
-      /* Datenqualitäts-Indikator: NL mit pct_erfassung > 100% (= Umsatz ohne
-         gültige PLZ-Zuordnung). Wir markieren nur den auffälligen Prozentwert
-         und nicht die ganze Zeile — der Rest der Daten ist ja valide. */
-      .nl-info-row td.nl-pct-invalid {
-        color: var(--red);
-        font-weight: 700;
-      }
-      .nl-pct-warn {
-        display: inline-block;
-        font-size: 0.85em;
-        line-height: 1;
-        vertical-align: middle;
-        cursor: help;
-        /* Subtiler Pulse, um das Auge auf die Auffälligkeit zu lenken — nicht
-           penetrant, einmaliger sanfter Hinweis pro Render. */
-        animation: nlInvalidPulse 1.6s ease-out 2;
-      }
-      @keyframes nlInvalidPulse {
-        0%, 100% { transform: scale(1); }
-        50%      { transform: scale(1.18); }
-      }
-
       /* GF-Gruppen-Header in NL-Tabelle (Multi-Modus) */
       .nl-gf-group-header td {
         background: linear-gradient(to right, var(--red-bg) 0%, transparent 100%);
@@ -2253,7 +2231,6 @@
       this._dropdownsInitialized   = false;
       this._plzFilterInitialized   = false;
       this._doppelbestreuungAktiv  = false;
-      this._lastLoadedDoppelMode   = null;    // Welcher Doppel-Modus wurde zuletzt mit BW geladen
       this._doppelTooltipEl        = null;
       this._geoClickBound          = false;
 
@@ -2956,52 +2933,14 @@
         this._nummerFilterKey = this._trySetFilter(ds, NUMMER_FILTER_KEYS, [nummer]);
       }
 
-      // PLZ-Filter entfernen → triggert BW-Reload ohne PLZ-Einschränkung.
-      //
-      // Reihenfolge der Strategien (von sicher zu Fallback):
-      // 1) removeDimensionFilter mit dem beim Bootstrap gecachten Key
-      // 2) removeDimensionFilter mit allen bekannten Keys
-      // 3) setDimensionFilter(key, []) — leeres Array als "kein Filter"
-      //    (in manchen SAC-Versionen äquivalent zu remove)
-      //
-      // Wichtig: SAC wirft keine Exception bei removeDimensionFilter wenn
-      // der Key existiert aber kein Filter aktiv ist → wir können Erfolg
-      // nicht sicher messen. Wir führen alle Versuche durch und setzen
-      // removed=true wenn kein Ausnahme-Pfad die komplette Schleife abbricht.
-      const knownPlzKey = this._plzFilterKey ? [this._plzFilterKey] : [];
-      const plzKeysOrdered = [...new Set([...knownPlzKey, ...PLZ_FILTER_KEYS])];
+      // PLZ-Filter zuletzt entfernen → triggert kombinierten BW-Query
       let removed = false;
-
-      // Strategie 1+2: removeDimensionFilter
-      for (const k of plzKeysOrdered) {
-        try {
-          ds.removeDimensionFilter(k);
-          console.info(`[PLZ-Widget] removeDimensionFilter(${k}) OK`);
-          removed = true;
-        } catch (e) {
-          console.warn(`[PLZ-Widget] removeDimensionFilter(${k}) fehler:`, e?.message ?? String(e));
-        }
+      for (const k of PLZ_FILTER_KEYS) {
+        try { ds.removeDimensionFilter(k); this._plzFilterKey = k; removed = true; break; } catch (e) {}
       }
-
-      // Strategie 3: leeres Array als Fallback
-      if (!removed) {
-        for (const k of plzKeysOrdered) {
-          try {
-            ds.setDimensionFilter(k, []);
-            console.info(`[PLZ-Widget] setDimensionFilter(${k}, []) OK (Fallback)`);
-            removed = true;
-          } catch (e) {
-            console.warn(`[PLZ-Widget] setDimensionFilter(${k}, []) fehler:`, e?.message ?? String(e));
-          }
-        }
-      }
-
       if (removed) {
-        this._plzFilterKey = null;   // Filter ist weg, Key nicht mehr relevant
         this._filterSwitchTime = Date.now();
-        console.info(`[PLZ-Widget] Filter-Switch OK (${erhIDs.length} ErhID) in ${(performance.now() - t0).toFixed(0)}ms`);
-      } else {
-        console.error('[PLZ-Widget] KRITISCH: PLZ-Filter konnte nicht entfernt werden!');
+        console.info(`[PLZ-Widget] Filter-Switch (${erhIDs.length} ErhID) in ${(performance.now() - t0).toFixed(0)}ms`);
       }
       return removed;
     }
@@ -3875,21 +3814,11 @@
           btnWA.classList.remove('disabled');
           this.useWerbeUmsatz = true; this.useZusatzUmsatz = false;
           chkWerbe.checked = true;    chkMit.checked = false; chkMit.disabled = false;
-          chkWerbe.disabled = false;
         } else {
           btnWA.classList.add('disabled');
           this.umsatzDarstellung = 'abs';
           darstSwitch.querySelectorAll('span').forEach(s => s.classList.remove('active'));
           btnAbs.classList.add('active');
-          // Bug WA7 Fix: Wenn im Werbeanteil-Modus auf "Gesamt" gewechselt
-          // wird, muss currentMapMode auf umsatz-multi zurück — sonst zeigt
-          // die Karte grau (werbeAnteil=0 im Gesamt-Modus).
-          if (this.currentMapMode === 'werbeanteil') {
-            this.currentMapMode = 'umsatz-multi';
-          }
-          // Mitgekauft + Werbe wieder enabled (waren im WA-Modus disabled)
-          if (chkMit)   chkMit.disabled = false;
-          if (chkWerbe) chkWerbe.disabled = false;
         }
         refreshMapAndPopup();
       });
@@ -3911,24 +3840,13 @@
         darstSwitch.querySelectorAll('span').forEach(s => s.classList.remove('active'));
         btn.classList.add('active');
       };
-      // Bug WA4 Fix: chkMit und chkWerbe waren im Werbeanteil-Modus disabled.
-      // Beim Wechsel zurück auf Absolut/HH müssen sie wieder klickbar werden.
-      const reEnableMit = () => {
-        if (this.umsatzMainMode === 'werbung') {
-          if (chkMit)   chkMit.disabled = false;
-          if (chkWerbe) chkWerbe.disabled = false;
-        }
-      };
-      this._on(btnAbs, 'click', () => { setDarst('abs', 'umsatz-multi', btnAbs); reEnableMit(); refreshMapAndPopup(); });
-      this._on(btnHH,  'click', () => { setDarst('hh',  'umsatz-multi', btnHH);  reEnableMit(); refreshMapAndPopup(); });
+      this._on(btnAbs, 'click', () => { setDarst('abs', 'umsatz-multi', btnAbs); refreshMapAndPopup(); });
+      this._on(btnHH,  'click', () => { setDarst('hh',  'umsatz-multi', btnHH);  refreshMapAndPopup(); });
       this._on(btnWA,  'click', () => {
         if (this.umsatzMainMode !== 'werbung') return;
         setDarst('werbeanteil', 'werbeanteil', btnWA);
-        // Im Werbeanteil-Modus: nur Werbung relevant, kein Mitgekauft.
-        // Beide Checkboxen werden auf den richtigen State erzwungen und
-        // disabled, damit der User sie nicht umschalten kann.
-        chkWerbe.checked = true; this.useWerbeUmsatz = true;  chkWerbe.disabled = true;
-        chkMit.checked = false;  this.useZusatzUmsatz = false; chkMit.disabled = true;
+        chkWerbe.checked = true; this.useWerbeUmsatz = true;
+        chkMit.checked = false; chkMit.disabled = true; this.useZusatzUmsatz = false;
         refreshMapAndPopup();
       });
 
@@ -3953,12 +3871,7 @@
             this.activeCategories.add(cat);
             toggle.classList.add('active');
           }
-          // Bug WA1 Fix: nur den Umsatz-Modus erzwingen wenn nicht gerade
-          // im Werbeanteil-Modus — sonst verliert der User seinen Werbeanteil-
-          // State sobald er eine Kategorie umschaltet.
-          if (this.currentMapMode !== 'werbeanteil') {
-            this.currentMapMode = 'umsatz-multi';
-          }
+          this.currentMapMode = 'umsatz-multi'; 
           refreshMapAndPopup();
         });
       });
@@ -4102,15 +4015,7 @@
 
     getColor(value, isHZ) {
       const v = typeof value === 'number' && !isNaN(value) ? value : 0;
-      if (isHZ) {
-        // HZ-Modus (aktive Bestreuung): Werte sind Werbekostenquote in %.
-        // Bei aktiver Bestreuung mit 0 Umsatz wäre v=0, aber das ist fachlich
-        // KEIN guter Wert — es heißt "Werbung kostet, bringt nichts ein".
-        // Diese PLZ soll als kritisch dargestellt werden (dunkelrot), nicht
-        // als grau (= kein Datum). Daher: v=0 mit isHZ=true → max WK-Quote.
-        if (v <= 0) return '#e31a1c';
-        return v > 25 ? '#e31a1c' : v > 15 ? '#fd8d3c' : v > 10 ? '#ffffb2' : v > 5 ? '#78c679' : v > 2 ? '#41ab5d' : '#006837';
-      }
+      if (isHZ) return v > 25 ? '#e31a1c' : v > 15 ? '#fd8d3c' : v > 10 ? '#ffffb2' : v > 5 ? '#78c679' : v > 2 ? '#41ab5d' : v > 0 ? '#006837' : '#cfd4da';
       return v > 50 ? '#cfd4da' : v > 25 ? '#bdbdbd' : v > 15 ? '#969696' : v > 10 ? '#6baed6' : v > 5 ? '#2171b5' : v > 0 ? '#08306b' : '#cfd4da';
     }
     getDynamicHeatColor(value, max) {
@@ -4133,13 +4038,7 @@
       // aktiv und WK-Modus.
       // Multi-Modus: Cross-GF-Doppel (separat schaltbar) markiert PLZs, die
       // in 2+ aktiv-kombinierten Erhebungen mit HZ=X bestreut werden.
-      if (this.currentMapMode === 'wk' && this.showCritical) {
-        this._computeCrossErhebungDoppel();
-      } else if (this._crossErhebungPLZ && Object.keys(this._crossErhebungPLZ).length > 0) {
-        // Bug DB2 Fix: bei deaktivierter Doppelbestreuung den stale State
-        // wegräumen, damit kein alter Cross-Marker hängenbleibt.
-        this._crossErhebungPLZ = {};
-      }
+      if (this.currentMapMode === 'wk' && this.showCritical) this._computeCrossErhebungDoppel();
       if (this._crossGfDoppelAktiv && this._activeErhebungen?.length > 1) {
         this._computeCrossGfDoppel();
       } else if (this._crossGfDoppel) {
@@ -4402,7 +4301,7 @@
         const coords = this.nlKoordinaten[nlKey];
         if (!coords || seen.has(nlKey)) continue;
         const marker = L.marker([coords.lat, coords.lon], {
-          icon: this.createMarkerIcon(nlName, false, this._isNLInvalid(nlKey)),
+          icon: this.createMarkerIcon(nlName),
           title: nlName,
           plzs: [nlKey]
         });
@@ -4416,7 +4315,7 @@
       if (Array.isArray(this.extraNLs)) {
         for (const { nl, lat, lon } of this.extraNLs) {
           const marker = L.marker([lat, lon], {
-            icon: this.createMarkerIcon(nl, false, this._isNLInvalid(nl)), title: nl, plzs: [nl]
+            icon: this.createMarkerIcon(nl), title: nl, plzs: [nl]
           });
           marker.setZIndexOffset(1000);
           marker.on('click', () => this.toggleNLSelection(nl));
@@ -4450,42 +4349,23 @@
         const nl  = row['dimension_niederlassung_0']?.id?.trim();
         if (selNLs.size > 0 && !selNLs.has(nl)) continue;
         const plz = this._normalizePLZ(row['dimension_plz_0']?.id);
-        // Bug PLZ3 Fix: '00000' = Stammdaten-Aggregat ohne echte PLZ-Zuordnung.
-        // Sonst landet das in filteredPLZs und verfälscht alle abgeleiteten
-        // Aggregate (computeWKKennwerte etc.).
-        if (plz && plz !== '00000') plzSet.add(plz);
+        if (plz) plzSet.add(plz);
       }
       this.filteredPLZs = [...plzSet];
       this.computeWKKennwerte();
     }
 
-    createMarkerIcon(nl, isPhantom = false, isInvalid = false) {
-      const key = nl + (isPhantom ? '_phantom' : '_active') + (isInvalid ? '_warn' : '');
+    createMarkerIcon(nl, isPhantom = false) {
+      const key = nl + (isPhantom ? '_phantom' : '_active');
       if (!this.iconCache[key]) {
         const color  = isPhantom ? '#8c9099' : '#b41821';
         const border = isPhantom ? '1.5px solid rgba(60,60,80,0.4)' : 'none';
         const shadow = isPhantom ? '-1px 2px 4px rgba(0,0,0,0.25)' : '-1px 2px 6px rgba(180,24,33,0.4)';
         const opacity = isPhantom ? 0.75 : 1;
-        // Warn-Badge oben rechts am Marker. Es sitzt außerhalb der gedrehten
-        // Tropfen-Form und ist gegen-gedreht, damit es aufrecht erscheint.
-        // Position absolut relativ zum 30x30 Marker-Container.
-        const warnBadge = isInvalid
-          ? `<div style="position:absolute;top:-4px;right:-4px;width:14px;height:14px;background:#f0a500;border-radius:50%;border:1.5px solid white;display:flex;align-items:center;justify-content:center;font-size:9px;line-height:1;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,0.3);" title="Diese NL hat Umsatz ohne PLZ-Zuordnung">!</div>`
-          : '';
-        const markerHtml = `<div style="position:relative;width:30px;height:30px;">
-          <div style="width:30px;height:30px;background-color:${color};opacity:${opacity};border-radius:50% 50% 50% 0;box-shadow:${shadow};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;font-family:system-ui;border:${border};"><div style="transform:rotate(45deg)">${escapeHtml(nl)}</div></div>
-          ${warnBadge}
-        </div>`;
+        const markerHtml = `<div style="width:30px;height:30px;background-color:${color};opacity:${opacity};border-radius:50% 50% 50% 0;box-shadow:${shadow};transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;font-family:system-ui;border:${border};"><div style="transform:rotate(45deg)">${escapeHtml(nl)}</div></div>`;
         this.iconCache[key] = L.divIcon({ html: markerHtml, className: '', iconSize: [30, 30], iconAnchor: [15, 30] });
       }
       return this.iconCache[key];
-    }
-
-    // Hilfs-Check: hat diese NL ein Erfassungs-Problem (>100%)?
-    // Wird zur Kennzeichnung in der NL-Tabelle UND am Karten-Marker genutzt.
-    _isNLInvalid(nl) {
-      const info = this.erhebungsInfo?.[nl];
-      return !!(info && info.pct_erfassung > 1.0);
     }
 
     updateMarkers() {
@@ -4506,7 +4386,7 @@
         this.filteredGroup.addLayer(marker);
 
         const isSelected = !this._selectedNLs?.size || this._selectedNLs.has(nl);
-        marker.setIcon(this.createMarkerIcon(nl, !isSelected, this._isNLInvalid(nl)));
+        marker.setIcon(this.createMarkerIcon(nl, !isSelected));
         // Alte Handler abhängen (z.B. von vorigem updateMarkers)
         marker.off('mouseover'); marker.off('mouseout');
         marker.on('mouseover', () => {
@@ -4768,14 +4648,9 @@
       const totalAbs = (active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
       const totalHH  = (active.stationaer?st.hh :0)+(active.pluscard?pc.hh :0)+(active.ra?ra.hh :0)+(active.online?os.hh :0);
 
-      // Bug WA9 Fix: Werbeanteil-Berechnung respektiert activeCategories
-      // (analog zu prepareUmsatzPLZWerte). Sonst wäre der Popup-Werbeanteil
-      // inkonsistent zum Map-Werbeanteil wenn eine Kategorie deselektiert ist.
-      let tN = 0, tW = 0, tZ = 0;
-      if (active.stationaer) { tN += values.umsatz;     tW += values.umsatzWerbung;     tZ += values.umsatzZusatz; }
-      if (active.pluscard)   { tN += values.pluscard;   tW += values.pluscardWerbung;   tZ += values.pluscardZusatz; }
-      if (active.ra)         { tN += values.ra;         tW += values.raWerbung;         tZ += values.raZusatz; }
-      if (active.online)     { tN += values.onlineshop; tW += values.onlineshopWerbung; tZ += values.onlineshopZusatz; }
+      const tN = values.umsatz        + values.pluscard        + values.ra        + values.onlineshop;
+      const tW = values.umsatzWerbung  + values.pluscardWerbung + values.raWerbung + values.onlineshopWerbung;
+      const tZ = values.umsatzZusatz   + values.pluscardZusatz  + values.raZusatz  + values.onlineshopZusatz;
       const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : '–';
 
       const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
@@ -4900,16 +4775,7 @@
       const { erhID } = this._activeFilter || {};
       const selNLs = this._selectedNLs;
       const allNLs = this.allNLs || [];
-      // Bug U3 Fix: bei Multi-GF alle aktiven Erhebungen im Header zeigen,
-      // nicht nur die Basis. Bei NL-Filter überschreibt die NL-Liste.
-      let headerTitle;
-      const activeCount = this._activeErhebungen?.length || 0;
-      if (activeCount >= 2) {
-        const ids = this._activeErhebungen.map(e => e.erhID).join(' + ');
-        headerTitle = `${ids}  (${activeCount} GF-Bereiche)`;
-      } else {
-        headerTitle = this._fmtGF(erhID) || 'Übersicht';
-      }
+      let headerTitle = this._fmtGF(erhID) || 'Übersicht';
       if (selNLs?.size > 0 && selNLs.size < allNLs.length) headerTitle = [...selNLs].join(', ');
 
       this._syncPanelState();
@@ -4962,14 +4828,9 @@
       };
       const totalAbs = (active.stationaer?st.abs:0)+(active.pluscard?pc.abs:0)+(active.ra?ra.abs:0)+(active.online?os.abs:0);
       const totalHH  = (active.stationaer?st.hh :0)+(active.pluscard?pc.hh :0)+(active.ra?ra.hh :0)+(active.online?os.hh :0);
-      // Bug WA9 Fix: Werbeanteil über aktive Kategorien rechnen (analog
-      // prepareUmsatzPLZWerte und showUmsatzPopup) — sonst Inkonsistenz
-      // zwischen Map und Overview-Popup.
-      let tN = 0, tW = 0, tZ = 0;
-      if (active.stationaer) { tN += agg.umsatz;     tW += agg.umsatzWerbung;     tZ += agg.umsatzZusatz; }
-      if (active.pluscard)   { tN += agg.pluscard;   tW += agg.pluscardWerbung;   tZ += agg.pluscardZusatz; }
-      if (active.ra)         { tN += agg.ra;         tW += agg.raWerbung;         tZ += agg.raZusatz; }
-      if (active.online)     { tN += agg.onlineshop; tW += agg.onlineshopWerbung; tZ += agg.onlineshopZusatz; }
+      const tN = agg.umsatz + agg.pluscard + agg.ra + agg.onlineshop;
+      const tW = agg.umsatzWerbung + agg.pluscardWerbung + agg.raWerbung + agg.onlineshopWerbung;
+      const tZ = agg.umsatzZusatz  + agg.pluscardZusatz  + agg.raZusatz  + agg.onlineshopZusatz;
       const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : '–';
 
       const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
@@ -5202,25 +5063,11 @@
           }
         };
         const setActive = (modeEin) => {
-          const previousMode = this._doppelbestreuungAktiv;
           this._doppelbestreuungAktiv = !!modeEin;
           optEin.classList.toggle('active', !!modeEin);
           optAus.classList.toggle('active', !modeEin);
           if (current) current.textContent = modeEin ? 'Mit' : 'Ohne';
           refreshBtn();
-          // Bug DB5 Fix: Wenn schon eine Erhebung aktiv ist und der User die
-          // Doppelbestreuung umschaltet, automatisch neu laden — sonst zeigt
-          // die Karte einen inkonsistenten Mischzustand. Nur reloaden wenn
-          // sich der Modus tatsächlich geändert hat und eine Erhebung läuft.
-          // Bug DB11: Doppel-Auto-Reload nur wenn nicht schon ein Reload läuft
-          // (Filter-Button-Lock checken).
-          if (previousMode !== this._doppelbestreuungAktiv && this._activeFilter) {
-            const filterBtnLoading = this.$('filter-button')?.dataset.loading === '1';
-            if (!this._renderInProgress && !filterBtnLoading) {
-              const { erhID, jahr, nummer } = this._activeFilter;
-              this.loadErhebung(erhID, jahr, nummer);
-            }
-          }
         };
         this._on(optAus, 'click', (ev) => {
           ev.stopPropagation();   // Header-Toggle nicht triggern
@@ -5480,36 +5327,19 @@
       const tr = document.createElement('tr');
       tr.classList.add('nl-info-row');
       tr.dataset.nl = info.nl;
-      // Erfassungs-Quote > 100% = Datenqualitätsproblem: die NL hat erfassten
-      // Umsatz der keiner gültigen PLZ zugeordnet werden konnte (PLZ "00000"
-      // im Roh-Datensatz). Visuell markieren, sodass der User die NL als
-      // verdächtig erkennen kann. Aggregation bleibt unverändert.
-      const erfassungInvalid = info.pct_erfassung > 1.0;
-      const pctText = (info.pct_erfassung * 100).toFixed(1) + '%';
       const cells = [
-        { text: info.nl, cls: '' },
-        { text: Math.round(info.jahresumsatz).toLocaleString('de-DE'), cls: '' },
-        { text: Math.round(info.erfasst_total).toLocaleString('de-DE'), cls: '' },
-        {
-          text: pctText,
-          cls: erfassungInvalid ? 'nl-pct-invalid' : '',
-          // Bei >100%: Warn-Symbol ⚠️ vor dem Wert + Tooltip
-          html: erfassungInvalid
-            ? `<span class="nl-pct-warn" title="Erfasster Umsatz übersteigt den Jahresumsatz dieser NL — vermutlich Umsatz ohne PLZ-Zuordnung. Datenqualität dieser NL prüfen.">⚠️</span>&nbsp;${escapeHtml(pctText)}`
-            : null,
-        },
-        { text: Math.round(info.erfasst_valid).toLocaleString('de-DE'), cls: '' },
-        { text: (info.pct_hochrechnung * 100).toFixed(1) + '%', cls: '' },
+        info.nl,
+        Math.round(info.jahresumsatz).toLocaleString('de-DE'),
+        Math.round(info.erfasst_total).toLocaleString('de-DE'),
+        (info.pct_erfassung * 100).toFixed(1) + '%',
+        Math.round(info.erfasst_valid).toLocaleString('de-DE'),
+        (info.pct_hochrechnung * 100).toFixed(1) + '%',
       ];
-      for (const c of cells) {
+      for (const val of cells) {
         const td = document.createElement('td');
-        if (c.cls) td.classList.add(c.cls);
-        if (c.html) td.innerHTML = c.html;
-        else td.textContent = c.text;
+        td.textContent = val;
         tr.appendChild(td);
       }
-      // Klasse auf der Zeile für optionales Row-Highlight + Sortier-Marker
-      if (erfassungInvalid) tr.classList.add('nl-info-row-invalid');
       return tr;
     }
 
@@ -5727,44 +5557,12 @@
         }
 
         this._activeErhebungen = newList;
-        // Bug GF10 Fix: Cross-GF-Marker macht nur Sinn bei 2+ Erhebungen.
-        // Wenn der User alle Partner deselektiert hat, das Flag auch deaktivieren,
-        // damit beim nächsten Hinzufügen der User es bewusst neu einschalten muss.
-        if (newList.length < 2) {
-          this._crossGfDoppelAktiv = false;
-        }
         // Pending-Set zurücksetzen → wird beim nächsten Render aus dem
         // neuen Active-State neu initialisiert
         this._pendingPartners = null;
         // Bug R5: Token inkrementieren, damit ein noch-laufender render()
         // der vorigen Active-Liste als stale erkannt wird.
         this._renderToken = (this._renderToken || 0) + 1;
-        // Bug GF2 Fix: _totalRowCount zurücksetzen, sonst könnte die Cache-
-        // Detection im Poll-Tick fälschlich greifen, falls die neue Liste
-        // zufällig gleiche Zeilenzahl liefert.
-        this._totalRowCount = -1;
-        // Bug GF3 Fix: NL-Selektion zurücksetzen — neue Partner bringen neue
-        // NLs mit, die alten _selectedNLs sind nicht mehr repräsentativ.
-        // render() wird das mit dem vollen allNLs-Set neu befüllen.
-        this._selectedNLs = new Set();
-        this._nlSelectionInitialized = false;
-        // Bug GF4 Fix: Home-Reset-Pending verwerfen falls noch aktiv
-        this._homeResetPending = false;
-        if (this._homeResetSafetyTimer) {
-          this._clearTimeout(this._homeResetSafetyTimer);
-          this._homeResetSafetyTimer = null;
-        }
-        // Stale State der alten Konfiguration leeren
-        this.filteredPLZWerte = {};
-        this.filteredKennwerte = {};
-        if (this._highlightedPLZ) {
-          const layer = this._layerByPLZ?.[this._highlightedPLZ];
-          if (layer && this._geoLayer) this.applyStyleToLayer(layer);
-          this._highlightedPLZ = null;
-        }
-        this._lastHighlightedLayer = null;
-        // Critical-Marker der vorigen Aggregation entfernen
-        this._clearDoppelMarkers?.();
 
         const allErhIDs = newList.map(e => e.erhID);
         const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
@@ -5776,10 +5574,6 @@
         if (switched) {
           this._showCinematicLoader?.();
           this._updateLoaderPhase?.(1, `${newList.length} GF-Bereiche werden geladen…`);
-          // Bug GF1 Fix: Skeleton-Loading zeigen für visuelle Konsistenz
-          // mit loadErhebung — PLZ-Tabelle bekommt Shimmer, Karte Pulse.
-          this._showSkeletonTable?.();
-          this._showSkeletonMapOverlay?.();
           this._fullDataLoaded = true;
           if (!this._renderInProgress) this._scheduleDataPoll();
         } else {
@@ -5789,8 +5583,6 @@
           this.updateGeoLayer();
           this.renderDataTable(this.filteredKennwerte);
         }
-        // Badge sofort aktualisieren
-        this._updateOverviewBtnBadge?.();
         this._renderPartnerErhebungPicker();
       } finally {
         this._setTimeout(() => { this._partnerToggleInProgress = false; }, 400);
@@ -5931,16 +5723,8 @@
         v.raZusatzProHaushalt         = perHH(v.raZusatz);
         v.onlineshopZusatzProHaushalt = perHH(v.onlineshopZusatz);
         v.pluscardZusatzProHaushalt   = perHH(v.pluscardZusatz);
-        // Bug WA2 Fix: werbeAnteil über aktive Kategorien rechnen — sonst
-        // bleibt im Werbeanteil-Modus eine deselektierte Kategorie (z.B. Online)
-        // unsichtbar in der Karten-Tooltip-Anzeige aber wirkt sich auf den
-        // Werbeanteil aus. Default: alle 4 Kategorien aktiv.
-        const cats = this.activeCategories ?? new Set(['stationaer','pluscard','ra','online']);
-        let tN = 0, tW = 0;
-        if (cats.has('stationaer')) { tN += v.umsatz;     tW += v.umsatzWerbung; }
-        if (cats.has('ra'))         { tN += v.ra;         tW += v.raWerbung; }
-        if (cats.has('online'))     { tN += v.onlineshop; tW += v.onlineshopWerbung; }
-        if (cats.has('pluscard'))   { tN += v.pluscard;   tW += v.pluscardWerbung; }
+        const tN = v.umsatz + v.ra + v.onlineshop + v.pluscard;
+        const tW = v.umsatzWerbung + v.raWerbung + v.onlineshopWerbung + v.pluscardWerbung;
         v.werbeAnteil = tN > 0 ? tW / tN : 0;
       }
 
@@ -6171,13 +5955,6 @@
       this._crossErhebungPLZ = {};
       if (!this._activeFilter || !this._myDataSource?.data) return;
       const { erhID: aktErhID, jahr, nummer } = this._activeFilter;
-      // Bug DB7 Fix: alle aktiven Erhebungen (Basis + Partner) gehören zum
-      // "aktiven Set" — Cross-Marker dürfen nur für ANDERE Erhebungen mit
-      // gleichem Jahr+Nummer gesetzt werden, nicht für aktive Partner.
-      const aktSet = new Set(
-        (this._activeErhebungen?.length ? this._activeErhebungen : [{ erhID: aktErhID }])
-          .map(e => e.erhID)
-      );
 
       const aktHZPLZs = new Set();
       for (const [plz, k] of Object.entries(this.filteredKennwerte || {})) {
@@ -6189,8 +5966,7 @@
       const fremdRows = [];
       for (const key of Object.keys(this._erhebungIndex || {})) {
         const [rErh, rJahr, rNr] = key.split('|');
-        // Aktive Erhebung (Basis ODER Partner) überspringen — die ist nicht "fremd"
-        if (aktSet.has(rErh) || rJahr !== jahr || rNr !== nummer) continue;
+        if (rErh === aktErhID || rJahr !== jahr || rNr !== nummer) continue;
         const rows = this._erhebungIndex[key];
         for (const r of rows) {
           if (r['dimension_hzflag_0']?.id?.trim() === 'X') fremdRows.push(r);
@@ -6288,7 +6064,7 @@
       if (this.currentMapMode === 'wk') {
         legend.innerHTML = `<strong>Werbekosten</strong>
           <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.04em">Bestreut (% WK)</div>
-          ${row('#e31a1c','&gt; 25 % &nbsp;<em style=\'opacity:.7;font-size:0.9em\'>oder bestreut ohne Umsatz</em>')}${row('#fd8d3c','15 – 25 %')}${row('#ffffb2','10 – 15 %')}${row('#78c679','5 – 10 %')}${row('#41ab5d','2 – 5 %')}${row('#006837','0 – 2 %')}
+          ${row('#e31a1c','&gt; 25 %')}${row('#fd8d3c','15 – 25 %')}${row('#ffffb2','10 – 15 %')}${row('#78c679','5 – 10 %')}${row('#41ab5d','2 – 5 %')}${row('#006837','0 – 2 %')}
           <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:8px 0 3px;text-transform:uppercase;letter-spacing:.04em">Nicht bestreut (% pot. WK)</div>
           ${row('#cfd4da','&gt; 50 %')}${row('#bdbdbd','25 – 50 %')}${row('#969696','15 – 25 %')}${row('#6baed6','10 – 15 %')}${row('#2171b5','5 – 10 %')}${row('#08306b','&lt; 5 %')}`;
         legend.classList.remove('hidden'); return;
@@ -6673,23 +6449,18 @@
 
     // ── loadErhebung ───────────────────────────────────────────────────
     async loadErhebung(erhID, jahr, nummer) {
-      // Bug E19 Fix: Wenn dieselbe Erhebung bereits geladen ist UND der
-      // Doppelbestreuungs-Modus unverändert ist, kein unnötiger BW-Reload.
-      // Vergleich auf rohe Werte (Basis-Erhebung, ignoriert Partner-Erhebungen).
-      //
-      // Bug DB1 Fix: Vergleich muss auch _doppelbestreuungAktiv einbeziehen —
-      // sonst wird ein Mode-Wechsel "mit↔ohne Doppelbestreuung" geskippt
-      // obwohl sich das BW-Filter-Setup grundlegend ändert.
+      // Bug E19 Fix: Wenn dieselbe Erhebung bereits geladen ist, kein
+      // unnötiger BW-Reload. Vergleich auf rohe Werte (Basis-Erhebung,
+      // ignoriert Partner-Erhebungen — diese werden über _applyPendingPartners
+      // verwaltet). Falls der User mit Partnern arbeitet und dieselbe Basis
+      // erneut lädt, wird er trotzdem auf den Single-GF-Modus zurückgesetzt,
+      // sieht er aber nichts Falsches.
       const cur = this._activeFilter;
-      const wantDoppel = !!this._doppelbestreuungAktiv;
       if (cur && cur.erhID === erhID && cur.jahr === jahr && cur.nummer === nummer
-          && (this._activeErhebungen?.length || 0) <= 1
-          && this._lastLoadedDoppelMode === wantDoppel) {
+          && (this._activeErhebungen?.length || 0) <= 1) {
         console.info('[PLZ-Widget] loadErhebung: identische Erhebung — skip');
         return;
       }
-      // Merken in welchem Modus wir gerade laden (für nächsten E19-Check).
-      this._lastLoadedDoppelMode = wantDoppel;
 
       this.$('heatmap-legend')?.classList.add('hidden');
       // Phase 2: Sidebar aktivieren, Default-View = PLZ-Tabelle, Spalte
@@ -6729,12 +6500,6 @@
       // als einzigem Eintrag. Im Erhebungs-Layout kann der User weitere via
       // togglePartnerErhebung() dazu- oder wegschalten (gleiches Jahr+Nummer).
       this._activeErhebungen = [{ erhID, jahr, nummer }];
-      // Doppelbestreuungs-Checkbox automatisch an den Modus koppeln:
-      // Wenn der User im Hauptmenü "Mit Doppelbestreuung" gewählt hat, soll
-      // der ⚠️-Marker-Toggle auto-an sein. Sonst auto-aus.
-      this.showCritical = !!this._doppelbestreuungAktiv;
-      const chkDoppelAuto = this.$('chk-doppelbestreuung');
-      if (chkDoppelAuto) chkDoppelAuto.checked = this.showCritical;
       // Cache-Reset: bei Wechsel der Basis-Erhebung gehören alte Pre-Aggregate
       // zu einer anderen "Session". Rows-Cache darf bleiben, um schnelles Zurück
       // zu früheren Erhebungen zu ermöglichen, aber Aggregate-Cache muss frisch
@@ -6821,8 +6586,8 @@
           this._scheduleDataPoll();
         }
       } else {
-        // Fallback: DataSource-API nicht verfügbar oder Filter konnte nicht entfernt werden
-        console.warn('[PLZ-Widget] _switchToErhebungFilter returned false — Fallback auf Index-Lookup. ACHTUNG: BW-Filter evtl. noch aktiv!');
+        // Fallback: DataSource-API nicht verfügbar → Index-Lookup direkt
+        console.info('[PLZ-Widget] Fallback: nutze vorhandenen Index');
         this._fullDataLoaded = false;
 
         const doRender = async () => {
@@ -7618,19 +7383,8 @@
       this._setFilterFieldsCollapsed(false);
       this.$('heatmap-legend')?.classList.add('hidden');
       this.$('map-control-panel')?.classList.remove('panel-large', 'panel-medium');
-      // Doppelbestreuungs-Bar im Hauptmenü wieder aufklappen + Default "Ohne"
+      // Doppelbestreuungs-Bar im Hauptmenü wieder aufklappen
       this.$('doppel-toggle-bar')?.classList.remove('collapsed');
-      // Bug DB6 Fix: Auswahl-State + UI auf Default "Ohne" zurücksetzen,
-      // sonst bleibt der Wert vom letzten Erhebungs-Lauf hängen und der
-      // nächste Erhebungs-Load würde unbeabsichtigt im falschen Modus starten.
-      this._doppelbestreuungAktiv = false;
-      this._lastLoadedDoppelMode = null;
-      const optAusReset = this.$('doppel-opt-aus');
-      const optEinReset = this.$('doppel-opt-ein');
-      const currentReset = this.$('doppel-toggle-current');
-      if (optAusReset) optAusReset.classList.add('active');
-      if (optEinReset) optEinReset.classList.remove('active');
-      if (currentReset) currentReset.textContent = 'Ohne';
       // Erhebungsübersicht-Badge zurücksetzen
       this._updateOverviewBtnBadge();
       this.filteredGroup?.clearLayers();
@@ -7653,21 +7407,6 @@
       this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
       this.currentMapMode = 'wk'; 
       this.umsatzMainMode = 'gesamt'; this.umsatzDarstellung = 'abs';
-      // Bug WA10 Fix: Werbe/Mitgekauft-States sowohl logisch als auch UI-mäßig
-      // auf Default zurücksetzen. Im Werbeanteil-Modus waren diese disabled,
-      // beim nächsten Erhebungs-Load müssen sie wieder klickbar sein.
-      this.useWerbeUmsatz = true;
-      this.useZusatzUmsatz = false;
-      const chkWerbeReset = this.$('chk-werbeumsatz');
-      const chkMitReset   = this.$('chk-mitgekauft');
-      if (chkWerbeReset) { chkWerbeReset.checked = true;  chkWerbeReset.disabled = false; }
-      if (chkMitReset)   { chkMitReset.checked   = false; chkMitReset.disabled   = false; }
-      // Werbeanteil-Button (in der Darstellung-Switch-Leiste) wieder als "disabled" markieren
-      // — er ist nur im Werbung-Modus aktiv.
-      this._shadowRoot.querySelector('.mode-werbeanteil')?.classList.add('disabled');
-      // Werbe-Optionen-Row im Umsatz-Panel verstecken (wird erst im Werbung-Modus sichtbar)
-      const werbeRowReset = this.$('werbe-options-row');
-      if (werbeRowReset) werbeRowReset.style.display = 'none';
       this.$('btn-wk')?.classList.add('active');
       this.$('btn-umsatz')?.classList.remove('active');
       // iOS-Slider-Position: links (Default)
