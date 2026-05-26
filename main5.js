@@ -7774,8 +7774,17 @@
       }
 
       // ── Phase 1: Bootstrap (PLZ=00000-Daten) ──
-      if (!this._fullDataLoaded) {
+      // Guard: nur wenn KEINE Erhebung aktiv ist. _fullDataLoaded=false allein
+      // reicht nicht — render() setzt es auf false auch während eine Erhebung
+      // aktiv ist, was sonst fälschlich Bootstrap triggert.
+      if (!this._fullDataLoaded && !this._activeFilter) {
         if (!this._bootstrapDone) this._bootstrapFromPLZ00000(this._myDataSource.data);
+        return;
+      }
+      // Wenn Erhebung aktiv aber _fullDataLoaded=false (render läuft oder hat
+      // gerade fertig): neuen Poll starten der auf die echten Daten wartet.
+      if (!this._fullDataLoaded && this._activeFilter) {
+        if (!this._dataPollTimer && !this._renderInProgress) this._scheduleDataPoll();
         return;
       }
 
