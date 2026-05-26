@@ -7783,9 +7783,20 @@
         ? ((Date.now() - this._filterSwitchTime) / 1000).toFixed(1) + 's'
         : '–';
 
-      // Cache-Detection: SAC schickt nach Filter-Änderung manchmal noch alte Rows
+      // Cache-Detection 1: gleiche Zeilenzahl wie vorheriger Render
       if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
         console.info(`[PLZ-Widget] SAC-Cache (${rowCount} Rows / E2E ${e2e}) – warte auf BW`);
+        if (!this._dataPollTimer) this._scheduleDataPoll();
+        return;
+      }
+      // Cache-Detection 2: gleiche Zeilenzahl wie Bootstrap → SAC hat noch
+      // die alten PLZ=00000-Daten gecacht, echte Erhebungsdaten kommen später.
+      // Nur in den ersten 10s nach Filter-Switch aktiv (Schutz gegen den
+      // theoretischen Fall dass eine Erhebung zufällig gleich viele Rows hat).
+      const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
+      const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
+      if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+        console.info(`[PLZ-Widget] SAC-Bootstrap-Cache (${rowCount} = Bootstrap-Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf echte Daten`);
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
@@ -7815,8 +7826,21 @@
         if (this._myDataSource?.state === 'success') {
           const rowCount = this._myDataSource?.data?.length ?? 0;
 
-          // Cache-Detection Phase 2: alte Rows zurückgegeben?
+          // Cache-Detection 1: alte Rows aus vorigem Render
           if (this._fullDataLoaded && rowCount === (this._totalRowCount ?? -1) && rowCount > 0) return;
+
+          // Cache-Detection 2: Bootstrap-Rows noch gecacht (häufiges SAC-Verhalten:
+          // nach removeDimensionFilter liefert SAC kurz noch den alten Datenstand)
+          // Nur in den ersten 10 Sekunden nach Filter-Switch prüfen — danach
+          // akzeptieren wir die Daten auch wenn die Zahl zufällig gleich ist.
+          if (this._fullDataLoaded) {
+            const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
+            const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
+            if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+              console.info(`[PLZ-Widget] Tick: Bootstrap-Cache (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte weiter`);
+              return;
+            }
+          }
 
           // Cache-Detection Home-Reset: noch alte Erhebungs-Rows da?
           if (this._homeResetPending && !this._fullDataLoaded) {
