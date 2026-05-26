@@ -2997,8 +2997,9 @@
       }
 
       if (removed) {
-        this._plzFilterKey = null;   // Filter ist weg, Key nicht mehr relevant
+        this._plzFilterKey = null;
         this._filterSwitchTime = Date.now();
+        this._lastRowCountSinceSwitch = undefined;  // Detection 4 neu starten
         console.info(`[PLZ-Widget] Filter-Switch OK (${erhIDs.length} ErhID) in ${(performance.now() - t0).toFixed(0)}ms`);
       } else {
         console.error('[PLZ-Widget] KRITISCH: PLZ-Filter konnte nicht entfernt werden!');
@@ -6792,7 +6793,8 @@
       // Zeilenzahl haben — dann würde der Poll fälschlich looping bleiben.
       // → _totalRowCount auf -1 zurücksetzen, damit der nächste Vergleich
       // garantiert "ungleich" ist.
-      this._totalRowCount = -1;
+      this._totalRowCount      = -1;
+      this._totalRowCountErhID = null;
       this._fullDataLoaded = true;
       this._sortState = { column: null, direction: 'asc' };  // Sortierung für neue Erhebung zurücksetzen
       // Bug 28 Fix: Sidebar-Icon-Badges sofort aktualisieren — der echte
@@ -7800,15 +7802,35 @@
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
-      // Cache-Detection 3: erste Row gehört zu anderer ErhID als angefordert
-      // → SAC hat noch Daten der vorigen Erhebung gecacht.
+      // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten.
       if (this._activeFilter && rowCount > 0) {
         const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
         if (staleErh) {
-          console.info(`[PLZ-Widget] SAC-ErhID-Cache (Row-ErhID "${staleErh}" ≠ aktiv "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
+          console.info(`[PLZ-Widget] SAC-ErhID-Cache ("${staleErh}" ≠ aktiv "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
           if (!this._dataPollTimer) this._scheduleDataPoll();
           return;
         }
+      }
+      // Cache-Detection 4: Row-Anzahl hat sich seit Filter-Switch nicht geändert.
+      // SAC liefert gecachte Daten → _lastRowCountSinceSwitch trackt was wir
+      // bei jedem Tick/Setter nach dem Switch gesehen haben. Erst wenn sich
+      // die Row-Anzahl ändert (SAC hat neuen BW-Datenstand) akzeptieren wir.
+      // Sicherheits-Timeout: nach 30s akzeptieren wir was auch immer kommt.
+      if (msSinceSwitch < 30000) {
+        if (this._lastRowCountSinceSwitch === undefined) {
+          this._lastRowCountSinceSwitch = rowCount;
+          console.info(`[PLZ-Widget] SAC-Post-Switch (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf Änderung`);
+          if (!this._dataPollTimer) this._scheduleDataPoll();
+          return;
+        }
+        if (rowCount === this._lastRowCountSinceSwitch) {
+          console.info(`[PLZ-Widget] SAC-Post-Switch unverändert (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte weiter`);
+          if (!this._dataPollTimer) this._scheduleDataPoll();
+          return;
+        }
+        // Row-Anzahl hat sich verändert → neue BW-Daten
+        console.info(`[PLZ-Widget] SAC-Post-Switch: Row-Änderung ${this._lastRowCountSinceSwitch} → ${rowCount} (${(msSinceSwitch/1000).toFixed(1)}s) ✓`);
+        this._lastRowCountSinceSwitch = undefined;
       }
       if (this._renderInProgress) {
         console.info(`[PLZ-Widget] render läuft – ignoriere SAC-Refresh (${rowCount} Rows)`);
@@ -7816,7 +7838,8 @@
       }
 
       console.info(`[PLZ-Widget] Phase 2: ${rowCount} Rows | E2E ${e2e} | ${this._doppelbestreuungAktiv ? 'mit' : 'ohne'} Doppelbestreuung`);
-      this._totalRowCount   = rowCount;
+      this._totalRowCount      = rowCount;
+      this._totalRowCountErhID = this._activeFilter?.erhID ?? null;
       this._fullDataLoaded  = false;
       this._renderInProgress = true;
       this.render().finally(() => { this._renderInProgress = false; });
@@ -7860,8 +7883,13 @@
         if (this._myDataSource?.state === 'success') {
           const rowCount = this._myDataSource?.data?.length ?? 0;
 
-          // Cache-Detection 1: alte Rows aus vorigem Render
-          if (this._fullDataLoaded && rowCount === (this._totalRowCount ?? -1) && rowCount > 0) return;
+          // Cache-Detection 1: gleiche Row-Anzahl UND gleiche ErhID wie letzter Render
+          // → SAC gibt den gecachten Datenstand zurück, BW hat noch nicht geliefert.
+          // Wenn ErhID unterschiedlich, ist Row-Anzahl-Gleichheit Zufall und kein Cache.
+          if (this._fullDataLoaded && rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
+            const sameErh = !this._activeFilter || this._totalRowCountErhID === this._activeFilter.erhID;
+            if (sameErh) return;
+          }
 
           // Cache-Detection 2: Bootstrap-Rows noch gecacht
           if (this._fullDataLoaded) {
@@ -7883,6 +7911,29 @@
             }
           }
 
+          // Cache-Detection 4: Row-Anzahl nach Filter-Switch noch nicht geändert
+          if (this._fullDataLoaded) {
+            const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
+            if (msSinceSwitch < 30000) {
+              if (this._lastRowCountSinceSwitch === undefined) {
+                this._lastRowCountSinceSwitch = rowCount;
+                console.info(`[PLZ-Widget] Tick: Post-Switch (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf Änderung`);
+                return;
+              }
+              if (rowCount === this._lastRowCountSinceSwitch) {
+                // Alle 3s einen Log-Eintrag damit der User weiss es läuft noch
+                const secs = Math.floor(msSinceSwitch / 1000);
+                if (secs !== this._lastPollSecs) {
+                  this._lastPollSecs = secs;
+                  console.info(`[PLZ-Widget] Tick: Post-Switch unverändert (${rowCount} Rows, ${secs}s) – warte weiter`);
+                }
+                return;
+              }
+              console.info(`[PLZ-Widget] Tick: Row-Änderung ${this._lastRowCountSinceSwitch} → ${rowCount} (${(msSinceSwitch/1000).toFixed(1)}s) ✓`);
+              this._lastRowCountSinceSwitch = undefined;
+            }
+          }
+
           // Cache-Detection Home-Reset: noch alte Erhebungs-Rows da?
           if (this._homeResetPending && !this._fullDataLoaded) {
             const expected = 200; // PLZ=00000 liefert ~164 Rows
@@ -7901,7 +7952,8 @@
           } else {
             if (!this._renderInProgress) {
               this._hideDataLoadProgress();
-              this._totalRowCount   = rowCount;
+              this._totalRowCount      = rowCount;
+              this._totalRowCountErhID = this._activeFilter?.erhID ?? null;
               this._fullDataLoaded  = false;
               this._renderInProgress = true;
               this.render().finally(() => { this._renderInProgress = false; });
