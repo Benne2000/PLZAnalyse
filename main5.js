@@ -2999,7 +2999,12 @@
       if (removed) {
         this._plzFilterKey = null;
         this._filterSwitchTime = Date.now();
-        this._lastRowCountSinceSwitch = undefined;  // Detection 4 neu starten
+        this._lastRowCountSinceSwitch = undefined;
+        // Lock: Setter-Aufrufe in den ersten 2s nach Filter-Switch werden
+        // ignoriert — SAC schickt durch das "dirty"-Marking Re-Renders die
+        // noch den alten gecachten Datenstand liefern. Nur der Poll-Tick
+        // darf in diesem Fenster die echten Daten akzeptieren.
+        this._filterSwitchLockUntil = Date.now() + 2000;
         console.info(`[PLZ-Widget] Filter-Switch OK (${erhIDs.length} ErhID) in ${(performance.now() - t0).toFixed(0)}ms`);
       } else {
         console.error('[PLZ-Widget] KRITISCH: PLZ-Filter konnte nicht entfernt werden!');
@@ -7715,6 +7720,9 @@
             try { ds.setDimensionFilter(key, ['00000']); this._plzFilterKey = key; break; } catch (e) {}
           }
           console.info('[PLZ-Widget] Home: Filter zurückgesetzt → PLZ=00000');
+          // Lock aufheben — Home-Reset soll sofort reagieren
+          this._filterSwitchLockUntil = null;
+          this._lastRowCountSinceSwitch = undefined;
           this.$('panel-home-btn')?.setAttribute('disabled', '');
           this.$('panel-overview-btn')?.setAttribute('disabled', '');
         } catch (e) {
@@ -7793,6 +7801,17 @@
       const e2e = this._filterSwitchTime
         ? ((Date.now() - this._filterSwitchTime) / 1000).toFixed(1) + 's'
         : '–';
+
+      // Lock-Fenster: in den ersten 2s nach Filter-Switch ignoriert der Setter
+      // alle Aufrufe. SAC schickt durch das "dirty"-Marking sofort einen
+      // Re-Render der noch den alten gecachten Datenstand liefert. Der Poll-
+      // Tick hat mehr Kontrolle und verwendet die D4-Detection korrekt.
+      if (this._filterSwitchLockUntil && Date.now() < this._filterSwitchLockUntil) {
+        const remaining = ((this._filterSwitchLockUntil - Date.now()) / 1000).toFixed(1);
+        console.info(`[PLZ-Widget] Setter-Lock (${remaining}s verbleibend, ${rowCount} Rows) – ignoriere`);
+        if (!this._dataPollTimer) this._scheduleDataPoll();
+        return;
+      }
 
       // Cache-Detection 1: gleiche Zeilenzahl wie vorheriger Render
       if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
