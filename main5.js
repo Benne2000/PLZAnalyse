@@ -2956,10 +2956,17 @@
         this._nummerFilterKey = this._trySetFilter(ds, NUMMER_FILTER_KEYS, [nummer]);
       }
 
-      // PLZ-Filter zuletzt entfernen → triggert kombinierten BW-Query
+      // PLZ-Filter zuletzt entfernen → triggert kombinierten BW-Query.
+      // Bug PLZ2 Fix: Vorher: 'break' nach dem ersten try ohne Exception.
+      // SAC's removeDimensionFilter wirft aber keine Exception wenn der Key
+      // existiert aber kein Filter dran ist → der echte 00000-Filter wäre
+      // dann noch aktiv! Wir entfernen jetzt ALLE bekannten Keys defensiv
+      // und priorisieren den im Bootstrap gesetzten _plzFilterKey.
       let removed = false;
-      for (const k of PLZ_FILTER_KEYS) {
-        try { ds.removeDimensionFilter(k); this._plzFilterKey = k; removed = true; break; } catch (e) {}
+      const knownPlzKey = this._plzFilterKey ? [this._plzFilterKey] : [];
+      const plzKeysOrdered = [...knownPlzKey, ...PLZ_FILTER_KEYS.filter(k => k !== this._plzFilterKey)];
+      for (const k of plzKeysOrdered) {
+        try { ds.removeDimensionFilter(k); removed = true; } catch (e) {}
       }
       if (removed) {
         this._filterSwitchTime = Date.now();
@@ -4412,7 +4419,10 @@
         const nl  = row['dimension_niederlassung_0']?.id?.trim();
         if (selNLs.size > 0 && !selNLs.has(nl)) continue;
         const plz = this._normalizePLZ(row['dimension_plz_0']?.id);
-        if (plz) plzSet.add(plz);
+        // Bug PLZ3 Fix: '00000' = Stammdaten-Aggregat ohne echte PLZ-Zuordnung.
+        // Sonst landet das in filteredPLZs und verfälscht alle abgeleiteten
+        // Aggregate (computeWKKennwerte etc.).
+        if (plz && plz !== '00000') plzSet.add(plz);
       }
       this.filteredPLZs = [...plzSet];
       this.computeWKKennwerte();
