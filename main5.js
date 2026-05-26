@@ -7800,6 +7800,16 @@
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
+      // Cache-Detection 3: erste Row gehört zu anderer ErhID als angefordert
+      // → SAC hat noch Daten der vorigen Erhebung gecacht.
+      if (this._activeFilter && rowCount > 0) {
+        const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
+        if (staleErh) {
+          console.info(`[PLZ-Widget] SAC-ErhID-Cache (Row-ErhID "${staleErh}" ≠ aktiv "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
+          if (!this._dataPollTimer) this._scheduleDataPoll();
+          return;
+        }
+      }
       if (this._renderInProgress) {
         console.info(`[PLZ-Widget] render läuft – ignoriere SAC-Refresh (${rowCount} Rows)`);
         return;
@@ -7810,6 +7820,30 @@
       this._fullDataLoaded  = false;
       this._renderInProgress = true;
       this.render().finally(() => { this._renderInProgress = false; });
+    }
+
+    // Hilfsfunktion: prüft ob die gelieferten BW-Rows zu einer anderen ErhID
+    // gehören als die aktuell angeforderte. SAC cached nach Filter-Wechsel
+    // häufig den vorigen Datenstand — Symptom: render() findet 0 Rows im Index.
+    // Gibt die gefundene ErhID zurück (für Log), oder null wenn Daten passen.
+    _isDataFromDifferentErhebung(data) {
+      if (!this._activeFilter || !data?.length) return null;
+      const expectedErhID = this._activeFilter.erhID;
+      // Nur die ersten ~10 Rows prüfen — wenn alle zu einer anderen ErhID
+      // gehören, ist das eindeutig ein Cache-Hit.
+      const sample = Math.min(data.length, 10);
+      let mismatchErh = null;
+      let matchCount = 0;
+      for (let i = 0; i < sample; i++) {
+        const rowErh = data[i]['dimension_erhebung_0']?.id?.trim();
+        if (!rowErh || rowErh === expectedErhID) { matchCount++; continue; }
+        // PLZ=00000-Rows haben manchmal keine ErhID → ignorieren
+        const plz = data[i]['dimension_plz_0']?.id?.trim();
+        if (plz === '00000' || plz === '0') continue;
+        mismatchErh = rowErh;
+      }
+      // Nur als Cache werten wenn keine einzige Row zur erwarteten ErhID passt
+      return (matchCount === 0 && mismatchErh) ? mismatchErh : null;
     }
 
     // ── Daten-Poll (Fallback, wenn DataSource noch nicht bereit) ───────
@@ -7829,15 +7863,22 @@
           // Cache-Detection 1: alte Rows aus vorigem Render
           if (this._fullDataLoaded && rowCount === (this._totalRowCount ?? -1) && rowCount > 0) return;
 
-          // Cache-Detection 2: Bootstrap-Rows noch gecacht (häufiges SAC-Verhalten:
-          // nach removeDimensionFilter liefert SAC kurz noch den alten Datenstand)
-          // Nur in den ersten 10 Sekunden nach Filter-Switch prüfen — danach
-          // akzeptieren wir die Daten auch wenn die Zahl zufällig gleich ist.
+          // Cache-Detection 2: Bootstrap-Rows noch gecacht
           if (this._fullDataLoaded) {
             const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
             const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
             if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
               console.info(`[PLZ-Widget] Tick: Bootstrap-Cache (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte weiter`);
+              return;
+            }
+          }
+
+          // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten
+          if (this._fullDataLoaded && this._activeFilter && rowCount > 0) {
+            const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
+            if (staleErh) {
+              const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 0;
+              console.info(`[PLZ-Widget] Tick: ErhID-Cache ("${staleErh}" ≠ "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte weiter`);
               return;
             }
           }
