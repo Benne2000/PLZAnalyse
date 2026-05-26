@@ -7802,22 +7802,23 @@
         return;
       }
 
+      // Cache-Detections: nur beim Erhebungs-Wechsel relevant (hasPreviousRender).
+      // Beim allerersten Load nach Bootstrap gibt es keinen Cache-Stand → sofort akzeptieren.
+      const hasPreviousRender = (this._totalRowCount ?? -1) !== -1;
+
       // Cache-Detection 1: gleiche Zeilenzahl wie vorheriger Render
-      if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
+      if (hasPreviousRender && rowCount === this._totalRowCount && rowCount > 0) {
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
-      // Cache-Detection 2: gleiche Zeilenzahl wie Bootstrap → SAC hat noch
-      // die alten PLZ=00000-Daten gecacht, echte Erhebungsdaten kommen später.
-      // Nur in den ersten 10s nach Filter-Switch aktiv (Schutz gegen den
-      // theoretischen Fall dass eine Erhebung zufällig gleich viele Rows hat).
+      // Cache-Detection 2: gleiche Zeilenzahl wie Bootstrap → SAC noch gecacht
       const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
       const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
-      if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+      if (hasPreviousRender && bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
-      // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten.
+      // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten
       if (this._activeFilter && rowCount > 0) {
         const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
         if (staleErh) {
@@ -7826,11 +7827,8 @@
         }
       }
       // Cache-Detection 4: Row-Anzahl hat sich seit Filter-Switch nicht geändert.
-      // SAC liefert gecachte Daten → _lastRowCountSinceSwitch trackt was wir
-      // bei jedem Tick/Setter nach dem Switch gesehen haben. Erst wenn sich
-      // die Row-Anzahl ändert (SAC hat neuen BW-Datenstand) akzeptieren wir.
-      // Sicherheits-Timeout: nach 30s akzeptieren wir was auch immer kommt.
-      if (msSinceSwitch < 30000) {
+      // Nur beim Erhebungs-Wechsel (hasPreviousRender), nicht beim ersten Load.
+      if (hasPreviousRender && msSinceSwitch < 30000) {
         if (this._lastRowCountSinceSwitch === undefined) {
           this._lastRowCountSinceSwitch = rowCount;
           if (!this._dataPollTimer) this._scheduleDataPoll();
@@ -7905,14 +7903,21 @@
 
           if (!isBootstrapPoll) {
             // ── Phase-2-Poll: Cache-Detections ──────────────────────────
-            if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
+            // WICHTIG: Cache-Detections greifen nur wenn schon ein vorheriger
+            // Render-Stand existiert (_totalRowCount != -1). Beim allerersten
+            // Load nach dem Bootstrap gibt es keinen Cache → sofort akzeptieren.
+            const hasPreviousRender = (this._totalRowCount ?? -1) !== -1;
+
+            // D1: gleiche Row-Anzahl + gleiche ErhID → SAC-Cache
+            if (hasPreviousRender && rowCount === this._totalRowCount && rowCount > 0) {
               const sameErh = !this._activeFilter || this._totalRowCountErhID === this._activeFilter.erhID;
               if (sameErh) return;
             }
             // D2: Bootstrap-Row-Count → SAC hat noch 00000-Daten
+            // Nur prüfen wenn schon ein Render-Stand da war (Erhebungs-Wechsel)
             const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
             const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
-            if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+            if (hasPreviousRender && bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
               return;
             }
             // D3: erste Row gehört zu anderer ErhID
@@ -7923,13 +7928,11 @@
               }
             }
             // D4: Row-Anzahl hat sich seit Filter-Switch noch nicht geändert.
-            // Sicherheits-Timeout: nach Lock-Ablauf + BW-Mindest-Wartezeit
-            // akzeptieren wir die Daten auch wenn Row-Anzahl gleich geblieben.
-            // BW braucht typisch 5-15s — wir warten mindestens 4s nach Lock-Ende.
+            // Nur beim Erhebungs-Wechsel prüfen (hasPreviousRender), nicht beim ersten Load.
             const lockEnd = this._filterSwitchLockUntil ?? (this._filterSwitchTime + 2000);
             const msSinceLockEnd = Date.now() - lockEnd;
-            const minBWWait = 4000;  // 4s Mindest-Wartezeit nach Lock
-            if (msSinceSwitch < 30000 && msSinceLockEnd < minBWWait) {
+            const minBWWait = 4000;
+            if (hasPreviousRender && msSinceSwitch < 30000 && msSinceLockEnd < minBWWait) {
               if (this._lastRowCountSinceSwitch === undefined) {
                 this._lastRowCountSinceSwitch = rowCount;
                 return;
@@ -7942,7 +7945,7 @@
                 return;
               }
               this._lastRowCountSinceSwitch = undefined;
-            } else if (msSinceSwitch < 30000 && rowCount === this._lastRowCountSinceSwitch) {
+            } else if (hasPreviousRender && msSinceSwitch < 30000 && rowCount === this._lastRowCountSinceSwitch) {
               // Lock abgelaufen + Mindest-Wartezeit abgelaufen + Row-Anzahl NOCH gleich
               // → Beide Erhebungen haben wahrscheinlich gleich viele Rows. Akzeptieren.
               this._lastRowCountSinceSwitch = undefined;
