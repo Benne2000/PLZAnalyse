@@ -2956,21 +2956,52 @@
         this._nummerFilterKey = this._trySetFilter(ds, NUMMER_FILTER_KEYS, [nummer]);
       }
 
-      // PLZ-Filter zuletzt entfernen → triggert kombinierten BW-Query.
-      // Bug PLZ2 Fix: Vorher: 'break' nach dem ersten try ohne Exception.
-      // SAC's removeDimensionFilter wirft aber keine Exception wenn der Key
-      // existiert aber kein Filter dran ist → der echte 00000-Filter wäre
-      // dann noch aktiv! Wir entfernen jetzt ALLE bekannten Keys defensiv
-      // und priorisieren den im Bootstrap gesetzten _plzFilterKey.
-      let removed = false;
+      // PLZ-Filter entfernen → triggert BW-Reload ohne PLZ-Einschränkung.
+      //
+      // Reihenfolge der Strategien (von sicher zu Fallback):
+      // 1) removeDimensionFilter mit dem beim Bootstrap gecachten Key
+      // 2) removeDimensionFilter mit allen bekannten Keys
+      // 3) setDimensionFilter(key, []) — leeres Array als "kein Filter"
+      //    (in manchen SAC-Versionen äquivalent zu remove)
+      //
+      // Wichtig: SAC wirft keine Exception bei removeDimensionFilter wenn
+      // der Key existiert aber kein Filter aktiv ist → wir können Erfolg
+      // nicht sicher messen. Wir führen alle Versuche durch und setzen
+      // removed=true wenn kein Ausnahme-Pfad die komplette Schleife abbricht.
       const knownPlzKey = this._plzFilterKey ? [this._plzFilterKey] : [];
-      const plzKeysOrdered = [...knownPlzKey, ...PLZ_FILTER_KEYS.filter(k => k !== this._plzFilterKey)];
+      const plzKeysOrdered = [...new Set([...knownPlzKey, ...PLZ_FILTER_KEYS])];
+      let removed = false;
+
+      // Strategie 1+2: removeDimensionFilter
       for (const k of plzKeysOrdered) {
-        try { ds.removeDimensionFilter(k); removed = true; } catch (e) {}
+        try {
+          ds.removeDimensionFilter(k);
+          console.info(`[PLZ-Widget] removeDimensionFilter(${k}) OK`);
+          removed = true;
+        } catch (e) {
+          console.warn(`[PLZ-Widget] removeDimensionFilter(${k}) fehler:`, e?.message ?? String(e));
+        }
       }
+
+      // Strategie 3: leeres Array als Fallback
+      if (!removed) {
+        for (const k of plzKeysOrdered) {
+          try {
+            ds.setDimensionFilter(k, []);
+            console.info(`[PLZ-Widget] setDimensionFilter(${k}, []) OK (Fallback)`);
+            removed = true;
+          } catch (e) {
+            console.warn(`[PLZ-Widget] setDimensionFilter(${k}, []) fehler:`, e?.message ?? String(e));
+          }
+        }
+      }
+
       if (removed) {
+        this._plzFilterKey = null;   // Filter ist weg, Key nicht mehr relevant
         this._filterSwitchTime = Date.now();
-        console.info(`[PLZ-Widget] Filter-Switch (${erhIDs.length} ErhID) in ${(performance.now() - t0).toFixed(0)}ms`);
+        console.info(`[PLZ-Widget] Filter-Switch OK (${erhIDs.length} ErhID) in ${(performance.now() - t0).toFixed(0)}ms`);
+      } else {
+        console.error('[PLZ-Widget] KRITISCH: PLZ-Filter konnte nicht entfernt werden!');
       }
       return removed;
     }
@@ -6790,8 +6821,8 @@
           this._scheduleDataPoll();
         }
       } else {
-        // Fallback: DataSource-API nicht verfügbar → Index-Lookup direkt
-        console.info('[PLZ-Widget] Fallback: nutze vorhandenen Index');
+        // Fallback: DataSource-API nicht verfügbar oder Filter konnte nicht entfernt werden
+        console.warn('[PLZ-Widget] _switchToErhebungFilter returned false — Fallback auf Index-Lookup. ACHTUNG: BW-Filter evtl. noch aktiv!');
         this._fullDataLoaded = false;
 
         const doRender = async () => {
