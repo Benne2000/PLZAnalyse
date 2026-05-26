@@ -7880,20 +7880,28 @@
     _isDataFromDifferentErhebung(data) {
       if (!this._activeFilter || !data?.length) return null;
       const expectedErhID = this._activeFilter.erhID;
-      // Nur die ersten ~10 Rows prüfen — wenn alle zu einer anderen ErhID
-      // gehören, ist das eindeutig ein Cache-Hit.
-      const sample = Math.min(data.length, 10);
-      let mismatchErh = null;
-      let matchCount = 0;
+      const sample = Math.min(data.length, 5);
+      // Diagnose: logge was in den ersten Rows steht
+      if (this._filterSwitchTime && Date.now() - this._filterSwitchTime < 60000) {
+        const keys0 = Object.keys(data[0] || {}).filter(k =>
+          k.includes('erh') || k.includes('Erh') || k.includes('ERH'));
+        if (keys0.length) {
+          const sample0 = {};
+          for (const k of keys0) sample0[k] = data[0][k]?.id ?? data[0][k];
+          console.info('[PLZ-Widget] ErhID-Check: Keys in Row[0]:', sample0, '| erwartet:', expectedErhID);
+        } else {
+          // Kein Erhebungs-Key gefunden — alle Keys loggen
+          console.info('[PLZ-Widget] ErhID-Check: keine ERH-Keys in Row[0], alle Keys:', Object.keys(data[0] || {}));
+        }
+      }
+      let mismatchErh = null, matchCount = 0;
       for (let i = 0; i < sample; i++) {
         const rowErh = data[i]['dimension_erhebung_0']?.id?.trim();
         if (!rowErh || rowErh === expectedErhID) { matchCount++; continue; }
-        // PLZ=00000-Rows haben manchmal keine ErhID → ignorieren
         const plz = data[i]['dimension_plz_0']?.id?.trim();
         if (plz === '00000' || plz === '0') continue;
         mismatchErh = rowErh;
       }
-      // Nur als Cache werten wenn keine einzige Row zur erwarteten ErhID passt
       return (matchCount === 0 && mismatchErh) ? mismatchErh : null;
     }
 
@@ -7937,8 +7945,14 @@
                 return;
               }
             }
-            // D4: Row-Anzahl hat sich seit Filter-Switch noch nicht geändert
-            if (msSinceSwitch < 30000) {
+            // D4: Row-Anzahl hat sich seit Filter-Switch noch nicht geändert.
+            // Sicherheits-Timeout: nach Lock-Ablauf + BW-Mindest-Wartezeit
+            // akzeptieren wir die Daten auch wenn Row-Anzahl gleich geblieben.
+            // BW braucht typisch 5-15s — wir warten mindestens 4s nach Lock-Ende.
+            const lockEnd = this._filterSwitchLockUntil ?? (this._filterSwitchTime + 2000);
+            const msSinceLockEnd = Date.now() - lockEnd;
+            const minBWWait = 4000;  // 4s Mindest-Wartezeit nach Lock
+            if (msSinceSwitch < 30000 && msSinceLockEnd < minBWWait) {
               if (this._lastRowCountSinceSwitch === undefined) {
                 this._lastRowCountSinceSwitch = rowCount;
                 console.info(`[PLZ-Widget] Tick: Post-Switch (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf Änderung`);
@@ -7948,11 +7962,16 @@
                 const secs = Math.floor(msSinceSwitch / 1000);
                 if (secs !== this._lastPollSecs) {
                   this._lastPollSecs = secs;
-                  console.info(`[PLZ-Widget] Tick: Post-Switch unverändert (${rowCount} Rows, ${secs}s) – warte`);
+                  console.info(`[PLZ-Widget] Tick: Post-Switch unverändert (${rowCount} Rows, ${secs}s, Lock+${(msSinceLockEnd/1000).toFixed(1)}s) – warte`);
                 }
                 return;
               }
               console.info(`[PLZ-Widget] Tick: Row-Änderung ${this._lastRowCountSinceSwitch} → ${rowCount} (${(msSinceSwitch/1000).toFixed(1)}s) ✓`);
+              this._lastRowCountSinceSwitch = undefined;
+            } else if (msSinceSwitch < 30000 && rowCount === this._lastRowCountSinceSwitch) {
+              // Lock abgelaufen + Mindest-Wartezeit abgelaufen + Row-Anzahl NOCH gleich
+              // → Beide Erhebungen haben wahrscheinlich gleich viele Rows. Akzeptieren.
+              console.info(`[PLZ-Widget] Tick: Mindest-BW-Wait abgelaufen (${(msSinceSwitch/1000).toFixed(1)}s) → akzeptiere ${rowCount} Rows`);
               this._lastRowCountSinceSwitch = undefined;
             }
           } else {
