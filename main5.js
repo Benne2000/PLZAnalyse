@@ -4491,7 +4491,7 @@
     // Wird zur Kennzeichnung in der NL-Tabelle UND am Karten-Marker genutzt.
     _isNLInvalid(nl) {
       const info = this.erhebungsInfo?.[nl];
-      return !!(info && info.pct_erfassung > 1.0);
+      return !!(info && info.pct_erfassung > 1.005);
     }
 
     updateMarkers() {
@@ -5490,7 +5490,7 @@
       // Umsatz der keiner gültigen PLZ zugeordnet werden konnte (PLZ "00000"
       // im Roh-Datensatz). Visuell markieren, sodass der User die NL als
       // verdächtig erkennen kann. Aggregation bleibt unverändert.
-      const erfassungInvalid = info.pct_erfassung > 1.0;
+      const erfassungInvalid = info.pct_erfassung > 1.005;
       const pctText = (info.pct_erfassung * 100).toFixed(1) + '%';
       const cells = [
         { text: info.nl, cls: '' },
@@ -6016,23 +6016,33 @@
 
         // Bucket 1: komplett ungefiltert — für isHZ/hzKosten-Fallback
         unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
-        if (!unfilteredByPLZ[plz]) unfilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0 };
+        if (!unfilteredByPLZ[plz]) unfilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0, hzNLs: new Set() };
         unfilteredByPLZ[plz].hzKosten += hzKosten;
-        if (hzFlag) unfilteredByPLZ[plz].hzCount++;
+        if (hzFlag && nl) {
+          unfilteredByPLZ[plz].hzNLs.add(nl);
+          unfilteredByPLZ[plz].hzCount = unfilteredByPLZ[plz].hzNLs.size;
+        }
 
         // Bucket 2: nach NL-Filter, vor Radius — Nenner für WK% bei aktivem NL-Filter
         if (nlPassed) {
           nlFilteredUmsatzByPLZ[plz] = (nlFilteredUmsatzByPLZ[plz] || 0) + umsatz;
-          if (!nlFilteredByPLZ[plz]) nlFilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0 };
+          if (!nlFilteredByPLZ[plz]) nlFilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0, hzNLs: new Set() };
           nlFilteredByPLZ[plz].hzKosten += hzKosten;
-          if (hzFlag) nlFilteredByPLZ[plz].hzCount++;
+          if (hzFlag && nl) {
+            nlFilteredByPLZ[plz].hzNLs.add(nl);
+            nlFilteredByPLZ[plz].hzCount = nlFilteredByPLZ[plz].hzNLs.size;
+          }
         }
 
         if (!nlPassed) continue;
         if (hasRadius && !radius.has(plz)) continue;
-        if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, umsatzNetto: 0, hzKosten: 0, potHzSum: 0, potHzCount: 0 };
+        if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, hzNLs: new Set(), umsatzNetto: 0, hzKosten: 0, potHzSum: 0, potHzCount: 0 };
         const entry = aggregated[plz];
-        if (hzFlag) entry.hzCount++;
+        // Bug 3 Fix: eindeutige NL-IDs zählen, nicht Rows
+        if (hzFlag && nl) {
+          entry.hzNLs.add(nl);
+          entry.hzCount = entry.hzNLs.size;
+        }
         entry.umsatzNetto += umsatz;
         entry.hzKosten    += hzKosten;
         // potHz: NL-Rows mit 0 werden nicht mitgezählt (Datenausfälle bzw. NLs
@@ -6850,6 +6860,9 @@
             this._nlSelectionInitialized = false;
             this.activeCategories = new Set(CATEGORIES);
             this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
+            // Bug 2 Fix: prepareErhebungsInfo VOR createAllMarkers — damit
+            // _isNLInvalid beim ersten Icon-Render korrekte Werte liefert.
+            this.prepareErhebungsInfo();
             this.createAllMarkers();
 
             this._updateLoaderPhase(4, 'Kennwerte werden berechnet…');
@@ -6968,6 +6981,8 @@
         this._nlSelectionInitialized = false;
         this.activeCategories = new Set(CATEGORIES);
         this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
+        // Bug 2 Fix: prepareErhebungsInfo VOR createAllMarkers
+        this.prepareErhebungsInfo();
         this.createAllMarkers();
 
         progress(4, 70, 'Kennwerte werden berechnet…', filteredData.length);
