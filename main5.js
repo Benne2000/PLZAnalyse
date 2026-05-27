@@ -7910,48 +7910,43 @@
             const hasPreviousRender = (this._totalRowCount ?? -1) !== -1;
             console.info(`[PLZ-Widget] Tick: state=success rowCount=${rowCount} hasPrev=${hasPreviousRender} renderInProgress=${this._renderInProgress}`);
 
-            // D1: gleiche Row-Anzahl + gleiche ErhID → SAC-Cache
+            // D1
             if (hasPreviousRender && rowCount === this._totalRowCount && rowCount > 0) {
               const sameErh = !this._activeFilter || this._totalRowCountErhID === this._activeFilter.erhID;
-              if (sameErh) return;
+              if (sameErh) { console.info('[PLZ-Widget] Tick: return D1'); return; }
             }
-            // D2: Bootstrap-Row-Count → SAC hat noch 00000-Daten
-            // Nur prüfen wenn schon ein Render-Stand da war (Erhebungs-Wechsel)
+            // D2
             const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
             const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
             if (hasPreviousRender && bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
-              return;
+              console.info('[PLZ-Widget] Tick: return D2'); return;
             }
-            // D3: erste Row gehört zu anderer ErhID
+            console.info(`[PLZ-Widget] Tick: nach D2 bootstrapCount=${bootstrapCount} msSince=${msSinceSwitch.toFixed(0)}`);
+            // D3
             if (this._activeFilter && rowCount > 0) {
               const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
-              if (staleErh) {
-                return;
-              }
+              if (staleErh) { console.info('[PLZ-Widget] Tick: return D3'); return; }
             }
-            // D4: Row-Anzahl hat sich seit Filter-Switch noch nicht geändert.
-            // Nur beim Erhebungs-Wechsel prüfen (hasPreviousRender), nicht beim ersten Load.
+            console.info('[PLZ-Widget] Tick: nach D3');
+            // D4
             const lockEnd = this._filterSwitchLockUntil ?? (this._filterSwitchTime + 2000);
             const msSinceLockEnd = Date.now() - lockEnd;
             const minBWWait = 4000;
             if (hasPreviousRender && msSinceSwitch < 30000 && msSinceLockEnd < minBWWait) {
               if (this._lastRowCountSinceSwitch === undefined) {
                 this._lastRowCountSinceSwitch = rowCount;
-                return;
+                console.info('[PLZ-Widget] Tick: return D4a'); return;
               }
               if (rowCount === this._lastRowCountSinceSwitch) {
                 const secs = Math.floor(msSinceSwitch / 1000);
-                if (secs !== this._lastPollSecs) {
-                  this._lastPollSecs = secs;
-                }
-                return;
+                if (secs !== this._lastPollSecs) { this._lastPollSecs = secs; }
+                console.info('[PLZ-Widget] Tick: return D4b'); return;
               }
               this._lastRowCountSinceSwitch = undefined;
             } else if (hasPreviousRender && msSinceSwitch < 30000 && rowCount === this._lastRowCountSinceSwitch) {
-              // Lock abgelaufen + Mindest-Wartezeit abgelaufen + Row-Anzahl NOCH gleich
-              // → Beide Erhebungen haben wahrscheinlich gleich viele Rows. Akzeptieren.
               this._lastRowCountSinceSwitch = undefined;
             }
+            console.info('[PLZ-Widget] Tick: nach D4 → clearInterval');
           } else {
             // ── Bootstrap-Poll: Home-Reset-Detection ────────────────────
             if (this._homeResetPending) {
