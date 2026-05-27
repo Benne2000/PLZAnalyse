@@ -7822,9 +7822,10 @@
         return;
       }
 
-      // Cache-Detection 1: gleiche Zeilenzahl wie vorheriger Render
-      if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
-        console.info(`[PLZ-Widget] SAC-Cache (${rowCount} Rows / E2E ${e2e}) – warte auf BW`);
+      // Cache-Detection 1: gleiche Zeilenzahl wie vorheriger Render —
+      // aber nur im aktiven Filter-Switch-Fenster (30s). Danach sind gleiche
+      // Row-Anzahlen kein Cache-Indikator mehr sondern echte neue Daten.
+      if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0 && msSinceSwitch < 30000) {
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
@@ -7879,6 +7880,10 @@
       this._totalRowCountErhID = this._activeFilter?.erhID ?? null;
       this._fullDataLoaded  = false;
       this._renderInProgress = true;
+      // Filter-Switch-Fenster schließen: nach akzeptierten Daten sollen
+      // D1-D4 nicht mehr gelten — sonst Endlosschleife bei Post-render-Setter.
+      this._filterSwitchTime = null;
+      this._lastRowCountSinceSwitch = undefined;
       this.render().finally(() => { this._renderInProgress = false; });
     }
 
@@ -7934,14 +7939,13 @@
 
           if (!isBootstrapPoll) {
             // ── Phase-2-Poll: Cache-Detections ──────────────────────────
-            // D1: gleiche Row-Anzahl + gleiche ErhID → SAC-Cache
-            if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
-              const sameErh = !this._activeFilter || this._totalRowCountErhID === this._activeFilter.erhID;
-              if (sameErh) return;
+            const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
+            // D1: gleiche Row-Anzahl → SAC-Cache — nur im Switch-Fenster prüfen
+            if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0 && msSinceSwitch < 30000) {
+              return;
             }
             // D2: Bootstrap-Row-Count → SAC hat noch 00000-Daten
             const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
-            const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
             if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
               console.info(`[PLZ-Widget] Tick: Bootstrap-Cache (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
               return;
@@ -8006,6 +8010,9 @@
               this._totalRowCountErhID = this._activeFilter?.erhID ?? null;
               this._fullDataLoaded  = false;
               this._renderInProgress = true;
+              // Filter-Switch-Fenster schließen
+              this._filterSwitchTime = null;
+              this._lastRowCountSinceSwitch = undefined;
               this.render().finally(() => { this._renderInProgress = false; });
             }
           }
