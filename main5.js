@@ -7907,6 +7907,7 @@
             // Render-Stand existiert (_totalRowCount != -1). Beim allerersten
             // Load nach dem Bootstrap gibt es keinen Cache → sofort akzeptieren.
             const hasPreviousRender = (this._totalRowCount ?? -1) !== -1;
+            console.info(`[PLZ-Widget] Tick: state=success rowCount=${rowCount} hasPrev=${hasPreviousRender} renderInProgress=${this._renderInProgress}`);
 
             // D1: gleiche Row-Anzahl + gleiche ErhID → SAC-Cache
             if (hasPreviousRender && rowCount === this._totalRowCount && rowCount > 0) {
