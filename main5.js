@@ -7798,13 +7798,12 @@
       // Tick hat mehr Kontrolle und verwendet die D4-Detection korrekt.
       if (this._filterSwitchLockUntil && Date.now() < this._filterSwitchLockUntil) {
         const remaining = ((this._filterSwitchLockUntil - Date.now()) / 1000).toFixed(1);
+        console.info(`[PLZ-Widget] Setter-Lock aktiv (${remaining}s, ${rowCount} Rows)`);
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
-
-      // Cache-Detections: nur beim Erhebungs-Wechsel relevant (hasPreviousRender).
-      // Beim allerersten Load nach Bootstrap gibt es keinen Cache-Stand → sofort akzeptieren.
       const hasPreviousRender = (this._totalRowCount ?? -1) !== -1;
+      console.info(`[PLZ-Widget] Setter: kein Lock (lockUntil=${this._filterSwitchLockUntil}, hasPrev=${hasPreviousRender}, rowCount=${rowCount}, msSince=${this._filterSwitchTime ? Date.now()-this._filterSwitchTime : 'n/a'})`);
 
       // Cache-Detection 1: gleiche Zeilenzahl wie vorheriger Render
       if (hasPreviousRender && rowCount === this._totalRowCount && rowCount > 0) {
