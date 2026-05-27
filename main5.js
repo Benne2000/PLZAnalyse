@@ -5420,9 +5420,7 @@
       const headers = [
         { label: 'NL' },
         { label: 'Umsatz\n(Hochrechn.)' },
-        { label: 'Erfasst' },
-        { label: '%' },
-        { label: 'Valide' },
+        { label: 'Erfasst mit\nvalider PLZ' },
         { label: 'Abdeckung' },
       ];
       for (const h of headers) {
@@ -5491,20 +5489,16 @@
       // im Roh-Datensatz). Visuell markieren, sodass der User die NL als
       // verdächtig erkennen kann. Aggregation bleibt unverändert.
       const erfassungInvalid = info.pct_erfassung > 1.005;
-      const pctText = (info.pct_erfassung * 100).toFixed(1) + '%';
       const cells = [
         { text: info.nl, cls: '' },
         { text: Math.round(info.jahresumsatz).toLocaleString('de-DE'), cls: '' },
-        { text: Math.round(info.erfasst_total).toLocaleString('de-DE'), cls: '' },
         {
-          text: pctText,
+          text: Math.round(info.erfasst_valid).toLocaleString('de-DE'),
           cls: erfassungInvalid ? 'nl-pct-invalid' : '',
-          // Bei >100%: Warn-Symbol ⚠️ vor dem Wert + Tooltip
           html: erfassungInvalid
-            ? `<span class="nl-pct-warn" title="Erfasster Umsatz übersteigt den Jahresumsatz dieser NL — vermutlich Umsatz ohne PLZ-Zuordnung. Datenqualität dieser NL prüfen.">⚠️</span>&nbsp;${escapeHtml(pctText)}`
+            ? `<span class="nl-pct-warn" title="Erfasster Umsatz übersteigt den Jahresumsatz dieser NL — vermutlich Umsatz ohne PLZ-Zuordnung. Datenqualität dieser NL prüfen.">⚠️</span>&nbsp;${escapeHtml(Math.round(info.erfasst_valid).toLocaleString('de-DE'))}`
             : null,
         },
-        { text: Math.round(info.erfasst_valid).toLocaleString('de-DE'), cls: '' },
         { text: (info.pct_hochrechnung * 100).toFixed(1) + '%', cls: '' },
       ];
       for (const c of cells) {
