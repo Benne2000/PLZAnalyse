@@ -7819,7 +7819,8 @@
         return;
       }
       // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten
-      if (this._activeFilter && rowCount > 0) {
+      // Nur beim Erhebungs-Wechsel: Bootstrap-Rows haben andere ErhID als gewählte Erhebung
+      if (hasPreviousRender && this._activeFilter && rowCount > 0) {
         const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
         if (staleErh) {
           if (!this._dataPollTimer) this._scheduleDataPoll();
@@ -7898,7 +7899,6 @@
       console.info(`[PLZ-Widget] ⏳ Poll gestartet [${mode}]`);
 
       const tick = () => {
-        try {
         if (this._myDataSource?.state === 'success') {
           const rowCount = this._myDataSource?.data?.length ?? 0;
 
@@ -7908,26 +7908,24 @@
             // Render-Stand existiert (_totalRowCount != -1). Beim allerersten
             // Load nach dem Bootstrap gibt es keinen Cache → sofort akzeptieren.
             const hasPreviousRender = (this._totalRowCount ?? -1) !== -1;
-            console.info(`[PLZ-Widget] Tick: state=success rowCount=${rowCount} hasPrev=${hasPreviousRender} renderInProgress=${this._renderInProgress}`);
 
             // D1
             if (hasPreviousRender && rowCount === this._totalRowCount && rowCount > 0) {
               const sameErh = !this._activeFilter || this._totalRowCountErhID === this._activeFilter.erhID;
-              if (sameErh) { console.info('[PLZ-Widget] Tick: return D1'); return; }
+              if (sameErh) return;
             }
             // D2
             const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
             const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
             if (hasPreviousRender && bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
-              console.info('[PLZ-Widget] Tick: return D2'); return;
+              return;
             }
-            console.info(`[PLZ-Widget] Tick: nach D2 bootstrapCount=${bootstrapCount} msSince=${msSinceSwitch.toFixed(0)}`);
-            // D3
-            if (this._activeFilter && rowCount > 0) {
+            // D3: erste Row gehört zu anderer ErhID → nur beim Erhebungs-Wechsel prüfen,
+            // nicht beim ersten Load (Bootstrap-Rows haben andere ErhID als die gewählte)
+            if (hasPreviousRender && this._activeFilter && rowCount > 0) {
               const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
-              if (staleErh) { console.info('[PLZ-Widget] Tick: return D3'); return; }
+              if (staleErh) { return; }
             }
-            console.info('[PLZ-Widget] Tick: nach D3');
             // D4
             const lockEnd = this._filterSwitchLockUntil ?? (this._filterSwitchTime + 2000);
             const msSinceLockEnd = Date.now() - lockEnd;
@@ -7935,18 +7933,17 @@
             if (hasPreviousRender && msSinceSwitch < 30000 && msSinceLockEnd < minBWWait) {
               if (this._lastRowCountSinceSwitch === undefined) {
                 this._lastRowCountSinceSwitch = rowCount;
-                console.info('[PLZ-Widget] Tick: return D4a'); return;
+                return;
               }
               if (rowCount === this._lastRowCountSinceSwitch) {
                 const secs = Math.floor(msSinceSwitch / 1000);
                 if (secs !== this._lastPollSecs) { this._lastPollSecs = secs; }
-                console.info('[PLZ-Widget] Tick: return D4b'); return;
+                return;
               }
               this._lastRowCountSinceSwitch = undefined;
             } else if (hasPreviousRender && msSinceSwitch < 30000 && rowCount === this._lastRowCountSinceSwitch) {
               this._lastRowCountSinceSwitch = undefined;
             }
-            console.info('[PLZ-Widget] Tick: nach D4 → clearInterval');
           } else {
             // ── Bootstrap-Poll: Home-Reset-Detection ────────────────────
             if (this._homeResetPending) {
@@ -7955,7 +7952,6 @@
             }
           }
 
-          console.info(`[PLZ-Widget] Tick: PASSIERT clearInterval isBootstrap=${isBootstrapPoll}`);
           this._clearInterval(this._dataPollTimer);
           this._dataPollTimer = null;
 
@@ -7988,7 +7984,6 @@
             }
           }
         }
-        } catch(e) { console.error('[PLZ-Widget] Tick-Fehler:', e?.message ?? e, e?.stack); }
       };
 
       this._dataPollTimer = this._setInterval(tick, 300);
