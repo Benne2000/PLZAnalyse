@@ -2781,6 +2781,7 @@
       // Partner-Toggle-Aktion läuft, blockieren wir weitere Klicks — sonst
       // gibt es Race Conditions zwischen den Reloads.
       if (this._partnerToggleInProgress) {
+        console.info('[PLZ-Widget] togglePartnerErhebung blockiert: vorige Aktion läuft noch');
         return;
       }
       this._partnerToggleInProgress = true;
@@ -2883,6 +2884,7 @@
     // Alle potentiell gesetzten ErhID/Jahr/Nummer-Filter entfernen
     _removeAllErhebungFilters(ds) {
       for (const key of ALL_STALE_KEYS) {
+        try { ds.removeDimensionFilter(key); } catch (e) { /* war nicht gesetzt */ }
       }
       this._erhIDFilterKey = null;
       this._jahrFilterKey  = null;
@@ -2893,6 +2895,7 @@
     // Gibt den erfolgreichen Key zurück oder null.
     _trySetFilter(ds, keys, values) {
       for (const key of keys) {
+        try { ds.setDimensionFilter(key, values); return key; } catch (e) { /* weiter */ }
       }
       return null;
     }
@@ -2942,9 +2945,11 @@
       } else {
         // ErhID-Filter aus vorigem "ohne Doppelbestreuung"-Lauf sicher entfernen
         if (this._erhIDFilterKey) {
+          try { ds.removeDimensionFilter(this._erhIDFilterKey); } catch (e) {}
           this._erhIDFilterKey = null;
         } else {
           for (const k of ERH_FILTER_KEYS) {
+            try { ds.removeDimensionFilter(k); } catch (e) {}
           }
         }
         this._jahrFilterKey   = this._trySetFilter(ds, JAHR_FILTER_KEYS,   [jahr]);
@@ -2956,6 +2961,7 @@
       // Reihenfolge der Strategien (von sicher zu Fallback):
       // 1) removeDimensionFilter mit dem beim Bootstrap gecachten Key
       // 2) removeDimensionFilter mit allen bekannten Keys
+      // 3) setDimensionFilter(key, []) — leeres Array als "kein Filter"
       //    (in manchen SAC-Versionen äquivalent zu remove)
       //
       // Wichtig: SAC wirft keine Exception bei removeDimensionFilter wenn
@@ -2969,6 +2975,8 @@
       // Strategie 1+2: removeDimensionFilter
       for (const k of plzKeysOrdered) {
         try {
+          ds.removeDimensionFilter(k);
+          console.info(`[PLZ-Widget] removeDimensionFilter(${k}) OK`);
           removed = true;
         } catch (e) {
           console.warn(`[PLZ-Widget] removeDimensionFilter(${k}) fehler:`, e?.message ?? String(e));
@@ -2979,6 +2987,7 @@
       if (!removed) {
         for (const k of plzKeysOrdered) {
           try {
+            ds.setDimensionFilter(k, []);
             console.info(`[PLZ-Widget] setDimensionFilter(${k}, []) OK (Fallback)`);
             removed = true;
           } catch (e) {
@@ -3069,6 +3078,7 @@
         this._switchSidebarView('docs');
       }
 
+      console.info(`[PLZ-Widget] Bootstrap: ${rows.length} Rows in ${(performance.now() - t0).toFixed(0)}ms`);
     }
 
     // ── GeoJSON ────────────────────────────────────────────────────────
@@ -4481,7 +4491,7 @@
     // Wird zur Kennzeichnung in der NL-Tabelle UND am Karten-Marker genutzt.
     _isNLInvalid(nl) {
       const info = this.erhebungsInfo?.[nl];
-      return !!(info && info.pct_erfassung > 1.005);
+      return !!(info && info.pct_erfassung > 1.0);
     }
 
     updateMarkers() {
@@ -5480,7 +5490,7 @@
       // Umsatz der keiner gültigen PLZ zugeordnet werden konnte (PLZ "00000"
       // im Roh-Datensatz). Visuell markieren, sodass der User die NL als
       // verdächtig erkennen kann. Aggregation bleibt unverändert.
-      const erfassungInvalid = info.pct_erfassung > 1.005;
+      const erfassungInvalid = info.pct_erfassung > 1.0;
       const pctText = (info.pct_erfassung * 100).toFixed(1) + '%';
       const cells = [
         { text: info.nl, cls: '' },
@@ -5700,6 +5710,7 @@
     async _applyPendingPartners() {
       if (!this._activeFilter || !this._activeErhebungen?.length || !this._pendingPartners) return;
       if (this._partnerToggleInProgress) {
+        console.info('[PLZ-Widget] _applyPendingPartners blockiert: vorige Aktion läuft noch');
         return;
       }
       this._partnerToggleInProgress = true;
@@ -6005,32 +6016,23 @@
 
         // Bucket 1: komplett ungefiltert — für isHZ/hzKosten-Fallback
         unfilteredUmsatzByPLZ[plz] = (unfilteredUmsatzByPLZ[plz] || 0) + umsatz;
-        if (!unfilteredByPLZ[plz]) unfilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0, hzNLs: new Set() };
+        if (!unfilteredByPLZ[plz]) unfilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0 };
         unfilteredByPLZ[plz].hzKosten += hzKosten;
-        if (hzFlag && nl) {
-          unfilteredByPLZ[plz].hzNLs.add(nl);
-          unfilteredByPLZ[plz].hzCount = unfilteredByPLZ[plz].hzNLs.size;
-        }
+        if (hzFlag) unfilteredByPLZ[plz].hzCount++;
 
         // Bucket 2: nach NL-Filter, vor Radius — Nenner für WK% bei aktivem NL-Filter
         if (nlPassed) {
           nlFilteredUmsatzByPLZ[plz] = (nlFilteredUmsatzByPLZ[plz] || 0) + umsatz;
-          if (!nlFilteredByPLZ[plz]) nlFilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0, hzNLs: new Set() };
+          if (!nlFilteredByPLZ[plz]) nlFilteredByPLZ[plz] = { hzKosten: 0, hzCount: 0 };
           nlFilteredByPLZ[plz].hzKosten += hzKosten;
-          if (hzFlag && nl) {
-            nlFilteredByPLZ[plz].hzNLs.add(nl);
-            nlFilteredByPLZ[plz].hzCount = nlFilteredByPLZ[plz].hzNLs.size;
-          }
+          if (hzFlag) nlFilteredByPLZ[plz].hzCount++;
         }
 
         if (!nlPassed) continue;
         if (hasRadius && !radius.has(plz)) continue;
-        if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, hzNLs: new Set(), umsatzNetto: 0, hzKosten: 0, potHzSum: 0, potHzCount: 0 };
+        if (!aggregated[plz]) aggregated[plz] = { hzCount: 0, umsatzNetto: 0, hzKosten: 0, potHzSum: 0, potHzCount: 0 };
         const entry = aggregated[plz];
-        if (hzFlag && nl) {
-          entry.hzNLs.add(nl);
-          entry.hzCount = entry.hzNLs.size;   // Bug 3 Fix: eindeutige NLs, nicht Rows
-        }
+        if (hzFlag) entry.hzCount++;
         entry.umsatzNetto += umsatz;
         entry.hzKosten    += hzKosten;
         // potHz: NL-Rows mit 0 werden nicht mitgezählt (Datenausfälle bzw. NLs
@@ -6689,6 +6691,7 @@
       if (cur && cur.erhID === erhID && cur.jahr === jahr && cur.nummer === nummer
           && (this._activeErhebungen?.length || 0) <= 1
           && this._lastLoadedDoppelMode === wantDoppel) {
+        console.info('[PLZ-Widget] loadErhebung: identische Erhebung — skip');
         return;
       }
       // Merken in welchem Modus wir gerade laden (für nächsten E19-Check).
@@ -6847,9 +6850,6 @@
             this._nlSelectionInitialized = false;
             this.activeCategories = new Set(CATEGORIES);
             this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
-            // Bug 2 Fix: prepareErhebungsInfo VOR createAllMarkers aufrufen,
-            // damit _isNLInvalid beim ersten Icon-Render korrekte Werte liefert.
-            this.prepareErhebungsInfo();
             this.createAllMarkers();
 
             this._updateLoaderPhase(4, 'Kennwerte werden berechnet…');
@@ -6926,7 +6926,8 @@
         this._updateDataLoadProgress(rows ?? totalRows, totalRows, pct);
       };
 
-      console.info(`[PLZ-Widget] render() – ${erhID}|${jahr}|${nummer}`);
+      console.group(`[PLZ-Widget] render() – ${erhID}|${jahr}|${nummer}`);
+      console.info(`Rows vom BW: ${rawData.length.toLocaleString('de-DE')}`);
 
       // Sekundenanzeiger stoppen
       if (this._loadSecTimer) { this._clearInterval(this._loadSecTimer); this._loadSecTimer = null; }
@@ -6934,6 +6935,7 @@
       try {
         progress(1, 5, 'Index wird aufgebaut…', 0);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
 
         // Phase-1: Index baut mit ALLEN aktiven Erhebungen — sonst gehen
         // Nachbar-NL-Umsätze der Partner-GFs verloren (Punkt 2-Bug).
@@ -6950,25 +6952,27 @@
         // _getErhebungRows der Basis-Erhebung.
         const filteredData = this._getAllActiveRows();
         this.filteredData = filteredData;
+        console.info(`Index: ${filteredData.length} Rows für ${this._activeErhebungen.length} aktive Erhebung(en)`);
 
         progress(2, 25, 'Karte wird vorbereitet…', filteredData.length);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         await this.loadGeoJson();
         this.prepareMapData(filteredData);
 
         progress(3, 50, 'Standorte werden gesetzt…', filteredData.length);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         this.allNLs = [...Object.keys(this.Niederlassung), ...(this.extraNLs?.map(e => e.nl) ?? [])];
         this._selectedNLs = new Set(this.allNLs);
         this._nlSelectionInitialized = false;
         this.activeCategories = new Set(CATEGORIES);
         this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
-        // Bug 2 Fix: prepareErhebungsInfo VOR createAllMarkers aufrufen
-        this.prepareErhebungsInfo();
         this.createAllMarkers();
 
         progress(4, 70, 'Kennwerte werden berechnet…', filteredData.length);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         const radius = Number(this.$('radius-slider')?.value ?? 40);
         this._buildDistanceCache();
         // Bug-Fix B23: applyRadiusFilter ruft intern bereits
@@ -6977,6 +6981,7 @@
 
         progress(4, 88, 'Karte wird gerendert…', filteredData.length);
         await yieldFrame();
+        if (isStale()) { console.info('[PLZ-Widget] render() abgebrochen (stale)'); console.groupEnd(); return; }
         this.updateGeoLayer();
         this.renderDataTable(this.filteredKennwerte);
         this.zoomToFilteredPLZ();
@@ -6985,6 +6990,8 @@
         const e2e = this._filterSwitchTime
           ? ((Date.now() - this._filterSwitchTime) / 1000).toFixed(1)
           : '–';
+        console.info(`E2E ab Filter-Switch: ${e2e}s | ${filteredData.length.toLocaleString('de-DE')} Rows`);
+        console.groupEnd();
 
         requestAnimationFrame(() => {
           if (isStale()) return;   // Home wurde inzwischen geklickt
@@ -7710,7 +7717,9 @@
           const knownKey = this._plzFilterKey ? [this._plzFilterKey] : [];
           const keysToTry = [...knownKey, ...PLZ_FILTER_KEYS.filter(k => k !== this._plzFilterKey)];
           for (const key of keysToTry) {
+            try { ds.setDimensionFilter(key, ['00000']); this._plzFilterKey = key; break; } catch (e) {}
           }
+          console.info('[PLZ-Widget] Home: Filter zurückgesetzt → PLZ=00000');
           // Lock aufheben — Home-Reset soll sofort reagieren
           this._filterSwitchLockUntil = null;
           this._lastRowCountSinceSwitch = undefined;
@@ -7723,6 +7732,7 @@
 
       // Bootstrap aus Cache wieder hochfahren
       if (this._cachedBootstrapRows?.length > 0) {
+        console.info(`[PLZ-Widget] Home: Bootstrap aus Cache (${this._cachedBootstrapRows.length} Rows)`);
         this._setTimeout(() => {
           this._bootstrapDone = false;
           this._bootstrapFromPLZ00000(this._cachedBootstrapRows);
@@ -7798,50 +7808,60 @@
       // Tick hat mehr Kontrolle und verwendet die D4-Detection korrekt.
       if (this._filterSwitchLockUntil && Date.now() < this._filterSwitchLockUntil) {
         const remaining = ((this._filterSwitchLockUntil - Date.now()) / 1000).toFixed(1);
-        console.info(`[PLZ-Widget] Setter-Lock aktiv (${remaining}s, ${rowCount} Rows)`);
+        console.info(`[PLZ-Widget] Setter-Lock (${remaining}s verbleibend, ${rowCount} Rows) – ignoriere`);
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
-      const hasPreviousRender = (this._totalRowCount ?? -1) !== -1;
-      console.info(`[PLZ-Widget] Setter: kein Lock (lockUntil=${this._filterSwitchLockUntil}, hasPrev=${hasPreviousRender}, rowCount=${rowCount}, msSince=${this._filterSwitchTime ? Date.now()-this._filterSwitchTime : 'n/a'})`);
 
       // Cache-Detection 1: gleiche Zeilenzahl wie vorheriger Render
-      if (hasPreviousRender && rowCount === this._totalRowCount && rowCount > 0) {
+      if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
+        console.info(`[PLZ-Widget] SAC-Cache (${rowCount} Rows / E2E ${e2e}) – warte auf BW`);
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
-      // Cache-Detection 2: gleiche Zeilenzahl wie Bootstrap → SAC noch gecacht
+      // Cache-Detection 2: gleiche Zeilenzahl wie Bootstrap → SAC hat noch
+      // die alten PLZ=00000-Daten gecacht, echte Erhebungsdaten kommen später.
+      // Nur in den ersten 10s nach Filter-Switch aktiv (Schutz gegen den
+      // theoretischen Fall dass eine Erhebung zufällig gleich viele Rows hat).
       const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
       const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
-      if (hasPreviousRender && bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+      if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+        console.info(`[PLZ-Widget] SAC-Bootstrap-Cache (${rowCount} = Bootstrap-Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf echte Daten`);
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
-      // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten
-      // Nur beim Erhebungs-Wechsel: Bootstrap-Rows haben andere ErhID als gewählte Erhebung
-      if (hasPreviousRender && this._activeFilter && rowCount > 0) {
+      // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten.
+      if (this._activeFilter && rowCount > 0) {
         const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
         if (staleErh) {
+          console.info(`[PLZ-Widget] SAC-ErhID-Cache ("${staleErh}" ≠ aktiv "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
           if (!this._dataPollTimer) this._scheduleDataPoll();
           return;
         }
       }
       // Cache-Detection 4: Row-Anzahl hat sich seit Filter-Switch nicht geändert.
-      // Nur beim Erhebungs-Wechsel (hasPreviousRender), nicht beim ersten Load.
-      if (hasPreviousRender && msSinceSwitch < 30000) {
+      // SAC liefert gecachte Daten → _lastRowCountSinceSwitch trackt was wir
+      // bei jedem Tick/Setter nach dem Switch gesehen haben. Erst wenn sich
+      // die Row-Anzahl ändert (SAC hat neuen BW-Datenstand) akzeptieren wir.
+      // Sicherheits-Timeout: nach 30s akzeptieren wir was auch immer kommt.
+      if (msSinceSwitch < 30000) {
         if (this._lastRowCountSinceSwitch === undefined) {
           this._lastRowCountSinceSwitch = rowCount;
+          console.info(`[PLZ-Widget] SAC-Post-Switch (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf Änderung`);
           if (!this._dataPollTimer) this._scheduleDataPoll();
           return;
         }
         if (rowCount === this._lastRowCountSinceSwitch) {
+          console.info(`[PLZ-Widget] SAC-Post-Switch unverändert (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte weiter`);
           if (!this._dataPollTimer) this._scheduleDataPoll();
           return;
         }
         // Row-Anzahl hat sich verändert → neue BW-Daten
+        console.info(`[PLZ-Widget] SAC-Post-Switch: Row-Änderung ${this._lastRowCountSinceSwitch} → ${rowCount} (${(msSinceSwitch/1000).toFixed(1)}s) ✓`);
         this._lastRowCountSinceSwitch = undefined;
       }
       if (this._renderInProgress) {
+        console.info(`[PLZ-Widget] render läuft – ignoriere SAC-Refresh (${rowCount} Rows)`);
         return;
       }
 
@@ -7868,8 +7888,10 @@
         if (keys0.length) {
           const sample0 = {};
           for (const k of keys0) sample0[k] = data[0][k]?.id ?? data[0][k];
+          console.info('[PLZ-Widget] ErhID-Check: Keys in Row[0]:', sample0, '| erwartet:', expectedErhID);
         } else {
           // Kein Erhebungs-Key gefunden — alle Keys loggen
+          console.info('[PLZ-Widget] ErhID-Check: keine ERH-Keys in Row[0], alle Keys:', Object.keys(data[0] || {}));
         }
       }
       let mismatchErh = null, matchCount = 0;
@@ -7903,44 +7925,53 @@
 
           if (!isBootstrapPoll) {
             // ── Phase-2-Poll: Cache-Detections ──────────────────────────
-            // WICHTIG: Cache-Detections greifen nur wenn schon ein vorheriger
-            // Render-Stand existiert (_totalRowCount != -1). Beim allerersten
-            // Load nach dem Bootstrap gibt es keinen Cache → sofort akzeptieren.
-            const hasPreviousRender = (this._totalRowCount ?? -1) !== -1;
-
-            // D1
-            if (hasPreviousRender && rowCount === this._totalRowCount && rowCount > 0) {
+            // D1: gleiche Row-Anzahl + gleiche ErhID → SAC-Cache
+            if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0) {
               const sameErh = !this._activeFilter || this._totalRowCountErhID === this._activeFilter.erhID;
               if (sameErh) return;
             }
-            // D2
+            // D2: Bootstrap-Row-Count → SAC hat noch 00000-Daten
             const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
             const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
-            if (hasPreviousRender && bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+            if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+              console.info(`[PLZ-Widget] Tick: Bootstrap-Cache (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
               return;
             }
-            // D3: erste Row gehört zu anderer ErhID → nur beim Erhebungs-Wechsel prüfen,
-            // nicht beim ersten Load (Bootstrap-Rows haben andere ErhID als die gewählte)
-            if (hasPreviousRender && this._activeFilter && rowCount > 0) {
+            // D3: erste Row gehört zu anderer ErhID
+            if (this._activeFilter && rowCount > 0) {
               const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
-              if (staleErh) { return; }
+              if (staleErh) {
+                console.info(`[PLZ-Widget] Tick: ErhID-Cache ("${staleErh}" ≠ "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
+                return;
+              }
             }
-            // D4
+            // D4: Row-Anzahl hat sich seit Filter-Switch noch nicht geändert.
+            // Sicherheits-Timeout: nach Lock-Ablauf + BW-Mindest-Wartezeit
+            // akzeptieren wir die Daten auch wenn Row-Anzahl gleich geblieben.
+            // BW braucht typisch 5-15s — wir warten mindestens 4s nach Lock-Ende.
             const lockEnd = this._filterSwitchLockUntil ?? (this._filterSwitchTime + 2000);
             const msSinceLockEnd = Date.now() - lockEnd;
-            const minBWWait = 4000;
-            if (hasPreviousRender && msSinceSwitch < 30000 && msSinceLockEnd < minBWWait) {
+            const minBWWait = 4000;  // 4s Mindest-Wartezeit nach Lock
+            if (msSinceSwitch < 30000 && msSinceLockEnd < minBWWait) {
               if (this._lastRowCountSinceSwitch === undefined) {
                 this._lastRowCountSinceSwitch = rowCount;
+                console.info(`[PLZ-Widget] Tick: Post-Switch (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf Änderung`);
                 return;
               }
               if (rowCount === this._lastRowCountSinceSwitch) {
                 const secs = Math.floor(msSinceSwitch / 1000);
-                if (secs !== this._lastPollSecs) { this._lastPollSecs = secs; }
+                if (secs !== this._lastPollSecs) {
+                  this._lastPollSecs = secs;
+                  console.info(`[PLZ-Widget] Tick: Post-Switch unverändert (${rowCount} Rows, ${secs}s, Lock+${(msSinceLockEnd/1000).toFixed(1)}s) – warte`);
+                }
                 return;
               }
+              console.info(`[PLZ-Widget] Tick: Row-Änderung ${this._lastRowCountSinceSwitch} → ${rowCount} (${(msSinceSwitch/1000).toFixed(1)}s) ✓`);
               this._lastRowCountSinceSwitch = undefined;
-            } else if (hasPreviousRender && msSinceSwitch < 30000 && rowCount === this._lastRowCountSinceSwitch) {
+            } else if (msSinceSwitch < 30000 && rowCount === this._lastRowCountSinceSwitch) {
+              // Lock abgelaufen + Mindest-Wartezeit abgelaufen + Row-Anzahl NOCH gleich
+              // → Beide Erhebungen haben wahrscheinlich gleich viele Rows. Akzeptieren.
+              console.info(`[PLZ-Widget] Tick: Mindest-BW-Wait abgelaufen (${(msSinceSwitch/1000).toFixed(1)}s) → akzeptiere ${rowCount} Rows`);
               this._lastRowCountSinceSwitch = undefined;
             }
           } else {
