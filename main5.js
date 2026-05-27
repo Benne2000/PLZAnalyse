@@ -7898,6 +7898,7 @@
       console.info(`[PLZ-Widget] ⏳ Poll gestartet [${mode}]`);
 
       const tick = () => {
+        try {
         if (this._myDataSource?.state === 'success') {
           const rowCount = this._myDataSource?.data?.length ?? 0;
 
@@ -7959,6 +7960,7 @@
             }
           }
 
+          console.info(`[PLZ-Widget] Tick: PASSIERT clearInterval isBootstrap=${isBootstrapPoll}`);
           this._clearInterval(this._dataPollTimer);
           this._dataPollTimer = null;
 
@@ -7991,6 +7993,7 @@
             }
           }
         }
+        } catch(e) { console.error('[PLZ-Widget] Tick-Fehler:', e?.message ?? e, e?.stack); }
       };
 
       this._dataPollTimer = this._setInterval(tick, 300);
