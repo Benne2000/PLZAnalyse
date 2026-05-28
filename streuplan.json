@@ -14,5 +14,182 @@
     { "datum": "2026-10-30", "kw": 45, "beschreibung": "24-Seiter A4" },
     { "datum": "2026-11-28", "kw": 49, "beschreibung": "32-Seiter A4" }
   ],
-  "partner": []
+  "partner": [
+    {
+      "haupt_nl": "Kiel-Suchsdorf",
+      "haupt_nl_id": 571,
+      "partner_nls": [
+        { "id": 853, "name": "Kiel-Ravensberg" },
+        { "id": 634, "name": "Schwentinental-Raisdorf" }
+      ]
+    },
+    {
+      "haupt_nl": "Lübeck",
+      "haupt_nl_id": 639,
+      "partner_nls": [
+        { "id": 534, "name": "Lübeck-St. Jürgen" },
+        { "id": 864, "name": "Lübeck-Moisling" }
+      ]
+    },
+    {
+      "haupt_nl": "Bremen",
+      "haupt_nl_id": 647,
+      "partner_nls": [
+        { "id": 553, "name": "Stuhr-Groß-Mackenstedt" },
+        { "id": 863, "name": "Bremen-Osterholz (Weserpark)" }
+      ]
+    },
+    {
+      "haupt_nl": "Dortmund",
+      "haupt_nl_id": 573,
+      "partner_nls": [
+        { "id": 509, "name": "Dortmund-Aplerbeck" }
+      ]
+    },
+    {
+      "haupt_nl": "Bochum Harpen",
+      "haupt_nl_id": 519,
+      "partner_nls": [
+        { "id": 648, "name": "Bochum-Hofstede" }
+      ]
+    },
+    {
+      "haupt_nl": "Wuppertal-Barmen (Lichtscheid)",
+      "haupt_nl_id": 868,
+      "partner_nls": [
+        { "id": 617, "name": "Wuppertal" }
+      ]
+    },
+    {
+      "haupt_nl": "Krefeld-Mevissenstraße",
+      "haupt_nl_id": 633,
+      "partner_nls": [
+        { "id": 541, "name": "Krefeld-Untergath" }
+      ]
+    },
+    {
+      "haupt_nl": "Aachen",
+      "haupt_nl_id": 586,
+      "partner_nls": [
+        { "id": 613, "name": "Würselen" }
+      ]
+    },
+    {
+      "haupt_nl": "Hamburg-Bergedorf",
+      "haupt_nl_id": 620,
+      "partner_nls": [
+        { "id": 619, "name": "Hamburg-Harburg" },
+        { "id": 851, "name": "Hamburg-Wandsbek" },
+        { "id": 595, "name": "Hamburg-Moorfleet" },
+        { "id": 663, "name": "Hamburg-Bramfeld" },
+        { "id": 858, "name": "Hamburg-Langenhorn" },
+        { "id": 664, "name": "Hamburg-Stellingen" },
+        { "id": 654, "name": "Hamburg-Lokstedt" },
+        { "id": 865, "name": "Hamburg-Lurup" },
+        { "id": 624, "name": "Barsbüttel" }
+      ]
+    },
+    {
+      "haupt_nl": "Berlin-Charlottenburg",
+      "haupt_nl_id": 812,
+      "partner_nls": [
+        { "id": 643, "name": "Berlin-Kurfürstendamm" },
+        { "id": 840, "name": "Berlin Am Wittenbergplatz" },
+        { "id": 814, "name": "Berlin Am Hermannplatz" },
+        { "id": 597, "name": "Berlin-Schöneberg" },
+        { "id": 894, "name": "Berlin-Steglitz" },
+        { "id": 604, "name": "Berlin-Marienfelde" },
+        { "id": 866, "name": "Berlin-Treptow" },
+        { "id": 578, "name": "Berlin-Pankow" },
+        { "id": 656, "name": "Berlin-Wedding" },
+        { "id": 850, "name": "Berlin-Wittenau" },
+        { "id": 596, "name": "Berlin-Spandau Brunsbütteler Damm" },
+        { "id": 623, "name": "Berlin-Spandau" }
+      ]
+    },
+    {
+      "haupt_nl": "Wildau",
+      "haupt_nl_id": 605,
+      "partner_nls": [
+        { "id": 565, "name": "Mahlow" },
+        { "id": 577, "name": "Birkenwerder" }
+      ]
+    },
+    {
+      "haupt_nl": "Karlsruhe-Oststadt",
+      "haupt_nl_id": 852,
+      "partner_nls": [
+        { "id": 330, "name": "Karlsruhe-Südstadt" },
+        { "id": 525, "name": "Karlsruhe-Mühlburg" }
+      ]
+    },
+    {
+      "haupt_nl": "Stuttgart",
+      "haupt_nl_id": 871,
+      "partner_nls": [
+        { "id": 631, "name": "Stuttgart-Untertürkheim" },
+        { "id": 626, "name": "Stuttgart-Möhringen" }
+      ]
+    },
+    {
+      "haupt_nl": "Augsburg-Oberhausen",
+      "haupt_nl_id": 862,
+      "partner_nls": [
+        { "id": 515, "name": "Augsburg" },
+        { "id": 632, "name": "Augsburg-Lechhausen" },
+        { "id": 548, "name": "Gersthofen" }
+      ]
+    },
+    {
+      "haupt_nl": "Kassel",
+      "haupt_nl_id": 658,
+      "partner_nls": [
+        { "id": 603, "name": "Fuldabrück" }
+      ]
+    },
+    {
+      "haupt_nl": "Mainz-Mombach",
+      "haupt_nl_id": 854,
+      "partner_nls": [
+        { "id": 614, "name": "Mainz" }
+      ]
+    },
+    {
+      "haupt_nl": "Mannheim",
+      "haupt_nl_id": 655,
+      "partner_nls": [
+        { "id": 583, "name": "Mannheim-Mallau" },
+        { "id": 557, "name": "Mannheim-Waldhof" },
+        { "id": 897, "name": "Mannheim-Columbus" }
+      ]
+    },
+    {
+      "haupt_nl": "Dillingen",
+      "haupt_nl_id": 585,
+      "partner_nls": [
+        { "id": 622, "name": "Ensdorf" }
+      ]
+    },
+    {
+      "haupt_nl": "Essen-Frillendorf",
+      "haupt_nl_id": 539,
+      "partner_nls": [
+        { "id": 505, "name": "Essen-Frohnhausen" }
+      ]
+    },
+    {
+      "haupt_nl": "München",
+      "haupt_nl_id": 520,
+      "partner_nls": [
+        { "id": 870, "name": "München-Freimann" }
+      ]
+    },
+    {
+      "haupt_nl": "Braunschweig",
+      "haupt_nl_id": 607,
+      "partner_nls": [
+        { "id": 630, "name": "Braunschweig-Stöckheim" }
+      ]
+    }
+  ]
 }
