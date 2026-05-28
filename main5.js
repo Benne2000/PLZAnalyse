@@ -7940,12 +7940,9 @@
         : '–';
 
       // Lock-Fenster: in den ersten 2s nach Filter-Switch ignoriert der Setter
-      // alle Aufrufe. SAC schickt durch das "dirty"-Marking sofort einen
-      // Re-Render der noch den alten gecachten Datenstand liefert. Der Poll-
-      // Tick hat mehr Kontrolle und verwendet die D4-Detection korrekt.
-      if (this._filterSwitchLockUntil && Date.now() < this._filterSwitchLockUntil) {
-        const remaining = ((this._filterSwitchLockUntil - Date.now()) / 1000).toFixed(1);
-        console.info(`[PLZ-Widget] Setter-Lock (${remaining}s verbleibend, ${rowCount} Rows) – ignoriere`);
+      // alle Aufrufe — außer bei Zwei-Pull Phase 2 (Pull 2 soll sofort durch).
+      if (this._multiGfPullPhase !== 2 &&
+          this._filterSwitchLockUntil && Date.now() < this._filterSwitchLockUntil) {
         if (!this._dataPollTimer) this._scheduleDataPoll();
         return;
       }
