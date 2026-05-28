@@ -7958,7 +7958,8 @@
         return;
       }
       // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten.
-      if (this._activeFilter && rowCount > 0) {
+      // Beim Zwei-Pull Phase 2 deaktivieren — Partner-Rows haben andere ErhIDs.
+      if (this._multiGfPullPhase !== 2 && this._activeFilter && rowCount > 0) {
         const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
         if (staleErh) {
           console.info(`[PLZ-Widget] SAC-ErhID-Cache ("${staleErh}" ≠ aktiv "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
@@ -8067,8 +8068,9 @@
               console.info(`[PLZ-Widget] Tick: Bootstrap-Cache (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
               return;
             }
-            // D3: erste Row gehört zu anderer ErhID
-            if (this._activeFilter && rowCount > 0) {
+            // D3: erste Row gehört zu anderer ErhID — beim Zwei-Pull (Pull 2)
+            // deaktivieren, da Partner-Rows erwartungsgemäß andere ErhIDs haben
+            if (this._multiGfPullPhase !== 2 && this._activeFilter && rowCount > 0) {
               const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
               if (staleErh) {
                 console.info(`[PLZ-Widget] Tick: ErhID-Cache ("${staleErh}" ≠ "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
@@ -8132,14 +8134,20 @@
               const base = this._activeErhebungen[0];
               const ok = this._startMultiGfPull2(partnerIDs, base.jahr, base.nummer);
               if (ok) {
-                // Neuen Poll für Pull 2 starten
-                this._updateLoaderPhase(1, `Partner-Bestreuung wird geladen…`);
-                return; // Poll läuft weiter für Pull 2
+                // Alten Poll-Timer stoppen — neuer Poll für Pull 2 startet frisch
+                this._clearInterval(this._dataPollTimer);
+                this._dataPollTimer = null;
+                // Detection-States für Pull 2 frisch setzen
+                this._totalRowCount = -1;
+                this._totalRowCountErhID = null;
+                this._lastRowCountSinceSwitch = undefined;
+                this._updateLoaderPhase(1, 'Partner-Bestreuung wird geladen…');
+                this._scheduleDataPoll();
+                return;
               } else {
-                // Pull 2 fehlgeschlagen → Fallback: eigene Rows + normaler Index
+                // Pull 2 fehlgeschlagen → Fallback: nur Pull 1 verwenden
                 console.warn('[PLZ-Widget] Multi-GF Pull 2 fehlgeschlagen — verwende nur Pull 1');
                 this._multiGfPullPhase = 0;
-                // Direkt mit den eigenen Rows rendern
               }
             }
 
