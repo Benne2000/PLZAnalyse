@@ -7841,10 +7841,12 @@
         return;
       }
       // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten.
-      if (this._activeFilter && rowCount > 0) {
+      // Nur innerhalb des 30s-Fensters und nur im Single-GF-Modus prüfen —
+      // im Multi-GF-Modus sind fremde ErhIDs in den Rows normal.
+      const isMultiGf = (this._activeErhebungen?.length ?? 0) > 1;
+      if (!isMultiGf && msSinceSwitch < 30000 && this._activeFilter && rowCount > 0) {
         const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
         if (staleErh) {
-          console.info(`[PLZ-Widget] SAC-ErhID-Cache ("${staleErh}" ≠ aktiv "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
           if (!this._dataPollTimer) this._scheduleDataPoll();
           return;
         }
@@ -7895,19 +7897,6 @@
       if (!this._activeFilter || !data?.length) return null;
       const expectedErhID = this._activeFilter.erhID;
       const sample = Math.min(data.length, 5);
-      // Diagnose: logge was in den ersten Rows steht
-      if (this._filterSwitchTime && Date.now() - this._filterSwitchTime < 60000) {
-        const keys0 = Object.keys(data[0] || {}).filter(k =>
-          k.includes('erh') || k.includes('Erh') || k.includes('ERH'));
-        if (keys0.length) {
-          const sample0 = {};
-          for (const k of keys0) sample0[k] = data[0][k]?.id ?? data[0][k];
-          console.info('[PLZ-Widget] ErhID-Check: Keys in Row[0]:', sample0, '| erwartet:', expectedErhID);
-        } else {
-          // Kein Erhebungs-Key gefunden — alle Keys loggen
-          console.info('[PLZ-Widget] ErhID-Check: keine ERH-Keys in Row[0], alle Keys:', Object.keys(data[0] || {}));
-        }
-      }
       let mismatchErh = null, matchCount = 0;
       for (let i = 0; i < sample; i++) {
         const rowErh = data[i]['dimension_erhebung_0']?.id?.trim();
@@ -7950,8 +7939,9 @@
               console.info(`[PLZ-Widget] Tick: Bootstrap-Cache (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
               return;
             }
-            // D3: erste Row gehört zu anderer ErhID
-            if (this._activeFilter && rowCount > 0) {
+            // D3: erste Row gehört zu anderer ErhID — nur Single-GF + 30s-Fenster
+            const isMultiGf = (this._activeErhebungen?.length ?? 0) > 1;
+            if (!isMultiGf && msSinceSwitch < 30000 && this._activeFilter && rowCount > 0) {
               const staleErh = this._isDataFromDifferentErhebung(this._myDataSource.data);
               if (staleErh) {
                 console.info(`[PLZ-Widget] Tick: ErhID-Cache ("${staleErh}" ≠ "${this._activeFilter.erhID}", ${(msSinceSwitch/1000).toFixed(1)}s) – warte`);
