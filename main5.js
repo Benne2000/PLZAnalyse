@@ -3562,7 +3562,7 @@
         { label: 'PLZ',                    width: '44px' },
         { label: 'Gemeinde',               width: '88px' },
         { label: 'HZ',                     width: '22px' },
-        { label: 'Umsatz\n(Hochgerechnet)', width: '58px' },
+        { label: 'Umsatz\n(Hochger.)', width: '58px' },
         { label: lastColLabel,             width: '46px' }
       ];
 
@@ -7408,10 +7408,10 @@
         for (const p of partner) {
           // partner_nls kann Array von Strings ODER Array von {id, name}-Objekten sein
           const partnerNLs = Array.isArray(p.partner_nls)
-            ? p.partner_nls.map(x => typeof x === 'object' ? (x.name || x.id) : x).join(', ')
+            ? p.partner_nls.map(x => typeof x === 'object' ? `${x.id} (${x.name || ''})`.trim() : x).join(', ')
             : '';
           html += `<tr>
-            <td><strong>${escapeHtml(p.haupt_nl || '–')}</strong></td>
+            <td><strong>${escapeHtml(p.haupt_nl_id ? `${p.haupt_nl_id} (${p.haupt_nl || '–'})` : (p.haupt_nl || '–'))}</strong></td>
             <td>${escapeHtml(partnerNLs)}</td>
           </tr>`;
         }
