@@ -33,6 +33,7 @@
   const ERH_FILTER_KEYS    = ['BGFBNR', 'dimension_erhebung_0', 'dimension_erhebung'];
   const JAHR_FILTER_KEYS   = ['0CALYEAR', 'dimension_jahr_0', 'dimension_jahr'];
   const NUMMER_FILTER_KEYS = ['BERHBNUM', 'dimension_erhebungsnummer_0', 'dimension_erhebungsnummer'];
+  const HZ_FILTER_KEYS     = ['BHZFLAG', 'dimension_hzflag_0', 'dimension_hzflag'];
   const ALL_STALE_KEYS = [...ERH_FILTER_KEYS, ...JAHR_FILTER_KEYS, ...NUMMER_FILTER_KEYS];
 
   const LABEL_ZOOM_MIN   = 11;   // ab diesem Zoom erscheinen PLZ-Namen
@@ -2262,6 +2263,12 @@
       this._erhIDFilterKey  = null;
       this._jahrFilterKey   = null;
       this._nummerFilterKey = null;
+      this._hzFilterKey     = null;
+
+      // Zwei-Pull-State für Multi-GF-Modus:
+      // Pull 1 = eigene Erhebung (alle Rows), Pull 2 = Partner (nur HZ=X)
+      this._multiGfPullPhase = 0;   // 0=inaktiv, 1=Pull1 läuft, 2=Pull2 läuft
+      this._ownErhebungRows  = null; // gecachte Rows aus Pull 1
     }
 
     // ── Lifecycle ──────────────────────────────────────────────────────
@@ -3012,7 +3019,108 @@
       return removed;
     }
 
-    // ── Bootstrap aus PLZ=00000-Rows ───────────────────────────────────
+    // ── Zwei-Pull-Strategie für Multi-GF-Modus ────────────────────────
+    // Pull 1: nur eigene Erhebung → alle Rows → in _ownErhebungRows cachen.
+    // Pull 2: nur Partner-Erhebungen + HZ-Flag='X' → nur bestreute Rows.
+    // Beide Pulls laufen über dieselbe DataSource sequenziell.
+    // Wenn kein HZ-Filter gesetzt werden kann (SAC unterstützt den Key nicht),
+    // Fallback auf normalen Single-Pull mit allen ErhIDs.
+    _startMultiGfTwoPull(ownErhID, partnerErhIDs, jahr, nummer) {
+      const ds = this._getDataSource();
+      if (!ds) return false;
+
+      this._multiGfPullPhase = 1;
+      this._ownErhebungRows  = null;
+
+      // Pull 1: nur eigene Erhebung, alle Rows
+      const switched = this._switchToErhebungFilter(ownErhID, jahr, nummer);
+      if (!switched) {
+        this._multiGfPullPhase = 0;
+        return false;
+      }
+      console.info(`[PLZ-Widget] Multi-GF Pull 1/2: eigene Erhebung ${ownErhID}`);
+      return true;
+    }
+
+    // Pull 2 starten: Partner-Erhebungen mit HZ-Flag-Filter
+    _startMultiGfPull2(partnerErhIDs, jahr, nummer) {
+      const ds = this._getDataSource();
+      if (!ds) return false;
+
+      this._multiGfPullPhase = 2;
+      const t0 = performance.now();
+
+      // ErhID-Filter auf Partner setzen
+      if (!this._doppelbestreuungAktiv) {
+        const kE = this._trySetFilter(ds, ERH_FILTER_KEYS, partnerErhIDs);
+        this._erhIDFilterKey = kE;
+      }
+
+      // HZ-Flag-Filter = 'X' → nur bestreute Rows
+      const kHz = this._trySetFilter(ds, HZ_FILTER_KEYS, ['X']);
+      if (kHz) {
+        this._hzFilterKey = kHz;
+        console.info(`[PLZ-Widget] Multi-GF Pull 2/2: ${partnerErhIDs.length} Partner, HZ-Filter gesetzt (${kHz})`);
+      } else {
+        // HZ-Filter nicht setzbar → Pull 2 ohne Filter, lokal filtern
+        console.warn('[PLZ-Widget] Multi-GF Pull 2/2: HZ-Filter konnte nicht gesetzt werden — lade alle Rows');
+        this._hzFilterKey = null;
+      }
+
+      // PLZ-Filter entfernen → BW-Query triggern
+      const knownPlzKey = this._plzFilterKey ? [this._plzFilterKey] : [];
+      const plzKeysOrdered = [...new Set([...knownPlzKey, ...PLZ_FILTER_KEYS])];
+      let removed = false;
+      for (const k of plzKeysOrdered) {
+        try { ds.removeDimensionFilter(k); removed = true; } catch (e) {}
+      }
+      if (removed) {
+        this._plzFilterKey = null;
+        this._filterSwitchTime = Date.now();
+        this._lastRowCountSinceSwitch = undefined;
+        this._filterSwitchLockUntil = Date.now() + 2000;
+        console.info(`[PLZ-Widget] Multi-GF Pull 2/2 gestartet in ${(performance.now() - t0).toFixed(0)}ms`);
+      }
+      return removed;
+    }
+
+    // HZ-Filter nach Pull 2 wieder entfernen (aufräumen)
+    _removeHzFilter() {
+      const ds = this._getDataSource();
+      if (!ds) return;
+      if (this._hzFilterKey) {
+        try { ds.removeDimensionFilter(this._hzFilterKey); } catch (e) {}
+        this._hzFilterKey = null;
+      } else {
+        for (const k of HZ_FILTER_KEYS) {
+          try { ds.removeDimensionFilter(k); } catch (e) {}
+        }
+      }
+    }
+
+
+    // Baut den Erhebungs-Index aus zwei separaten Row-Arrays:
+    // ownRows = alle Rows der eigenen Erhebung (Pull 1)
+    // partnerRows = nur HZ=X Rows der Partner-Erhebungen (Pull 2)
+    _buildErhebungIndexFromArrays(ownRows, partnerRows) {
+      const idx = {};
+      const addRows = (rows) => {
+        for (let i = 0, len = rows.length; i < len; i++) {
+          const row = rows[i];
+          const eID = row['dimension_erhebung_0']?.id?.trim();
+          const yr  = row['dimension_jahr_0']?.id?.trim();
+          const nr  = row['dimension_erhebungsnummer_0']?.id?.trim();
+          if (isNull(eID) || isNull(yr) || isNull(nr)) continue;
+          const key = eID + '|' + yr + '|' + nr;
+          (idx[key] ||= []).push(row);
+        }
+      };
+      addRows(ownRows);
+      addRows(partnerRows);
+      this._erhebungIndex = idx;
+      console.info(`[PLZ-Widget] Zwei-Pull-Index: ${Object.keys(idx).length} Schlüssel`);
+    }
+
     _bootstrapFromPLZ00000(rows) {
       if (this._bootstrapDone) return;
       this._bootstrapDone = true;
@@ -5722,6 +5830,7 @@
         const newIds = newList.map(e => e.erhID).join('|');
         if (oldIds === newIds) {
           this._pendingPartners = null;
+      this._multiGfPullPhase = 0; this._ownErhebungRows = null;
           if (this._sidebarView === 'analysis') this._renderAnalysisView();
           return;
         }
@@ -5736,6 +5845,7 @@
         // Pending-Set zurücksetzen → wird beim nächsten Render aus dem
         // neuen Active-State neu initialisiert
         this._pendingPartners = null;
+      this._multiGfPullPhase = 0; this._ownErhebungRows = null;
         // Bug R5: Token inkrementieren, damit ein noch-laufender render()
         // der vorigen Active-Liste als stale erkannt wird.
         this._renderToken = (this._renderToken || 0) + 1;
@@ -5767,7 +5877,9 @@
         this._clearDoppelMarkers?.();
 
         const allErhIDs = newList.map(e => e.erhID);
-        const switched = this._switchToErhebungFilter(allErhIDs, base.jahr, base.nummer);
+        const switched = allErhIDs.length > 1
+          ? this._startMultiGfTwoPull(allErhIDs[0], allErhIDs.slice(1), base.jahr, base.nummer)
+          : this._switchToErhebungFilter(allErhIDs[0], base.jahr, base.nummer);
 
         // Index + Aggregat-Cache invalidieren (siehe Punkt-2-Bug Phase 1)
         this._erhebungIndex = null;
@@ -6754,6 +6866,7 @@
       // Pending-Partners-Set verwerfen — gehört zur alten Erhebungs-Session.
       // Beim nächsten Picker-Render wird es aus dem neuen Active-State initialisiert.
       this._pendingPartners = null;
+      this._multiGfPullPhase = 0; this._ownErhebungRows = null;
       // Bug E2 Fix: NL-Selektion und Kategorie-Selektion zurücksetzen.
       // Andernfalls bleiben NL-IDs der alten Erhebung selektiert, die in der
       // neuen Erhebung gar nicht existieren — führt zu leeren Filter-Resultaten
@@ -6946,10 +7059,13 @@
 
         // Phase-1: Index baut mit ALLEN aktiven Erhebungen — sonst gehen
         // Nachbar-NL-Umsätze der Partner-GFs verloren (Punkt 2-Bug).
-        const activeIDs = (this._activeErhebungen?.length || 0) > 0
-          ? this._activeErhebungen.map(e => e.erhID)
-          : [erhID];
-        this._buildErhebungIndex(activeIDs);
+        // Wenn Zwei-Pull den Index bereits gebaut hat (Multi-GF), nicht neu bauen.
+        if (!this._erhebungIndex) {
+          const activeIDs = (this._activeErhebungen?.length || 0) > 0
+            ? this._activeErhebungen.map(e => e.erhID)
+            : [erhID];
+          this._buildErhebungIndex(activeIDs);
+        }
         this._erhData = this._cachedBootstrapStruktur ?? this.buildErhebungsStruktur(rawData);
         this.setupFilterDropdowns();
         this.restoreDropdownSelections();
@@ -7606,7 +7722,8 @@
       // Rows-Cache bleibt für schnelles Zurück zu vorigen Erhebungen erhalten.
       this._activeErhebungen     = [];
       this._crossGfDoppelAktiv   = false;
-      this._pendingPartners      = null;
+      this._pendingPartners = null;
+      this._multiGfPullPhase = 0; this._ownErhebungRows = null;
       this._erhebungAggregatesCache?.clear();
       this.filteredData        = null;
       this.filteredKennwerte   = {};
@@ -8004,13 +8121,52 @@
           if (isBootstrapPoll) {
             if (!this._bootstrapDone) this._bootstrapFromPLZ00000(this._myDataSource.data);
           } else {
+            // ── Zwei-Pull-Handling: Pull 1 fertig → Pull 2 starten ───────
+            if (this._multiGfPullPhase === 1) {
+              // Pull 1 (eigene Erhebung) abgeschlossen: Rows cachen
+              this._ownErhebungRows = [...(this._myDataSource.data || [])];
+              console.info(`[PLZ-Widget] Multi-GF Pull 1/2 fertig: ${this._ownErhebungRows.length} Rows gecacht`);
+
+              // Pull 2 starten: Partner mit HZ-Filter
+              const partnerIDs = this._activeErhebungen.slice(1).map(e => e.erhID);
+              const base = this._activeErhebungen[0];
+              const ok = this._startMultiGfPull2(partnerIDs, base.jahr, base.nummer);
+              if (ok) {
+                // Neuen Poll für Pull 2 starten
+                this._updateLoaderPhase(1, `Partner-Bestreuung wird geladen…`);
+                return; // Poll läuft weiter für Pull 2
+              } else {
+                // Pull 2 fehlgeschlagen → Fallback: eigene Rows + normaler Index
+                console.warn('[PLZ-Widget] Multi-GF Pull 2 fehlgeschlagen — verwende nur Pull 1');
+                this._multiGfPullPhase = 0;
+                // Direkt mit den eigenen Rows rendern
+              }
+            }
+
+            // ── Pull 2 fertig oder Single-Pull: render() ─────────────────
+            if (this._multiGfPullPhase === 2) {
+              // HZ-Filter wieder entfernen (aufräumen)
+              this._removeHzFilter();
+              this._multiGfPullPhase = 0;
+
+              // Partner-Rows (nur HZ=X wenn Filter gesetzt war, sonst lokal filtern)
+              const partnerRows = (this._myDataSource.data || []).filter(row =>
+                this._hzFilterKey !== null || row['dimension_hzflag_0']?.id?.trim() === 'X'
+              );
+              console.info(`[PLZ-Widget] Multi-GF Pull 2/2 fertig: ${partnerRows.length} Partner-HZ-Rows`);
+
+              // Kombinierter Index: eigene Rows (alle) + Partner-Rows (nur HZ=X)
+              // Direkt in _erhebungIndex eintragen ohne _myDataSource zu überschreiben
+              this._buildErhebungIndexFromArrays(this._ownErhebungRows, partnerRows);
+              this._ownErhebungRows = null;
+            }
+
             if (!this._renderInProgress) {
               this._hideDataLoadProgress();
               this._totalRowCount      = rowCount;
               this._totalRowCountErhID = this._activeFilter?.erhID ?? null;
               this._fullDataLoaded  = false;
               this._renderInProgress = true;
-              // Filter-Switch-Fenster schließen
               this._filterSwitchTime = null;
               this._lastRowCountSinceSwitch = undefined;
               this.render().finally(() => { this._renderInProgress = false; });
