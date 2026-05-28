@@ -41,6 +41,9 @@
 
   const isNull = v => v == null || NULL_TOKENS.has(v);
 
+  // ── Streuplan-Fallback (analog Mitbewerber-Fallback) ─────────────────
+  const STREUPLAN_FALLBACK = {"termine":[{"datum":"2026-01-31","kw":6,"beschreibung":"16-Seiter A4"},{"datum":"2026-02-28","kw":10,"beschreibung":"32-Seiter A4"},{"datum":"2026-03-28","kw":14,"beschreibung":"32-Seiter A4"},{"datum":"2026-04-11","kw":16,"beschreibung":"16-Seiter A4"},{"datum":"2026-05-02","kw":19,"beschreibung":"24-Seiter A4"},{"datum":"2026-05-16","kw":21,"beschreibung":"16-Seiter A4"},{"datum":"2026-05-30","kw":23,"beschreibung":"24-Seiter A4"},{"datum":"2026-07-18","kw":30,"beschreibung":"8-Seiter A4"},{"datum":"2026-08-29","kw":36,"beschreibung":"16-Seiter A4"},{"datum":"2026-09-12","kw":38,"beschreibung":"16-Seiter A4"},{"datum":"2026-10-02","kw":41,"beschreibung":"40-Seiter A4"},{"datum":"2026-10-30","kw":45,"beschreibung":"24-Seiter A4"},{"datum":"2026-11-28","kw":49,"beschreibung":"32-Seiter A4"}],"partner":[{"haupt_nl":"Kiel-Suchsdorf","haupt_nl_id":571,"partner_nls":[{"id":853,"name":"Kiel-Ravensberg"},{"id":634,"name":"Schwentinental-Raisdorf"}]},{"haupt_nl":"Lübeck","haupt_nl_id":639,"partner_nls":[{"id":534,"name":"Lübeck-St. Jürgen"},{"id":864,"name":"Lübeck-Moisling"}]},{"haupt_nl":"Bremen","haupt_nl_id":647,"partner_nls":[{"id":553,"name":"Stuhr-Groß-Mackenstedt"},{"id":863,"name":"Bremen-Osterholz (Weserpark)"}]},{"haupt_nl":"Dortmund","haupt_nl_id":573,"partner_nls":[{"id":509,"name":"Dortmund-Aplerbeck"}]},{"haupt_nl":"Bochum Harpen","haupt_nl_id":519,"partner_nls":[{"id":648,"name":"Bochum-Hofstede"}]},{"haupt_nl":"Wuppertal-Barmen (Lichtscheid)","haupt_nl_id":868,"partner_nls":[{"id":617,"name":"Wuppertal"}]},{"haupt_nl":"Krefeld-Mevissenstraße","haupt_nl_id":633,"partner_nls":[{"id":541,"name":"Krefeld-Untergath"}]},{"haupt_nl":"Aachen","haupt_nl_id":586,"partner_nls":[{"id":613,"name":"Würselen"}]},{"haupt_nl":"Hamburg-Bergedorf","haupt_nl_id":620,"partner_nls":[{"id":619,"name":"Hamburg-Harburg"},{"id":851,"name":"Hamburg-Wandsbek"},{"id":595,"name":"Hamburg-Moorfleet"},{"id":663,"name":"Hamburg-Bramfeld"},{"id":858,"name":"Hamburg-Langenhorn"},{"id":664,"name":"Hamburg-Stellingen"},{"id":654,"name":"Hamburg-Lokstedt"},{"id":865,"name":"Hamburg-Lurup"},{"id":624,"name":"Barsbüttel"}]},{"haupt_nl":"Berlin-Charlottenburg","haupt_nl_id":812,"partner_nls":[{"id":643,"name":"Berlin-Kurfürstendamm"},{"id":840,"name":"Berlin Am Wittenbergplatz"},{"id":814,"name":"Berlin Am Hermannplatz"},{"id":597,"name":"Berlin-Schöneberg"},{"id":894,"name":"Berlin-Steglitz"},{"id":604,"name":"Berlin-Marienfelde"},{"id":866,"name":"Berlin-Treptow"},{"id":578,"name":"Berlin-Pankow"},{"id":656,"name":"Berlin-Wedding"},{"id":850,"name":"Berlin-Wittenau"},{"id":596,"name":"Berlin-Spandau Brunsbütteler Damm"},{"id":623,"name":"Berlin-Spandau"}]},{"haupt_nl":"Wildau","haupt_nl_id":605,"partner_nls":[{"id":565,"name":"Mahlow"},{"id":577,"name":"Birkenwerder"}]},{"haupt_nl":"Karlsruhe-Oststadt","haupt_nl_id":852,"partner_nls":[{"id":330,"name":"Karlsruhe-Südstadt"},{"id":525,"name":"Karlsruhe-Mühlburg"}]},{"haupt_nl":"Stuttgart","haupt_nl_id":871,"partner_nls":[{"id":631,"name":"Stuttgart-Untertürkheim"},{"id":626,"name":"Stuttgart-Möhringen"}]},{"haupt_nl":"Augsburg-Oberhausen","haupt_nl_id":862,"partner_nls":[{"id":515,"name":"Augsburg"},{"id":632,"name":"Augsburg-Lechhausen"},{"id":548,"name":"Gersthofen"}]},{"haupt_nl":"Kassel","haupt_nl_id":658,"partner_nls":[{"id":603,"name":"Fuldabrück"}]},{"haupt_nl":"Mainz-Mombach","haupt_nl_id":854,"partner_nls":[{"id":614,"name":"Mainz"}]},{"haupt_nl":"Mannheim","haupt_nl_id":655,"partner_nls":[{"id":583,"name":"Mannheim-Mallau"},{"id":557,"name":"Mannheim-Waldhof"},{"id":897,"name":"Mannheim-Columbus"}]},{"haupt_nl":"Dillingen","haupt_nl_id":585,"partner_nls":[{"id":622,"name":"Ensdorf"}]},{"haupt_nl":"Essen-Frillendorf","haupt_nl_id":539,"partner_nls":[{"id":505,"name":"Essen-Frohnhausen"}]},{"haupt_nl":"München","haupt_nl_id":520,"partner_nls":[{"id":870,"name":"München-Freimann"}]},{"haupt_nl":"Braunschweig","haupt_nl_id":607,"partner_nls":[{"id":630,"name":"Braunschweig-Stöckheim"}]}]};
+
   // HTML-Escape gegen XSS bei nutzergenerierten oder BW-Dimension-Inhalten
   const escapeHtml = (s) => {
     if (s == null) return '';
@@ -1668,8 +1671,11 @@
         background: white;
       }
       .doppel-option:last-child { border-bottom: none; }
-      .doppel-option:hover { background: var(--red-bg); }
+      .doppel-option:hover:not(.disabled) { background: var(--red-bg); }
       .doppel-option.active { background: var(--red-bg); }
+      .doppel-option.disabled {
+        opacity: 0.38; cursor: not-allowed; pointer-events: none;
+      }
       .doppel-option-radio {
         width: 14px; height: 14px; border-radius: 50%;
         border: 2px solid var(--gray-300); flex-shrink: 0;
@@ -1688,6 +1694,14 @@
       .doppel-option-name { font-size: 0.78rem; font-weight: 600; color: var(--gray-800); }
       .doppel-option.active .doppel-option-name { color: var(--red); }
       .doppel-option-desc { font-size: 0.67rem; color: var(--gray-500); line-height: 1.3; }
+      /* Hinweis wenn Doppelbestreuung nicht verfügbar */
+      #doppel-laufend-hint {
+        display: none; padding: 7px 10px 8px;
+        font-size: 0.7rem; color: var(--gray-500); line-height: 1.45;
+        background: var(--gray-50); border-top: 1px solid var(--gray-100);
+      }
+      #doppel-laufend-hint.visible { display: block; }
+      #doppel-laufend-hint strong { color: var(--gray-700); }
 
       /* ─── Tooltip ───────────────────────────────────────────────── */
       .doppel-tooltip {
@@ -5171,6 +5185,10 @@
                 <span class="doppel-option-desc">Alle Erhebungen des Zeitraums · Längere Ladezeit</span>
               </div>
             </div>
+            <div id="doppel-laufend-hint">
+              ⓘ <strong>Nur für Einzelerhebungen verfügbar.</strong><br>
+              Das laufende Jahr (Nummer 0) läuft aus dem Cache und unterstützt keine Doppelbestreuung.
+            </div>
           </div>`;
         const filterBtn = filterContainer.querySelector('#filter-button');
         // Phase 2 Bug-Fix: filter-button ist jetzt in einer .filter-button-row,
@@ -5279,7 +5297,24 @@
         }
         updateBtnState();
       });
-      this._on(nummerSelect, 'change', updateBtnState);
+      this._on(nummerSelect, 'change', () => {
+        updateBtnState();
+        // Doppelbestreuung deaktivieren wenn Nummer 0 (laufendes Jahr = Cache)
+        const isLaufend = nummerSelect.value && /^0+$/.test(nummerSelect.value);
+        const optEinEl  = this.$('doppel-opt-ein');
+        const hintEl    = this.$('doppel-laufend-hint');
+        if (optEinEl) optEinEl.classList.toggle('disabled', !!isLaufend);
+        if (hintEl)   hintEl.classList.toggle('visible', !!isLaufend);
+        // Falls "Mit" aktiv war und Nummer 0 gewählt wird → auf "Ohne" zurück
+        if (isLaufend && this._doppelbestreuungAktiv) {
+          const optAusEl = this.$('doppel-opt-aus');
+          const curEl    = this.$('doppel-toggle-current');
+          this._doppelbestreuungAktiv = false;
+          optEinEl?.classList.remove('active');
+          optAusEl?.classList.add('active');
+          if (curEl) curEl.textContent = 'Ohne';
+        }
+      });
 
       if (filterBtn) {
         this._on(filterBtn, 'click', () => {
@@ -7324,9 +7359,7 @@
     async _loadAndRenderStreuplan() {
       const target = this.$('streuplan-content');
       if (!target) return;
-      // TODO: Diesen Raw-URL durch den echten GitHub-Pfad ersetzen.
-      // Beispiel: 'https://raw.githubusercontent.com/USER/REPO/main/streuplan.json'
-      const url = 'https://raw.githubusercontent.com/USER/REPO/main/streuplan.json';
+      const url = 'https://raw.githubusercontent.com/Benne2000/PLZAnalyse/main/streuplan.json';
       try {
         const resp = await fetch(url, { cache: 'no-cache' });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
@@ -7334,7 +7367,8 @@
         target.innerHTML = this._renderStreuplanHtml(data);
       } catch (err) {
         console.warn('[PLZ-Widget] Streuplan-Datei nicht verfügbar:', err.message);
-        target.innerHTML = `<div class="analysis-empty">Keine Streuplan-Daten verfügbar.</div>`;
+        // Fallback auf eingebettete Daten (analog Mitbewerber-Fallback)
+        target.innerHTML = this._renderStreuplanHtml(STREUPLAN_FALLBACK);
       }
     }
 
@@ -7345,7 +7379,6 @@
 
       if (termine.length > 0) {
         html += `<h4>Streutermine</h4>`;
-        // Termine sortiert nach Datum
         const sorted = [...termine].sort((a, b) => (a.datum || '').localeCompare(b.datum || ''));
         html += `<ul class="streuplan-termine-list">`;
         for (const t of sorted) {
@@ -7370,14 +7403,16 @@
           Umsätze der Haupt-NL zugeordnet.
         </p>`;
         html += `<table class="streuplan-partner-table">
-          <thead><tr><th>Haupt-NL</th><th>Partner-NLs</th><th>Beschreibung</th></tr></thead>
+          <thead><tr><th>Haupt-NL</th><th>Partner-NLs</th></tr></thead>
           <tbody>`;
         for (const p of partner) {
-          const partnerList = Array.isArray(p.partner_nls) ? p.partner_nls.join(', ') : '';
+          // partner_nls kann Array von Strings ODER Array von {id, name}-Objekten sein
+          const partnerNLs = Array.isArray(p.partner_nls)
+            ? p.partner_nls.map(x => typeof x === 'object' ? (x.name || x.id) : x).join(', ')
+            : '';
           html += `<tr>
             <td><strong>${escapeHtml(p.haupt_nl || '–')}</strong></td>
-            <td>${escapeHtml(partnerList)}</td>
-            <td>${escapeHtml(p.beschreibung || '')}</td>
+            <td>${escapeHtml(partnerNLs)}</td>
           </tr>`;
         }
         html += `</tbody></table>`;
@@ -7908,6 +7943,43 @@
       return (matchCount === 0 && mismatchErh) ? mismatchErh : null;
     }
 
+    // ── Cache-Overflow / Timeout-Fehlermeldung ─────────────────────────
+    _showCacheOverflowError() {
+      const loader = this.$('cinematic-loader');
+      if (!loader) return;
+      // Loader in Fehlerzustand versetzen
+      loader.querySelector('#loader-phase-text')?.remove();
+      loader.querySelector('.loader-bar-track')?.remove();
+      loader.querySelector('.loader-dots')?.remove();
+      loader.querySelector('#loader-data-progress')?.remove();
+
+      const errBox = document.createElement('div');
+      errBox.style.cssText = 'text-align:center;max-width:320px;padding:0 16px;';
+      errBox.innerHTML = `
+        <div style="font-size:2rem;margin-bottom:12px">⚠️</div>
+        <div style="font-size:0.95rem;font-weight:700;color:var(--gray-800);margin-bottom:8px">
+          Daten konnten nicht geladen werden
+        </div>
+        <div style="font-size:0.78rem;color:var(--gray-500);line-height:1.55;margin-bottom:20px">
+          Die angefragten Daten überschreiten die maximale Cache-Größe von SAC.<br>
+          Bitte wähle weniger GF-Bereiche oder deaktiviere die Doppelbestreuung.
+        </div>
+        <button id="cache-error-home-btn" type="button" style="
+          padding:9px 20px;background:var(--red);color:white;border:none;
+          border-radius:var(--radius-md);font-size:0.87rem;font-weight:600;
+          font-family:var(--font);cursor:pointer;
+          transition:background 0.18s,transform 0.12s;
+        ">← Zurück zum Hauptmenü</button>`;
+      loader.appendChild(errBox);
+
+      const btn = errBox.querySelector('#cache-error-home-btn');
+      if (btn) {
+        btn.onmouseenter = () => { btn.style.background = 'var(--red-dark)'; btn.style.transform = 'translateY(-1px)'; };
+        btn.onmouseleave = () => { btn.style.background = 'var(--red)'; btn.style.transform = ''; };
+        btn.onclick = () => this._resetToHome();
+      }
+    }
+
     // ── Daten-Poll (Fallback, wenn DataSource noch nicht bereit) ───────
     _scheduleDataPoll() {
       if (this._dataPollTimer) return;
@@ -8018,6 +8090,13 @@
               this._updateLoaderPhase(1, 'Erhebungsdaten werden geladen…');
               this._updateDataLoadProgress(currentRows, totalRows);
             }
+          }
+          // Nach 90s ohne Daten: Timeout-Fehlermeldung anzeigen.
+          // Häufigste Ursache: SAC-Cache-Overflow bei zu vielen kombinierten Daten.
+          if (!isBootstrapPoll && secs >= 90) {
+            this._clearInterval(this._dataPollTimer);
+            this._dataPollTimer = null;
+            this._showCacheOverflowError();
           }
         }
       };
