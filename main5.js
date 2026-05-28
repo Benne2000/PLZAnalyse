@@ -1866,6 +1866,11 @@
         background: var(--red-bg); color: var(--red);
         padding: 1px 6px; border-radius: 8px;
       }
+      .streu-kw.done {
+        background: #e8f5e9; color: #2e7d32;
+      }
+      .streuplan-termine-list li.done .streu-datum { color: var(--gray-500); }
+      .streuplan-termine-list li.done .streu-beschr { color: var(--gray-400); }
       .streu-beschr { color: var(--gray-600); font-size: 0.72rem; flex: 1; }
       .streuplan-partner-table {
         width: 100%; border-collapse: collapse; font-size: 0.72rem;
@@ -7380,12 +7385,14 @@
       if (termine.length > 0) {
         html += `<h4>Streutermine</h4>`;
         const sorted = [...termine].sort((a, b) => (a.datum || '').localeCompare(b.datum || ''));
+        const today = new Date().toISOString().slice(0, 10);
         html += `<ul class="streuplan-termine-list">`;
         for (const t of sorted) {
           const datum = t.datum ? this._fmtStreudatum(t.datum) : '–';
-          const kw = t.kw ? `<span class="streu-kw">KW ${t.kw}</span>` : '';
+          const done = t.datum && t.datum <= today;
+          const kw = t.kw ? `<span class="streu-kw${done ? ' done' : ''}">KW ${t.kw}</span>` : '';
           const beschr = t.beschreibung ? escapeHtml(t.beschreibung) : '';
-          html += `<li>
+          html += `<li${done ? ' class="done"' : ''}>
             <span class="streu-datum">${datum}</span>
             ${kw}
             <span class="streu-beschr">${beschr}</span>
