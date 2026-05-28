@@ -3067,12 +3067,23 @@
         this._hzFilterKey = null;
       }
 
-      // PLZ-Filter entfernen → BW-Query triggern
-      const knownPlzKey = this._plzFilterKey ? [this._plzFilterKey] : [];
-      const plzKeysOrdered = [...new Set([...knownPlzKey, ...PLZ_FILTER_KEYS])];
-      let removed = false;
+      // PLZ-Filter kurz auf '00000' setzen dann sofort entfernen →
+      // erzwingt einen neuen BW-Query auch wenn PLZ-Filter nicht mehr aktiv war.
+      // Ohne diesen Trick liefert SAC noch den gecachten Pull-1-Stand.
+      const plzKeysOrdered = [...new Set([...PLZ_FILTER_KEYS])];
+      let triggerKey = null;
       for (const k of plzKeysOrdered) {
-        try { ds.removeDimensionFilter(k); removed = true; } catch (e) {}
+        try { ds.setDimensionFilter(k, ['00000']); triggerKey = k; break; } catch (e) {}
+      }
+      let removed = false;
+      if (triggerKey) {
+        try { ds.removeDimensionFilter(triggerKey); removed = true; } catch (e) {}
+      }
+      // Fallback: alle PLZ-Keys versuchen
+      if (!removed) {
+        for (const k of plzKeysOrdered) {
+          try { ds.removeDimensionFilter(k); removed = true; } catch (e) {}
+        }
       }
       if (removed) {
         this._plzFilterKey = null;
@@ -7989,8 +8000,19 @@
         this._lastRowCountSinceSwitch = undefined;
       }
       if (this._renderInProgress) {
-        console.info(`[PLZ-Widget] render läuft – ignoriere SAC-Refresh (${rowCount} Rows)`);
         return;
+      }
+
+      // ── Zwei-Pull Phase 2: Partner-Rows verarbeiten ──────────────────
+      if (this._multiGfPullPhase === 2) {
+        this._removeHzFilter();
+        this._multiGfPullPhase = 0;
+        const partnerRows = (this._myDataSource.data || []).filter(row =>
+          row['dimension_hzflag_0']?.id?.trim() === 'X'
+        );
+        console.info(`[PLZ-Widget] Multi-GF Pull 2/2 fertig: ${partnerRows.length} Partner-HZ-Rows`);
+        this._buildErhebungIndexFromArrays(this._ownErhebungRows, partnerRows);
+        this._ownErhebungRows = null;
       }
 
       console.info(`[PLZ-Widget] Phase 2: ${rowCount} Rows | E2E ${e2e} | ${this._doppelbestreuungAktiv ? 'mit' : 'ohne'} Doppelbestreuung`);
@@ -7998,8 +8020,6 @@
       this._totalRowCountErhID = this._activeFilter?.erhID ?? null;
       this._fullDataLoaded  = false;
       this._renderInProgress = true;
-      // Filter-Switch-Fenster schließen: nach akzeptierten Daten sollen
-      // D1-D4 nicht mehr gelten — sonst Endlosschleife bei Post-render-Setter.
       this._filterSwitchTime = null;
       this._lastRowCountSinceSwitch = undefined;
       this.render().finally(() => { this._renderInProgress = false; });
@@ -8153,18 +8173,13 @@
 
             // ── Pull 2 fertig oder Single-Pull: render() ─────────────────
             if (this._multiGfPullPhase === 2) {
-              // HZ-Filter wieder entfernen (aufräumen)
+              // HZ-Filter aufräumen und Index bauen
               this._removeHzFilter();
               this._multiGfPullPhase = 0;
-
-              // Partner-Rows (nur HZ=X wenn Filter gesetzt war, sonst lokal filtern)
               const partnerRows = (this._myDataSource.data || []).filter(row =>
-                this._hzFilterKey !== null || row['dimension_hzflag_0']?.id?.trim() === 'X'
+                row['dimension_hzflag_0']?.id?.trim() === 'X'
               );
               console.info(`[PLZ-Widget] Multi-GF Pull 2/2 fertig: ${partnerRows.length} Partner-HZ-Rows`);
-
-              // Kombinierter Index: eigene Rows (alle) + Partner-Rows (nur HZ=X)
-              // Direkt in _erhebungIndex eintragen ohne _myDataSource zu überschreiben
               this._buildErhebungIndexFromArrays(this._ownErhebungRows, partnerRows);
               this._ownErhebungRows = null;
             }
