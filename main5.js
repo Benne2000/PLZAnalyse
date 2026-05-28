@@ -7171,20 +7171,17 @@
       const inner = document.createElement('div');
       inner.className = 'docs-content-wrap';
 
-      // ── Hero ─────────────────────────────────────────────────────────
+      // ── Schlichter Header ─────────────────────────────────────────────
       const hero = document.createElement('div');
       hero.className = 'docs-hero';
-      hero.innerHTML = `
-        <div class="docs-hero-icon">🗺️</div>
-        <div class="docs-hero-title">PLZ-Analyse</div>
-        <div class="docs-hero-subtitle">Auswertung der Werbe-Effizienz auf Postleitzahl-Ebene</div>`;
+      hero.innerHTML = `<div class="docs-hero-title" style="font-size:1.05rem;padding:8px 0 4px">PLZ-Analyse</div>`;
       inner.appendChild(hero);
 
-      // ── Sub-Akkordeon: Schnellstart (default aufgeklappt) ──────────
+      // ── Sub-Akkordeons: alle standardmäßig eingeklappt ────────────────
       const quickstart = this._buildDocsAccordion(
-        '⚡', 'Schnellstart', true,
+        '⚡', 'Schnellstart', false,
         `<ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:4px;">
-           <li>Im Filter-Bereich <strong>ErhebungsID</strong> wählen.</li>
+           <li>Im Filter-Bereich <strong>GF-Bereich</strong> wählen.</li>
            <li><strong>Jahr</strong> auswählen → <strong>Erhebungsnummer</strong> auswählen.</li>
            <li><strong>Anzeigen</strong>-Button klicken.</li>
            <li>Wahlweise <strong>📋 PLZ-Tabelle</strong>, <strong>📊 Erhebungsübersicht</strong> oder <strong>🔬 Erweiterte Analyse</strong> über die Sidebar-Icons öffnen.</li>
@@ -7240,59 +7237,71 @@
       return `
         <h4>Hochrechnung</h4>
         <p>
-          Aus der laufenden Bon-Erfassung wird der Gesamt-Brutto-Umsatz einer PLZ
-          hochgerechnet. Grundlage ist das Verhältnis <code>erfasster Umsatz / 
-          valider Umsatz</code> über alle NLs der Erhebung. Das Ergebnis steht im
-          Feld <code>value_hr_n_umsatz_0</code> (BW-Dimension) bzw. <em>Umsatz Brutto
-          (hochger.)</em> in der UI. Ohne Hochrechnung würden nur erfasste Stichprobe
-          gezeigt, nicht der echte Markt.
+          Aus der laufenden Kassenbon-Erfassung wird der Gesamt-Brutto-Umsatz einer PLZ
+          hochgerechnet. Grundlage ist das Verhältnis zwischen erfasstem und gültig
+          zugeordnetem Umsatz über alle Niederlassungen der Erhebung. Das Ergebnis
+          erscheint in der Tabelle als <em>Umsatz (Hochger.)</em>. Ohne Hochrechnung
+          würden nur die erfasste Stichprobe gezeigt, nicht der echte Markt.
         </p>
+
+        <h4>Werbekosten-Berechnung</h4>
+        <p>
+          Die Werbekosten eines Streuverbundes werden anteilig auf die einzelnen
+          Niederlassungen verteilt – je nach deren Umsatzanteil am Gesamtumsatz der
+          Streueinheit. Innerhalb einer Niederlassung werden die Kosten dann weiter
+          auf die einzelnen Postleitzahlen aufgeteilt – proportional zur Anzahl der
+          Haushalte je PLZ im Verhältnis zu allen aktiv bestreuten Haushalten der
+          Niederlassung.
+        </p>
+        <div class="docs-key-block">
+          <strong>Wichtig:</strong> Teilen sich Niederlassungen eine Auflage und
+          PLZ-Gebiete, so werden zur Darstellung die Werbekosten einer einzelnen
+          Niederlassung zugeordnet. Diese finden Sie unter
+          <em>Streuplan &amp; Streupartner</em>.
+        </div>
 
         <h4>Werbekosten-Anteil (WK %)</h4>
         <p>
-          <code>WK% = HZ-Kosten / Gesamtumsatz × 100</code>. Der Nenner ist der
-          <strong>Gesamtumsatz aller aktiven NLs in dieser PLZ</strong> — inklusive
-          Nachbar-NLs, die nicht selbst beworben haben. So zeigt der WK% die echte
-          Werbe-Effizienz im Markt: Wenn Nachbar-NLs vom Marketing der HZ-NL
-          profitieren, sinkt der WK% — das ist gewollt.
+          WK % = Werbekosten / Gesamtumsatz × 100. Der Nenner ist der
+          <strong>Gesamtumsatz aller Niederlassungen in dieser PLZ</strong> — inklusive
+          Nachbar-Niederlassungen, die nicht selbst beworben haben. So zeigt der WK %
+          die echte Werbe-Effizienz im Markt: Wenn Nachbar-Niederlassungen vom
+          Marketing der werbenden Niederlassung profitieren, sinkt der WK % — das
+          ist gewollt.
         </p>
         <div class="docs-key-block">
-          <strong>Beispiel:</strong> NL Köln macht 60.000 € Umsatz und 800 € HZ-Kosten,
+          <strong>Beispiel:</strong> NL Köln macht 60.000 € Umsatz und 800 € Werbekosten,
           Nachbar-NL Bonn macht 25.000 € Umsatz ohne Werbung in derselben PLZ.<br>
-          WK% = 800 / (60.000 + 25.000) = <strong>0,94 %</strong>.
+          WK % = 800 / (60.000 + 25.000) = <strong>0,94 %</strong>.
         </div>
 
-        <h4>Potentielle Werbekosten (pot. WK)</h4>
+        <h4>Potentielle Werbekosten</h4>
         <p>
           Für nicht-bestreute PLZs werden potentielle Werbekosten geschätzt — also
           was die Bestreuung kosten würde, wenn man sie zusätzlich bewerben würde.
-          Wird aus <code>value_hz_potentiell_0</code> als Durchschnitt über alle
-          NL-Rows einer PLZ aggregiert (PLZ-Stammdatum, daher Mittelwert statt Summe).
-          NL-Rows mit Wert 0 werden vom Durchschnitt ausgeschlossen.
+          Der Wert wird als Durchschnitt über alle Niederlassungen einer PLZ berechnet
+          und in der Karte als Heatmap im WK-Modus dargestellt (blau = nicht bestreut).
         </p>
 
         <h4>Streuverlust</h4>
         <p>
-          Umsatz, der <strong>außerhalb</strong> des aktuellen Radius angefallen ist
-          — also durch Werbung erreichbar gewesen wäre, aber nicht im Einzugsgebiet
-          der bestreuenden NL liegt. <code>Streuverlust % = Umsatz_außerhalb_Radius /
-          Umsatz_gesamt × 100</code>.
+          Umsatz, der <strong>außerhalb</strong> des aktuellen Radius angefallen ist —
+          also Kunden die außerhalb des Einzugsgebiets wohnen aber trotzdem kaufen.
+          Streuverlust % = Umsatz außerhalb Radius / Gesamtumsatz × 100.
         </p>
 
         <h4>Werbeanteil</h4>
         <p>
-          <code>Werbeanteil = Werbeumsatz / Gesamtumsatz × 100</code>. Wird ausschließlich
-          mit dem direkt durch Werbung verursachten Umsatz berechnet; Mitkauf-Umsatz
-          ("Zusatz") fließt nicht ein, auch wenn die "Mitgekauft"-Checkbox aktiv ist
-          (die ändert nur die Anzeige der absoluten Werte).
+          Werbeanteil = Werbeumsatz / Gesamtumsatz × 100. Zeigt welcher Anteil des
+          Umsatzes direkt auf die beworbenen Kunden zurückgeht. Der Mitkauf-Umsatz
+          fließt nur in die absolute Anzeige ein, nicht in den Werbeanteil.
         </p>
 
-        <h4>Negative Umsätze und Stornos</h4>
+        <h4>Stornos und negative Umsätze</h4>
         <p>
-          Einzelne Storno-Rows fließen mit ihrem Vorzeichen in die Aggregation ein
-          (Stornos reduzieren also korrekt den Saldo). Wenn der Saldo einer PLZ
-          oder Kategorie am Ende negativ wird, wird er für die Anzeige auf 0
-          gesetzt — keine negativen Beträge in Tabelle oder Popups.
+          Storno-Buchungen fließen mit negativem Vorzeichen korrekt in die Aggregation
+          ein. Wenn der Saldo einer PLZ oder Kategorie am Ende negativ wird, wird er
+          für die Anzeige auf 0 gesetzt — es erscheinen keine negativen Beträge.
         </p>`;
     }
 
