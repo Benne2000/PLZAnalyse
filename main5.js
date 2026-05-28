@@ -7950,23 +7950,18 @@
         return;
       }
 
-      // Cache-Detection 1: gleiche Zeilenzahl wie vorheriger Render —
-      // aber nur im aktiven Filter-Switch-Fenster (30s). Danach sind gleiche
-      // Row-Anzahlen kein Cache-Indikator mehr sondern echte neue Daten.
-      if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0 && msSinceSwitch < 30000) {
-        if (!this._dataPollTimer) this._scheduleDataPoll();
-        return;
-      }
-      // Cache-Detection 2: gleiche Zeilenzahl wie Bootstrap → SAC hat noch
-      // die alten PLZ=00000-Daten gecacht, echte Erhebungsdaten kommen später.
-      // Nur in den ersten 10s nach Filter-Switch aktiv (Schutz gegen den
-      // theoretischen Fall dass eine Erhebung zufällig gleich viele Rows hat).
-      const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
+      // Cache-Detection 1+2: beim Zwei-Pull Phase 2 deaktivieren
       const msSinceSwitch = this._filterSwitchTime ? Date.now() - this._filterSwitchTime : 99999;
-      if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
-        console.info(`[PLZ-Widget] SAC-Bootstrap-Cache (${rowCount} = Bootstrap-Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf echte Daten`);
-        if (!this._dataPollTimer) this._scheduleDataPoll();
-        return;
+      if (this._multiGfPullPhase !== 2) {
+        if (rowCount === (this._totalRowCount ?? -1) && rowCount > 0 && msSinceSwitch < 30000) {
+          if (!this._dataPollTimer) this._scheduleDataPoll();
+          return;
+        }
+        const bootstrapCount = this._cachedBootstrapRows?.length ?? 0;
+        if (bootstrapCount > 0 && rowCount === bootstrapCount && msSinceSwitch < 10000) {
+          if (!this._dataPollTimer) this._scheduleDataPoll();
+          return;
+        }
       }
       // Cache-Detection 3: erste Row gehört zu anderer ErhID → alte Daten.
       // Beim Zwei-Pull Phase 2 deaktivieren — Partner-Rows haben andere ErhIDs.
@@ -7979,11 +7974,8 @@
         }
       }
       // Cache-Detection 4: Row-Anzahl hat sich seit Filter-Switch nicht geändert.
-      // SAC liefert gecachte Daten → _lastRowCountSinceSwitch trackt was wir
-      // bei jedem Tick/Setter nach dem Switch gesehen haben. Erst wenn sich
-      // die Row-Anzahl ändert (SAC hat neuen BW-Datenstand) akzeptieren wir.
-      // Sicherheits-Timeout: nach 30s akzeptieren wir was auch immer kommt.
-      if (msSinceSwitch < 30000) {
+      // Beim Zwei-Pull Phase 2 deaktivieren — Pull 2 hat eigenen frischen Switch.
+      if (this._multiGfPullPhase !== 2 && msSinceSwitch < 30000) {
         if (this._lastRowCountSinceSwitch === undefined) {
           this._lastRowCountSinceSwitch = rowCount;
           console.info(`[PLZ-Widget] SAC-Post-Switch (${rowCount} Rows, ${(msSinceSwitch/1000).toFixed(1)}s) – warte auf Änderung`);
@@ -8013,6 +8005,11 @@
         console.info(`[PLZ-Widget] Multi-GF Pull 2/2 fertig: ${partnerRows.length} Partner-HZ-Rows`);
         this._buildErhebungIndexFromArrays(this._ownErhebungRows, partnerRows);
         this._ownErhebungRows = null;
+        // Laufenden Poll-Timer stoppen — Setter übernimmt ab hier
+        if (this._dataPollTimer) {
+          this._clearInterval(this._dataPollTimer);
+          this._dataPollTimer = null;
+        }
       }
 
       console.info(`[PLZ-Widget] Phase 2: ${rowCount} Rows | E2E ${e2e} | ${this._doppelbestreuungAktiv ? 'mit' : 'ohne'} Doppelbestreuung`);
