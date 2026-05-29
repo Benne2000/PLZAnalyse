@@ -600,37 +600,40 @@
       }
       #filter-fields-toggle {
         flex-shrink: 0;
-        /* Gleiche Optik wie der Anzeigen-Button: rot, gleiches Padding,
-           gleiche Höhe. Padding 9px 12px → Höhe matched mit filter-button. */
         padding: 9px 12px;
-        font-family: var(--font); font-size: 0.87rem; font-weight: 600;
-        color: var(--white); background: var(--red); border: none;
-        border-radius: var(--radius-md);
+        font-family: var(--font); font-size: 0.8rem; font-weight: 600;
+        color: var(--white);
+        background: linear-gradient(135deg, var(--gray-700) 0%, var(--gray-800) 100%);
+        border: none; border-radius: var(--radius-md);
         cursor: pointer;
-        display: inline-flex; align-items: center; justify-content: center;
+        display: inline-flex; align-items: center; justify-content: center; gap: 5px;
         line-height: 1;
         position: relative; overflow: hidden;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.18);
         transition: background 0.22s var(--ease-in-out),
                     transform 0.12s, box-shadow 0.18s;
       }
-      /* Subtiler Inner-Highlight wie beim Anzeigen-Button.ready */
       #filter-fields-toggle::after {
         content: ''; position: absolute; inset: 0;
-        background: linear-gradient(180deg, rgba(255,255,255,0.12) 0%, transparent 100%);
+        background: linear-gradient(180deg, rgba(255,255,255,0.10) 0%, transparent 100%);
         pointer-events: none;
       }
       #filter-fields-toggle:hover {
-        background: var(--red-light);
-        box-shadow: var(--shadow-red);
+        background: linear-gradient(135deg, var(--gray-800) 0%, var(--gray-900) 100%);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.25);
         transform: translateY(-1px);
       }
       #filter-fields-toggle:active {
         transform: translateY(0); box-shadow: none;
       }
-      /* Im Hauptmenü (vor Erhebungs-Auswahl) macht "Filter ausblenden" keinen
-         Sinn — Button wird ausgeblendet sobald kein _activeFilter da ist. */
-      #filter-fields-toggle.disabled {
-        display: none;
+      #filter-fields-toggle.disabled { display: none; }
+      /* Kurze Attention-Animation wenn der Button erstmalig sichtbar wird */
+      #filter-fields-toggle.just-visible {
+        animation: toggleButtonHint 0.9s ease-out 0.3s 2 both;
+      }
+      @keyframes toggleButtonHint {
+        0%, 100% { box-shadow: 0 2px 6px rgba(0,0,0,0.18); }
+        50%       { box-shadow: 0 0 0 4px rgba(73,80,87,0.25), 0 2px 6px rgba(0,0,0,0.18); }
       }
 
       /* Info-Bar oben in der Spalte: kompakte Anzeige der aktuellen Auswahl,
@@ -683,14 +686,23 @@
       .filter-info-badge:empty { display: none; animation: none; }
       #filter-info-expand {
         flex-shrink: 0;
-        background: transparent; border: none; color: white;
-        cursor: pointer; padding: 0 2px;
-        font-size: 0.85rem; font-weight: 700;
+        background: rgba(255,255,255,0.2);
+        border: 1.5px solid rgba(255,255,255,0.4);
+        border-radius: var(--radius-md);
+        color: white;
+        cursor: pointer;
+        padding: 4px 9px;
+        font-size: 0.72rem; font-weight: 700;
+        font-family: var(--font);
         line-height: 1;
-        opacity: 0.85;
-        transition: opacity 0.18s, transform 0.24s var(--ease-out);
+        white-space: nowrap;
+        display: inline-flex; align-items: center; gap: 4px;
+        transition: background 0.18s, transform 0.18s var(--ease-out);
       }
-      #filter-info-expand:hover { opacity: 1; transform: scale(1.15); }
+      #filter-info-expand:hover {
+        background: rgba(255,255,255,0.32);
+        transform: translateY(-1px);
+      }
 
       /* Filter-Toggle-Button (▴ in der Filter-Maske): rotiert je nach State */
       #filter-fields-toggle .filter-toggle-arrow {
@@ -2027,7 +2039,7 @@
           <span class="filter-info-icon">📍</span>
           <span class="filter-info-text" id="filter-info-text">—</span>
           <span class="filter-info-badge" id="filter-info-badge"></span>
-          <button type="button" id="filter-info-expand" title="Filter wieder einblenden">▾</button>
+          <button type="button" id="filter-info-expand" title="Filter wieder einblenden">▾ Ändern</button>
         </div>
 
         <!-- Filter-Felder. Zusammen ein-/ausklappbar via #filter-fields-toggle. -->
@@ -2042,7 +2054,7 @@
             <button id="filter-button">Anzeigen</button>
             <!-- Filter-Maske einklappen. Erscheint nur wenn eine Erhebung
                  geladen ist (sonst nichts zu verbergen). -->
-            <button id="filter-fields-toggle" type="button" title="Filter ausblenden"><span class="filter-toggle-arrow">▴</span></button>
+            <button id="filter-fields-toggle" type="button" title="Filter ausblenden"><span class="filter-toggle-arrow">▴</span> Ausblenden</button>
           </div>
         </div>
 
@@ -6775,6 +6787,14 @@
       this._activeFilter = { erhID, jahr, nummer };
       // Filter-Maske einklappen — _activeFilter muss vorher gesetzt sein
       this._setFilterFieldsCollapsed(true);
+      // Kurze Attention-Animation auf dem Toggle-Button
+      const ft = this.$('filter-fields-toggle');
+      if (ft) {
+        ft.classList.remove('just-visible');
+        void ft.offsetWidth;
+        ft.classList.add('just-visible');
+        this._setTimeout(() => ft.classList.remove('just-visible'), 2500);
+      }
       // Multi-Erhebungs-Modell: Liste aktiver Erhebungen mit dieser Basis-Erhebung
       // als einzigem Eintrag. Im Erhebungs-Layout kann der User weitere via
       // togglePartnerErhebung() dazu- oder wegschalten (gleiches Jahr+Nummer).
