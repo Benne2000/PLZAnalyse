@@ -6743,12 +6743,13 @@
 
       this.$('heatmap-legend')?.classList.add('hidden');
       // Phase 2: Sidebar aktivieren, Default-View = PLZ-Tabelle, Spalte
-      // sichtbar machen falls vorher ausgeblendet. Filter-Maske wird beim
-      // Laden nicht automatisch eingeklappt — der User kann das selbst per
-      // Knopfdruck steuern.
+      // sichtbar machen falls vorher ausgeblendet.
       this._setSidebarEnabled(true);
       this._setLeftPaneVisible(true);
       this._switchSidebarView('plz');
+      // Filter-Maske einklappen sobald eine Erhebung geladen wird —
+      // gibt der PLZ-Tabelle mehr vertikalen Platz.
+      this._setFilterFieldsCollapsed(true);
       // Doppelbestreuungs-Bar collapsed während der Erhebung —
       // gibt der PLZ-Tabelle mehr vertikalen Platz.
       this.$('doppel-toggle-bar')?.classList.add('collapsed');
