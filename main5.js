@@ -6747,9 +6747,6 @@
       this._setSidebarEnabled(true);
       this._setLeftPaneVisible(true);
       this._switchSidebarView('plz');
-      // Filter-Maske einklappen sobald eine Erhebung geladen wird —
-      // gibt der PLZ-Tabelle mehr vertikalen Platz.
-      this._setFilterFieldsCollapsed(true);
       // Doppelbestreuungs-Bar collapsed während der Erhebung —
       // gibt der PLZ-Tabelle mehr vertikalen Platz.
       this.$('doppel-toggle-bar')?.classList.add('collapsed');
@@ -6776,6 +6773,8 @@
       this._renderToken = (this._renderToken || 0) + 1;
 
       this._activeFilter = { erhID, jahr, nummer };
+      // Filter-Maske einklappen — _activeFilter muss vorher gesetzt sein
+      this._setFilterFieldsCollapsed(true);
       // Multi-Erhebungs-Modell: Liste aktiver Erhebungen mit dieser Basis-Erhebung
       // als einzigem Eintrag. Im Erhebungs-Layout kann der User weitere via
       // togglePartnerErhebung() dazu- oder wegschalten (gleiches Jahr+Nummer).
