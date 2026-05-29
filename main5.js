@@ -7215,7 +7215,7 @@
 
       // ── Sub-Akkordeon: Streuplan & Streupartner ────────────────────
       const streuplan = this._buildDocsAccordion(
-        '📍', 'Streuplan & Streupartner', false,
+        '📍', 'Streuplan & Streuverbünde', false,
         `<div id="streuplan-content"><div class="analysis-empty">Daten werden geladen…</div></div>`);
       inner.appendChild(streuplan);
 
