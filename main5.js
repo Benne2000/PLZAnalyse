@@ -3397,6 +3397,28 @@
       }
     }
 
+    // Bug-Fix HL1: Highlight-Style zentral definiert. Vorher war die
+    // Umrandung an zwei Stellen dupliziert (highlightMapArea + updateGeoLayer)
+    // und in Orange (#f0a500) — das ging in der Heatmap (gelb/orange/rot)
+    // sowie gegen den Doppelbestreuungs-Marker optisch unter.
+    // Neu: kräftiges Cyan + dickere Kante + bringToFront, damit die Kante
+    // nicht von benachbarten Polygonen überzeichnet wird.
+    static get HIGHLIGHT_STROKE()  { return '#00E5FF'; }
+    static get HIGHLIGHT_WEIGHT()  { return 4; }
+
+    _applyHighlightStyle(layer, fillOpacity) {
+      if (!layer) return;
+      layer.setStyle({
+        color:       GeoMapWidget.HIGHLIGHT_STROKE,
+        weight:      GeoMapWidget.HIGHLIGHT_WEIGHT,
+        opacity:     1,
+        fillOpacity: fillOpacity != null ? fillOpacity : layer.options.fillOpacity,
+      });
+      // Ohne bringToFront zeichnen die Nachbar-Polygone (weiße 0.8er-Kante)
+      // die Markierung an den Rändern wieder zu.
+      try { layer.bringToFront?.(); } catch (e) {}
+    }
+
     highlightMapArea(plz) {
       if (!this._layerByPLZ) return;
       const target = this._layerByPLZ[plz];
@@ -3405,7 +3427,7 @@
         this.applyStyleToLayer(this._lastHighlightedLayer);
       }
       this._highlightedPLZ = plz;
-      target.setStyle({ weight: 3, color: '#f0a500', fillOpacity: this._plzFillOpacity('hover') });
+      this._applyHighlightStyle(target, this._plzFillOpacity('hover'));
       this._lastHighlightedLayer = target;
     }
 
@@ -3428,7 +3450,14 @@
       if (this.plzImRadius && this.plzImRadius.size > 0) {
         entries = entries.filter(([plz]) => this.plzImRadius.has(plz));
       }
-      if (!this._sortState || this._sortState.column == null) {
+      // Bug-Fix S2: Bisher wurde eine aktive Sortierung bei jedem Re-Render
+      // (Moduswechsel, Kategorie-Toggle, Radius-Änderung, NL-Auswahl …)
+      // stillschweigend verworfen — die Tabelle fiel auf die Insertion-Order
+      // von Object.entries() zurück, während das Sort-Icon weiter ▲/▼ zeigte.
+      // Genau das ließ die Umsatzanteil-Sortierung "kaputt" wirken.
+      if (this._sortState && this._sortState.column != null) {
+        entries = this._applySort(entries);
+      } else {
         entries.sort(([a], [b]) => a.localeCompare(b));
       }
       this.renderDataTableFromEntries(entries);
@@ -3497,25 +3526,73 @@
         this._sortState.column = columnIndex;
         this._sortState.direction = 'desc';
       }
+      // Re-Render über renderDataTable(), damit Radius-/00000-Filter und
+      // Streuverlust-Footer identisch zum normalen Rendering laufen.
+      this.renderDataTable(this.filteredKennwerte);
+    }
+
+    // Sortiert bereits gefilterte [plz, kennwerte]-Paare gemäß _sortState.
+    _applySort(entries) {
+      const columnIndex = this._sortState.column;
       const dir = this._sortState.direction === 'asc' ? 1 : -1;
-      const entries = Object.entries(this.filteredKennwerte);
-      const sorted = entries.sort(([plzA, a], [plzB, b]) => {
-        let valA, valB;
+
+      // Bug-Fix S1: Die Sortierung lief immer über die WK-Kennwerte, egal in
+      // welchem Modus die Tabelle gerendert wurde. Im Umsatz-/Werbeanteil-Modus
+      // zeigen Spalte 3 (Umsatz) und Spalte 4 (Umsatz-Anteil) aber Werte aus
+      // filteredPLZWerte + getUmsatzSumForPLZ() — sortiert wurde dagegen nach
+      // value_hr_n_umsatz_0 bzw. value_wk_nachbar_0. Ergebnis: scheinbar
+      // zufällige Reihenfolge bzw. gar keine Reaktion auf den Umsatzanteil.
+      // Zusätzlich: im WK-Modus wurde nach value_wk_nachbar_0 sortiert,
+      // angezeigt wird aber value_wk_in_percent_0.
+      // Fix: Sortier-Werte werden exakt aus derselben Quelle gelesen wie die
+      // Anzeige in renderDataTableFromEntries().
+      const isUmsatzMode = this.currentMapMode === 'umsatz-multi' || this.currentMapMode === 'werbeanteil';
+
+      // Umsatz-Summe je PLZ (identisch zur Tabellen-Anzeige)
+      const umsatzOf = (plz) => {
+        const v = this.filteredPLZWerte?.[plz];
+        const s = v ? this.getUmsatzSumForPLZ(v) : 0;
+        return Number.isFinite(s) ? s : 0;
+      };
+
+      // Gesamtumsatz als Bezugsgröße für den Anteil — konstanter Divisor,
+      // die Reihenfolge entspricht damit 1:1 den angezeigten Prozentwerten.
+      const totalUmsatz = isUmsatzMode
+        ? Object.values(this.filteredPLZWerte || {}).reduce((s, v) => {
+            const x = this.getUmsatzSumForPLZ(v);
+            return s + (Number.isFinite(x) ? x : 0);
+          }, 0)
+        : 0;
+
+      const valueOf = (plz, k) => {
         switch (columnIndex) {
-          case 0: valA = plzA; valB = plzB; break;
-          case 1: valA = this.geoNotes?.[plzA] || ''; valB = this.geoNotes?.[plzB] || ''; break;
-          case 2:
-            valA = a.isCritical ? 2 : (a.isHZ ? 1 : 0);
-            valB = b.isCritical ? 2 : (b.isHZ ? 1 : 0);
-            break;
-          case 3: valA = a['value_hr_n_umsatz_0']?.raw ?? -Infinity; valB = b['value_hr_n_umsatz_0']?.raw ?? -Infinity; break;
-          case 4: valA = a['value_wk_nachbar_0']?.raw  ?? -Infinity; valB = b['value_wk_nachbar_0']?.raw  ?? -Infinity; break;
+          case 0: return plz;
+          case 1: return this.geoNotes?.[plz] || '';
+          case 2: return k?.isCritical ? 2 : (k?.isHZ ? 1 : 0);
+          case 3: return isUmsatzMode
+            ? umsatzOf(plz)
+            : (k?.['value_hr_n_umsatz_0']?.raw ?? -Infinity);
+          case 4: return isUmsatzMode
+            ? (totalUmsatz > 0 ? umsatzOf(plz) / totalUmsatz : 0)
+            : (k?.['value_wk_in_percent_0']?.raw ?? -Infinity);
           default: return 0;
         }
-        if (typeof valA === 'string') return valA.localeCompare(valB) * dir;
-        return (valA - valB) * dir;
+      };
+
+      // Vergleich ohne Subtraktion: -Infinity - -Infinity ergäbe NaN und
+      // damit einen instabilen Comparator.
+      return entries.slice().sort(([plzA, a], [plzB, b]) => {
+        const valA = valueOf(plzA, a), valB = valueOf(plzB, b);
+        let cmp;
+        if (typeof valA === 'string' || typeof valB === 'string') {
+          cmp = String(valA).localeCompare(String(valB), 'de');
+        } else {
+          cmp = valA === valB ? 0 : (valA < valB ? -1 : 1);
+        }
+        // Tie-Break nach PLZ → stabile, reproduzierbare Reihenfolge
+        if (cmp === 0) return plzA.localeCompare(plzB);
+        return cmp * dir;
       });
-      this.renderDataTableFromEntries(sorted);
     }
 
     updateSortIcons(activeIndex) {
@@ -3610,9 +3687,14 @@
         const tr = ev.target.closest('tr');
         if (!tr || !tr.dataset.plz) return;
         const plz = tr.dataset.plz;
-        this.closeAllPopups();
-        this.highlightMapArea(plz);
+        // Bug-Fix HL2: openPopupFromTable() ruft intern closeAllPopups() auf,
+        // und closeAllPopups() setzt das Highlight via applyStyleToLayer()
+        // wieder zurück. Dadurch wurde die eben gesetzte Markierung sofort
+        // gelöscht — beim Klick auf die Karte passierte das nicht, weil dort
+        // erst geschlossen und danach markiert wird (_handlePolygonClick).
+        // Fix: erst Popup öffnen (schließt alles), danach markieren.
         this.openPopupFromTable(plz);
+        this.highlightMapArea(plz);
         this.highlightTableRow(tr);
       });
 
@@ -4193,8 +4275,8 @@
       this.updateHeatmapLegend();
 
       if (this._highlightedPLZ) {
-        const layer = this._layerByPLZ?.[this._highlightedPLZ];
-        if (layer) layer.setStyle({ weight: 3, color: '#f0a500', fillOpacity: layer.options.fillOpacity });
+        // Bug-Fix HL1: identischer Style wie highlightMapArea()
+        this._applyHighlightStyle(this._layerByPLZ?.[this._highlightedPLZ]);
       }
     }
 
