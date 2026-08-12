@@ -3405,8 +3405,7 @@
         this.applyStyleToLayer(this._lastHighlightedLayer);
       }
       this._highlightedPLZ = plz;
-      target.setStyle({ weight: 4, color: '#00E5FF', opacity: 1, fillOpacity: this._plzFillOpacity('hover') });
-      target.bringToFront();
+      target.setStyle({ weight: 3, color: '#f0a500', fillOpacity: this._plzFillOpacity('hover') });
       this._lastHighlightedLayer = target;
     }
 
@@ -3499,12 +3498,6 @@
         this._sortState.direction = 'desc';
       }
       const dir = this._sortState.direction === 'asc' ? 1 : -1;
-      const umsatzMode = this.currentMapMode === 'umsatz-multi' || this.currentMapMode === 'werbeanteil';
-      const ums = (plz) => {
-        const v = this.filteredPLZWerte?.[String(plz).padStart(5, '0')];
-        const s = v ? this.getUmsatzSumForPLZ(v) : 0;
-        return Number.isFinite(s) ? s : 0;
-      };
       const entries = Object.entries(this.filteredKennwerte);
       const sorted = entries.sort(([plzA, a], [plzB, b]) => {
         let valA, valB;
@@ -3515,19 +3508,12 @@
             valA = a.isCritical ? 2 : (a.isHZ ? 1 : 0);
             valB = b.isCritical ? 2 : (b.isHZ ? 1 : 0);
             break;
-          case 3:
-            valA = umsatzMode ? ums(plzA) : (a['value_hr_n_umsatz_0']?.raw ?? -Infinity);
-            valB = umsatzMode ? ums(plzB) : (b['value_hr_n_umsatz_0']?.raw ?? -Infinity);
-            break;
-          case 4:
-            valA = umsatzMode ? ums(plzA) : (a['value_wk_in_percent_0']?.raw ?? -Infinity);
-            valB = umsatzMode ? ums(plzB) : (b['value_wk_in_percent_0']?.raw ?? -Infinity);
-            break;
+          case 3: valA = a['value_hr_n_umsatz_0']?.raw ?? -Infinity; valB = b['value_hr_n_umsatz_0']?.raw ?? -Infinity; break;
+          case 4: valA = a['value_wk_nachbar_0']?.raw  ?? -Infinity; valB = b['value_wk_nachbar_0']?.raw  ?? -Infinity; break;
           default: return 0;
         }
         if (typeof valA === 'string') return valA.localeCompare(valB) * dir;
-        if (valA === valB) return String(plzA).localeCompare(String(plzB));
-        return (valA < valB ? -1 : 1) * dir;
+        return (valA - valB) * dir;
       });
       this.renderDataTableFromEntries(sorted);
     }
@@ -3625,8 +3611,8 @@
         if (!tr || !tr.dataset.plz) return;
         const plz = tr.dataset.plz;
         this.closeAllPopups();
-        this.openPopupFromTable(plz);   // vorher stand highlightMapArea hier
-        this.highlightMapArea(plz);     // muss NACH openPopupFromTable stehen
+        this.highlightMapArea(plz);
+        this.openPopupFromTable(plz);
         this.highlightTableRow(tr);
       });
 
@@ -4208,7 +4194,7 @@
 
       if (this._highlightedPLZ) {
         const layer = this._layerByPLZ?.[this._highlightedPLZ];
-        if (layer) layer.setStyle({ weight: 4, color: '#00E5FF', opacity: 1, fillOpacity: layer.options.fillOpacity });
+        if (layer) layer.setStyle({ weight: 3, color: '#f0a500', fillOpacity: layer.options.fillOpacity });
       }
     }
 
