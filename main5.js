@@ -2188,6 +2188,11 @@
   // ═══════════════════════════════════════════════════════════════════════
   //  GeoMapWidget – Custom Element
   // ═══════════════════════════════════════════════════════════════════════
+  // Farbe/Stärke der Markierung einer angeklickten PLZ-Fläche (Karte).
+  // Hier zentral änderbar.
+  const HIGHLIGHT_STROKE = '#00E5FF';
+  const HIGHLIGHT_WEIGHT = 4;
+
   class GeoMapWidget extends HTMLElement {
 
     constructor() {
@@ -3403,14 +3408,11 @@
     // sowie gegen den Doppelbestreuungs-Marker optisch unter.
     // Neu: kräftiges Cyan + dickere Kante + bringToFront, damit die Kante
     // nicht von benachbarten Polygonen überzeichnet wird.
-    static get HIGHLIGHT_STROKE()  { return '#00E5FF'; }
-    static get HIGHLIGHT_WEIGHT()  { return 4; }
-
     _applyHighlightStyle(layer, fillOpacity) {
       if (!layer) return;
       layer.setStyle({
-        color:       GeoMapWidget.HIGHLIGHT_STROKE,
-        weight:      GeoMapWidget.HIGHLIGHT_WEIGHT,
+        color:       HIGHLIGHT_STROKE,
+        weight:      HIGHLIGHT_WEIGHT,
         opacity:     1,
         fillOpacity: fillOpacity != null ? fillOpacity : layer.options.fillOpacity,
       });
