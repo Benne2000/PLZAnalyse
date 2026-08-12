@@ -2188,10 +2188,14 @@
   // ═══════════════════════════════════════════════════════════════════════
   //  GeoMapWidget – Custom Element
   // ═══════════════════════════════════════════════════════════════════════
-  // Farbe/Stärke der Markierung einer angeklickten PLZ-Fläche (Karte).
-  // Hier zentral änderbar.
-  const HIGHLIGHT_STROKE = '#00E5FF';
-  const HIGHLIGHT_WEIGHT = 4;
+  // Markierung einer angeklickten PLZ-Fläche (Karte) — hier zentral änderbar.
+  // Schwarze Kontur auf weißem Halo: funktioniert auf jedem Untergrund, also
+  // sowohl auf der Heatmap (gelb/orange/rot) als auch auf der blau-grauen
+  // WK-Skala, ohne mit einer der beiden Farbskalen verwechselt zu werden.
+  const HIGHLIGHT_STROKE = '#111111';  // innere Linie
+  const HIGHLIGHT_WEIGHT = 3;
+  const HIGHLIGHT_HALO   = '#FFFFFF';  // äußerer Saum
+  const HIGHLIGHT_HALO_W = 7;          // > HIGHLIGHT_WEIGHT, Differenz = Saumbreite
 
   class GeoMapWidget extends HTMLElement {
 
@@ -3408,17 +3412,47 @@
     // sowie gegen den Doppelbestreuungs-Marker optisch unter.
     // Neu: kräftiges Cyan + dickere Kante + bringToFront, damit die Kante
     // nicht von benachbarten Polygonen überzeichnet wird.
+    // Entfernt den weißen Saum-Layer der letzten Markierung.
+    _removeHighlightHalo() {
+      if (!this._haloLayer) return;
+      try { this._haloLayer.remove(); } catch (e) {}
+      this._haloLayer = null;
+    }
+
     _applyHighlightStyle(layer, fillOpacity) {
       if (!layer) return;
+      this._removeHighlightHalo();
+
+      // Leaflet zeichnet pro Polygon nur EINE Linie — für den Halo-Effekt
+      // legen wir daher eine breitere, weiße Kopie der Geometrie darunter.
+      // fill:false + interactive:false, damit weder Füllung noch Klick-/
+      // Hover-Events der eigentlichen PLZ-Fläche verdeckt werden.
+      try {
+        const latlngs = layer.getLatLngs?.();
+        if (this.map && latlngs && typeof L !== 'undefined') {
+          this._haloLayer = L.polygon(latlngs, {
+            color:       HIGHLIGHT_HALO,
+            weight:      HIGHLIGHT_HALO_W,
+            opacity:     0.95,
+            fill:        false,
+            interactive: false,
+            lineJoin:    'round',
+            lineCap:     'round',
+          }).addTo(this.map);
+        }
+      } catch (e) { this._haloLayer = null; }
+
       layer.setStyle({
         color:       HIGHLIGHT_STROKE,
         weight:      HIGHLIGHT_WEIGHT,
         opacity:     1,
         fillOpacity: fillOpacity != null ? fillOpacity : layer.options.fillOpacity,
       });
-      // Ohne bringToFront zeichnen die Nachbar-Polygone (weiße 0.8er-Kante)
-      // die Markierung an den Rändern wieder zu.
+      // Reihenfolge: Halo wurde zuletzt zur Karte hinzugefügt und liegt damit
+      // über den Nachbar-Polygonen; bringToFront hebt die schwarze Linie
+      // darüber. Ohne das überzeichnen die Nachbarkanten die Markierung.
       try { layer.bringToFront?.(); } catch (e) {}
+      this._lastHighlightedLayer = layer;
     }
 
     highlightMapArea(plz) {
@@ -4129,6 +4163,10 @@
     }
 
     applyStyleToLayer(layer) {
+      // Wird die aktuell markierte Fläche neu gestylt, ist die Markierung weg —
+      // dann muss auch der Halo verschwinden. (updateGeoLayer() stylt alle
+      // Layer neu und setzt die Markierung danach wieder, siehe unten.)
+      if (this._haloLayer && layer === this._lastHighlightedLayer) this._removeHighlightHalo();
       const plz = String(layer.feature?.properties?.plz ?? '').padStart(5, '0');
       const v   = this.filteredPLZWerte?.[plz];
       const hasRadius = this.plzImRadius instanceof Set && this.plzImRadius.size > 0;
@@ -7773,6 +7811,7 @@
       this._activePopupPLZ     = null;
       this._activePopupType    = null;
       this._highlightedPLZ     = null;
+      this._removeHighlightHalo();
       this._nlSelectionInitialized = false;
 
       this.closeAllPopups();
