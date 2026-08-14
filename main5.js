@@ -4338,14 +4338,15 @@
       return this._bonRefCache;
     }
 
-    // Divergierende Skala um den Referenz-Ø-Bon. Eine 0-bis-Max-Heatmap wäre
-    // hier unbrauchbar: Ø-Bon-Werte liegen typischerweise in einem schmalen
-    // Band, alle PLZ landeten im gleichen Bucket. Relevant ist die Abweichung
-    // vom Durchschnitt, nicht der Absolutwert.
+    // Warme Heat-Rampe (rot → gelb), identisch zur Umsatz- und Kunden-Skala.
+    // Der Bezugspunkt bleibt der Referenz-Ø-Bon (Index 100): eine 0-bis-Max-
+    // Skala wäre hier unbrauchbar, weil Ø-Bon-Werte in einem schmalen Band
+    // liegen und alle PLZ im selben Bucket landeten. Rot = überdurchschnitt-
+    // licher Bon, Gelb = unterdurchschnittlich.
     getBonIndexColor(ratio) {
       if (!Number.isFinite(ratio) || ratio <= 0) return '#cfd4da';
-      return ratio > 1.20 ? '#7a0f17' : ratio > 1.10 ? '#c0392b' : ratio > 1.03 ? '#f08a3c' :
-             ratio > 0.97 ? '#f7e8b0' : ratio > 0.90 ? '#a8c8e0' : ratio > 0.80 ? '#4f8fc0' : '#1f4e79';
+      return ratio > 1.20 ? '#7a0f17' : ratio > 1.10 ? '#b41821' : ratio > 1.03 ? '#d9483b' :
+             ratio > 0.97 ? '#e96a3a' : ratio > 0.90 ? '#f08a3c' : ratio > 0.80 ? '#f6b65b' : '#fce9b2';
     }
 
     computeFillColor(plz) {
@@ -6659,12 +6660,12 @@
         legend.innerHTML = `<strong>Ø-Bon</strong>
           <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.04em">Ø ${eur(1)} = Index 100</div>` +
           [['#7a0f17', `&gt; 120 &nbsp;<em style='opacity:.7;font-size:0.9em'>(${eur(1.20)}+)</em>`],
-           ['#c0392b', '110 – 120'],
-           ['#f08a3c', '103 – 110'],
-           ['#f7e8b0', '97 – 103'],
-           ['#a8c8e0', '90 – 97'],
-           ['#4f8fc0', '80 – 90'],
-           ['#1f4e79', `&lt; 80 &nbsp;<em style='opacity:.7;font-size:0.9em'>(${eur(0.80)}–)</em>`]]
+           ['#b41821', '110 – 120'],
+           ['#d9483b', '103 – 110'],
+           ['#e96a3a', '97 – 103'],
+           ['#f08a3c', '90 – 97'],
+           ['#f6b65b', '80 – 90'],
+           ['#fce9b2', `&lt; 80 &nbsp;<em style='opacity:.7;font-size:0.9em'>(${eur(0.80)}–)</em>`]]
             .map(([bg, l]) => row(bg, l)).join('') +
           row('#cfd4da', `&lt; ${BON_MIN_KD} Bons &nbsp;<em style='opacity:.7;font-size:0.9em'>(zu wenig Daten)</em>`);
         legend.classList.remove('hidden'); return;
