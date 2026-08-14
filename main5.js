@@ -2164,6 +2164,12 @@
           <label class="big-check"><input type="checkbox" id="chk-werbeumsatz" checked> Werbeumsatz</label>
           <label class="big-check"><input type="checkbox" id="chk-mitgekauft"> Mitgekauft</label>
         </div>
+        <div class="switch-label">Kennzahl</div>
+        <div id="umsatz-kennzahl-switch" class="triple-switch">
+          <span class="mode-kz-umsatz active">Umsatz</span>
+          <span class="mode-kz-bon">Ø-Bon</span>
+          <span class="mode-kz-kunden">Kunden</span>
+        </div>
         <div class="switch-label">Darstellung</div>
         <div id="umsatz-analysis-switch" class="triple-switch">
           <span class="mode-abs active">Absolut</span>
@@ -2196,6 +2202,9 @@
   const HIGHLIGHT_WEIGHT = 3;
   const HIGHLIGHT_HALO   = '#FFFFFF';  // äußerer Saum
   const HIGHLIGHT_HALO_W = 7;          // > HIGHLIGHT_WEIGHT, Differenz = Saumbreite
+
+  // Mindestanzahl Bons, ab der ein Ø-Bon je PLZ ausgewertet wird.
+  const BON_MIN_KD = 5;
 
   class GeoMapWidget extends HTMLElement {
 
@@ -2245,6 +2254,12 @@
       this.activeCategories      = new Set(CATEGORIES);
       this.umsatzMainMode        = 'gesamt';
       this.umsatzDarstellung     = 'abs';
+      // Kennzahl der Umsatz-Heatmap: 'umsatz' | 'bon' | 'kunden'.
+      // Bewusst KEIN eigener currentMapMode — die Umsatz-Kennzahlen teilen sich
+      // Radius-Filter, Tabelle, Popups und Streuverlust mit 'umsatz-multi'.
+      // Ein neuer Map-Mode hätte alle `=== 'umsatz-multi'`-Abfragen im Widget
+      // umgangen und den Umsatzmodus faktisch abgeschaltet.
+      this.umsatzKennzahl        = 'umsatz';
       this.useWerbeUmsatz        = true;
       this.useZusatzUmsatz       = false;
       this.useRadiusFilter       = true;
@@ -3934,6 +3949,10 @@
       const btnAbs     = darstSwitch?.querySelector('.mode-abs');
       const btnHH      = darstSwitch?.querySelector('.mode-hh');
       const btnWA      = darstSwitch?.querySelector('.mode-werbeanteil');
+      const kzSwitch   = this.$('umsatz-kennzahl-switch');
+      const btnKzUms   = kzSwitch?.querySelector('.mode-kz-umsatz');
+      const btnKzBon   = kzSwitch?.querySelector('.mode-kz-bon');
+      const btnKzKd    = kzSwitch?.querySelector('.mode-kz-kunden');
       const werbeRow   = this.$('werbe-options-row');
       const chkWerbe   = this.$('chk-werbeumsatz');
       const chkMit     = this.$('chk-mitgekauft');
@@ -3979,8 +3998,12 @@
         this.showBestreuung = false;
         if (chkBestreu) chkBestreu.checked = false;
         this.umsatzDarstellung = 'abs';
+        this.umsatzKennzahl = 'umsatz';
+        kzSwitch?.querySelectorAll('span').forEach(sp => sp.classList.remove('active'));
+        btnKzUms?.classList.add('active');
         darstSwitch.querySelectorAll('span').forEach(s => s.classList.remove('active'));
         btnAbs.classList.add('active'); btnWA.classList.add('disabled');
+        btnHH?.classList.remove('disabled');
         this.bestreuungGroup?.clearLayers();
         this.activeCategories = new Set(CATEGORIES);
         this._shadowRoot.querySelectorAll('.category-toggle').forEach(t => t.classList.add('active'));
@@ -4008,8 +4031,12 @@
         umsatzPanel.classList.remove('hidden');
         this._syncPanelState();
         this.umsatzDarstellung = 'abs';
+        this.umsatzKennzahl = 'umsatz';
+        kzSwitch?.querySelectorAll('span').forEach(sp => sp.classList.remove('active'));
+        btnKzUms?.classList.add('active');
         darstSwitch.querySelectorAll('span').forEach(s => s.classList.remove('active'));
         btnAbs.classList.add('active'); btnWA.classList.add('disabled');
+        btnHH?.classList.remove('disabled');
         if (!this.showBestreuung) this.bestreuungGroup?.clearLayers();
         this.updateGeoLayer(); this.updateHeatmapLegend();
         if (this._activeFilter) {
@@ -4027,7 +4054,7 @@
         typeSwitch.classList.toggle('active-left', !switchingToWerbung);
         werbeRow.style.display = switchingToWerbung ? 'flex' : 'none';
         if (switchingToWerbung) {
-          btnWA.classList.remove('disabled');
+          if (this.umsatzKennzahl === 'umsatz') btnWA.classList.remove('disabled');
           this.useWerbeUmsatz = true; this.useZusatzUmsatz = false;
           chkWerbe.checked = true;    chkMit.checked = false; chkMit.disabled = false;
           chkWerbe.disabled = false;
@@ -4060,6 +4087,43 @@
         refreshMapAndPopup();
       });
 
+      // ── Kennzahl (Umsatz / Ø-Bon / Anzahl Kunden) ────────────────────
+      // Welche Darstellungen fachlich sinnvoll sind, hängt an der Kennzahl:
+      //   Umsatz → Absolut, pro HH, Werbeanteil (letzteres nur bei Werbeumsatz)
+      //   Kunden → Absolut, pro HH (= Kundendichte); Werbeanteil sinnlos
+      //   Ø-Bon  → nur Absolut; ein Mittelwert pro Haushalt ergibt keinen Sinn
+      const syncDarstellung = () => {
+        const kz = this.umsatzKennzahl;
+        const hhOk = kz !== 'bon';
+        const waOk = kz === 'umsatz' && this.umsatzMainMode === 'werbung';
+        btnHH?.classList.toggle('disabled', !hhOk);
+        btnWA?.classList.toggle('disabled', !waOk);
+        // Ungültige Auswahl auf 'abs' zurücksetzen
+        if ((this.umsatzDarstellung === 'hh' && !hhOk) ||
+            (this.umsatzDarstellung === 'werbeanteil' && !waOk)) {
+          this.umsatzDarstellung = 'abs';
+          darstSwitch.querySelectorAll('span').forEach(sp => sp.classList.remove('active'));
+          btnAbs.classList.add('active');
+        }
+        // Werbeanteil ist ein eigener Map-Mode — bei Kennzahl != Umsatz zurück
+        if (this.umsatzKennzahl !== 'umsatz' && this.currentMapMode === 'werbeanteil') {
+          this.currentMapMode = 'umsatz-multi';
+        }
+      };
+      this._syncDarstellungSwitch = syncDarstellung;
+
+      const setKennzahl = (kz, btn) => {
+        if (this.umsatzKennzahl === kz) return;
+        this.umsatzKennzahl = kz;
+        kzSwitch.querySelectorAll('span').forEach(sp => sp.classList.remove('active'));
+        btn.classList.add('active');
+        syncDarstellung();
+        refreshMapAndPopup();
+      };
+      this._on(btnKzUms, 'click', () => setKennzahl('umsatz', btnKzUms));
+      this._on(btnKzBon, 'click', () => setKennzahl('bon',    btnKzBon));
+      this._on(btnKzKd,  'click', () => setKennzahl('kunden', btnKzKd));
+
       // Darstellung
       const setDarst = (modus, mapMode, btn) => {
         this.umsatzDarstellung = modus; this.currentMapMode = mapMode; 
@@ -4075,9 +4139,13 @@
         }
       };
       this._on(btnAbs, 'click', () => { setDarst('abs', 'umsatz-multi', btnAbs); reEnableMit(); refreshMapAndPopup(); });
-      this._on(btnHH,  'click', () => { setDarst('hh',  'umsatz-multi', btnHH);  reEnableMit(); refreshMapAndPopup(); });
+      this._on(btnHH,  'click', () => {
+        if (this.umsatzKennzahl === 'bon') return;   // pro HH bei Ø-Bon sinnlos
+        setDarst('hh',  'umsatz-multi', btnHH);  reEnableMit(); refreshMapAndPopup();
+      });
       this._on(btnWA,  'click', () => {
         if (this.umsatzMainMode !== 'werbung') return;
+        if (this.umsatzKennzahl !== 'umsatz') return;
         setDarst('werbeanteil', 'werbeanteil', btnWA);
         // Im Werbeanteil-Modus: nur Werbung relevant, kein Mitgekauft.
         // Beide Checkboxen werden auf den richtigen State erzwungen und
@@ -4230,12 +4298,70 @@
       if (m) { this.map.removeLayer(m); delete this.criticalMarkers[plz]; }
     }
 
+    // ── Kennzahlen der Umsatz-Heatmap ──────────────────────────────────
+    // Anzahl Kunden = Anzahl Bons aus der Erhebung. 'hh' teilt zusätzlich
+    // durch die Haushalte → Kundendichte / Marktdurchdringung.
+    _kundenValue(v) {
+      if (!v) return 0;
+      const kd = Number(v.kdErhebung) || 0;
+      if (kd <= 0) return 0;
+      if (this.umsatzDarstellung === 'hh') {
+        const hh = Number(v.haushalte) || 0;
+        return hh > 0 ? kd / hh : 0;
+      }
+      return kd;
+    }
+
+    // Ø-Bon = Erhebungsumsatz / Anzahl Kunden. Unter BON_MIN_KD Bons ist der
+    // Mittelwert statistisch wertlos (ein einzelner Großeinkauf verschiebt ihn
+    // um Faktoren) — solche PLZ bleiben grau statt die Skala zu verzerren.
+    _bonValue(v) {
+      if (!v) return 0;
+      const kd  = Number(v.kdErhebung) || 0;
+      const ums = Number(v.umsatzErhebung) || 0;
+      if (kd < BON_MIN_KD || ums <= 0) return 0;
+      return ums / kd;
+    }
+
+    // Referenz-Ø-Bon des aktuellen Scopes: Gesamtumsatz / Gesamtkunden.
+    // Bewusst gewichtet (Summe/Summe) und nicht als Mittelwert der PLZ-Bons —
+    // sonst zählt eine PLZ mit 5 Bons so viel wie eine mit 5.000.
+    _computeBonReferenz() {
+      let ums = 0, kd = 0;
+      for (const v of Object.values(this.filteredPLZWerte || {})) {
+        const k = Number(v.kdErhebung) || 0;
+        if (k < BON_MIN_KD) continue;
+        ums += Number(v.umsatzErhebung) || 0;
+        kd  += k;
+      }
+      this._bonRefCache = kd > 0 ? ums / kd : 0;
+      return this._bonRefCache;
+    }
+
+    // Divergierende Skala um den Referenz-Ø-Bon. Eine 0-bis-Max-Heatmap wäre
+    // hier unbrauchbar: Ø-Bon-Werte liegen typischerweise in einem schmalen
+    // Band, alle PLZ landeten im gleichen Bucket. Relevant ist die Abweichung
+    // vom Durchschnitt, nicht der Absolutwert.
+    getBonIndexColor(ratio) {
+      if (!Number.isFinite(ratio) || ratio <= 0) return '#cfd4da';
+      return ratio > 1.20 ? '#7a0f17' : ratio > 1.10 ? '#c0392b' : ratio > 1.03 ? '#f08a3c' :
+             ratio > 0.97 ? '#f7e8b0' : ratio > 0.90 ? '#a8c8e0' : ratio > 0.80 ? '#4f8fc0' : '#1f4e79';
+    }
+
     computeFillColor(plz) {
       const v = this.filteredPLZWerte?.[plz];
       if (!v) return '#cfd4da';
       if (this.currentMapMode === 'wk')           return this.getColor(v.hz ? v.wk : v.wkPot, v.hz);
-      if (this.currentMapMode === 'umsatz-multi') return this.getDynamicHeatColor(this.getUmsatzSumForPLZ(v), this._maxValueCache || 1);
       if (this.currentMapMode === 'werbeanteil')  return this.getWerbeAnteilColor(v.werbeAnteil ?? 0);
+      if (this.currentMapMode === 'umsatz-multi') {
+        if (this.umsatzKennzahl === 'kunden') return this.getDynamicHeatColor(this._kundenValue(v), this._maxValueCache || 1);
+        if (this.umsatzKennzahl === 'bon') {
+          const ref = this._bonRefCache || 0;
+          const bon = this._bonValue(v);
+          return ref > 0 && bon > 0 ? this.getBonIndexColor(bon / ref) : '#cfd4da';
+        }
+        return this.getDynamicHeatColor(this.getUmsatzSumForPLZ(v), this._maxValueCache || 1);
+      }
       return '#cfd4da';
     }
 
@@ -4247,6 +4373,16 @@
           const val = v.hz ? v.wk : v.wkPot;
           if (Number.isFinite(val) && val > maxValue) maxValue = val;
         }
+      } else if (this.currentMapMode === 'umsatz-multi' && this.umsatzKennzahl === 'kunden') {
+        for (const v of Object.values(plzWerte)) {
+          const k = this._kundenValue(v);
+          if (k > maxValue) maxValue = k;
+        }
+      } else if (this.currentMapMode === 'umsatz-multi' && this.umsatzKennzahl === 'bon') {
+        // Ø-Bon skaliert nicht über ein Maximum, sondern über die Abweichung
+        // vom Referenzwert — der wird hier einmal pro Render berechnet.
+        this._computeBonReferenz();
+        this._maxValueCache = 1; return 1;
       } else if (this.currentMapMode === 'umsatz-multi') {
         for (const v of Object.values(plzWerte)) {
           const sum = this.getUmsatzSumForPLZ(v);
@@ -4937,6 +5073,13 @@
       if (active.online)     { tN += values.onlineshop; tW += values.onlineshopWerbung; tZ += values.onlineshopZusatz; }
       const antWA = tN > 0 ? ((tW / tN) * 100).toFixed(1) : '–';
 
+      // Ø-Bon inkl. Index gegen den Scope-Durchschnitt (siehe Heatmap-Legende)
+      const bonVal = this._bonValue(values);
+      const bonRef = this._bonRefCache || this._computeBonReferenz();
+      const bonTxt = bonVal > 0
+        ? `${fmtDec(bonVal).replace('.', ',')} €` + (bonRef > 0 ? ` <span style="font-weight:500;color:var(--gray-500)">(Idx ${Math.round(bonVal / bonRef * 100)})</span>` : '')
+        : '–';
+
       const pct = (x, t) => t > 0 ? (x / t) * 100 : 0;
       const hl = !isWerbung ? 'Gesamtumsatz'
                : useWerbe && useZusatz ? 'Werbeumsatz + Mitgekauft'
@@ -5009,6 +5152,10 @@
             <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.werbeverweigerer > 0 ? fmtNum(values.werbeverweigerer) + ' %' : '–'}</div>
             <div style="color:var(--gray-600);font-weight:500">Kaufkraft-Index</div>
             <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.kaufkraftIndex > 0 ? fmtNum(values.kaufkraftIndex) : '–'}</div>
+            <div style="color:var(--gray-600);font-weight:500">Kunden (Bons)</div>
+            <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.kdErhebung > 0 ? fmtNum(values.kdErhebung) : '–'}</div>
+            <div style="color:var(--gray-600);font-weight:500">Ø-Bon</div>
+            <div style="text-align:right;font-weight:700;color:var(--gray-800)">${bonTxt}</div>
           </div>
         </div>`;
 
@@ -6314,6 +6461,11 @@
           onlineshopZusatzProHaushalt: old.onlineshopZusatzProHaushalt ?? 0,
           pluscardZusatzProHaushalt: old.pluscardZusatzProHaushalt ?? 0,
           werbeAnteil: old.werbeAnteil ?? 0,
+          // Erhebungsdaten für die Kennzahl-Heatmaps (Ø-Bon / Anzahl Kunden).
+          // Lagen bisher nur in filteredKennwerte — die Karte liest aber
+          // ausschließlich filteredPLZWerte.
+          umsatzErhebung: old.umsatzErhebung ?? 0,
+          kdErhebung:     old.kdErhebung ?? 0,
         };
       }
 
@@ -6475,6 +6627,46 @@
           ${row('#e31a1c','&gt; 25 % &nbsp;<em style=\'opacity:.7;font-size:0.9em\'>oder bestreut ohne Umsatz</em>')}${row('#fd8d3c','15 – 25 %')}${row('#ffffb2','10 – 15 %')}${row('#78c679','5 – 10 %')}${row('#41ab5d','2 – 5 %')}${row('#006837','0 – 2 %')}
           <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:8px 0 3px;text-transform:uppercase;letter-spacing:.04em">Nicht bestreut (% pot. WK)</div>
           ${row('#cfd4da','&gt; 50 %')}${row('#bdbdbd','25 – 50 %')}${row('#969696','15 – 25 %')}${row('#6baed6','10 – 15 %')}${row('#2171b5','5 – 10 %')}${row('#08306b','&lt; 5 %')}`;
+        legend.classList.remove('hidden'); return;
+      }
+      if (this.currentMapMode === 'umsatz-multi' && this.umsatzKennzahl === 'kunden') {
+        let max = 0;
+        for (const v of Object.values(this.filteredPLZWerte)) {
+          const k = this._kundenValue(v);
+          if (k > max) max = k;
+        }
+        if (max === 0) { legend.classList.add('hidden'); return; }
+        const perHH = this.umsatzDarstellung === 'hh';
+        const fmt = (x) => perHH ? x.toFixed(2).replace('.', ',')
+                                 : x.toLocaleString('de-DE', { maximumFractionDigits: 0 });
+        const unit = perHH ? ' / HH' : '';
+        const steps = [
+          { v: max,     label: `&gt; ${fmt(max*0.95)}${unit}` },
+          { v: max*.85, label: `${fmt(max*0.75)} – ${fmt(max*0.85)}${unit}` },
+          { v: max*.65, label: `${fmt(max*0.55)} – ${fmt(max*0.65)}${unit}` },
+          { v: max*.45, label: `${fmt(max*0.35)} – ${fmt(max*0.45)}${unit}` },
+          { v: max*.20, label: `${fmt(max*0.10)} – ${fmt(max*0.20)}${unit}` },
+          { v: 0,       label: `&lt; ${fmt(max*0.10)}${unit}` },
+        ];
+        legend.innerHTML = `<strong>${perHH ? 'Kunden pro Haushalt' : 'Anzahl Kunden (Bons)'}</strong>` +
+          steps.map(st => row(this.getDynamicHeatColor(st.v, max), st.label)).join('');
+        legend.classList.remove('hidden'); return;
+      }
+      if (this.currentMapMode === 'umsatz-multi' && this.umsatzKennzahl === 'bon') {
+        const ref = this._bonRefCache || this._computeBonReferenz();
+        if (!ref) { legend.classList.add('hidden'); return; }
+        const eur = (f) => `${(ref*f).toLocaleString('de-DE', { maximumFractionDigits: 0 })} €`;
+        legend.innerHTML = `<strong>Ø-Bon</strong>
+          <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.04em">Ø ${eur(1)} = Index 100</div>` +
+          [['#7a0f17', `&gt; 120 &nbsp;<em style='opacity:.7;font-size:0.9em'>(${eur(1.20)}+)</em>`],
+           ['#c0392b', '110 – 120'],
+           ['#f08a3c', '103 – 110'],
+           ['#f7e8b0', '97 – 103'],
+           ['#a8c8e0', '90 – 97'],
+           ['#4f8fc0', '80 – 90'],
+           ['#1f4e79', `&lt; 80 &nbsp;<em style='opacity:.7;font-size:0.9em'>(${eur(0.80)}–)</em>`]]
+            .map(([bg, l]) => row(bg, l)).join('') +
+          row('#cfd4da', `&lt; ${BON_MIN_KD} Bons &nbsp;<em style='opacity:.7;font-size:0.9em'>(zu wenig Daten)</em>`);
         legend.classList.remove('hidden'); return;
       }
       if (this.currentMapMode === 'umsatz-multi') {
