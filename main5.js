@@ -4312,13 +4312,13 @@
       return kd;
     }
 
-    // Ø-Bon = Erhebungsumsatz / Anzahl Kunden. Unter BON_MIN_KD Bons ist der
-    // Mittelwert statistisch wertlos (ein einzelner Großeinkauf verschiebt ihn
-    // um Faktoren) — solche PLZ bleiben grau statt die Skala zu verzerren.
+    // Ø-Bon = hochgerechneter Umsatz / Anzahl Bons. Unter BON_MIN_KD Bons ist
+    // der Mittelwert statistisch wertlos (ein einzelner Großeinkauf verschiebt
+    // ihn um Faktoren) — solche PLZ bleiben grau statt die Skala zu verzerren.
     _bonValue(v) {
       if (!v) return 0;
       const kd  = Number(v.kdErhebung) || 0;
-      const ums = Number(v.umsatzErhebung) || 0;
+      const ums = Number(v.umsatzNetto) || 0;
       if (kd < BON_MIN_KD || ums <= 0) return 0;
       return ums / kd;
     }
@@ -4331,7 +4331,7 @@
       for (const v of Object.values(this.filteredPLZWerte || {})) {
         const k = Number(v.kdErhebung) || 0;
         if (k < BON_MIN_KD) continue;
-        ums += Number(v.umsatzErhebung) || 0;
+        ums += Number(v.umsatzNetto) || 0;
         kd  += k;
       }
       this._bonRefCache = kd > 0 ? ums / kd : 0;
@@ -6467,6 +6467,10 @@
           // ausschließlich filteredPLZWerte.
           umsatzErhebung: old.umsatzErhebung ?? 0,
           kdErhebung:     old.kdErhebung ?? 0,
+          // Hochgerechneter Umsatz (value_hr_n_umsatz_0), Nenner-Basis des Ø-Bon.
+          // Respektiert NL-Filter und Radius, weil aggregated[] nur passende
+          // Rows zählt — damit konsistent zur WK-Berechnung.
+          umsatzNetto:    umsatzNetto,
         };
       }
 
@@ -6656,17 +6660,21 @@
       if (this.currentMapMode === 'umsatz-multi' && this.umsatzKennzahl === 'bon') {
         const ref = this._bonRefCache || this._computeBonReferenz();
         if (!ref) { legend.classList.add('hidden'); return; }
-        const eur = (f) => `${(ref*f).toLocaleString('de-DE', { maximumFractionDigits: 0 })} €`;
+        // Euro-Grenzen dynamisch aus dem Referenzwert — der Index allein sagt
+        // dem Anwender nichts über die tatsächliche Bonhöhe.
+        const nf  = (x) => x.toLocaleString('de-DE', { maximumFractionDigits: x < 20 ? 1 : 0 });
+        const eur = (f) => `${nf(ref * f)} €`;
+        const idx = (t) => `&nbsp;<em style='opacity:.6;font-size:0.85em'>${t}</em>`;
         legend.innerHTML = `<strong>Ø-Bon</strong>
           <div style="font-size:0.7rem;color:#adb5bd;font-weight:600;margin:6px 0 3px;text-transform:uppercase;letter-spacing:.04em">Ø ${eur(1)} = Index 100</div>` +
-          [['#7a0f17', `&gt; 120 &nbsp;<em style='opacity:.7;font-size:0.9em'>(${eur(1.20)}+)</em>`],
-           ['#b41821', '110 – 120'],
-           ['#d9483b', '103 – 110'],
-           ['#e96a3a', '97 – 103'],
-           ['#f08a3c', '90 – 97'],
-           ['#f6b65b', '80 – 90'],
-           ['#fce9b2', `&lt; 80 &nbsp;<em style='opacity:.7;font-size:0.9em'>(${eur(0.80)}–)</em>`]]
-            .map(([bg, l]) => row(bg, l)).join('') +
+          [['#7a0f17', `&gt; ${eur(1.20)}`,            'Idx &gt; 120'],
+           ['#b41821', `${eur(1.10)} – ${eur(1.20)}`,  '110 – 120'],
+           ['#d9483b', `${eur(1.03)} – ${eur(1.10)}`,  '103 – 110'],
+           ['#e96a3a', `${eur(0.97)} – ${eur(1.03)}`,  '97 – 103'],
+           ['#f08a3c', `${eur(0.90)} – ${eur(0.97)}`,  '90 – 97'],
+           ['#f6b65b', `${eur(0.80)} – ${eur(0.90)}`,  '80 – 90'],
+           ['#fce9b2', `&lt; ${eur(0.80)}`,            'Idx &lt; 80']]
+            .map(([bg, l, i]) => row(bg, l + idx(i))).join('') +
           row('#cfd4da', `&lt; ${BON_MIN_KD} Bons &nbsp;<em style='opacity:.7;font-size:0.9em'>(zu wenig Daten)</em>`);
         legend.classList.remove('hidden'); return;
       }
