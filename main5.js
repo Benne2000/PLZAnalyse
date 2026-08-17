@@ -4312,13 +4312,18 @@
       return kd;
     }
 
-    // Ø-Bon = hochgerechneter Umsatz / Anzahl Bons. Unter BON_MIN_KD Bons ist
-    // der Mittelwert statistisch wertlos (ein einzelner Großeinkauf verschiebt
-    // ihn um Faktoren) — solche PLZ bleiben grau statt die Skala zu verzerren.
+    // Ø-Bon = Ist-Umsatz aus der Erhebung / Anzahl Bons. Bewusst NICHT der
+    // hochgerechnete Umsatz: Zähler und Nenner stammen so aus derselben
+    // Erhebung, der Quotient ist ein echter Bondurchschnitt. Beim Mischen mit
+    // dem hochgerechneten Umsatz käme dagegen der Hochrechnungsfaktor mit in
+    // den Wert und der "Ø-Bon" wäre keiner mehr.
+    // Unter BON_MIN_KD Bons ist der Mittelwert statistisch wertlos (ein
+    // einzelner Großeinkauf verschiebt ihn um Faktoren) — solche PLZ bleiben
+    // grau, statt die Skala zu verzerren.
     _bonValue(v) {
       if (!v) return 0;
       const kd  = Number(v.kdErhebung) || 0;
-      const ums = Number(v.umsatzNetto) || 0;
+      const ums = Number(v.umsatzErhebung) || 0;
       if (kd < BON_MIN_KD || ums <= 0) return 0;
       return ums / kd;
     }
@@ -4331,7 +4336,7 @@
       for (const v of Object.values(this.filteredPLZWerte || {})) {
         const k = Number(v.kdErhebung) || 0;
         if (k < BON_MIN_KD) continue;
-        ums += Number(v.umsatzNetto) || 0;
+        ums += Number(v.umsatzErhebung) || 0;
         kd  += k;
       }
       this._bonRefCache = kd > 0 ? ums / kd : 0;
@@ -5145,14 +5150,20 @@
             <span><span style="color:#ffb000">⬤</span> KUBE OS</span>
           </div>
 
-          <div class="section-title">PLZ-Daten</div>
-          <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px 14px;font-size:0.82rem;">
+          <div class="section-title">Strukturdaten</div>
+          <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px 12px;font-size:0.82rem;">
             <div style="color:var(--gray-600);font-weight:500">Haushalte</div>
             <div style="text-align:right;font-weight:700;color:var(--gray-800)">${fmtNum(values.haushalte)}</div>
             <div style="color:var(--gray-600);font-weight:500">Werbeverweigerer</div>
             <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.werbeverweigerer > 0 ? fmtNum(values.werbeverweigerer) + ' %' : '–'}</div>
             <div style="color:var(--gray-600);font-weight:500">Kaufkraft-Index</div>
             <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.kaufkraftIndex > 0 ? fmtNum(values.kaufkraftIndex) : '–'}</div>
+          </div>
+
+          <div class="section-title">Erhebungsdaten</div>
+          <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:3px 10px;padding:8px 14px 14px;font-size:0.82rem;">
+            <div style="color:var(--gray-600);font-weight:500">Umsatz (Ist)</div>
+            <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.umsatzErhebung > 0 ? fmtNum(values.umsatzErhebung) + ' €' : '–'}</div>
             <div style="color:var(--gray-600);font-weight:500">Kunden (Bons)</div>
             <div style="text-align:right;font-weight:700;color:var(--gray-800)">${values.kdErhebung > 0 ? fmtNum(values.kdErhebung) : '–'}</div>
             <div style="color:var(--gray-600);font-weight:500">Ø-Bon</div>
@@ -6467,10 +6478,6 @@
           // ausschließlich filteredPLZWerte.
           umsatzErhebung: old.umsatzErhebung ?? 0,
           kdErhebung:     old.kdErhebung ?? 0,
-          // Hochgerechneter Umsatz (value_hr_n_umsatz_0), Nenner-Basis des Ø-Bon.
-          // Respektiert NL-Filter und Radius, weil aggregated[] nur passende
-          // Rows zählt — damit konsistent zur WK-Berechnung.
-          umsatzNetto:    umsatzNetto,
         };
       }
 
