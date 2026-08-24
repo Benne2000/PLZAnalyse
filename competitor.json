@@ -1,860 +1,7640 @@
 [
     {
-        "brand": "HOR",
-        "name": "Hornbach 41063 Mönchengladbach",
-        "lat": "51.2025",
-        "lon": "6.4445"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 41199 Mönchengladbach",
-        "lat": "51.1625",
-        "lon": "6.4835"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 42285 Wuppertal",
-        "lat": "51.2565",
-        "lon": "7.1915"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 44145 Dortmund",
-        "lat": "51.5345",
-        "lon": "7.4905"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 44625 Herne",
-        "lat": "51.5285",
-        "lon": "7.2275"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 45356 Essen",
-        "lat": "51.4745",
-        "lon": "6.9905"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 45711 Datteln",
-        "lat": "51.6575",
-        "lon": "7.3355"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 45881 Gelsenkirchen",
-        "lat": "51.5225",
-        "lon": "7.1035"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 46047 Oberhausen",
-        "lat": "51.4795",
-        "lon": "6.8755"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 47055 Duisburg",
-        "lat": "51.4155",
-        "lon": "6.7685"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 47167 Duisburg",
-        "lat": "51.4795",
-        "lon": "6.7855"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 47443 Moers",
-        "lat": "51.4625",
-        "lon": "6.6765"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 47803 Krefeld",
-        "lat": "51.3355",
-        "lon": "6.5845"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 48157 Münster",
-        "lat": "51.9835",
-        "lon": "7.6915"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 49084 Osnabrück",
-        "lat": "52.2885",
-        "lon": "8.0785"
-    },
-    {
-        "brand": "HOR",
-        "name": "Hornbach 51105 Köln",
-        "lat": "50.9245",
-        "lon": "7.0205"
-    },
-    {
-        "brand": "GLO",
-        "name": "Globus  40670 Meerbusch",
-        "lat": "51.272000",
-        "lon": "6.665000"
-    },
-    {
-        "brand": "GLO",
-        "name": "Globus  45770 Marl",
-        "lat": "51.662000",
-        "lon": "7.094000"
+        "brand": "HAG",
+        "name": "Hagebau OSM#28119683",
+        "lat": "53.5821109",
+        "lon": "7.7974958"
     },
     {
         "brand": "OBI",
-        "name": "OBI 40231 Düsseldorf",
-        "lat": "51.2161",
-        "lon": "6.8160"
+        "name": "OBI 70469 Stuttgart",
+        "lat": "48.8103503",
+        "lon": "9.1674737"
     },
     {
         "brand": "OBI",
-        "name": "OBI 40472 Düsseldorf",
-        "lat": "51.2772",
-        "lon": "6.7977"
+        "name": "OBI OSM#88769618",
+        "lat": "48.7109399",
+        "lon": "19.1366693"
     },
     {
         "brand": "OBI",
-        "name": "OBI 40549 Düsseldorf",
-        "lat": "51.2330",
-        "lon": "6.7110"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 40721 Hilden",
-        "lat": "51.1578",
-        "lon": "6.9452"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 40878 Ratingen",
-        "lat": "51.3031",
-        "lon": "6.8402"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 41334 Nettetal",
-        "lat": "51.3117",
-        "lon": "6.2755"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 41464 Neuss",
-        "lat": "51.1738",
-        "lon": "6.7027"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 41747 Viersen",
-        "lat": "51.2584",
-        "lon": "6.3887"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 41812 Erkelenz",
-        "lat": "51.0779",
-        "lon": "6.3155"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 41836 Hückelhoven",
-        "lat": "51.0543",
-        "lon": "6.2162"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 42103 Wuppertal",
-        "lat": "51.2612",
-        "lon": "7.1528"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 42551 Velbert",
-        "lat": "51.3444",
-        "lon": "7.0267"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 42655 Solingen",
-        "lat": "51.1735",
-        "lon": "7.0658"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 42859 Remscheid",
-        "lat": "51.1894",
-        "lon": "7.2272"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 42929 Wermelskirchen",
-        "lat": "51.1352",
-        "lon": "7.2144"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 45525 Hattingen",
-        "lat": "51.3995",
-        "lon": "7.1685"
-    },
-    {
-        "brand": "OBI",
-        "name": "OBI 45665 Recklinghausen",
-        "lat": "51.6033",
-        "lon": "7.1678"
+        "name": "OBI 88046 Friedrichshafen",
+        "lat": "47.6651642",
+        "lon": "9.4843580"
     },
     {
         "brand": "OBI",
         "name": "OBI 46325 Borken",
-        "lat": "51.8366",
-        "lon": "6.8488"
+        "lat": "51.8493219",
+        "lon": "6.8689569"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85540 Haar",
+        "lat": "48.1085987",
+        "lon": "11.7213780"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 64521 Groß-Gerau",
+        "lat": "49.9100668",
+        "lon": "8.4962585"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 17489 Greifswald",
+        "lat": "54.0807704",
+        "lon": "13.3809799"
     },
     {
         "brand": "OBI",
-        "name": "OBI 46446 Emmerich",
-        "lat": "51.8173",
-        "lon": "6.2735"
+        "name": "OBI OSM#259846078",
+        "lat": "49.7315811",
+        "lon": "9.9571915"
     },
     {
         "brand": "OBI",
-        "name": "OBI 47475 Kamp-Lintfort",
-        "lat": "51.4879",
-        "lon": "6.5367"
+        "name": "OBI 74613 Öhringen",
+        "lat": "49.1896017",
+        "lon": "9.4964400"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 16798 Fürstenberg/Havel",
+        "lat": "53.1713487",
+        "lon": "13.1390112"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 37574 Einbeck",
+        "lat": "51.8124938",
+        "lon": "9.8456380"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 65520 Bad Camberg",
+        "lat": "50.2926073",
+        "lon": "8.2542950"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 63110 Rodgau",
+        "lat": "50.0152477",
+        "lon": "8.8883424"
     },
     {
         "brand": "OBI",
-        "name": "OBI 47906 Kempen",
-        "lat": "51.3654",
-        "lon": "6.4258"
+        "name": "OBI 53359 Rheinbach",
+        "lat": "50.6243909",
+        "lon": "6.9645715"
     },
     {
         "brand": "OBI",
-        "name": "OBI 48429 Rheine",
-        "lat": "52.2858",
-        "lon": "7.4243"
+        "name": "OBI 08056 Zwickau",
+        "lat": "50.7056422",
+        "lon": "12.4954649"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#268442081",
+        "lat": "47.9221515",
+        "lon": "7.7065515"
     },
     {
         "brand": "OBI",
-        "name": "OBI 49377 Vechta",
-        "lat": "52.7483",
-        "lon": "8.2732"
+        "name": "OBI 63322 Rödermark",
+        "lat": "49.9749477",
+        "lon": "8.8039051"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 82362 Weilheim in Oberbayern",
+        "lat": "47.8516521",
+        "lon": "11.1509689"
     },
     {
         "brand": "OBI",
-        "name": "OBI 49661 Cloppenburg",
-        "lat": "52.8464",
-        "lon": "8.0487"
+        "name": "OBI 33129 Delbrück",
+        "lat": "51.7612180",
+        "lon": "8.5477750"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 26133 Oldenburg",
+        "lat": "53.1031302",
+        "lon": "8.2097214"
     },
     {
         "brand": "OBI",
-        "name": "OBI 49808 Lingen",
-        "lat": "52.5401",
-        "lon": "7.3308"
+        "name": "OBI 01328 Dresden",
+        "lat": "51.0657985",
+        "lon": "13.8921456"
     },
     {
-        "brand": "HEL",
-        "name": "Hellweg 40789 Monheim",
-        "lat": "51.1077",
-        "lon": "6.9142"
+        "brand": "HAG",
+        "name": "Hagebau OSM#276648185",
+        "lat": "53.5775588",
+        "lon": "8.1090392"
     },
     {
-        "brand": "HEL",
-        "name": "Hellweg 40822 Mettmann",
-        "lat": "51.2721",
-        "lon": "6.9535"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 42109 Wuppertal",
-        "lat": "51.2882",
-        "lon": "7.1725"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 44143 Dortmund",
-        "lat": "51.5273",
-        "lon": "7.5028"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 44149 Dortmund",
-        "lat": "51.5362",
-        "lon": "7.4372"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 44149 Dortmund",
-        "lat": "51.5076",
-        "lon": "7.4103"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 44265 Dortmund",
-        "lat": "51.4651",
-        "lon": "7.5255"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 44809 Bochum",
-        "lat": "51.4938",
-        "lon": "7.2284"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 45134 Essen",
-        "lat": "51.4269",
-        "lon": "7.0406"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 45139 Essen",
-        "lat": "51.4623",
-        "lon": "7.0552"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 45219 Essen",
-        "lat": "51.3915",
-        "lon": "6.9378"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 45326 Essen",
-        "lat": "51.4847",
-        "lon": "6.9875"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 45359 Essen",
-        "lat": "51.4752",
-        "lon": "6.9394"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 45527 Hattingen",
-        "lat": "51.3998",
-        "lon": "7.1853"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 45659 Recklinghausen",
-        "lat": "51.6124",
-        "lon": "7.2095"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 46149 Oberhausen",
-        "lat": "51.5281",
-        "lon": "6.8274"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 46284 Dorsten",
-        "lat": "51.6602",
-        "lon": "6.9712"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 46395 Bocholt",
-        "lat": "51.8457",
-        "lon": "6.6164"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 47138 Duisburg",
-        "lat": "51.4542",
-        "lon": "6.7815"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 48155 Münster",
-        "lat": "51.9384",
-        "lon": "7.6763"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 48161 Münster",
-        "lat": "51.9481",
-        "lon": "7.5472"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 48249 Dülmen",
-        "lat": "51.8302",
-        "lon": "7.2804"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 48565 Steinfurt",
-        "lat": "52.1432",
-        "lon": "7.3361"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 48599 Gronau (Westfalen)",
-        "lat": "52.2136",
-        "lon": "7.0224"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 48683 Ahaus",
-        "lat": "52.0783",
-        "lon": "7.0125"
-    },
-    {
-        "brand": "HEL",
-        "name": "Hellweg 49090 Osnabrück",
-        "lat": "52.2931",
-        "lon": "8.0437"
+        "brand": "OBI",
+        "name": "OBI 97437 Haßfurt",
+        "lat": "50.0323131",
+        "lon": "10.5392575"
     },
     {
         "brand": "TOO",
-        "name": "Toom 40764 Langenfeld (Rheinland)",
-        "lat": "51.1094",
-        "lon": "6.9495"
+        "name": "Toom 58239 Schwerte",
+        "lat": "51.4500472",
+        "lon": "7.5863614"
     },
     {
         "brand": "TOO",
-        "name": "Toom 41065 Mönchengladbach",
-        "lat": "51.1917",
-        "lon": "6.4763"
+        "name": "Toom OSM#279107373",
+        "lat": "50.8407074",
+        "lon": "12.9508194"
     },
     {
         "brand": "TOO",
-        "name": "Toom 41334 Nettetal",
-        "lat": "51.3162",
-        "lon": "6.2805"
+        "name": "Toom 14913 Jüterbog",
+        "lat": "51.9982811",
+        "lon": "13.0824361"
     },
     {
         "brand": "TOO",
-        "name": "Toom 41516 Grevenbroich",
-        "lat": "51.0923",
-        "lon": "6.5861"
+        "name": "Toom 93051 Regensburg",
+        "lat": "49.0077533",
+        "lon": "12.0623927"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 10409 Berlin",
+        "lat": "52.5464101",
+        "lon": "13.4432988"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 88316 Isny im Allgäu",
+        "lat": "47.7025372",
+        "lon": "10.0485783"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 01796 Pirna",
+        "lat": "50.9581202",
+        "lon": "13.9268442"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#295532430",
+        "lat": "49.1237116",
+        "lon": "10.7599910"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#295873370",
+        "lat": "51.0944335",
+        "lon": "8.0647712"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 14300 Praha 412",
+        "lat": "50.0157587",
+        "lon": "14.4307270"
     },
     {
         "brand": "TOO",
-        "name": "Toom 44532 Lünen",
-        "lat": "51.6285",
-        "lon": "7.5142"
+        "name": "Toom OSM#298540786",
+        "lat": "50.4735022",
+        "lon": "7.7898448"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 31028 Gronau (Leine)",
+        "lat": "52.0881979",
+        "lon": "9.7850190"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83646 Bad Tölz",
+        "lat": "47.7522586",
+        "lon": "11.5605950"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 49176 Hilter am Teutoburger Wald",
+        "lat": "52.1346601",
+        "lon": "8.1549448"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#305710680",
+        "lat": "47.9328043",
+        "lon": "9.2407434"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85276 Pfaffenhofen a.d. Ilm",
+        "lat": "48.5365608",
+        "lon": "11.5130231"
     },
     {
         "brand": "TOO",
-        "name": "Toom 44866 Bochum",
-        "lat": "51.4926",
-        "lon": "7.1472"
+        "name": "Toom 01587 Riesa",
+        "lat": "51.2978200",
+        "lon": "13.2649227"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 23566 Lübeck",
+        "lat": "53.8714773",
+        "lon": "10.7476675"
     },
     {
         "brand": "TOO",
-        "name": "Toom 45472 Mülheim (Ruhr)",
-        "lat": "51.4443",
-        "lon": "6.9027"
+        "name": "Toom 77694 Kehl",
+        "lat": "48.5475711",
+        "lon": "7.8368343"
     },
     {
         "brand": "TOO",
-        "name": "Toom 45699 Herten",
-        "lat": "51.6038",
-        "lon": "7.1324"
+        "name": "Toom OSM#314660639",
+        "lat": "51.7729534",
+        "lon": "14.3434859"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 31655 Stadthagen",
+        "lat": "52.3307840",
+        "lon": "9.2337182"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 50003 Hradec Králové",
+        "lat": "50.2185445",
+        "lon": "15.8299897"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85774 Unterföhring",
+        "lat": "48.1793299",
+        "lon": "11.6328806"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 97737 Gemünden am Main",
+        "lat": "50.0630058",
+        "lon": "9.6799433"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 17192 Waren (Müritz)",
+        "lat": "53.5205644",
+        "lon": "12.7137326"
     },
     {
         "brand": "TOO",
-        "name": "Toom 45772 Marl",
-        "lat": "51.6594",
-        "lon": "7.1103"
+        "name": "Toom 93149 Nittenau",
+        "lat": "49.1911589",
+        "lon": "12.2720899"
     },
     {
         "brand": "TOO",
-        "name": "Toom 45894 Gelsenkirchen",
-        "lat": "51.5823",
-        "lon": "7.0485"
+        "name": "Toom 61231 Bad Nauheim",
+        "lat": "50.3616483",
+        "lon": "8.7520770"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 99091 Erfurt",
+        "lat": "51.0017228",
+        "lon": "10.9989640"
     },
     {
         "brand": "TOO",
-        "name": "Toom 46240 Bottrop",
-        "lat": "51.5326",
-        "lon": "6.9378"
+        "name": "Toom 27404 Zeven",
+        "lat": "53.2766674",
+        "lon": "9.2942986"
     },
     {
         "brand": "TOO",
-        "name": "Toom 46562 Voerde (Niederrhein)",
-        "lat": "51.5943",
-        "lon": "6.6881"
+        "name": "Toom 09247 Chemnitz",
+        "lat": "50.8660970",
+        "lon": "12.8648052"
     },
     {
         "brand": "TOO",
-        "name": "Toom 47059 Duisburg",
-        "lat": "51.4481",
-        "lon": "6.7623"
+        "name": "Toom 88299 Leutkirch im Allgäu",
+        "lat": "47.8306960",
+        "lon": "10.0058834"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04860 Torgau",
+        "lat": "51.5625684",
+        "lon": "12.9703948"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 93326 Abensberg",
+        "lat": "48.8097689",
+        "lon": "11.8604104"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 52134 Herzogenrath",
+        "lat": "50.8804045",
+        "lon": "6.1157974"
     },
     {
         "brand": "TOO",
-        "name": "Toom 47228 Duisburg",
-        "lat": "51.4076",
-        "lon": "6.7215"
+        "name": "Toom 99427 Weimar",
+        "lat": "51.0087972",
+        "lon": "11.3345027"
     },
     {
         "brand": "TOO",
-        "name": "Toom 47506 Neukirchen-Vluyn",
-        "lat": "51.4412",
-        "lon": "6.5573"
+        "name": "Toom 63069 Offenbach am Main",
+        "lat": "50.0872764",
+        "lon": "8.7591547"
     },
     {
-        "brand": "TOO",
-        "name": "Toom 48153 Münster",
-        "lat": "51.9227",
-        "lon": "7.6471"
+        "brand": "HAG",
+        "name": "Hagebau 23968 Gägelow",
+        "lat": "53.9035025",
+        "lon": "11.3819191"
     },
     {
-        "brand": "TOO",
-        "name": "Toom 48231 Warendorf",
-        "lat": "51.9489",
-        "lon": "7.9975"
+        "brand": "OBI",
+        "name": "OBI 09456 Annaberg-Buchholz",
+        "lat": "50.5985395",
+        "lon": "13.0214916"
     },
     {
-        "brand": "TOO",
-        "name": "Toom 48527 Nordhorn",
-        "lat": "52.4306",
-        "lon": "7.0714"
+        "brand": "OBI",
+        "name": "OBI 59302 Oelde",
+        "lat": "51.8299602",
+        "lon": "8.1462964"
     },
     {
-        "brand": "TOO",
-        "name": "Toom 49124 Georgsmarienhütte",
-        "lat": "52.2005",
-        "lon": "8.0452"
-    },
-    {
-        "brand": "TOO",
-        "name": "Toom 49191 Belm",
-        "lat": "52.3027",
-        "lon": "8.1238"
-    },
-    {
-        "brand": "TOO",
-        "name": "Toom 49201 Dissen (Teutoburger Wald)",
-        "lat": "52.1154",
-        "lon": "8.1976"
-    },
-    {
-        "brand": "TOO",
-        "name": "Toom 49479 Ibbenbüren",
-        "lat": "52.2795",
-        "lon": "7.7173"
+        "brand": "OBI",
+        "name": "OBI 37079 Göttingen",
+        "lat": "51.5284022",
+        "lon": "9.8811779"
     },
     {
         "brand": "TOO",
         "name": "Toom 49525 Lengerich",
-        "lat": "52.1956",
-        "lon": "7.8653"
+        "lat": "52.2028578",
+        "lon": "7.8164004"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 25980 Sylt",
+        "lat": "54.9042484",
+        "lon": "8.3297839"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#434600073",
+        "lat": "52.0520107",
+        "lon": "8.1545348"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#439748913",
+        "lat": "51.7025522",
+        "lon": "7.8177158"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#442662181",
+        "lat": "46.1545564",
+        "lon": "8.9596012"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#443139997",
+        "lat": "47.8640382",
+        "lon": "13.3322576"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 61900",
+        "lat": "49.1660927",
+        "lon": "16.6275144"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 15907 Lübben (Spreewald)",
+        "lat": "51.9342055",
+        "lon": "13.8840013"
     },
     {
         "brand": "TOO",
-        "name": "Toom 49811 Lingen (Ems)",
-        "lat": "52.5204",
-        "lon": "7.3221"
+        "name": "Toom 34431 Marsberg",
+        "lat": "51.4521286",
+        "lon": "8.8357868"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#457846730",
+        "lat": "49.0564144",
+        "lon": "20.2714759"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#457954526",
+        "lat": "52.1203742",
+        "lon": "9.9590902"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 08340 Schwarzenberg/Erzgeb.",
+        "lat": "50.5504135",
+        "lon": "12.7731436"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#480173326",
+        "lat": "49.7009613",
+        "lon": "9.2248586"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#487621774",
+        "lat": "47.5493458",
+        "lon": "9.7231797"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 40764 Langenfeld (Rheinland)",
-        "lat": "51.1078",
-        "lon": "6.9624"
+        "name": "Hagebau 31241 Ilsede",
+        "lat": "52.2619701",
+        "lon": "10.1983183"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 40885 Ratingen",
-        "lat": "51.3075",
-        "lon": "6.8521"
+        "name": "Hagebau OSM#492905419",
+        "lat": "47.5932977",
+        "lon": "9.8659913"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#497207196",
+        "lat": "51.2791403",
+        "lon": "8.8637697"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 41189 Mönchengladbach",
-        "lat": "51.1683",
-        "lon": "6.4152"
+        "name": "Hagebau 3390 Melk",
+        "lat": "48.2286845",
+        "lon": "15.3511921"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#503993944",
+        "lat": "52.1279035",
+        "lon": "14.6370528"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 41352 Korschenbroich",
-        "lat": "51.1874",
-        "lon": "6.5179"
+        "name": "Hagebau 24340 Eckernförde",
+        "lat": "54.4717009",
+        "lon": "9.8277647"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 40472 Düsseldorf",
+        "lat": "51.2773335",
+        "lon": "6.7977220"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 66849",
+        "lat": "49.4131824",
+        "lon": "7.5531946"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 41462 Neuss",
-        "lat": "51.2071",
-        "lon": "6.6853"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 41540 Dormagen",
-        "lat": "51.0912",
-        "lon": "6.8374"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 41564 Kaarst",
-        "lat": "51.2256",
-        "lon": "6.6173"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 41751 Viersen",
-        "lat": "51.2557",
-        "lon": "6.3925"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 41812 Erkelenz",
-        "lat": "51.0806",
-        "lon": "6.3124"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 41844 Wegberg",
-        "lat": "51.1435",
-        "lon": "6.2843"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 42781 Haan",
-        "lat": "51.1948",
-        "lon": "7.0041"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 44357 Dortmund",
-        "lat": "51.5391",
-        "lon": "7.3856"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 44575 Castrop-Rauxel",
-        "lat": "51.5562",
-        "lon": "7.3087"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 44894 Bochum",
-        "lat": "51.4732",
-        "lon": "7.3041"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 45478 Mülheim (Ruhr)",
-        "lat": "51.4459",
-        "lon": "6.8796"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 45721 Haltern (See)",
-        "lat": "51.7364",
-        "lon": "7.1782"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 45964 Gladbeck",
-        "lat": "51.5713",
-        "lon": "6.9895"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 46049 Oberhausen",
-        "lat": "51.4715",
-        "lon": "6.8552"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 46282 Dorsten",
-        "lat": "51.6615",
-        "lon": "6.9731"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 46395 Bocholt",
-        "lat": "51.8402",
-        "lon": "6.6268"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 46414 Rhede",
-        "lat": "51.8387",
-        "lon": "6.7005"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 46485 Wesel",
-        "lat": "51.6624",
-        "lon": "6.6173"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 46509 Xanten",
-        "lat": "51.6631",
-        "lon": "6.4552"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 46539 Dinslaken",
-        "lat": "51.5683",
-        "lon": "6.7374"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 47179 Duisburg",
-        "lat": "51.5074",
-        "lon": "6.7621"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 47495 Rheinberg",
-        "lat": "51.5436",
-        "lon": "6.5972"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 47533 Kleve",
-        "lat": "51.7895",
-        "lon": "6.1403"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 47574 Goch",
-        "lat": "51.6762",
-        "lon": "6.1541"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 47608 Geldern",
-        "lat": "51.5173",
-        "lon": "6.3237"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 48268 Greven",
-        "lat": "52.0914",
-        "lon": "7.6083"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 48301 Nottuln",
-        "lat": "51.9295",
-        "lon": "7.3571"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 48455 Bad Bentheim",
-        "lat": "52.3002",
-        "lon": "7.1618"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 48477 Hörstel",
-        "lat": "52.2973",
-        "lon": "7.5854"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 48607 Ochtrup",
-        "lat": "52.2085",
-        "lon": "7.1892"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 48653 Coesfeld",
-        "lat": "51.9452",
-        "lon": "7.1637"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 48712 Gescher",
-        "lat": "51.9527",
-        "lon": "7.0028"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 49124 Georgsmarienhütte",
-        "lat": "52.2051",
-        "lon": "8.0472"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 49152 Bad Essen",
-        "lat": "52.3207",
-        "lon": "8.3426"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 49176 Hilter (Teutoburger Wald)",
-        "lat": "52.1354",
-        "lon": "8.1597"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 49324 Melle",
-        "lat": "52.2038",
-        "lon": "8.3381"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 49356 Diepholz",
-        "lat": "52.6032",
-        "lon": "8.3715"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 49393 Lohne (Oldenburg)",
-        "lat": "52.6624",
-        "lon": "8.2361"
-    },
-    {
-        "brand": "HAG",
-        "name": "Hagebau 49401 Damme",
-        "lat": "52.5174",
-        "lon": "8.1942"
+        "name": "Hagebau OSM#551800902",
+        "lat": "53.1595394",
+        "lon": "12.1725937"
     },
     {
         "brand": "HAG",
         "name": "Hagebau 49504 Lotte",
-        "lat": "52.2713",
-        "lon": "7.9235"
+        "lat": "52.3065887",
+        "lon": "7.9491168"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 15234 Frankfurt (Oder)",
+        "lat": "52.3603809",
+        "lon": "14.5244061"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#567972077",
+        "lat": "46.6287405",
+        "lon": "14.3585962"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 49525 Lengerich",
-        "lat": "52.1937",
-        "lon": "7.8592"
+        "name": "Hagebau 24376 Kappeln",
+        "lat": "54.6668300",
+        "lon": "9.9297420"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#582132478",
+        "lat": "50.9992870",
+        "lon": "10.3553546"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#588152051",
+        "lat": "51.3284057",
+        "lon": "6.2124819"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 49565 Bramsche",
-        "lat": "52.4063",
-        "lon": "7.9821"
+        "name": "Hagebau OSM#600871880",
+        "lat": "50.7940367",
+        "lon": "7.8645145"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#604300137",
+        "lat": "51.8521758",
+        "lon": "11.5592429"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32683 Barntrup",
+        "lat": "51.9876917",
+        "lon": "9.1335100"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#633283771",
+        "lat": "44.4251855",
+        "lon": "12.1664444"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 49610 Badbergen",
-        "lat": "52.6375",
-        "lon": "7.9752"
+        "name": "Hagebau OSM#634133664",
+        "lat": "51.9603509",
+        "lon": "6.9960135"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 47906 Kempen",
+        "lat": "51.3740955",
+        "lon": "6.4188330"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 43401 Most",
+        "lat": "50.5159712",
+        "lon": "13.6424263"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#652657954",
+        "lat": "50.3241746",
+        "lon": "11.6940130"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#661330405",
+        "lat": "53.2615032",
+        "lon": "7.4583398"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 75015 Bretten",
+        "lat": "49.0327399",
+        "lon": "8.7055996"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau Westerburg",
+        "lat": "50.5581965",
+        "lon": "7.9822735"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 63075 Offenbach am Main",
+        "lat": "50.1100334",
+        "lon": "8.8028086"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#683782708",
+        "lat": "51.8470366",
+        "lon": "10.8097431"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom Sonneberg",
+        "lat": "50.3437328",
+        "lon": "11.1490307"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 77900 Olomouc",
+        "lat": "49.5755735",
+        "lon": "17.2348021"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 56253 Treis-Karden",
+        "lat": "50.1680427",
+        "lon": "7.2895292"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 32469 Petershagen",
+        "lat": "52.3833184",
+        "lon": "9.0039087"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 34414 Warburg",
+        "lat": "51.4940556",
+        "lon": "9.1296612"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 06333 Hettstedt",
+        "lat": "51.6405143",
+        "lon": "11.4858521"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#779347405",
+        "lat": "48.0556584",
+        "lon": "10.8933046"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 24941 Flensburg",
+        "lat": "54.7589655",
+        "lon": "9.4325572"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 36251 Bad Hersfeld",
+        "lat": "50.8639488",
+        "lon": "9.7097046"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#799557806",
+        "lat": "51.2575859",
+        "lon": "6.3325996"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 48301 Nottuln",
+        "lat": "51.9273451",
+        "lon": "7.3642049"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 15306 Seelow",
+        "lat": "52.5300455",
+        "lon": "14.3664033"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 48527 Nordhorn",
+        "lat": "52.4388603",
+        "lon": "7.0650641"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 33758 Schloß Holte-Stukenbrock",
+        "lat": "51.9034493",
+        "lon": "8.6394377"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 72379 Hechingen",
+        "lat": "48.3674884",
+        "lon": "8.9649261"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 33-300 Nowy Sącz",
+        "lat": "49.6226341",
+        "lon": "20.7203281"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 69412 Eberbach",
+        "lat": "49.4729070",
+        "lon": "8.9869970"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#903953648",
+        "lat": "50.0990408",
+        "lon": "8.5889100"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41201 Litoměřice",
+        "lat": "50.5257650",
+        "lon": "14.1386924"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 14542 Werder (Havel)",
+        "lat": "52.3622068",
+        "lon": "12.9363698"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06712 Zeitz",
+        "lat": "51.0360899",
+        "lon": "12.1631319"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#1002419533",
+        "lat": "50.4648639",
+        "lon": "7.7240514"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 79650 Schopfheim",
+        "lat": "47.6422942",
+        "lon": "7.8102827"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 42551 Velbert",
+        "lat": "51.3404556",
+        "lon": "7.0556076"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 47922 Rimini",
+        "lat": "44.0593814",
+        "lon": "12.5426540"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#1056999782",
+        "lat": "47.5749117",
+        "lon": "7.7998155"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1085321927",
+        "lat": "59.9933833",
+        "lon": "30.1470525"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9015 St. Gallen",
+        "lat": "47.4151225",
+        "lon": "9.3128494"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06406 Bernburg (Saale)",
+        "lat": "51.7776514",
+        "lon": "11.7363101"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 17153 Stavenhagen",
+        "lat": "53.6875821",
+        "lon": "12.9153143"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 350 02 Cheb",
+        "lat": "50.0730568",
+        "lon": "12.3680717"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 98724 Neuhaus am Rennweg",
+        "lat": "50.4926732",
+        "lon": "11.1606474"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 14712 Rathenow",
+        "lat": "52.6078364",
+        "lon": "12.3231870"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 14772 Brandenburg an der Havel",
+        "lat": "52.4331674",
+        "lon": "12.5464656"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1205926070",
+        "lat": "49.7634971",
+        "lon": "11.9206776"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1222202139",
+        "lat": "52.9945047",
+        "lon": "11.7240644"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 28779 Bremen",
+        "lat": "53.1798493",
+        "lon": "8.5692078"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 39040 Vahrn - Varna",
+        "lat": "46.7310064",
+        "lon": "11.6523655"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Warszawa",
+        "lat": "52.1408395",
+        "lon": "21.0248328"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8604 Volketswil",
+        "lat": "47.3799690",
+        "lon": "8.6750254"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 15517 Fürstenwalde/Spree",
+        "lat": "52.3355634",
+        "lon": "14.0806858"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6000 Kecskemét",
+        "lat": "46.8935166",
+        "lon": "19.6672984"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06366 Köthen (Anhalt)",
+        "lat": "51.7459038",
+        "lon": "11.9484500"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4300 Sankt Valentin",
+        "lat": "48.1671087",
+        "lon": "14.5136151"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 31600 Uchte",
+        "lat": "52.4983393",
+        "lon": "8.9022789"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 04910 Elsterwerda",
+        "lat": "51.4646934",
+        "lon": "13.5323566"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6380 St. Johann in Tirol",
+        "lat": "47.5191656",
+        "lon": "12.4148100"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 16227 Eberswalde",
+        "lat": "52.8394344",
+        "lon": "13.7701264"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 36043 Fulda",
+        "lat": "50.5315902",
+        "lon": "9.6929438"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 94209 Regen",
+        "lat": "48.9736841",
+        "lon": "13.0962338"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1426017832",
+        "lat": "54.1248324",
+        "lon": "10.6257276"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 18273 Güstrow",
+        "lat": "53.8000588",
+        "lon": "12.2158638"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 34369 Hofgeismar",
+        "lat": "51.5003324",
+        "lon": "9.3928872"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 97833",
+        "lat": "50.0559579",
+        "lon": "9.4851029"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8042 Graz",
+        "lat": "47.0362654",
+        "lon": "15.4856089"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 03222 Lübbenau/Spreewald",
+        "lat": "51.8659971",
+        "lon": "13.9400405"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04552 Borna",
+        "lat": "51.1081650",
+        "lon": "12.4882252"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31275 Lehrte",
+        "lat": "52.3741890",
+        "lon": "9.9844864"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 31633 Leese",
+        "lat": "52.4933129",
+        "lon": "9.1205707"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1552640325",
+        "lat": "53.4179184",
+        "lon": "11.8238738"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 29614 Soltau",
+        "lat": "52.9723341",
+        "lon": "9.8154499"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1586226525",
+        "lat": "49.4798018",
+        "lon": "11.2276963"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 48231 Warendorf",
+        "lat": "51.9531527",
+        "lon": "7.9737431"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85055 Ingolstadt",
+        "lat": "48.7788048",
+        "lon": "11.4311526"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Gdańsk",
+        "lat": "54.3212063",
+        "lon": "18.5486566"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 48268 Greven",
+        "lat": "52.0948417",
+        "lon": "7.6050127"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 92637 Weiden i.d.OPf.",
+        "lat": "49.6546788",
+        "lon": "12.1439088"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 92637 Weiden i.d.OPf.",
+        "lat": "49.6614457",
+        "lon": "12.1476652"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#1693281981",
+        "lat": "49.9126983",
+        "lon": "8.1882104"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1699751596",
+        "lat": "49.7987185",
+        "lon": "18.2298107"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 08393 Meerane",
+        "lat": "50.8385488",
+        "lon": "12.4474638"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8600 Bruck an der Mur",
+        "lat": "47.4020195",
+        "lon": "15.2414865"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 93413 Cham",
+        "lat": "49.2031581",
+        "lon": "12.6628617"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 10-088 Olsztyn",
+        "lat": "53.7522531",
+        "lon": "20.4836254"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1821604664",
+        "lat": "50.3209915",
+        "lon": "19.1039075"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 76275 Ettlingen",
+        "lat": "48.9459099",
+        "lon": "8.3848554"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1885324575",
+        "lat": "41.9565367",
+        "lon": "12.6984284"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06667 Weißenfels",
+        "lat": "51.1972740",
+        "lon": "11.9993339"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 39701 Písek",
+        "lat": "49.2992261",
+        "lon": "14.1410163"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 06526 Sangerhausen",
+        "lat": "51.4807337",
+        "lon": "11.3168875"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1931873442",
+        "lat": "56.8512481",
+        "lon": "60.5510879"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 06366 Köthen (Anhalt)",
+        "lat": "51.7652541",
+        "lon": "11.9845181"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 59348 Lüdinghausen",
+        "lat": "51.7690669",
+        "lon": "7.4287048"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#1972105419",
+        "lat": "52.6747308",
+        "lon": "8.2530904"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 37242",
+        "lat": "51.2675054",
+        "lon": "9.9702464"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 26160 Bad Zwischenahn",
+        "lat": "53.1687111",
+        "lon": "8.0014053"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 63452 Hanau",
+        "lat": "50.1479966",
+        "lon": "8.9298313"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 49610 Quakenbrück",
+        "lat": "52.6647629",
+        "lon": "7.9667158"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 40-555 Katowice",
+        "lat": "50.2301278",
+        "lon": "18.9931936"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#2123264455",
+        "lat": "52.6820659",
+        "lon": "9.9111874"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 4320 Perg",
+        "lat": "48.2471703",
+        "lon": "14.6251379"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 29525 Uelzen",
+        "lat": "52.9663455",
+        "lon": "10.5519403"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 75002 Přerov",
+        "lat": "49.4574569",
+        "lon": "17.4348893"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#2269551497",
+        "lat": "46.7453064",
+        "lon": "7.6041777"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 25746 Heide",
+        "lat": "54.1753653",
+        "lon": "9.0926605"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 99610 Sömmerda",
+        "lat": "51.1666343",
+        "lon": "11.1123037"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#2335757341",
+        "lat": "50.8407109",
+        "lon": "7.9760677"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 94469 Deggendorf",
+        "lat": "48.8501992",
+        "lon": "12.9635534"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#2357664730",
+        "lat": "51.3093890",
+        "lon": "6.2850380"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 40026",
+        "lat": "44.3437719",
+        "lon": "11.7413238"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 97616 Bad Neustadt an der Saale",
+        "lat": "50.3165436",
+        "lon": "10.1986381"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 02625 Bautzen",
+        "lat": "51.1786673",
+        "lon": "14.3971295"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 93413 Cham",
+        "lat": "49.2078329",
+        "lon": "12.6658842"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 16816 Neuruppin",
+        "lat": "52.9154627",
+        "lon": "12.7898718"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 42103 Wuppertal",
+        "lat": "51.2485309",
+        "lon": "7.1354344"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 94227 Zwiesel",
+        "lat": "49.0097281",
+        "lon": "13.2216721"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 86633 Neuburg an der Donau",
+        "lat": "48.7210224",
+        "lon": "11.1711773"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#2483262069",
+        "lat": "45.6084588",
+        "lon": "8.9210802"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 36006 Karlovy Vary",
+        "lat": "50.2241661",
+        "lon": "12.8226154"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 27576 Bremerhaven",
+        "lat": "53.5560652",
+        "lon": "8.5896397"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 54101 Trutnov",
+        "lat": "50.5721278",
+        "lon": "15.8913187"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 10249 Berlin",
+        "lat": "52.5223479",
+        "lon": "13.4655699"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 09356 St. Egidien",
+        "lat": "50.7748366",
+        "lon": "12.6245140"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 33649 Bielefeld",
+        "lat": "51.9789485",
+        "lon": "8.4807558"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41747 Viersen",
+        "lat": "51.2441555",
+        "lon": "6.4094232"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#2710645897",
+        "lat": "45.6199500",
+        "lon": "8.4037740"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 93437 Furth im Wald",
+        "lat": "49.3062776",
+        "lon": "12.8536287"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 21509 Glinde",
+        "lat": "53.5324436",
+        "lon": "10.2232222"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 75334 Straubenhardt",
+        "lat": "48.8453211",
+        "lon": "8.5220250"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#2860151266",
+        "lat": "50.8294683",
+        "lon": "8.7695305"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 73479 Ellwangen (Jagst)",
+        "lat": "48.9527611",
+        "lon": "10.1689224"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 31832 Springe",
+        "lat": "52.2114758",
+        "lon": "9.5689738"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#2930659445",
+        "lat": "50.3801495",
+        "lon": "18.8898398"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 78727 Oberndorf am Neckar",
+        "lat": "48.2987350",
+        "lon": "8.6282827"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 62012 Civitanova Marche",
+        "lat": "43.2921666",
+        "lon": "13.7013129"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 17033 Neubrandenburg",
+        "lat": "53.5253551",
+        "lon": "13.2671563"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 78467 Konstanz",
+        "lat": "47.6766779",
+        "lon": "9.1471406"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 88239 Wangen im Allgäu",
+        "lat": "47.6941639",
+        "lon": "9.8258405"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 21019 Somma Lombardo",
+        "lat": "45.6804349",
+        "lon": "8.7229956"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 41189 Mönchengladbach",
+        "lat": "51.1418632",
+        "lon": "6.4105262"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 21244 Buchholz in der Nordheide",
+        "lat": "53.3500847",
+        "lon": "9.8663249"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 02906 Niesky",
+        "lat": "51.2872377",
+        "lon": "14.8182694"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 40231 Düsseldorf",
+        "lat": "51.2162960",
+        "lon": "6.8255242"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 29614 Soltau",
+        "lat": "52.9775903",
+        "lon": "9.8556563"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#3156254977",
+        "lat": "52.3820324",
+        "lon": "13.2442317"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 18182 Bentwisch",
+        "lat": "54.1173711",
+        "lon": "12.1937985"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 48429 Rheine",
+        "lat": "52.2856367",
+        "lon": "7.4424383"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 98617 Meiningen",
+        "lat": "50.5851677",
+        "lon": "10.4117762"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#3247468276",
+        "lat": "55.8771461",
+        "lon": "37.3300019"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#3250104360",
+        "lat": "44.8834461",
+        "lon": "10.0886312"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 15834 Rangsdorf",
+        "lat": "52.2992671",
+        "lon": "13.4568482"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 23554 Lübeck",
+        "lat": "53.8798220",
+        "lon": "10.6685143"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 34454 Bad Arolsen",
+        "lat": "51.3726944",
+        "lon": "8.9925641"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83052 Bruckmühl",
+        "lat": "47.8767339",
+        "lon": "11.9617395"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8000 Székesfehérvár",
+        "lat": "47.1904155",
+        "lon": "18.4236415"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 32547",
+        "lat": "52.2135401",
+        "lon": "8.8112087"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 56023 Navacchio",
+        "lat": "43.6727382",
+        "lon": "10.4730689"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 48455 Bad Bentheim",
+        "lat": "52.3085342",
+        "lon": "7.1525020"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 24768 Rendsburg",
+        "lat": "54.3188486",
+        "lon": "9.6237765"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 35708 Haiger",
+        "lat": "50.7443117",
+        "lon": "8.2102176"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#3645124453",
+        "lat": "50.5420645",
+        "lon": "6.5753335"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 23758 Oldenburg in Holstein",
+        "lat": "54.2925609",
+        "lon": "10.9199160"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 78315",
+        "lat": "47.7443894",
+        "lon": "8.9572126"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#3842225325",
+        "lat": "52.5920362",
+        "lon": "12.3362743"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8404 Winterthur",
+        "lat": "47.4974795",
+        "lon": "8.7611817"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85368 Moosburg a.d. Isar",
+        "lat": "48.4723161",
+        "lon": "11.9665104"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#4003401876",
+        "lat": "50.0130272",
+        "lon": "8.7751639"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 29640 Schneverdingen",
+        "lat": "53.1046064",
+        "lon": "9.7992213"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#4038453580",
+        "lat": "51.5579832",
+        "lon": "8.1331779"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 58708 Menden (Sauerland)",
+        "lat": "51.4461737",
+        "lon": "7.7597058"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 6511 Zams",
+        "lat": "47.1673700",
+        "lon": "10.5909902"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 21365 Adendorf",
+        "lat": "53.2868461",
+        "lon": "10.4254282"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#4174239093",
+        "lat": "45.4635132",
+        "lon": "10.5271742"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 58601 Jihlava",
+        "lat": "49.4086043",
+        "lon": "15.5789109"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04100 Latina",
+        "lat": "41.4576986",
+        "lon": "12.8959870"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 86720 Nördlingen",
+        "lat": "48.8579786",
+        "lon": "10.4944779"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32657 Lemgo",
+        "lat": "52.0269096",
+        "lon": "8.8875989"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 32758 Detmold",
+        "lat": "51.9520454",
+        "lon": "8.8563115"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 40549 Düsseldorf",
+        "lat": "51.2274560",
+        "lon": "6.7023235"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3302 Moosseedorf",
+        "lat": "47.0157651",
+        "lon": "7.4901073"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 23864 Malgrate",
+        "lat": "45.8480374",
+        "lon": "9.3697285"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 26871 Papenburg",
+        "lat": "53.0828494",
+        "lon": "7.3863932"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8753 Fohnsdorf",
+        "lat": "47.1844955",
+        "lon": "14.6817845"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 25917 Leck",
+        "lat": "54.7803636",
+        "lon": "8.9770184"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 99880 Waltershausen",
+        "lat": "50.8950211",
+        "lon": "10.5689343"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 76829 Landau in der Pfalz",
+        "lat": "49.2121660",
+        "lon": "8.1178017"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#5664313429",
+        "lat": "51.5806694",
+        "lon": "7.0047631"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#5757280648",
+        "lat": "54.5339683",
+        "lon": "9.5556482"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#5820333146",
+        "lat": "51.5118267",
+        "lon": "14.6111174"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 49152 Bad Essen",
+        "lat": "52.3253341",
+        "lon": "8.3380960"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 32457 Porta Westfalica",
+        "lat": "52.2637058",
+        "lon": "8.9012113"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 21465 Wentorf bei Hamburg",
+        "lat": "53.4886548",
+        "lon": "10.2636345"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 70839 Gerlingen",
+        "lat": "48.8073193",
+        "lon": "9.0774482"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 82256 Fürstenfeldbruck",
+        "lat": "48.1767900",
+        "lon": "11.2285693"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 3335 Weyer",
+        "lat": "47.8530615",
+        "lon": "14.6553778"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 84405 Dorfen",
+        "lat": "48.2585987",
+        "lon": "12.1583588"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 6330 Kufstein",
+        "lat": "47.5946311",
+        "lon": "12.1756324"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 07937 Langenwolschendorf",
+        "lat": "50.6421159",
+        "lon": "11.9684085"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 88339 Bad Waldsee",
+        "lat": "47.9401825",
+        "lon": "9.7636324"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom Pasewalk",
+        "lat": "53.5149749",
+        "lon": "14.0112613"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4665 Oftringen",
+        "lat": "47.3079244",
+        "lon": "7.9294985"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 58332 Schwelm",
+        "lat": "51.2920055",
+        "lon": "7.2860817"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#6635260916",
+        "lat": "48.4524052",
+        "lon": "12.3603054"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#6637119838",
+        "lat": "46.6322177",
+        "lon": "11.1774782"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 45525 Hattingen",
+        "lat": "51.3905338",
+        "lon": "7.1727603"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 57413 Finnentrop",
+        "lat": "51.1649449",
+        "lon": "7.9791650"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#6661282146",
+        "lat": "45.0114458",
+        "lon": "39.1252392"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#6710828519",
+        "lat": "48.3998441",
+        "lon": "12.7470509"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#6780480289",
+        "lat": "45.6819440",
+        "lon": "11.9416242"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#6787793222",
+        "lat": "55.6583387",
+        "lon": "37.4327737"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 74523 Schwäbisch Hall",
+        "lat": "49.1054112",
+        "lon": "9.7079658"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 82256 Fürstenfeldbruck",
+        "lat": "48.1857594",
+        "lon": "11.2377069"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 99086 Erfurt",
+        "lat": "51.0124268",
+        "lon": "11.0227412"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#7080030533",
+        "lat": "44.4216324",
+        "lon": "7.5493841"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 92237 Sulzbach-Rosenberg",
+        "lat": "49.4956919",
+        "lon": "11.7420894"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 18437 Stralsund",
+        "lat": "54.3055298",
+        "lon": "13.0631054"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 99099 Erfurt",
+        "lat": "50.9733450",
+        "lon": "11.0633284"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 14943 Luckenwalde",
+        "lat": "52.1019842",
+        "lon": "13.1244968"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 99869 Schwabhausen",
+        "lat": "50.8934655",
+        "lon": "10.7288606"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 04838 Eilenburg",
+        "lat": "51.4657969",
+        "lon": "12.6761234"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom Lingen (Ems)",
+        "lat": "52.5421030",
+        "lon": "7.3452957"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91207 Lauf an der Pegnitz",
+        "lat": "49.5173020",
+        "lon": "11.3110551"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 89537 Giengen an der Brenz",
+        "lat": "48.6171375",
+        "lon": "10.2510713"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 9523 Villach-Landskron",
+        "lat": "46.6277819",
+        "lon": "13.8788212"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91301 Forchheim",
+        "lat": "49.6974786",
+        "lon": "11.0606884"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#8180155299",
+        "lat": "49.0283426",
+        "lon": "12.1122292"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3380 Pöchlarn",
+        "lat": "48.1988380",
+        "lon": "15.2211285"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 27318 Hoya",
+        "lat": "52.8013436",
+        "lon": "9.1345085"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 59100 Prato",
+        "lat": "43.8772291",
+        "lon": "11.0750147"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83512 Wasserburg am Inn",
+        "lat": "48.0498479",
+        "lon": "12.2198465"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 86381 Krumbach (Schwaben)",
+        "lat": "48.2542451",
+        "lon": "10.3538163"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 16792 Zehdenick",
+        "lat": "52.9904063",
+        "lon": "13.3481612"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 35576 Wetzlar",
+        "lat": "50.5677798",
+        "lon": "8.4835263"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 44866 Bochum",
+        "lat": "51.4750888",
+        "lon": "7.1239299"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#8586880400",
+        "lat": "47.4116063",
+        "lon": "13.2178192"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#8909758653",
+        "lat": "54.3317196",
+        "lon": "10.2057658"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 35510 Butzbach",
+        "lat": "50.4339194",
+        "lon": "8.6847457"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8207 Schaffhausen",
+        "lat": "47.7179651",
+        "lon": "8.6574855"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 49479 Ibbenbüren",
+        "lat": "52.2586656",
+        "lon": "7.7097641"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 87527 Sonthofen",
+        "lat": "47.5153366",
+        "lon": "10.2913059"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 7632 Pécs",
+        "lat": "46.0564646",
+        "lon": "18.2340646"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 38304 Wolfenbüttel",
+        "lat": "52.1589803",
+        "lon": "10.5068994"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#9770542780",
+        "lat": "43.7133241",
+        "lon": "10.9242299"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 65203 Wiesbaden",
+        "lat": "50.0509848",
+        "lon": "8.2172898"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 47495 Rheinberg",
+        "lat": "51.5365856",
+        "lon": "6.6085867"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38448 Wolfsburg",
+        "lat": "52.4209675",
+        "lon": "10.8616431"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 99867 Gotha",
+        "lat": "50.9410490",
+        "lon": "10.7301555"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#9872235324",
+        "lat": "50.9975554",
+        "lon": "9.7347746"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 27283 Verden (Aller)",
+        "lat": "52.9185825",
+        "lon": "9.2178701"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 28870 Ottersberg",
+        "lat": "53.0624716",
+        "lon": "9.1652314"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 93333 Neustadt an der Donau",
+        "lat": "48.8125005",
+        "lon": "11.7546572"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04758 Oschatz",
+        "lat": "51.2977823",
+        "lon": "13.0937461"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 04720 Döbeln",
+        "lat": "51.1192989",
+        "lon": "13.1459831"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 65552 Limburg an der Lahn",
+        "lat": "50.3786371",
+        "lon": "8.0982260"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 16321 Bernau",
+        "lat": "52.6878340",
+        "lon": "13.5642546"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 56410 Montabaur",
+        "lat": "50.4472588",
+        "lon": "7.8329776"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38889 Blankenburg (Harz)",
+        "lat": "51.8074008",
+        "lon": "10.9424686"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 07749 Jena",
+        "lat": "50.9407363",
+        "lon": "11.5980973"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#11195608040",
+        "lat": "48.2187576",
+        "lon": "13.4965495"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 16866 Hansestadt Kyritz",
+        "lat": "52.9526078",
+        "lon": "12.3975223"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 37308 Heilbad Heiligenstadt",
+        "lat": "51.3684928",
+        "lon": "10.1553471"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 52477 Alsdorf",
+        "lat": "50.8893542",
+        "lon": "6.1751921"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#11384344188",
+        "lat": "50.1688785",
+        "lon": "8.9734127"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 60439 Frankfurt am Main",
+        "lat": "50.1577964",
+        "lon": "8.6343178"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#11674327976",
+        "lat": "53.5928901",
+        "lon": "10.0986041"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2250 Ptuj",
+        "lat": "46.4223076",
+        "lon": "15.8860636"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32676 Lügde",
+        "lat": "51.9670522",
+        "lon": "9.2514685"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32425 Minden",
+        "lat": "52.3142257",
+        "lon": "8.8767827"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#11863259438",
+        "lat": "48.3751889",
+        "lon": "20.0207765"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 99706 Sondershausen",
+        "lat": "51.3648322",
+        "lon": "10.8911498"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#11900858896",
+        "lat": "44.7801800",
+        "lon": "10.8590918"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 66020",
+        "lat": "42.4146536",
+        "lon": "14.1704933"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#11931073623",
+        "lat": "48.9344481",
+        "lon": "9.4449875"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 96052 Bamberg",
+        "lat": "49.9110381",
+        "lon": "10.8761439"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#12087242475",
+        "lat": "45.3914415",
+        "lon": "9.2599779"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 9400 Wolfsberg",
+        "lat": "46.8199667",
+        "lon": "14.8407534"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 07318 Saalfeld/Saale",
+        "lat": "50.6594966",
+        "lon": "11.3468651"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#12301877847",
+        "lat": "47.9764944",
+        "lon": "16.2814701"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 14482 Potsdam",
+        "lat": "52.3851776",
+        "lon": "13.1080241"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 33010 Tavagnacco",
+        "lat": "46.1166432",
+        "lon": "13.2209827"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#12609426044",
+        "lat": "50.2186444",
+        "lon": "8.8730799"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#12688120839",
+        "lat": "41.8698343",
+        "lon": "12.5851851"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 53842 Troisdorf",
+        "lat": "50.8266066",
+        "lon": "7.1030294"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 19386 Lübz",
+        "lat": "53.4655274",
+        "lon": "12.0418160"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 27472 Cuxhaven",
+        "lat": "53.8529099",
+        "lon": "8.7158329"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 93437 Furth im Wald",
+        "lat": "49.3042149",
+        "lon": "12.8500550"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 96450 Coburg",
+        "lat": "50.2883200",
+        "lon": "10.9821879"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1020 Renens",
+        "lat": "46.5329015",
+        "lon": "6.5866158"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#13273498985",
+        "lat": "42.4297600",
+        "lon": "12.1071040"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 97941 Tauberbischofsheim",
+        "lat": "49.6311385",
+        "lon": "9.6670584"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1227 Carouge GE",
+        "lat": "46.1850933",
+        "lon": "6.1342537"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#13859794947",
+        "lat": "45.5529831",
+        "lon": "10.7840536"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#13969858044",
+        "lat": "45.9994734",
+        "lon": "8.9050806"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 14300 Praha 12",
+        "lat": "50.0155566",
+        "lon": "14.4304875"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85560 Ebersberg",
+        "lat": "48.0790969",
+        "lon": "11.9856121"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#12355609",
+        "lat": "50.1209985",
+        "lon": "14.5070976"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1170 Wien",
+        "lat": "48.2234074",
+        "lon": "16.3196432"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 60488 Frankfurt am Main",
+        "lat": "50.1369560",
+        "lon": "8.6005238"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85386 Eching",
+        "lat": "48.3080658",
+        "lon": "11.6335302"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 21149 Hamburg",
+        "lat": "53.4736257",
+        "lon": "9.8477558"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2000 Stockerau",
+        "lat": "48.3879139",
+        "lon": "16.1811234"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 31515 Wunstorf",
+        "lat": "52.4184620",
+        "lon": "9.4491718"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#23054107",
+        "lat": "52.4293013",
+        "lon": "9.4160172"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 2100 Leobendorf",
+        "lat": "48.3615182",
+        "lon": "16.3489792"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 81827 München",
+        "lat": "48.1184919",
+        "lon": "11.6877400"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3442 Langenrohr",
+        "lat": "48.3180686",
+        "lon": "16.0194902"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 04229 Leipzig",
+        "lat": "51.3238427",
+        "lon": "12.3286278"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 21079 Hamburg",
+        "lat": "53.4536036",
+        "lon": "10.0016080"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 22047 Hamburg",
+        "lat": "53.5873474",
+        "lon": "10.0986398"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 86551 Aichach",
+        "lat": "48.4341100",
+        "lon": "11.1070865"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 27751 Delmenhorst",
+        "lat": "53.0378788",
+        "lon": "8.6762411"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 01728 Bannewitz",
+        "lat": "50.9992811",
+        "lon": "13.7196636"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 74074 Heilbronn",
+        "lat": "49.1229647",
+        "lon": "9.2205751"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 10200 Praha 10",
+        "lat": "50.0731236",
+        "lon": "14.5445380"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41464 Neuss",
+        "lat": "51.1870839",
+        "lon": "6.7091095"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4060 Leonding",
+        "lat": "48.2609373",
+        "lon": "14.2583559"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2000 Maribor",
+        "lat": "46.5414891",
+        "lon": "15.6491990"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 64319 Pfungstadt",
+        "lat": "49.8108752",
+        "lon": "8.5871776"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 53721 Siegburg",
+        "lat": "50.7989705",
+        "lon": "7.1857533"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 7000 Eisenstadt",
+        "lat": "47.8269576",
+        "lon": "16.5336100"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 12057 Berlin",
+        "lat": "52.4668281",
+        "lon": "13.4484512"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 22767 Hamburg",
+        "lat": "53.5501993",
+        "lon": "9.9451013"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 94474 Vilshofen an der Donau",
+        "lat": "48.6117988",
+        "lon": "13.1764386"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85435 Erding",
+        "lat": "48.3058368",
+        "lon": "11.8915141"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8054 Graz",
+        "lat": "47.0337306",
+        "lon": "15.4200787"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6830 Rankweil",
+        "lat": "47.2709424",
+        "lon": "9.6168775"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 53347 Alfter",
+        "lat": "50.7173093",
+        "lon": "7.0292948"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 45478 Mülheim an der Ruhr",
+        "lat": "51.4324175",
+        "lon": "6.8484745"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38444 Wolfsburg",
+        "lat": "52.3698354",
+        "lon": "10.7433092"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 80809 München",
+        "lat": "48.1883100",
+        "lon": "11.5519792"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 01279 Dresden",
+        "lat": "51.0177896",
+        "lon": "13.8321199"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 94060 Pocking",
+        "lat": "48.3926275",
+        "lon": "13.3096580"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32051 Herford",
+        "lat": "52.1293780",
+        "lon": "8.6448492"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 05-091 Ząbki",
+        "lat": "52.3025905",
+        "lon": "21.0865365"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 01445 Radebeul",
+        "lat": "51.1148456",
+        "lon": "13.6089472"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 61440 Oberursel (Taunus)",
+        "lat": "50.2088738",
+        "lon": "8.6005590"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32257 Bünde",
+        "lat": "52.1986383",
+        "lon": "8.5658638"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91126 Schwabach",
+        "lat": "49.3387498",
+        "lon": "11.0230385"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 63811 Stockstadt am Main",
+        "lat": "49.9615142",
+        "lon": "9.0790474"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31-876 Kraków",
+        "lat": "50.0871178",
+        "lon": "19.9776262"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 46562 Voerde (Niederrhein)",
+        "lat": "51.6179916",
+        "lon": "6.6744813"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 41844 Wegberg",
+        "lat": "51.1508938",
+        "lon": "6.2838723"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#25787543",
+        "lat": "48.7205836",
+        "lon": "10.7634757"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04011 Košice",
+        "lat": "48.6985851",
+        "lon": "21.2389404"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 79713 Bad Säckingen",
+        "lat": "47.5530971",
+        "lon": "7.9309206"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 15711 Königs Wusterhausen",
+        "lat": "52.2810583",
+        "lon": "13.6298342"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1140 Wien",
+        "lat": "48.1923579",
+        "lon": "16.2828615"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04289 Leipzig",
+        "lat": "51.3022816",
+        "lon": "12.4249228"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 18311 Ribnitz-Damgarten",
+        "lat": "54.2468955",
+        "lon": "12.4077651"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 41540 Dormagen",
+        "lat": "51.0941146",
+        "lon": "6.8088703"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 80686 München",
+        "lat": "48.1302569",
+        "lon": "11.5191206"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06132 Halle (Saale)",
+        "lat": "51.4416161",
+        "lon": "11.9851156"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31224 Peine",
+        "lat": "52.3149636",
+        "lon": "10.2719215"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 71034 Böblingen",
+        "lat": "48.6854751",
+        "lon": "8.9948661"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38228 Salzgitter",
+        "lat": "52.1383721",
+        "lon": "10.2891563"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 26129 Oldenburg",
+        "lat": "53.1439735",
+        "lon": "8.1899559"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 45472 Mülheim an der Ruhr",
+        "lat": "51.4434474",
+        "lon": "6.9463843"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 71229 Leonberg",
+        "lat": "48.7982800",
+        "lon": "9.0023604"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 46049 Oberhausen",
+        "lat": "51.4824483",
+        "lon": "6.8615980"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31137 Hildesheim",
+        "lat": "52.1592885",
+        "lon": "9.9401634"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 14800 Praha",
+        "lat": "50.0394872",
+        "lon": "14.4791231"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 82008 Unterhaching",
+        "lat": "48.0554437",
+        "lon": "11.6027271"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#27258245",
+        "lat": "48.1430636",
+        "lon": "11.4303040"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 71277 Rutesheim",
+        "lat": "48.8098265",
+        "lon": "8.9551489"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#27273298",
+        "lat": "51.3710703",
+        "lon": "11.9786601"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38350 Helmstedt",
+        "lat": "52.2164667",
+        "lon": "11.0278659"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 27721 Ritterhude",
+        "lat": "53.1885752",
+        "lon": "8.7074227"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 81675 München",
+        "lat": "48.1350904",
+        "lon": "11.6127184"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#27413061",
+        "lat": "55.6021008",
+        "lon": "37.4980801"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#27566419",
+        "lat": "52.6666997",
+        "lon": "13.5832021"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 71332 Waiblingen",
+        "lat": "48.8232594",
+        "lon": "9.2987823"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91781 Weißenburg in Bayern",
+        "lat": "49.0194125",
+        "lon": "10.9629379"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 49324 Melle",
+        "lat": "52.1937597",
+        "lon": "8.3518409"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 96450 Coburg",
+        "lat": "50.2276458",
+        "lon": "10.9798289"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91052 Erlangen",
+        "lat": "49.5889821",
+        "lon": "11.0337977"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 70327 Stuttgart",
+        "lat": "48.7674433",
+        "lon": "9.2473468"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 45894 Gelsenkirchen",
+        "lat": "51.5860061",
+        "lon": "7.0344971"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 61169 Friedberg (Hessen)",
+        "lat": "50.3209017",
+        "lon": "8.7376029"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 03185 Peitz",
+        "lat": "51.8507623",
+        "lon": "14.4004992"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 95445 Bayreuth",
+        "lat": "49.9516825",
+        "lon": "11.5664098"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 74722 Buchen (Odenwald)",
+        "lat": "49.5094626",
+        "lon": "9.3139767"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 13086 Berlin",
+        "lat": "52.5620118",
+        "lon": "13.4576692"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 65830 Kriftel",
+        "lat": "50.0755331",
+        "lon": "8.4751889"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 35394 Gießen",
+        "lat": "50.5699558",
+        "lon": "8.6907811"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 01662",
+        "lat": "51.1758408",
+        "lon": "13.4991669"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 68766 Hockenheim",
+        "lat": "49.3285291",
+        "lon": "8.5352446"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 32825 Blomberg",
+        "lat": "51.9384531",
+        "lon": "9.0959174"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 01662 Meißen",
+        "lat": "51.1635400",
+        "lon": "13.4916732"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 50735 Köln",
+        "lat": "50.9732554",
+        "lon": "6.9608280"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 97816 Lohr am Main",
+        "lat": "49.9756949",
+        "lon": "9.5868365"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 821 05 Bratislava",
+        "lat": "48.1434177",
+        "lon": "17.1503924"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#29109641",
+        "lat": "49.2726648",
+        "lon": "11.4465142"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 92507 Nabburg",
+        "lat": "49.4478347",
+        "lon": "12.1743697"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#29202069",
+        "lat": "52.2401103",
+        "lon": "10.9917995"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 47059 Duisburg",
+        "lat": "51.4397844",
+        "lon": "6.7611707"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 90592 Schwarzenbruck",
+        "lat": "49.3613801",
+        "lon": "11.2508319"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 30-663 Kraków",
+        "lat": "50.0140887",
+        "lon": "19.9971079"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 03-671 Warszawa",
+        "lat": "52.2751601",
+        "lon": "21.0678466"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85221 Dachau",
+        "lat": "48.2603275",
+        "lon": "11.4749671"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 85221 Dachau",
+        "lat": "48.2618629",
+        "lon": "11.4703094"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 71083 Herrenberg",
+        "lat": "48.6035181",
+        "lon": "8.8700906"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 23843 Bad Oldesloe",
+        "lat": "53.7987969",
+        "lon": "10.4041935"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 45721 Haltern am See",
+        "lat": "51.7329971",
+        "lon": "7.1669200"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6850 Dornbirn",
+        "lat": "47.4142510",
+        "lon": "9.7096060"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 01156 Dresden",
+        "lat": "51.0391289",
+        "lon": "13.6298907"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 15234 Frankfurt (Oder)",
+        "lat": "52.3415334",
+        "lon": "14.5074993"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#30162677",
+        "lat": "54.0671897",
+        "lon": "13.7620533"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 21255 Tostedt",
+        "lat": "53.2905127",
+        "lon": "9.7317345"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91257 Pegnitz",
+        "lat": "49.7464337",
+        "lon": "11.5333959"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 09496 Marienberg",
+        "lat": "50.6576633",
+        "lon": "13.1561504"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 70736 Fellbach",
+        "lat": "48.8141399",
+        "lon": "9.2650856"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 22143 Hamburg",
+        "lat": "53.6026668",
+        "lon": "10.1472251"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Kaiserslautern",
+        "lat": "49.4440656",
+        "lon": "7.7065586"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38518 Gifhorn",
+        "lat": "52.4629686",
+        "lon": "10.5378280"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 95032 Hof",
+        "lat": "50.3053465",
+        "lon": "11.9202237"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 31737 Rinteln",
+        "lat": "52.1963992",
+        "lon": "9.0732935"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 01458 Ottendorf-Okrilla",
+        "lat": "51.1768255",
+        "lon": "13.8261552"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 7400 Kaposvár",
+        "lat": "46.3583601",
+        "lon": "17.7819025"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 33803 Steinhagen",
+        "lat": "52.0040808",
+        "lon": "8.4141060"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#31012282",
+        "lat": "49.3147998",
+        "lon": "12.0984064"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 74076 Heilbronn",
+        "lat": "49.1536193",
+        "lon": "9.2142499"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 38448 Wolfsburg",
+        "lat": "52.4342776",
+        "lon": "10.8597590"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2320 Schwechat",
+        "lat": "48.1388543",
+        "lon": "16.4894503"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 01277 Dresden",
+        "lat": "51.0291738",
+        "lon": "13.7954950"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 90537 Feucht",
+        "lat": "49.3651115",
+        "lon": "11.2049951"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 90480 Nürnberg",
+        "lat": "49.4361605",
+        "lon": "11.1202972"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1210 Wien",
+        "lat": "48.2709278",
+        "lon": "16.4075735"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 23843 Bad Oldesloe",
+        "lat": "53.7931972",
+        "lon": "10.4099378"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41501 Teplice",
+        "lat": "50.6547305",
+        "lon": "13.8462592"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 73066 Uhingen",
+        "lat": "48.7134723",
+        "lon": "9.5667004"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91315 Höchstadt an der Aisch",
+        "lat": "49.6958900",
+        "lon": "10.8156104"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 59557 Lippstadt",
+        "lat": "51.6609357",
+        "lon": "8.3601772"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 73230 Kirchheim unter Teck",
+        "lat": "48.6498891",
+        "lon": "9.4401114"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 63303 Dreieich",
+        "lat": "50.0301807",
+        "lon": "8.6976356"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#32317627",
+        "lat": "49.5056655",
+        "lon": "11.4832656"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 64807 Dieburg",
+        "lat": "49.8874878",
+        "lon": "8.8441113"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 06749 Bitterfeld-Wolfen",
+        "lat": "51.6132143",
+        "lon": "12.3056390"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 44357 Dortmund",
+        "lat": "51.5627135",
+        "lon": "7.3678602"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 58840 Plettenberg",
+        "lat": "51.2310820",
+        "lon": "7.8708667"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 51065 Köln",
+        "lat": "50.9505639",
+        "lon": "7.0156716"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 30952 Ronnenberg",
+        "lat": "52.3471535",
+        "lon": "9.6562846"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 25451 Quickborn",
+        "lat": "53.7435321",
+        "lon": "9.9412281"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 37115",
+        "lat": "51.5076057",
+        "lon": "10.2533854"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91154 Roth",
+        "lat": "49.2457404",
+        "lon": "11.1156583"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 53175 Bonn",
+        "lat": "50.6946693",
+        "lon": "7.1390096"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 06112 Halle (Saale)",
+        "lat": "51.4874191",
+        "lon": "12.0031225"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 18059 Rostock",
+        "lat": "54.0604061",
+        "lon": "12.1188467"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 08289 Schneeberg",
+        "lat": "50.6040603",
+        "lon": "12.6465319"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 18107 Rostock",
+        "lat": "54.1347121",
+        "lon": "12.0610915"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4407 Dietach",
+        "lat": "48.0775171",
+        "lon": "14.4242025"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 65232 Taunusstein",
+        "lat": "50.1370687",
+        "lon": "8.1536412"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 92-412 Łódź",
+        "lat": "51.7548858",
+        "lon": "19.5824637"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 98553",
+        "lat": "50.5155343",
+        "lon": "10.7546960"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 27607 Geestland",
+        "lat": "53.5959595",
+        "lon": "8.6005853"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04603 Windischleuba",
+        "lat": "51.0141331",
+        "lon": "12.4552538"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 7100 Neusiedl am See",
+        "lat": "47.9691251",
+        "lon": "16.8392882"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 21614 Buxtehude",
+        "lat": "53.4726571",
+        "lon": "9.7154057"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 50997 Köln",
+        "lat": "50.8592032",
+        "lon": "6.9732183"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 48653 Coesfeld",
+        "lat": "51.9294999",
+        "lon": "7.1708109"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06179",
+        "lat": "51.4624921",
+        "lon": "11.9055077"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 82110 Germering",
+        "lat": "48.1407529",
+        "lon": "11.3726146"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 80997 München",
+        "lat": "48.1784828",
+        "lon": "11.4966636"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 25337 Elmshorn",
+        "lat": "53.7433705",
+        "lon": "9.7085551"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 25337 Elmshorn",
+        "lat": "53.7469258",
+        "lon": "9.6939349"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 23730 Neustadt in Holstein",
+        "lat": "54.0945777",
+        "lon": "10.7855317"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 67547 Worms",
+        "lat": "49.6239294",
+        "lon": "8.3598781"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1000 Ljubljana",
+        "lat": "46.0181406",
+        "lon": "14.5329009"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 99817 Eisenach",
+        "lat": "51.0003183",
+        "lon": "10.3145540"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 2000 Stockerau",
+        "lat": "48.3891781",
+        "lon": "16.1829508"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 22301 Hamburg",
+        "lat": "53.5873197",
+        "lon": "10.0071044"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 04416 Markkleeberg",
+        "lat": "51.2712788",
+        "lon": "12.3656263"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 38121 Trento",
+        "lat": "46.0839007",
+        "lon": "11.1207382"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 24217 Schönberg (Holstein)",
+        "lat": "54.3878914",
+        "lon": "10.3724102"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 33142 Büren",
+        "lat": "51.5464572",
+        "lon": "8.5626360"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32339 Espelkamp",
+        "lat": "52.3729920",
+        "lon": "8.6244970"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 90431 Nürnberg",
+        "lat": "49.4525330",
+        "lon": "11.0171354"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 40721 Hilden",
+        "lat": "51.1747490",
+        "lon": "6.9121255"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 2130 Mistelbach",
+        "lat": "48.5619543",
+        "lon": "16.5784224"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 18146 Rostock",
+        "lat": "54.0988754",
+        "lon": "12.1784618"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3400 Klosterneuburg",
+        "lat": "48.2933833",
+        "lon": "16.3376898"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 60598 Frankfurt am Main",
+        "lat": "50.0949446",
+        "lon": "8.6832158"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 18273 Güstrow",
+        "lat": "53.8157616",
+        "lon": "12.1934152"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 47001 Česká Lípa",
+        "lat": "50.6998217",
+        "lon": "14.5435983"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 33609 Bielefeld",
+        "lat": "52.0392922",
+        "lon": "8.6005964"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 15344 Strausberg",
+        "lat": "52.5909496",
+        "lon": "13.9040722"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1220 Wien",
+        "lat": "48.2527166",
+        "lon": "16.4706184"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1220 Wien",
+        "lat": "48.2175420",
+        "lon": "16.4955553"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2334 Vösendorf",
+        "lat": "48.1184244",
+        "lon": "16.3153639"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 29223 Celle",
+        "lat": "52.6381949",
+        "lon": "10.0745740"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 37671 Höxter",
+        "lat": "51.7866256",
+        "lon": "9.3915785"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 92421 Schwandorf",
+        "lat": "49.3131537",
+        "lon": "12.1502576"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 49191 Belm",
+        "lat": "52.3044565",
+        "lon": "8.1201060"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38820 Halberstadt",
+        "lat": "51.8784753",
+        "lon": "11.0767524"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 51645 Gummersbach",
+        "lat": "50.9906813",
+        "lon": "7.5556687"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32584 Löhne",
+        "lat": "52.2073586",
+        "lon": "8.7179133"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 93-546 Łódź",
+        "lat": "51.7432984",
+        "lon": "19.4385444"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 30100 Plzeň",
+        "lat": "49.7287593",
+        "lon": "13.3644451"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 40004 Trmice",
+        "lat": "50.6516819",
+        "lon": "14.0043360"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 76571 Gaggenau",
+        "lat": "48.8230292",
+        "lon": "8.2969605"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 50767 Köln",
+        "lat": "51.0055563",
+        "lon": "6.8754950"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 48153 Münster",
+        "lat": "51.9219573",
+        "lon": "7.6320507"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 84130 Dingolfing",
+        "lat": "48.6371429",
+        "lon": "12.4861698"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 81827 München",
+        "lat": "48.1193047",
+        "lon": "11.6867066"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 59368 Werne",
+        "lat": "51.6635620",
+        "lon": "7.6437225"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 47228 Duisburg",
+        "lat": "51.4205484",
+        "lon": "6.7104379"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 50019 Sesto Fiorentino",
+        "lat": "43.8222050",
+        "lon": "11.2077267"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 56727 Mayen",
+        "lat": "50.3261837",
+        "lon": "7.2537706"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 61250 Usingen",
+        "lat": "50.3292385",
+        "lon": "8.5235317"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 63755 Alzenau",
+        "lat": "50.0885988",
+        "lon": "9.0465784"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 24113",
+        "lat": "54.2981908",
+        "lon": "10.0894095"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 85-741 Bydgoszcz",
+        "lat": "53.1226549",
+        "lon": "18.0639226"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#46341553",
+        "lat": "53.6079685",
+        "lon": "11.3769123"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Rzeszów",
+        "lat": "50.0207930",
+        "lon": "21.9784188"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 50389 Wesseling",
+        "lat": "50.8298882",
+        "lon": "6.9602576"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6020 Innsbruck",
+        "lat": "47.2671993",
+        "lon": "11.4266444"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 86391 Stadtbergen",
+        "lat": "48.3763948",
+        "lon": "10.8363916"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2011 Budakalász",
+        "lat": "47.6107342",
+        "lon": "19.0602931"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 97101 Prievidza",
+        "lat": "48.7851139",
+        "lon": "18.6261317"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#48227866",
+        "lat": "45.5128571",
+        "lon": "12.2318697"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 65779 Kelkheim (Taunus)",
+        "lat": "50.1193862",
+        "lon": "8.4688371"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 81243 München",
+        "lat": "48.1416277",
+        "lon": "11.4312287"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 57258 Freudenberg",
+        "lat": "50.9135068",
+        "lon": "7.9116479"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 61381 Friedrichsdorf",
+        "lat": "50.2580286",
+        "lon": "8.6552415"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom Freiburg im Breisgau",
+        "lat": "48.0300113",
+        "lon": "7.8580673"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04001 Košice",
+        "lat": "48.7399369",
+        "lon": "21.2701689"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3500 Krems an der Donau",
+        "lat": "48.4070394",
+        "lon": "15.6545596"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 57076 Siegen",
+        "lat": "50.8980792",
+        "lon": "8.0242936"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 72793 Pfullingen",
+        "lat": "48.4823829",
+        "lon": "9.2227524"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41-910 Bytom",
+        "lat": "50.3216596",
+        "lon": "18.9419574"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 24558 Henstedt-Ulzburg",
+        "lat": "53.8004279",
+        "lon": "9.9819074"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 30449 Hannover",
+        "lat": "52.3559024",
+        "lon": "9.7137312"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 16100 Praha",
+        "lat": "50.0783167",
+        "lon": "14.3094005"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 74705 Opava",
+        "lat": "49.9451175",
+        "lon": "17.9271946"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 65510 Idstein",
+        "lat": "50.2074038",
+        "lon": "8.2577995"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 52355 Düren",
+        "lat": "50.7885821",
+        "lon": "6.4675437"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#54044388",
+        "lat": "53.8395374",
+        "lon": "13.6814355"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 280 02 Kolín",
+        "lat": "50.0332220",
+        "lon": "15.1880677"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 42929 Wermelskirchen",
+        "lat": "51.1345418",
+        "lon": "7.1958531"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 30880 Laatzen",
+        "lat": "52.2964370",
+        "lon": "9.8273584"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 04347 Leipzig",
+        "lat": "51.3656694",
+        "lon": "12.4527808"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 03149 Forst (Lausitz)",
+        "lat": "51.7282083",
+        "lon": "14.6294587"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3300 Amstetten",
+        "lat": "48.1195907",
+        "lon": "14.8530439"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 69126 Heidelberg",
+        "lat": "49.3608299",
+        "lon": "8.6858117"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 83064 Raubling",
+        "lat": "47.8140041",
+        "lon": "12.1169322"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 81477 München",
+        "lat": "48.0904443",
+        "lon": "11.5078863"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 47506 Neukirchen-Vluyn",
+        "lat": "51.4348696",
+        "lon": "6.5473656"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83714 Miesbach",
+        "lat": "47.7937818",
+        "lon": "11.8395675"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 82467 Garmisch-Partenkirchen",
+        "lat": "47.5023717",
+        "lon": "11.0997114"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91522 Ansbach",
+        "lat": "49.2993994",
+        "lon": "10.5481315"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 02625 Bautzen",
+        "lat": "51.1879739",
+        "lon": "14.4533222"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 26789 Leer (Ostfriesland)",
+        "lat": "53.2425367",
+        "lon": "7.4615139"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 50171 Kerpen",
+        "lat": "50.8832204",
+        "lon": "6.6919198"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32756 Detmold",
+        "lat": "51.9468650",
+        "lon": "8.9019485"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06886 Wittenberg",
+        "lat": "51.8897396",
+        "lon": "12.6665522"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 51373 Leverkusen",
+        "lat": "51.0524820",
+        "lon": "7.0044411"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#60447212",
+        "lat": "53.4353346",
+        "lon": "10.3522326"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 13156 Berlin",
+        "lat": "52.5834854",
+        "lon": "13.4194250"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 35075 Gladenbach",
+        "lat": "50.7578642",
+        "lon": "8.5791760"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 65428 Rüsselsheim am Main",
+        "lat": "49.9833843",
+        "lon": "8.3964193"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 50858 Köln",
+        "lat": "50.9169668",
+        "lon": "6.8493541"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 50969 Köln",
+        "lat": "50.9058553",
+        "lon": "6.9347968"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 76302 Zlín-Malenovice",
+        "lat": "49.2036007",
+        "lon": "17.5734914"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau Stade",
+        "lat": "53.5812566",
+        "lon": "9.4987984"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 5101 Salzburg-Lengenfelden",
+        "lat": "47.8393866",
+        "lon": "13.0583798"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#68289300",
+        "lat": "50.8258549",
+        "lon": "19.1036158"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 21614 Buxtehude",
+        "lat": "53.4675567",
+        "lon": "9.7187747"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 03130 Spremberg",
+        "lat": "51.5587988",
+        "lon": "14.3572842"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04103 Leipzig",
+        "lat": "51.3482392",
+        "lon": "12.3902376"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38855 Wernigerode",
+        "lat": "51.8500796",
+        "lon": "10.8121204"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 22339 Hamburg",
+        "lat": "53.6488880",
+        "lon": "10.0387342"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 38667 Bad Harzburg",
+        "lat": "51.9121806",
+        "lon": "10.5398059"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 21423 Winsen (Luhe)",
+        "lat": "53.3385040",
+        "lon": "10.2211539"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 26441 Jever",
+        "lat": "53.5818914",
+        "lon": "7.9069857"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2130 Mistelbach",
+        "lat": "48.5684104",
+        "lon": "16.5957958"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 22070 Montano Lucino",
+        "lat": "45.7786934",
+        "lon": "9.0435206"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 71364 Winnenden",
+        "lat": "48.8727919",
+        "lon": "9.3834579"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 87-100 Toruń",
+        "lat": "53.0239670",
+        "lon": "18.6702275"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 08001 Prešov",
+        "lat": "48.9821812",
+        "lon": "21.2510141"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 61122 Pesaro",
+        "lat": "43.8960786",
+        "lon": "12.8394797"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 3493 Hadersdorf-Kammern",
+        "lat": "48.4755009",
+        "lon": "15.7003703"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 66538 Neunkirchen",
+        "lat": "49.3503302",
+        "lon": "7.2061929"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 05-110 Jabłonna",
+        "lat": "52.3798661",
+        "lon": "20.9209361"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2700 Wiener Neustadt",
+        "lat": "47.8410479",
+        "lon": "16.2469895"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 94901 Nitra",
+        "lat": "48.3173125",
+        "lon": "18.1061286"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 38364 Schöningen",
+        "lat": "52.1359209",
+        "lon": "10.9517882"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 71149 Bondorf",
+        "lat": "48.5241891",
+        "lon": "8.8408624"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 74613 Öhringen",
+        "lat": "49.2037878",
+        "lon": "9.4903355"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3910 Zwettl",
+        "lat": "48.6026502",
+        "lon": "15.1815790"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 7502 Unterwart",
+        "lat": "47.2711636",
+        "lon": "16.2402393"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 01968 Senftenberg",
+        "lat": "51.5216521",
+        "lon": "14.0170467"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 09599 Freiberg",
+        "lat": "50.8938848",
+        "lon": "13.3301830"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 24837 Schleswig",
+        "lat": "54.5319406",
+        "lon": "9.5725378"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 24837 Schleswig",
+        "lat": "54.5341920",
+        "lon": "9.5572631"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2040 Budaörs",
+        "lat": "47.4597889",
+        "lon": "18.8922598"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 52072 Aachen",
+        "lat": "50.7895109",
+        "lon": "6.0663854"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 52072 Aachen",
+        "lat": "50.7890892",
+        "lon": "6.0665666"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 95100 Selb",
+        "lat": "50.1673325",
+        "lon": "12.1471162"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 29439 Lüchow",
+        "lat": "52.9768825",
+        "lon": "11.1648619"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8010 Graz",
+        "lat": "47.0543778",
+        "lon": "15.4504691"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 01917 Kamenz",
+        "lat": "51.2861587",
+        "lon": "14.0938549"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 17036 Neubrandenburg",
+        "lat": "53.5560852",
+        "lon": "13.3095741"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 49356 Diepholz",
+        "lat": "52.6079395",
+        "lon": "8.3805517"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 39638 Gardelegen",
+        "lat": "52.5321055",
+        "lon": "11.4072789"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#88285545",
+        "lat": "52.5405452",
+        "lon": "11.3998602"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 78224 Singen (Hohentwiel)",
+        "lat": "47.7541908",
+        "lon": "8.8507635"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 80-394 Gdańsk",
+        "lat": "54.4014789",
+        "lon": "18.5834075"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 26427 Esens",
+        "lat": "53.6336682",
+        "lon": "7.6113668"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 79108 Freiburg im Breisgau",
+        "lat": "48.0244489",
+        "lon": "7.8470351"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 19205 Gadebusch",
+        "lat": "53.6979949",
+        "lon": "11.1043464"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8295 Sankt Johann in der Haide",
+        "lat": "47.2817418",
+        "lon": "16.0167705"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 59581 Warstein",
+        "lat": "51.4579131",
+        "lon": "8.3463927"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 02708 Löbau",
+        "lat": "51.1081844",
+        "lon": "14.6565452"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 19057 Schwerin",
+        "lat": "53.6552098",
+        "lon": "11.3733716"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 04828 Bennewitz",
+        "lat": "51.3588036",
+        "lon": "12.7165038"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 24539 Neumünster",
+        "lat": "54.0469667",
+        "lon": "10.0071723"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 23966 Wismar",
+        "lat": "53.8951792",
+        "lon": "11.4374268"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 76-251 Kobylnica",
+        "lat": "54.4537864",
+        "lon": "16.9707681"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 64720 Michelstadt",
+        "lat": "49.6924290",
+        "lon": "9.0033709"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#90098264",
+        "lat": "49.8027921",
+        "lon": "9.8825738"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4840 Vöcklabruck",
+        "lat": "48.0033355",
+        "lon": "13.6434557"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 23970 Wismar",
+        "lat": "53.9251527",
+        "lon": "11.4870399"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 02977 Hoyerswerda",
+        "lat": "51.4578304",
+        "lon": "14.2683044"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 96317 Kronach",
+        "lat": "50.2335586",
+        "lon": "11.3476180"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 26607 Aurich",
+        "lat": "53.4973249",
+        "lon": "7.4917250"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 38723 Seesen",
+        "lat": "51.8883638",
+        "lon": "10.1754307"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 14641 Nauen",
+        "lat": "52.6019161",
+        "lon": "12.8938641"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 86637 Wertingen",
+        "lat": "48.5590289",
+        "lon": "10.6920556"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom Ehingen (Donau)",
+        "lat": "48.2821177",
+        "lon": "9.7466899"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 51465 Bergisch Gladbach",
+        "lat": "50.9921302",
+        "lon": "7.1201211"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4600 Wels",
+        "lat": "48.1852169",
+        "lon": "14.0245048"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 94315 Straubing",
+        "lat": "48.8866794",
+        "lon": "12.6148350"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 68723 Schwetzingen",
+        "lat": "49.3778145",
+        "lon": "8.5826852"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 46395 Bocholt",
+        "lat": "51.8379932",
+        "lon": "6.5951666"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 41564 Kaarst",
+        "lat": "51.2268264",
+        "lon": "6.6004340"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 14776 Brandenburg an der Havel",
+        "lat": "52.4092108",
+        "lon": "12.6128626"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 63571 Gelnhausen",
+        "lat": "50.2031794",
+        "lon": "9.1737996"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8940 Liezen",
+        "lat": "47.5592118",
+        "lon": "14.2582870"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#92386939",
+        "lat": "47.8481872",
+        "lon": "12.0786571"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 53879 Euskirchen",
+        "lat": "50.6521383",
+        "lon": "6.7922277"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#92664740",
+        "lat": "50.3335766",
+        "lon": "10.2263025"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 53783 Eitorf",
+        "lat": "50.7714816",
+        "lon": "7.4713691"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 29410 Salzwedel",
+        "lat": "52.8571435",
+        "lon": "11.1636384"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#92899406",
+        "lat": "53.9584399",
+        "lon": "9.4950654"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 26954 Nordenham",
+        "lat": "53.5028078",
+        "lon": "8.4728813"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 25524 Heiligenstedten",
+        "lat": "53.9347317",
+        "lon": "9.4714331"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 5230 Mattighofen",
+        "lat": "48.1131778",
+        "lon": "13.1505660"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04668 Grimma",
+        "lat": "51.2545017",
+        "lon": "12.7272358"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 06886 Wittenberg",
+        "lat": "51.8647458",
+        "lon": "12.6188175"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06862 Dessau-Roßlau",
+        "lat": "51.8949096",
+        "lon": "12.2233961"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 59872 Meschede",
+        "lat": "51.3566874",
+        "lon": "8.2589040"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 83026 Rosenheim",
+        "lat": "47.8486939",
+        "lon": "12.0871487"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 64579 Gernsheim",
+        "lat": "49.7523123",
+        "lon": "8.4927576"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 79601 Prostějov",
+        "lat": "49.4819784",
+        "lon": "17.1258795"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 17291 Prenzlau",
+        "lat": "53.3041475",
+        "lon": "13.8783595"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 26506 Norden",
+        "lat": "53.6010945",
+        "lon": "7.1856844"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 51702 Bergneustadt",
+        "lat": "51.0207183",
+        "lon": "7.6594220"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 17192 Waren (Müritz)",
+        "lat": "53.5205804",
+        "lon": "12.6474372"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 39114 Magdeburg",
+        "lat": "52.1279807",
+        "lon": "11.6711935"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 92224 Amberg",
+        "lat": "49.4363843",
+        "lon": "11.8803078"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 76547 Sinzheim",
+        "lat": "48.7736737",
+        "lon": "8.1737951"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2230 Gänserndorf",
+        "lat": "48.3339873",
+        "lon": "16.7101281"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 74211 Leingarten",
+        "lat": "49.1495930",
+        "lon": "9.1339028"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 17034 Neubrandenburg",
+        "lat": "53.5871782",
+        "lon": "13.2733311"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 16244 Schorfheide",
+        "lat": "52.8401900",
+        "lon": "13.6960886"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 47608 Geldern",
+        "lat": "51.5218694",
+        "lon": "6.2923047"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31675 Bückeburg",
+        "lat": "52.2655340",
+        "lon": "9.0665230"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 02763 Zittau",
+        "lat": "50.9043875",
+        "lon": "14.7724472"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31535 Neustadt am Rübenberge",
+        "lat": "52.5121816",
+        "lon": "9.4792786"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 59-300 Lubin",
+        "lat": "51.3899456",
+        "lon": "16.2132341"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 49124 Georgsmarienhütte",
+        "lat": "52.2182145",
+        "lon": "8.0622755"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 49124 Georgsmarienhütte",
+        "lat": "52.2190494",
+        "lon": "8.0650933"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 38304 Wolfenbüttel",
+        "lat": "52.1597392",
+        "lon": "10.5290749"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 27404 Zeven",
+        "lat": "53.3058582",
+        "lon": "9.2747141"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 2560",
+        "lat": "47.9408058",
+        "lon": "16.1367410"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 46414 Rhede",
+        "lat": "51.8513164",
+        "lon": "6.6991711"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 09228 Chemnitz",
+        "lat": "50.8789479",
+        "lon": "12.8239402"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 26135 Oldenburg",
+        "lat": "53.1416832",
+        "lon": "8.2574072"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 67663 Kaiserslautern",
+        "lat": "49.4337792",
+        "lon": "7.7452615"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 73430 Aalen",
+        "lat": "48.8492977",
+        "lon": "10.0962023"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 33689 Bielefeld",
+        "lat": "51.9568579",
+        "lon": "8.5815902"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 99996 Unstruttal",
+        "lat": "51.2408890",
+        "lon": "10.4567821"
     },
     {
         "brand": "HAG",
         "name": "Hagebau 49661 Cloppenburg",
-        "lat": "52.8452",
-        "lon": "8.0463"
+        "lat": "52.8402586",
+        "lon": "8.0662099"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 49661 Cloppenburg",
+        "lat": "52.8384122",
+        "lon": "8.0669287"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 40764 Langenfeld (Rheinland)",
+        "lat": "51.1171988",
+        "lon": "6.9643212"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 26101 Příbram",
+        "lat": "49.6706647",
+        "lon": "13.9901183"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 46605 Jablonec nad Nisou",
+        "lat": "50.7341102",
+        "lon": "15.1593182"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#100860914",
+        "lat": "47.5882204",
+        "lon": "18.3923253"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#101429454",
+        "lat": "51.4639910",
+        "lon": "11.2713119"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 51067 Köln",
+        "lat": "50.9760844",
+        "lon": "7.0564352"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#101925190",
+        "lat": "48.8739901",
+        "lon": "18.0275460"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1117 Budapest",
+        "lat": "47.4365486",
+        "lon": "19.0423509"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91-211 Łódź",
+        "lat": "51.8020368",
+        "lon": "19.3787808"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 95032 Hof",
+        "lat": "50.2884093",
+        "lon": "11.9227866"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom Hannover",
+        "lat": "52.4197453",
+        "lon": "9.7283545"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 58636 Iserlohn",
+        "lat": "51.3866401",
+        "lon": "7.7287726"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 59929 Brilon",
+        "lat": "51.4039390",
+        "lon": "8.5739090"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 10-449 Olsztyn",
+        "lat": "53.7804596",
+        "lon": "20.5142161"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 5280 Braunau am Inn",
+        "lat": "48.2430497",
+        "lon": "13.0483100"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 51491 Overath",
+        "lat": "50.9305254",
+        "lon": "7.2809770"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 52351 Düren",
+        "lat": "50.7819042",
+        "lon": "6.5067024"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 35041 Marburg",
+        "lat": "50.8382582",
+        "lon": "8.7684641"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 8504 Preding",
+        "lat": "46.8541386",
+        "lon": "15.4117687"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 48599 Gronau",
+        "lat": "52.1899341",
+        "lon": "7.0304264"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 77815 Bühl",
+        "lat": "48.6877083",
+        "lon": "8.1137954"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 35398 Gießen",
+        "lat": "50.5843428",
+        "lon": "8.6502882"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 88212 Ravensburg",
+        "lat": "47.7949708",
+        "lon": "9.6111813"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 88400 Biberach an der Riß",
+        "lat": "48.1159239",
+        "lon": "9.8038873"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 33034 Brakel",
+        "lat": "51.7055042",
+        "lon": "9.1786781"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 53489 Sinzig",
+        "lat": "50.5444912",
+        "lon": "7.2682411"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 70372 Stuttgart",
+        "lat": "48.7983518",
+        "lon": "9.2201253"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 25541 Brunsbüttel",
+        "lat": "53.9004379",
+        "lon": "9.1217694"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 53424 Remagen",
+        "lat": "50.5685434",
+        "lon": "7.2469704"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 49377 Vechta",
+        "lat": "52.7317224",
+        "lon": "8.2695573"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Rösrath",
+        "lat": "50.8834922",
+        "lon": "7.1892358"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 60131 Ancona",
+        "lat": "43.5712048",
+        "lon": "13.5101544"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 59457 Werl",
+        "lat": "51.5611330",
+        "lon": "7.9015455"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 99610 Sömmerda",
+        "lat": "51.1566676",
+        "lon": "11.1422998"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31061 Alfeld (Leine)",
+        "lat": "51.9911055",
+        "lon": "9.8040902"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 23879 Mölln",
+        "lat": "53.6224614",
+        "lon": "10.6818959"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 59067 Hamm",
+        "lat": "51.6635330",
+        "lon": "7.7595849"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 58513 Lüdenscheid",
+        "lat": "51.2390423",
+        "lon": "7.6758737"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#112594964",
+        "lat": "46.6706988",
+        "lon": "21.0845527"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 25813 Husum",
+        "lat": "54.4918229",
+        "lon": "9.0754742"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 30890 Barsinghausen",
+        "lat": "52.3157647",
+        "lon": "9.4646783"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 24306 Plön",
+        "lat": "54.1707902",
+        "lon": "10.4368839"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 21684 Stade",
+        "lat": "53.5929729",
+        "lon": "9.4260278"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 79312 Emmendingen",
+        "lat": "48.1266174",
+        "lon": "7.8308688"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 64625 Bensheim",
+        "lat": "49.6730280",
+        "lon": "8.5952107"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06766 Bitterfeld-Wolfen",
+        "lat": "51.6946334",
+        "lon": "12.2578024"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 67063 Ludwigshafen am Rhein",
+        "lat": "49.4876557",
+        "lon": "8.4064417"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#117807424",
+        "lat": "43.4723033",
+        "lon": "11.8647075"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 56626 Andernach",
+        "lat": "50.4353445",
+        "lon": "7.4191271"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 72336 Balingen",
+        "lat": "48.2576755",
+        "lon": "8.8543948"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 78532 Tuttlingen",
+        "lat": "47.9717044",
+        "lon": "8.7919487"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 66386 Sankt Ingbert",
+        "lat": "49.2705807",
+        "lon": "7.1311081"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83451 Piding",
+        "lat": "47.7548200",
+        "lon": "12.9078221"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#118967841",
+        "lat": "48.1284305",
+        "lon": "20.7807804"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 74564 Crailsheim",
+        "lat": "49.1420243",
+        "lon": "10.0284433"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 66839 Schmelz",
+        "lat": "49.4382869",
+        "lon": "6.8703661"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 51427 Bergisch Gladbach",
+        "lat": "50.9586247",
+        "lon": "7.1443386"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3950 Gmünd",
+        "lat": "48.7595491",
+        "lon": "14.9940945"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1046 Budapest",
+        "lat": "47.5669716",
+        "lon": "19.0971320"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83209 Prien am Chiemsee",
+        "lat": "47.8433462",
+        "lon": "12.3448760"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 87437 Kempten (Allgäu)",
+        "lat": "47.7322580",
+        "lon": "10.3288000"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#120790625",
+        "lat": "48.7522981",
+        "lon": "44.4940232"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 16909 Wittstock/Dosse",
+        "lat": "53.1582670",
+        "lon": "12.4565113"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 37327 Leinefelde-Worbis",
+        "lat": "51.3746765",
+        "lon": "10.3159820"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 63820 Elsenfeld",
+        "lat": "49.8561098",
+        "lon": "9.1655305"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 33106 Paderborn",
+        "lat": "51.7046909",
+        "lon": "8.7219524"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 09405 Zschopau",
+        "lat": "50.7565963",
+        "lon": "13.0540873"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 14167 Berlin",
+        "lat": "52.4168085",
+        "lon": "13.2895272"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 64625 Bensheim",
+        "lat": "49.6829995",
+        "lon": "8.6024267"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6134 Vomp",
+        "lat": "47.3519308",
+        "lon": "11.6976688"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 53119 Bonn",
+        "lat": "50.7389872",
+        "lon": "7.0811843"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 95478 Kemnath",
+        "lat": "49.8687387",
+        "lon": "11.8789928"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41836 Hückelhoven",
+        "lat": "51.0549855",
+        "lon": "6.2177383"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 03238 Massen-Niederlausitz",
+        "lat": "51.6355671",
+        "lon": "13.7373013"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 29633 Munster",
+        "lat": "52.9911660",
+        "lon": "10.1031804"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 91334 Hemhofen",
+        "lat": "49.6923850",
+        "lon": "10.9439185"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#126785437",
+        "lat": "44.9058042",
+        "lon": "8.1817764"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 88662 Überlingen",
+        "lat": "47.7754565",
+        "lon": "9.1913511"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 54568 Gerolstein",
+        "lat": "50.2226354",
+        "lon": "6.6503881"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 06366 Köthen (Anhalt)",
+        "lat": "51.7444625",
+        "lon": "11.9992834"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 30823 Garbsen",
+        "lat": "52.4229154",
+        "lon": "9.5912217"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 27232 Sulingen",
+        "lat": "52.6869520",
+        "lon": "8.8165989"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83278 Traunstein",
+        "lat": "47.8534962",
+        "lon": "12.6289897"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83355 Grabenstätt",
+        "lat": "47.8750889",
+        "lon": "12.5879822"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 42655 Solingen",
+        "lat": "51.1744509",
+        "lon": "7.0708294"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31157 Sarstedt",
+        "lat": "52.2476944",
+        "lon": "9.8549623"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 19230 Hagenow",
+        "lat": "53.4256338",
+        "lon": "11.1984351"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 82319 Starnberg",
+        "lat": "48.0135291",
+        "lon": "11.3479954"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2620 Neunkirchen",
+        "lat": "47.7176049",
+        "lon": "16.0690557"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 86609 Donauwörth",
+        "lat": "48.7084562",
+        "lon": "10.7566798"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 47475 Kamp-Lintfort",
+        "lat": "51.5100788",
+        "lon": "6.5472636"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 19288 Ludwigslust",
+        "lat": "53.3494593",
+        "lon": "11.4897844"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9500 Villach",
+        "lat": "46.6044921",
+        "lon": "13.8630631"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4030",
+        "lat": "48.2507771",
+        "lon": "14.3219019"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 37154 Northeim",
+        "lat": "51.6898012",
+        "lon": "9.9849328"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41123 Modena",
+        "lat": "44.6516803",
+        "lon": "10.8557195"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 51010 Massa e Cozzile",
+        "lat": "43.8608310",
+        "lon": "10.7627385"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9400 Sopron",
+        "lat": "47.6730836",
+        "lon": "16.6152490"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 17358 Torgelow",
+        "lat": "53.6276870",
+        "lon": "14.0139236"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 46282 Dorsten",
+        "lat": "51.6575960",
+        "lon": "7.0146127"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4240 Freistadt",
+        "lat": "48.4946534",
+        "lon": "14.5014886"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 08606 Oelsnitz/Vogtl.",
+        "lat": "50.4269774",
+        "lon": "12.1740924"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 84030 Landshut",
+        "lat": "48.5536067",
+        "lon": "12.1536450"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 15517 Fürstenwalde/Spree",
+        "lat": "52.3795971",
+        "lon": "14.0644888"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 23909 Ratzeburg",
+        "lat": "53.7000475",
+        "lon": "10.7413572"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 8750 Judenburg",
+        "lat": "47.1717656",
+        "lon": "14.6381717"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3000 Celje",
+        "lat": "46.2342399",
+        "lon": "15.2822738"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2400 Dunaújváros",
+        "lat": "46.9776684",
+        "lon": "18.9222354"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 37520 Osterode am Harz",
+        "lat": "51.7261387",
+        "lon": "10.2402597"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 25746 Heide",
+        "lat": "54.1968796",
+        "lon": "9.1289221"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Hamburg",
+        "lat": "53.5661749",
+        "lon": "9.9274046"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#145943249",
+        "lat": "48.6666783",
+        "lon": "15.6332037"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 90766 Fürth",
+        "lat": "49.4848990",
+        "lon": "10.9514078"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8051 Graz",
+        "lat": "47.1045794",
+        "lon": "15.4026796"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1030 Wien",
+        "lat": "48.1859162",
+        "lon": "16.4102370"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91413 Neustadt an der Aisch",
+        "lat": "49.5780781",
+        "lon": "10.5996600"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 17235 Neustrelitz",
+        "lat": "53.3491030",
+        "lon": "13.0777594"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4971 Aurolzmünster",
+        "lat": "48.2268013",
+        "lon": "13.4746091"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 49809 Lingen (Ems)",
+        "lat": "52.5054176",
+        "lon": "7.3239110"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#148677665",
+        "lat": "50.5453634",
+        "lon": "7.2561419"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#148975047",
+        "lat": "48.3290174",
+        "lon": "14.3149562"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#149316898",
+        "lat": "54.4235934",
+        "lon": "13.4213301"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Tychy",
+        "lat": "50.0963414",
+        "lon": "19.0063080"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 29227 Celle",
+        "lat": "52.5918494",
+        "lon": "10.0666330"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 06268 Querfurt",
+        "lat": "51.3911192",
+        "lon": "11.6098197"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 99310 Arnstadt",
+        "lat": "50.8518548",
+        "lon": "10.9494580"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 29221 Celle",
+        "lat": "52.6078722",
+        "lon": "10.0627851"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 74523 Schwäbisch Hall",
+        "lat": "49.1042463",
+        "lon": "9.7086918"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#151884522",
+        "lat": "51.5126504",
+        "lon": "11.5770158"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 73801 Frýdek-Místek",
+        "lat": "49.6715830",
+        "lon": "18.3272094"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 22848 Norderstedt",
+        "lat": "53.6688791",
+        "lon": "9.9719021"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8800 Nagykanizsa",
+        "lat": "46.4644943",
+        "lon": "17.0161470"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 60389 Frankfurt am Main",
+        "lat": "50.1397841",
+        "lon": "8.6977013"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6000 Koper / Capodistria",
+        "lat": "45.5445534",
+        "lon": "13.7402173"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9900 Lienz",
+        "lat": "46.8325144",
+        "lon": "12.7815145"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 96050 Bamberg",
+        "lat": "49.8892180",
+        "lon": "10.9145020"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9020 Klagenfurt am Wörthersee",
+        "lat": "46.6514275",
+        "lon": "14.2841617"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 48607 Ochtrup",
+        "lat": "52.2060617",
+        "lon": "7.2077803"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 8530 Deutschlandsberg",
+        "lat": "46.8214957",
+        "lon": "15.2377430"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 95213 Münchberg",
+        "lat": "50.1886754",
+        "lon": "11.7751781"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 77652 Offenburg",
+        "lat": "48.4701226",
+        "lon": "7.9362717"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8582 Rosental an der Kainach",
+        "lat": "47.0537064",
+        "lon": "15.1279584"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#158187892",
+        "lat": "54.1035127",
+        "lon": "9.9895850"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 51399 Burscheid",
+        "lat": "51.0835711",
+        "lon": "7.1296987"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 79761 Waldshut-Tiengen",
+        "lat": "47.6179219",
+        "lon": "8.2491224"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 46485 Wesel",
+        "lat": "51.6656951",
+        "lon": "6.6464061"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6729 Szeged",
+        "lat": "46.2418929",
+        "lon": "20.1210751"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 74321 Bietigheim-Bissingen",
+        "lat": "48.9559754",
+        "lon": "9.1434945"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 58455 Witten",
+        "lat": "51.4418051",
+        "lon": "7.3508396"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 8552 Eibiswald",
+        "lat": "46.6902733",
+        "lon": "15.2504276"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 3332 Rosenau am Sonntagberg",
+        "lat": "48.0110158",
+        "lon": "14.7410379"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 26723 Emden",
+        "lat": "53.3634953",
+        "lon": "7.1708245"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 61-285 Poznań",
+        "lat": "52.3801393",
+        "lon": "16.9812784"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 08060 Zwickau",
+        "lat": "50.7200187",
+        "lon": "12.4475885"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 49201 Dissen am Teutoburger Wald",
+        "lat": "52.1121290",
+        "lon": "8.1877350"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 37269 Eschwege",
+        "lat": "51.1942281",
+        "lon": "10.0332471"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 52078 Aachen",
+        "lat": "50.7573697",
+        "lon": "6.1526644"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 16303 Schwedt/Oder",
+        "lat": "53.0703395",
+        "lon": "14.2584563"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4782 St. Florian am Inn",
+        "lat": "48.4266512",
+        "lon": "13.4482083"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8600 Siófok",
+        "lat": "46.8933079",
+        "lon": "18.0603418"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 42781 Haan",
+        "lat": "51.1835208",
+        "lon": "6.9846546"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 67227 Frankenthal (Pfalz)",
+        "lat": "49.5430320",
+        "lon": "8.3514492"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#166530206",
+        "lat": "52.7937886",
+        "lon": "14.0427731"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41121 Modena",
+        "lat": "44.6295426",
+        "lon": "10.9686668"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#169320224",
+        "lat": "50.9833277",
+        "lon": "7.5195818"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 44-203 Rybnik",
+        "lat": "50.0936137",
+        "lon": "18.5715305"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8330 Feldbach",
+        "lat": "46.9500449",
+        "lon": "15.9115846"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#170481256",
+        "lat": "45.4602573",
+        "lon": "8.8667949"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 33901 Klatovy",
+        "lat": "49.3941110",
+        "lon": "13.2872006"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 73614 Schorndorf",
+        "lat": "48.8059799",
+        "lon": "9.5132688"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#171935427",
+        "lat": "46.7746051",
+        "lon": "17.2647946"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 16-400 Suwałki",
+        "lat": "54.1287408",
+        "lon": "22.9426997"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 5000 Nova Gorica",
+        "lat": "45.9612073",
+        "lon": "13.6389300"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 86529 Schrobenhausen",
+        "lat": "48.5644611",
+        "lon": "11.2541705"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 31789 Hameln",
+        "lat": "52.0813780",
+        "lon": "9.3394427"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 09-410 Płock",
+        "lat": "52.5353134",
+        "lon": "19.7549237"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 14806 Bad Belzig",
+        "lat": "52.1439159",
+        "lon": "12.6115600"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 8190 Birkfeld",
+        "lat": "47.3487464",
+        "lon": "15.6903810"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9560",
+        "lat": "46.7244289",
+        "lon": "14.0863936"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 01705 Freital",
+        "lat": "51.0046126",
+        "lon": "13.6490907"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 20-555 Lublin",
+        "lat": "51.2365965",
+        "lon": "22.4957927"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#176276647",
+        "lat": "50.7762817",
+        "lon": "7.7254262"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 20-329 Lublin",
+        "lat": "51.2381819",
+        "lon": "22.5951890"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2405 Bad Deutsch-Altenburg",
+        "lat": "48.1279174",
+        "lon": "16.9083701"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 06556 Artern",
+        "lat": "51.3762070",
+        "lon": "11.2863691"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 19322 Wittenberge",
+        "lat": "53.0014896",
+        "lon": "11.7197586"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 58-309 Wałbrzych",
+        "lat": "50.8090837",
+        "lon": "16.2932611"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 45772 Marl",
+        "lat": "51.6661247",
+        "lon": "7.0842029"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 18356 Barth",
+        "lat": "54.3589266",
+        "lon": "12.7100813"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9400 Wolfsberg",
+        "lat": "46.8180926",
+        "lon": "14.8341871"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 55469 Simmern/Hunsrück",
+        "lat": "49.9825917",
+        "lon": "7.5375894"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 13355 Berlin",
+        "lat": "52.5416398",
+        "lon": "13.3948528"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#181180590",
+        "lat": "52.9603111",
+        "lon": "10.5692619"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 45665 Recklinghausen",
+        "lat": "51.5954338",
+        "lon": "7.2440554"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 55-040 Bielany Wrocławskie",
+        "lat": "51.0488415",
+        "lon": "16.9567507"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Kielce",
+        "lat": "50.8882973",
+        "lon": "20.6697002"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#183268653",
+        "lat": "49.7872735",
+        "lon": "18.4448272"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 04249 Leipzig",
+        "lat": "51.2994200",
+        "lon": "12.3182866"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 09427 Ehrenfriedersdorf",
+        "lat": "50.6338406",
+        "lon": "12.9634431"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4400 Nyíregyháza",
+        "lat": "47.9572362",
+        "lon": "21.7269398"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 98646 Hildburghausen",
+        "lat": "50.4282594",
+        "lon": "10.7109649"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 98646 Hildburghausen",
+        "lat": "50.4276592",
+        "lon": "10.7118752"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 98646 Hildburghausen",
+        "lat": "50.4270829",
+        "lon": "10.7125259"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 24768 Rendsburg",
+        "lat": "54.3114528",
+        "lon": "9.6276466"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1095 Budapest",
+        "lat": "47.4670151",
+        "lon": "19.0749462"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 34613 Schwalmstadt",
+        "lat": "50.9182218",
+        "lon": "9.2017065"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 21493 Schwarzenbek",
+        "lat": "53.5121040",
+        "lon": "10.4976696"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 73312 Geislingen an der Steige",
+        "lat": "48.6123475",
+        "lon": "9.8091198"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#186644233",
+        "lat": "44.5361897",
+        "lon": "10.8301896"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3040 Neulengbach",
+        "lat": "48.1999933",
+        "lon": "15.9015562"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 37170 Uslar",
+        "lat": "51.6605322",
+        "lon": "9.6303023"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 18546 Sassnitz",
+        "lat": "54.5140933",
+        "lon": "13.6022604"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 83071 Stephanskirchen",
+        "lat": "47.8498218",
+        "lon": "12.1573607"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 23795 Bad Segeberg",
+        "lat": "53.9258721",
+        "lon": "10.3180441"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1148 Budapest",
+        "lat": "47.5058044",
+        "lon": "19.1213085"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 73525 Schwäbisch Gmünd",
+        "lat": "48.8000414",
+        "lon": "9.8258029"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4810 Gmunden",
+        "lat": "47.9321480",
+        "lon": "13.7867138"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 34537 Bad Wildungen",
+        "lat": "51.1202029",
+        "lon": "9.1335056"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 39307 Genthin",
+        "lat": "52.4182699",
+        "lon": "12.1610781"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#192488416",
+        "lat": "52.8642338",
+        "lon": "9.6123715"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 5000 Szolnok",
+        "lat": "47.1581691",
+        "lon": "20.1946258"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 34125 Kassel",
+        "lat": "51.3157177",
+        "lon": "9.5193520"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8280 Fürstenfeld",
+        "lat": "47.0533385",
+        "lon": "16.0823573"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 02-256 Warszawa",
+        "lat": "52.1744473",
+        "lon": "20.9456444"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#195779665",
+        "lat": "53.2326307",
+        "lon": "8.7512736"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#195809814",
+        "lat": "47.7665697",
+        "lon": "19.9099081"
     },
     {
         "brand": "HAG",
         "name": "Hagebau 49716 Meppen",
-        "lat": "52.6894",
-        "lon": "7.2912"
+        "lat": "52.6806445",
+        "lon": "7.3013744"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 06118 Halle (Saale)",
+        "lat": "51.5233164",
+        "lon": "11.9524086"
     },
     {
         "brand": "HAG",
-        "name": "Hagebau 49733 Haren (Ems)",
-        "lat": "52.7921",
-        "lon": "7.2456"
+        "name": "Hagebau 82377 Penzberg",
+        "lat": "47.7578669",
+        "lon": "11.3835536"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32108 Bad Salzuflen",
+        "lat": "52.0648484",
+        "lon": "8.7514911"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91171",
+        "lat": "49.0425425",
+        "lon": "11.3622545"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 93444 Bad Kötzting",
+        "lat": "49.1692539",
+        "lon": "12.8661005"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 25813 Husum",
+        "lat": "54.4892079",
+        "lon": "9.0837311"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 90542 Eckental",
+        "lat": "49.5793243",
+        "lon": "11.1983006"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 65346 Eltville am Rhein",
+        "lat": "50.0234986",
+        "lon": "8.1040363"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 31061 Alfeld (Leine)",
+        "lat": "51.9866970",
+        "lon": "9.8056898"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 73527 Schwäbisch Gmünd",
+        "lat": "48.8048895",
+        "lon": "9.8073835"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 69168 Wiesloch",
+        "lat": "49.2886159",
+        "lon": "8.6823400"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41-800 Zabrze",
+        "lat": "50.3213170",
+        "lon": "18.7702094"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 55411 Bingen am Rhein",
+        "lat": "49.9505408",
+        "lon": "7.9013060"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 72072 Tübingen",
+        "lat": "48.5138933",
+        "lon": "9.0732139"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 13629 Berlin",
+        "lat": "52.5389318",
+        "lon": "13.2487383"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 46240 Bottrop",
+        "lat": "51.5359024",
+        "lon": "6.9819904"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 44-335 Jastrzębie-Zdrój",
+        "lat": "49.9409804",
+        "lon": "18.5970030"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 21762 Otterndorf",
+        "lat": "53.8051549",
+        "lon": "8.8853303"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 19258 Boizenburg/Elbe",
+        "lat": "53.3817751",
+        "lon": "10.7720376"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#207707088",
+        "lat": "53.1169211",
+        "lon": "9.3852244"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 24589 Nortorf",
+        "lat": "54.1644577",
+        "lon": "9.8541052"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 38518 Gifhorn",
+        "lat": "52.4792437",
+        "lon": "10.5384096"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 77855 Achern",
+        "lat": "48.6371659",
+        "lon": "8.0513085"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 02763 Zittau",
+        "lat": "50.9068584",
+        "lon": "14.8121105"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 75015 Bretten",
+        "lat": "49.0415364",
+        "lon": "8.6923529"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 94405 Landau an der Isar",
+        "lat": "48.6532614",
+        "lon": "12.7053228"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 25-558 Kielce",
+        "lat": "50.8895373",
+        "lon": "20.6271911"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 3300 Eger",
+        "lat": "47.9272932",
+        "lon": "20.3699399"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#222312876",
+        "lat": "50.6953745",
+        "lon": "7.6535391"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 26316 Varel",
+        "lat": "53.3971747",
+        "lon": "8.1238011"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 67269 Grünstadt",
+        "lat": "49.5573626",
+        "lon": "8.1703889"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 08468 Reichenbach",
+        "lat": "50.6382060",
+        "lon": "12.3274341"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 26842 Ostrhauderfehn",
+        "lat": "53.1375381",
+        "lon": "7.5981862"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#224102560",
+        "lat": "48.5876438",
+        "lon": "10.5173237"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85567 Grafing bei München",
+        "lat": "48.0352503",
+        "lon": "11.9583250"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 72555 Metzingen",
+        "lat": "48.5447669",
+        "lon": "9.2742788"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 04319 Leipzig",
+        "lat": "51.3446875",
+        "lon": "12.4763233"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 57319 Bad Berleburg",
+        "lat": "51.0589255",
+        "lon": "8.3951000"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 7100 Szekszárd",
+        "lat": "46.3334871",
+        "lon": "18.7036912"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 97076 Würzburg",
+        "lat": "49.7931282",
+        "lon": "10.0000621"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 30173 Hannover",
+        "lat": "52.3606288",
+        "lon": "9.7665840"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#231348453",
+        "lat": "48.4075981",
+        "lon": "10.4320179"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 29410 Salzwedel",
+        "lat": "52.8612745",
+        "lon": "11.1603297"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31582 Nienburg/Weser",
+        "lat": "52.6419691",
+        "lon": "9.2000854"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 26655 Westerstede",
+        "lat": "53.2621456",
+        "lon": "7.9422151"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 49401 Damme",
+        "lat": "52.5188512",
+        "lon": "8.1985313"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 03051 Cottbus",
+        "lat": "51.7178822",
+        "lon": "14.3226614"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 92901 Dunajská Streda",
+        "lat": "47.9952612",
+        "lon": "17.6288312"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 5020 Salzburg",
+        "lat": "47.7972805",
+        "lon": "13.0075394"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 87-800 Włocławek",
+        "lat": "52.6417855",
+        "lon": "19.0741615"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 46446 Emmerich am Rhein",
+        "lat": "51.8490774",
+        "lon": "6.2691836"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 90411 Nürnberg",
+        "lat": "49.4783173",
+        "lon": "11.1113375"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 99510 Apolda",
+        "lat": "51.0126018",
+        "lon": "11.5146970"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9620",
+        "lat": "46.6257939",
+        "lon": "13.3746932"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 73037 Göppingen",
+        "lat": "48.6942550",
+        "lon": "9.6616218"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 29451 Dannenberg (Elbe)",
+        "lat": "53.0911507",
+        "lon": "11.0813510"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 56355 Nastätten",
+        "lat": "50.2000239",
+        "lon": "7.8515699"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 89-620 Lipienice",
+        "lat": "53.6936166",
+        "lon": "17.6208127"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 57439 Attendorn",
+        "lat": "51.1220407",
+        "lon": "7.9050856"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 06485 Quedlinburg",
+        "lat": "51.7368717",
+        "lon": "11.1502649"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6460 Imst",
+        "lat": "47.2176376",
+        "lon": "10.7371863"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#244977960",
+        "lat": "53.4881853",
+        "lon": "10.2004060"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 82152 Planegg",
+        "lat": "48.1142539",
+        "lon": "11.4531782"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 72116 Mössingen",
+        "lat": "48.4049286",
+        "lon": "9.0383776"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 67098 Bad Dürkheim",
+        "lat": "49.4709898",
+        "lon": "8.1999898"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8682 Mürzzuschlag",
+        "lat": "47.5822401",
+        "lon": "15.6498741"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 8510 Stainz",
+        "lat": "46.8965379",
+        "lon": "15.2713788"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31-346 Kraków",
+        "lat": "50.0946091",
+        "lon": "19.8964376"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 5700 Zell am See",
+        "lat": "47.2965512",
+        "lon": "12.7850645"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 59872 Meschede",
+        "lat": "51.3642875",
+        "lon": "8.1738761"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#253362932",
+        "lat": "46.6770227",
+        "lon": "13.0062916"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 25014 Castenedolo",
+        "lat": "45.4573645",
+        "lon": "10.3223653"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 64-100 Leszno",
+        "lat": "51.8609465",
+        "lon": "16.5729294"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#254904447",
+        "lat": "49.7845077",
+        "lon": "9.4892278"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#255538218",
+        "lat": "50.9991726",
+        "lon": "14.6164452"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 96-500",
+        "lat": "52.2239893",
+        "lon": "20.2679185"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 35216 Biedenkopf",
+        "lat": "50.9226944",
+        "lon": "8.4675690"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 04178 Leipzig",
+        "lat": "51.3477236",
+        "lon": "12.2650239"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 97-300 Piotrków Trybunalski",
+        "lat": "51.4047178",
+        "lon": "19.7260255"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 78532 Tuttlingen",
+        "lat": "47.9956615",
+        "lon": "8.8303337"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#257922298",
+        "lat": "51.5588076",
+        "lon": "8.0851058"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 59229 Ahlen",
+        "lat": "51.7648283",
+        "lon": "7.9071717"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 99734 Nordhausen",
+        "lat": "51.4917715",
+        "lon": "10.8207600"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#259751208",
+        "lat": "53.6207194",
+        "lon": "10.6715194"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 38518 Gifhorn",
+        "lat": "52.5006585",
+        "lon": "10.5428508"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 81379 München",
+        "lat": "48.1015960",
+        "lon": "11.5285225"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 25899 Niebüll",
+        "lat": "54.7829753",
+        "lon": "8.8535101"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 52428 Jülich",
+        "lat": "50.9367626",
+        "lon": "6.3507462"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 41516 Grevenbroich",
+        "lat": "51.0955155",
+        "lon": "6.6052859"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 48477 Hörstel",
+        "lat": "52.3007320",
+        "lon": "7.5848410"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 47533 Kleve",
+        "lat": "51.8015233",
+        "lon": "6.1404452"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 92224 Amberg",
+        "lat": "49.4449901",
+        "lon": "11.8313543"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#273305813",
+        "lat": "52.9670263",
+        "lon": "10.5815977"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#275311883",
+        "lat": "51.8785527",
+        "lon": "8.9441484"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 42859 Remscheid",
+        "lat": "51.1761714",
+        "lon": "7.2111218"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 53639 Königswinter",
+        "lat": "50.7011414",
+        "lon": "7.1766743"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 88348 Bad Saulgau",
+        "lat": "48.0083561",
+        "lon": "9.5094490"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 84453 Mühldorf a. Inn",
+        "lat": "48.2532927",
+        "lon": "12.5357563"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 13595 Berlin",
+        "lat": "52.5273714",
+        "lon": "13.1935094"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9027 Győr",
+        "lat": "47.6870589",
+        "lon": "17.6507504"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau Baden-Baden",
+        "lat": "48.7764117",
+        "lon": "8.2128389"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#289868441",
+        "lat": "49.1169055",
+        "lon": "12.1145011"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4000 Kranj",
+        "lat": "46.2408627",
+        "lon": "14.3513593"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9000 Murska Sobota",
+        "lat": "46.6729440",
+        "lon": "16.1804150"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 81929 München",
+        "lat": "48.1406775",
+        "lon": "11.6555945"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 40885 Ratingen",
+        "lat": "51.3590132",
+        "lon": "6.8655000"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 23795 Bad Segeberg",
+        "lat": "53.9370571",
+        "lon": "10.2833033"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 57462 Olpe",
+        "lat": "51.0189459",
+        "lon": "7.8396005"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9800 Spittal an der Drau",
+        "lat": "46.7827064",
+        "lon": "13.5323723"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 07-410 Ostrołęka",
+        "lat": "53.0743185",
+        "lon": "21.5796115"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 63225 Langen (Hessen)",
+        "lat": "49.9953082",
+        "lon": "8.6507189"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 77656 Offenburg",
+        "lat": "48.4713885",
+        "lon": "7.9310654"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 59759 Arnsberg",
+        "lat": "51.4271799",
+        "lon": "8.0059762"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 63-400 Ostrów Wielkopolski",
+        "lat": "51.6567207",
+        "lon": "17.8469092"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 9100 Völkermarkt",
+        "lat": "46.6578960",
+        "lon": "14.6143323"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 85072 Eichstätt",
+        "lat": "48.8766386",
+        "lon": "11.2115089"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 26701 Králův Dvůr",
+        "lat": "49.9522283",
+        "lon": "14.0430713"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 65582 Diez",
+        "lat": "50.3750816",
+        "lon": "8.0485101"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 58540 Meinerzhagen",
+        "lat": "51.1014199",
+        "lon": "7.6787285"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 31020 Salzhemmendorf",
+        "lat": "52.0690180",
+        "lon": "9.5856971"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau Peißenberg",
+        "lat": "47.7890391",
+        "lon": "11.0571708"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 31303 Burgdorf",
+        "lat": "52.4602274",
+        "lon": "9.9923016"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 63939 Wörth am Main",
+        "lat": "49.7870573",
+        "lon": "9.1682838"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 4053 Basel",
+        "lat": "47.5407076",
+        "lon": "7.6037451"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1100 Wien",
+        "lat": "48.1786765",
+        "lon": "16.3565971"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41-300 Dąbrowa Górnicza",
+        "lat": "50.3285202",
+        "lon": "19.1788660"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 97215 Uffenheim",
+        "lat": "49.5409623",
+        "lon": "10.2416303"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 93426 Roding",
+        "lat": "49.2098007",
+        "lon": "12.5101581"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 97980 Bad Mergentheim",
+        "lat": "49.4951126",
+        "lon": "9.7647104"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 85599 Vaterstetten",
+        "lat": "48.1486175",
+        "lon": "11.7909223"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 8330 Feldbach",
+        "lat": "46.9530295",
+        "lon": "15.8804790"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 78052 Villingen-Schwenningen",
+        "lat": "48.0827067",
+        "lon": "8.5004045"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 44-321 Marklowice",
+        "lat": "51.6661247",
+        "lon": "18.5358449"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 08223 Falkenstein/Vogtl.",
+        "lat": "50.4746894",
+        "lon": "12.3564417"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 57128",
+        "lat": "43.5294181",
+        "lon": "10.3306647"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 29306 Mladá Boleslav",
+        "lat": "50.4366866",
+        "lon": "14.9085783"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 39261 Zerbst/Anhalt",
+        "lat": "51.9636020",
+        "lon": "12.0997103"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 43-100 Tychy",
+        "lat": "50.1083649",
+        "lon": "18.9780745"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 7210 Mattersburg",
+        "lat": "47.7370073",
+        "lon": "16.4114321"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 95615 Marktredwitz",
+        "lat": "50.0084589",
+        "lon": "12.1074484"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#377789109",
+        "lat": "48.2069932",
+        "lon": "17.0402300"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 44532 Lünen",
+        "lat": "51.6044252",
+        "lon": "7.4960728"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 77933 Lahr/Schwarzwald",
+        "lat": "48.3331645",
+        "lon": "7.8480444"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 19348 Perleberg",
+        "lat": "53.0632558",
+        "lon": "11.8401437"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#385314962",
+        "lat": "48.2399564",
+        "lon": "14.5332134"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 10365 Berlin",
+        "lat": "52.5103068",
+        "lon": "13.4929714"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 01979 Lauchhammer",
+        "lat": "51.4698316",
+        "lon": "13.7610767"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 64560 Riedstadt",
+        "lat": "49.8285580",
+        "lon": "8.4884682"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#388729959",
+        "lat": "46.7882917",
+        "lon": "11.9188144"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 70197 Stuttgart",
+        "lat": "48.7686494",
+        "lon": "9.1420352"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 28816 Stuhr",
+        "lat": "53.0258746",
+        "lon": "8.8056302"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32312 Lübbecke",
+        "lat": "52.3044898",
+        "lon": "8.6038021"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 76297 Stutensee",
+        "lat": "49.1132114",
+        "lon": "8.4736167"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83395 Freilassing",
+        "lat": "47.8355276",
+        "lon": "12.9762114"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 29549 Bad Bevensen",
+        "lat": "53.0710256",
+        "lon": "10.5708297"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85356 Freising",
+        "lat": "48.3799823",
+        "lon": "11.7540167"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 22529 Hamburg",
+        "lat": "53.6004047",
+        "lon": "9.9787633"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 37603 Holzminden",
+        "lat": "51.8435646",
+        "lon": "9.4656775"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 54576 Hillesheim",
+        "lat": "50.2993481",
+        "lon": "6.6714958"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 02763 Zittau",
+        "lat": "50.8877459",
+        "lon": "14.7980918"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 76863 Herxheim",
+        "lat": "49.1376149",
+        "lon": "8.2179134"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#438885498",
+        "lat": "50.6954121",
+        "lon": "11.3259776"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 25761 Büsum",
+        "lat": "54.1347323",
+        "lon": "8.8654901"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#443454538",
+        "lat": "52.4302325",
+        "lon": "13.5510885"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 33098 Paderborn",
+        "lat": "51.7030077",
+        "lon": "8.7283383"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85649 Brunnthal",
+        "lat": "48.0411260",
+        "lon": "11.6599728"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 50126 Bergheim",
+        "lat": "50.9435096",
+        "lon": "6.6299108"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 97828 Marktheidenfeld",
+        "lat": "49.8530143",
+        "lon": "9.6113896"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#471145467",
+        "lat": "51.4070524",
+        "lon": "21.1440707"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 72458 Albstadt",
+        "lat": "48.2025632",
+        "lon": "9.0444911"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#477540809",
+        "lat": "43.1000044",
+        "lon": "12.3069827"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#478552950",
+        "lat": "44.7114714",
+        "lon": "10.6064770"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 34576 Homberg (Efze)",
+        "lat": "51.0407189",
+        "lon": "9.3990189"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 79111 Freiburg im Breisgau",
+        "lat": "47.9901029",
+        "lon": "7.7932720"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#490323529",
+        "lat": "51.3819153",
+        "lon": "21.1728236"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 22926 Ahrensburg",
+        "lat": "53.6818062",
+        "lon": "10.2564084"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 45699 Herten",
+        "lat": "51.6031156",
+        "lon": "7.1558746"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 44894 Bochum",
+        "lat": "51.4817946",
+        "lon": "7.3236814"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 71254 Ditzingen",
+        "lat": "48.8211677",
+        "lon": "9.0656233"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#519063885",
+        "lat": "51.7950885",
+        "lon": "19.5097040"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 55232 Alzey",
+        "lat": "49.7496177",
+        "lon": "8.1383392"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 39118 Magdeburg",
+        "lat": "52.1046970",
+        "lon": "11.6022567"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Hessisch Oldendorf",
+        "lat": "52.1757037",
+        "lon": "9.2324054"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 07607 Eisenberg",
+        "lat": "50.9771962",
+        "lon": "11.8975608"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 93309 Kelheim",
+        "lat": "48.9134856",
+        "lon": "11.8675686"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 41812 Erkelenz",
+        "lat": "51.0725767",
+        "lon": "6.3034663"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 52249 Eschweiler",
+        "lat": "50.8199377",
+        "lon": "6.2980829"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 17498 Neuenkirchen",
+        "lat": "54.1191509",
+        "lon": "13.3639223"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 94535 Eging am See",
+        "lat": "48.7116013",
+        "lon": "13.2614693"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI Montevarchi",
+        "lat": "43.5348304",
+        "lon": "11.5642520"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#669462526",
+        "lat": "48.7704763",
+        "lon": "44.7965080"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 24537 Neumünster",
+        "lat": "54.0878803",
+        "lon": "9.9790119"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#678601421",
+        "lat": "45.6532893",
+        "lon": "12.3077049"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 7000 Eisenstadt",
+        "lat": "47.8320990",
+        "lon": "16.5250131"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 25421 Pinneberg",
+        "lat": "53.6476067",
+        "lon": "9.7702601"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 78467 Konstanz",
+        "lat": "47.6750992",
+        "lon": "9.1570326"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 84048 Mainburg",
+        "lat": "48.6316992",
+        "lon": "11.7749593"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 77790 Steinach",
+        "lat": "48.2847743",
+        "lon": "8.0708249"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#776519721",
+        "lat": "51.0288107",
+        "lon": "7.4124461"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 96215 Lichtenfels",
+        "lat": "50.1524510",
+        "lon": "11.0672768"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#789031599",
+        "lat": "50.3798158",
+        "lon": "18.8891282"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 01454 Radeberg",
+        "lat": "51.1299443",
+        "lon": "13.9148998"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 26919 Brake (Unterweser)",
+        "lat": "53.3364784",
+        "lon": "8.4684383"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 91056 Erlangen",
+        "lat": "49.5868125",
+        "lon": "10.9761154"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 21682 Stade",
+        "lat": "53.6098245",
+        "lon": "9.4804011"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 28100 Novara",
+        "lat": "45.4675218",
+        "lon": "8.6298306"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 32791 Lage",
+        "lat": "51.9855063",
+        "lon": "8.8053602"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 85435 Erding",
+        "lat": "48.3070237",
+        "lon": "11.8913076"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 57290 Neunkirchen",
+        "lat": "50.7840833",
+        "lon": "8.0135381"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 32052 Herford",
+        "lat": "52.1015814",
+        "lon": "8.7017410"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#889267755",
+        "lat": "49.1940584",
+        "lon": "12.0559046"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 92318 Neumarkt in der Oberpfalz",
+        "lat": "49.2867908",
+        "lon": "11.4455844"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 35781 Weilburg",
+        "lat": "50.4794469",
+        "lon": "8.2889990"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#952486956",
+        "lat": "50.5306380",
+        "lon": "12.1070255"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 36179 Bebra",
+        "lat": "50.9606288",
+        "lon": "9.7955165"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 39387 Oschersleben",
+        "lat": "52.0289758",
+        "lon": "11.2498220"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 39387 Oschersleben",
+        "lat": "52.0322745",
+        "lon": "11.2387389"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 07101 Michalovce",
+        "lat": "48.7440510",
+        "lon": "21.9132607"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 79725 Laufenburg (Baden)",
+        "lat": "47.5651027",
+        "lon": "8.0784092"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 05-500 Mysiadło",
+        "lat": "52.1051052",
+        "lon": "21.0230638"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1021981764",
+        "lat": "46.4679174",
+        "lon": "11.3238284"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 39340 Haldensleben",
+        "lat": "52.2843285",
+        "lon": "11.4324543"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 34225 Baunatal",
+        "lat": "51.2261613",
+        "lon": "9.4311778"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 28239 Bremen",
+        "lat": "53.1363682",
+        "lon": "8.7463225"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 39326 Wolmirstedt",
+        "lat": "52.2616806",
+        "lon": "11.6374356"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 31-580 Kraków",
+        "lat": "50.0640353",
+        "lon": "20.0022384"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 72488 Sigmaringen",
+        "lat": "48.0804344",
+        "lon": "9.2377266"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#1124235925",
+        "lat": "50.8084333",
+        "lon": "10.2973326"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 26506 Norden",
+        "lat": "53.5753822",
+        "lon": "7.2344417"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 94065 Waldkirchen",
+        "lat": "48.7412181",
+        "lon": "13.6148358"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom OSM#1144902163",
+        "lat": "51.1967129",
+        "lon": "6.4570228"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 39288 Burg",
+        "lat": "52.2587283",
+        "lon": "11.8469724"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1218075589",
+        "lat": "46.4164568",
+        "lon": "19.4964520"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 83607 Holzkirchen",
+        "lat": "47.8783921",
+        "lon": "11.7152709"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 34121 Kassel",
+        "lat": "51.3087737",
+        "lon": "9.4507657"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#1237478291",
+        "lat": "50.9823513",
+        "lon": "13.1058949"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 96001 Zvolen",
+        "lat": "48.5824867",
+        "lon": "19.1018545"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1250725938",
+        "lat": "54.0775992",
+        "lon": "13.4316390"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 39590 Tangermünde",
+        "lat": "52.5477458",
+        "lon": "11.9665282"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 2763 Pernitz",
+        "lat": "47.8952429",
+        "lon": "15.9534824"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 37060 Lugagnano di Sona",
+        "lat": "45.4392867",
+        "lon": "10.8636797"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1332919491",
+        "lat": "53.4981291",
+        "lon": "14.5860866"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1358491696",
+        "lat": "45.6165989",
+        "lon": "13.8206994"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 01796 Pirna",
+        "lat": "50.9790257",
+        "lon": "13.9493976"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1379333416",
+        "lat": "50.3198508",
+        "lon": "18.7547835"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 39576 Stendal",
+        "lat": "52.5833840",
+        "lon": "11.8773124"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau OSM#1409240931",
+        "lat": "49.9584718",
+        "lon": "8.2614234"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 66-400 Gorzów Wielkopolski",
+        "lat": "52.7394999",
+        "lon": "15.1982530"
+    },
+    {
+        "brand": "TOO",
+        "name": "Toom 39218 Schönebeck (Elbe)",
+        "lat": "52.0145964",
+        "lon": "11.7140951"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 30916 Isernhagen",
+        "lat": "52.4249489",
+        "lon": "9.8322516"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 75417 Mühlacker",
+        "lat": "48.9554595",
+        "lon": "8.8490315"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#1481055586",
+        "lat": "50.8379381",
+        "lon": "19.1184629"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 1191 Budapest",
+        "lat": "47.4627695",
+        "lon": "19.1445225"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2143 Kistarcsa",
+        "lat": "47.5365834",
+        "lon": "19.2473313"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 80-286 Gdańsk",
+        "lat": "54.3756843",
+        "lon": "18.5186931"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#2080560",
+        "lat": "56.3078832",
+        "lon": "44.0734635"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 2151 Fót",
+        "lat": "47.5775951",
+        "lon": "19.1609181"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 01008 Žilina",
+        "lat": "49.2128398",
+        "lon": "18.7536448"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#7058238",
+        "lat": "54.1940663",
+        "lon": "37.6348867"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#7266243",
+        "lat": "45.5460365",
+        "lon": "8.0669948"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8200 Veszprém",
+        "lat": "47.1014192",
+        "lon": "17.9353574"
+    },
+    {
+        "brand": "HAG",
+        "name": "Hagebau 8431 Gralla",
+        "lat": "46.8034011",
+        "lon": "15.5567448"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 8431 Gralla",
+        "lat": "46.8062546",
+        "lon": "15.5647950"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 6724 Szeged",
+        "lat": "46.2691615",
+        "lon": "20.1308828"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI OSM#16253387",
+        "lat": "47.4140203",
+        "lon": "19.1616566"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 13469 Berlin",
+        "lat": "52.6064344",
+        "lon": "13.3230527"
+    },
+    {
+        "brand": "OBI",
+        "name": "OBI 06618 Naumburg (Saale)",
+        "lat": "51.1479690",
+        "lon": "11.8281105"
     }
 ]
