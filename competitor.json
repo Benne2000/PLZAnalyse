@@ -1,5 +1,1067 @@
 [
     {
+        "brand": "HOR",
+        "name": "Hornbach 60437 Frankfurt am Main",
+        "lat": "50.1950357",
+        "lon": "8.6547589"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 2345 Brunn am Gebirge",
+        "lat": "48.1079922",
+        "lon": "16.3128591"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 21339 Lüneburg",
+        "lat": "53.2612557",
+        "lon": "10.4138417"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Drive In",
+        "lat": "49.2266373",
+        "lon": "7.0336757"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Baumarkt Drive In",
+        "lat": "49.2133162",
+        "lon": "8.1738594"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#1681443928",
+        "lat": "51.6200438",
+        "lon": "7.3221168"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 4825BC Breda",
+        "lat": "51.6031427",
+        "lon": "4.7679980"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 2913LA Nieuwerkerk aan den IJssel",
+        "lat": "51.9658614",
+        "lon": "4.5927033"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 6163AK Geleen",
+        "lat": "50.9904176",
+        "lon": "5.8238511"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 5047VA Tilburg",
+        "lat": "51.5886111",
+        "lon": "5.0311804"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 1506RZ Zaandam",
+        "lat": "52.4252465",
+        "lon": "4.8235657"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 76887 Bad Bergzabern",
+        "lat": "49.1082737",
+        "lon": "8.0100855"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Dortmund",
+        "lat": "51.5275901",
+        "lon": "7.4749251"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 71686 Remseck am Neckar",
+        "lat": "48.8544875",
+        "lon": "9.2477666"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#4040317809",
+        "lat": "49.2265193",
+        "lon": "7.0322404"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 27572 Bremerhaven",
+        "lat": "53.4880859",
+        "lon": "8.5981965"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 5683PL Best",
+        "lat": "51.5040272",
+        "lon": "5.4094743"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#4602457439",
+        "lat": "47.2757145",
+        "lon": "11.4535524"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 1046CA Amsterdam",
+        "lat": "52.3917731",
+        "lon": "4.7985530"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#5339381325",
+        "lat": "53.0532144",
+        "lon": "8.9584051"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 2497GS 's-Gravenhage",
+        "lat": "52.0292570",
+        "lon": "4.3598075"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#6551311952",
+        "lat": "46.3871981",
+        "lon": "6.9349662"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 8041AD Zwolle",
+        "lat": "52.5181429",
+        "lon": "6.0779021"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 76879 Bornheim",
+        "lat": "49.2136490",
+        "lon": "8.1724726"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 48157 Münster",
+        "lat": "51.9974806",
+        "lon": "7.6666975"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 3439LE Nieuwegein",
+        "lat": "52.0485568",
+        "lon": "5.1164061"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 6921RJ Duiven",
+        "lat": "51.9650478",
+        "lon": "5.9939739"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#7519114831",
+        "lat": "51.3461031",
+        "lon": "6.5366371"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 7321BT Apeldoorn",
+        "lat": "52.2069557",
+        "lon": "5.9978984"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 291 28 Kristianstad",
+        "lat": "56.0239783",
+        "lon": "14.1960537"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 73730 Esslingen",
+        "lat": "48.7156701",
+        "lon": "9.3567057"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 7543EZ Enschede",
+        "lat": "52.2019793",
+        "lon": "6.8921022"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 07747 Jena",
+        "lat": "50.8761403",
+        "lon": "11.6171330"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Trollhättan",
+        "lat": "58.3147359",
+        "lon": "12.2990074"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#9310471461",
+        "lat": "47.4686408",
+        "lon": "8.9930287"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#9583384923",
+        "lat": "48.3246366",
+        "lon": "18.0559218"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 12107 Berlin",
+        "lat": "52.4309937",
+        "lon": "13.3785171"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 65203 Wiesbaden",
+        "lat": "50.0508727",
+        "lon": "8.2212403"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 6515AN Nijmegen",
+        "lat": "51.8846728",
+        "lon": "5.8607503"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 04103 Leipzig",
+        "lat": "51.3164381",
+        "lon": "12.3979060"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#11056584888",
+        "lat": "59.2531837",
+        "lon": "17.8627020"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#11434851245",
+        "lat": "47.2746373",
+        "lon": "11.4542151"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 4825BC Breda",
+        "lat": "51.6024849",
+        "lon": "4.7664653"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#11968417452",
+        "lat": "49.3212018",
+        "lon": "11.0485943"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 33334 Gütersloh",
+        "lat": "51.8841282",
+        "lon": "8.3549020"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#13760636414",
+        "lat": "48.3643400",
+        "lon": "17.6146801"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 47443 Moers",
+        "lat": "51.4548393",
+        "lon": "6.6611561"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 71065 Sindelfingen",
+        "lat": "48.6954439",
+        "lon": "9.0069563"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 04129 Leipzig",
+        "lat": "51.3817848",
+        "lon": "12.3854774"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 80939 München",
+        "lat": "48.2029352",
+        "lon": "11.6186902"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 97076 Würzburg",
+        "lat": "49.8163809",
+        "lon": "9.9828357"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 19300 Praha",
+        "lat": "50.1116197",
+        "lon": "14.5815974"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 2201 Gerasdorf bei Wien",
+        "lat": "48.3440351",
+        "lon": "16.4681105"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 1220 Wien",
+        "lat": "48.2302600",
+        "lon": "16.4554590"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 55128 Mainz",
+        "lat": "49.9663188",
+        "lon": "8.2373229"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 15370 Fredersdorf-Vogelsdorf",
+        "lat": "52.4967249",
+        "lon": "13.7470632"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 38444 Wolfsburg",
+        "lat": "52.3683200",
+        "lon": "10.7268083"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 33605 Bielefeld",
+        "lat": "52.0032992",
+        "lon": "8.5605319"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 04011 Košice",
+        "lat": "48.7005985",
+        "lon": "21.2414101"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 68723 Schwetzingen",
+        "lat": "49.4140836",
+        "lon": "8.5460266"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 45356 Essen",
+        "lat": "51.4941624",
+        "lon": "6.9547413"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 34253 Lohfelden",
+        "lat": "51.2804659",
+        "lon": "9.5282827"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 64293 Darmstadt",
+        "lat": "49.8891044",
+        "lon": "8.6394335"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 81249 München",
+        "lat": "48.1332582",
+        "lon": "11.4109130"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 94034 Passau",
+        "lat": "48.5784072",
+        "lon": "13.4161943"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 75179 Pforzheim",
+        "lat": "48.9056580",
+        "lon": "8.6565803"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 45881 Gelsenkirchen",
+        "lat": "51.5266431",
+        "lon": "7.0766155"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 96052 Bamberg",
+        "lat": "49.9074671",
+        "lon": "10.8782424"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 91056 Erlangen",
+        "lat": "49.5775539",
+        "lon": "10.9646311"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 26131 Oldenburg",
+        "lat": "53.1252386",
+        "lon": "8.1665658"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 4052 Ansfelden",
+        "lat": "48.2103620",
+        "lon": "14.2726767"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 14476 Potsdam",
+        "lat": "52.4750688",
+        "lon": "12.9583012"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 85053 Ingolstadt",
+        "lat": "48.7449243",
+        "lon": "11.4679619"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 24143 Kiel",
+        "lat": "54.3004994",
+        "lon": "10.1404157"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 01239 Dresden",
+        "lat": "51.0056250",
+        "lon": "13.7860804"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 41199 Mönchengladbach",
+        "lat": "51.1432002",
+        "lon": "6.4240862"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 6014 Luzern",
+        "lat": "47.0579111",
+        "lon": "8.2577223"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 8070 Bertrange",
+        "lat": "49.6071721",
+        "lon": "6.0772527"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 22523 Hamburg",
+        "lat": "53.6141074",
+        "lon": "9.9041989"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 72074",
+        "lat": "48.5224015",
+        "lon": "9.0985216"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 52382 Niederzier",
+        "lat": "50.8451749",
+        "lon": "6.4545744"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 12347 Berlin",
+        "lat": "52.4534062",
+        "lon": "13.4222181"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 4600 Wels",
+        "lat": "48.1482568",
+        "lon": "13.9731479"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 41705 Göteborg",
+        "lat": "57.7305375",
+        "lon": "11.9468634"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 077015 Balotești",
+        "lat": "44.6025185",
+        "lon": "26.0692895"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 60386 Frankfurt am Main",
+        "lat": "50.1277365",
+        "lon": "8.7518801"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 74821 Mosbach",
+        "lat": "49.3296160",
+        "lon": "9.1088665"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 76185 Karlsruhe",
+        "lat": "48.9984501",
+        "lon": "8.3557616"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 14974 Ludwigsfelde",
+        "lat": "52.3206302",
+        "lon": "13.2899353"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 94315 Straubing",
+        "lat": "48.8710075",
+        "lon": "12.6298009"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 16300 Praha",
+        "lat": "50.0752921",
+        "lon": "14.3078593"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 72100 Ostrava Svinov",
+        "lat": "49.8264095",
+        "lon": "18.2105509"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#47459290",
+        "lat": "53.2513929",
+        "lon": "6.5797567"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 55128 Mainz",
+        "lat": "49.9668775",
+        "lon": "8.2393332"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 3500 Krems an der Donau",
+        "lat": "48.4060178",
+        "lon": "15.6614572"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#50438543",
+        "lat": "49.1791686",
+        "lon": "16.6053948"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 73037 Göppingen",
+        "lat": "48.6988858",
+        "lon": "9.6790752"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 87435 Kempten (Allgäu)",
+        "lat": "47.7086862",
+        "lon": "10.3138806"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#58459921",
+        "lat": "52.0171155",
+        "lon": "4.2753796"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 67071 Ludwigshafen am Rhein",
+        "lat": "49.4891876",
+        "lon": "8.3540218"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 77900 Olomouc",
+        "lat": "49.5870771",
+        "lon": "17.2870736"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 9020 Klagenfurt am Wörthersee",
+        "lat": "46.6107034",
+        "lon": "14.3167502"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Sibiu",
+        "lat": "45.8207896",
+        "lon": "24.1490798"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 30827 Garbsen",
+        "lat": "52.4292221",
+        "lon": "9.6204620"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 90763 Fürth",
+        "lat": "49.4515243",
+        "lon": "11.0009785"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#90004871",
+        "lat": "48.1613735",
+        "lon": "17.1797783"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 2721 Bad Fischau-Brunn",
+        "lat": "47.8322102",
+        "lon": "16.1843386"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 54294 Trier",
+        "lat": "49.7420726",
+        "lon": "6.6177605"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 09122 Chemnitz",
+        "lat": "50.7955801",
+        "lon": "12.8795619"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 39128 Magdeburg",
+        "lat": "52.1668331",
+        "lon": "11.6059395"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 8700 Leoben",
+        "lat": "47.3561081",
+        "lon": "15.0734166"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 76275 Ettlingen",
+        "lat": "48.9525324",
+        "lon": "8.3730587"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 89231 Neu-Ulm",
+        "lat": "48.3916337",
+        "lon": "10.0195399"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 66954 Pirmasens",
+        "lat": "49.2241114",
+        "lon": "7.5907392"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 8854 Galgenen",
+        "lat": "47.1818006",
+        "lon": "8.8793356"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 84503 Altötting",
+        "lat": "48.2222618",
+        "lon": "12.6907241"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 70300 Ostrava-Vítkovice",
+        "lat": "49.8052230",
+        "lon": "18.2775476"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 8054 Seiersberg-Pirka",
+        "lat": "47.0089689",
+        "lon": "15.4094491"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 6845 Hohenems",
+        "lat": "47.3753938",
+        "lon": "9.6792802"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 47167 Duisburg",
+        "lat": "51.4912648",
+        "lon": "6.8075003"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 44625 Herne",
+        "lat": "51.5205906",
+        "lon": "7.2162741"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 74889 Sinsheim",
+        "lat": "49.2481244",
+        "lon": "8.8613487"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 78628 Rottweil",
+        "lat": "48.1442772",
+        "lon": "8.6375187"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 56070 Koblenz",
+        "lat": "50.3902253",
+        "lon": "7.5560079"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 30100 Plzeň",
+        "lat": "49.7466080",
+        "lon": "13.3952723"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 59174 Kamen",
+        "lat": "51.5788662",
+        "lon": "7.6722926"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 12526 Berlin",
+        "lat": "52.3975844",
+        "lon": "13.5443431"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Etoy",
+        "lat": "46.4748696",
+        "lon": "6.4193760"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 2334 Vösendorf",
+        "lat": "48.1082495",
+        "lon": "16.3147551"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 041711 București",
+        "lat": "44.3725376",
+        "lon": "26.1174042"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 3100 St. Pölten",
+        "lat": "48.1833123",
+        "lon": "15.6138927"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 46047 Oberhausen",
+        "lat": "51.4891371",
+        "lon": "6.8896805"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 01139 Dresden",
+        "lat": "51.0789379",
+        "lon": "13.6885646"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 23261 Arlöv",
+        "lat": "55.6116112",
+        "lon": "13.0961281"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 300283 Timișoara",
+        "lat": "45.7869242",
+        "lon": "21.2230909"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Drive In",
+        "lat": "45.7879644",
+        "lon": "21.2236860"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 69123 Heidelberg",
+        "lat": "49.4119253",
+        "lon": "8.6473264"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 89077",
+        "lat": "48.4019799",
+        "lon": "9.9699968"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 84107 Bratislava",
+        "lat": "48.2057175",
+        "lon": "17.0200515"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 23569 Lübeck",
+        "lat": "53.9146597",
+        "lon": "10.7331685"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 077090 Domnești",
+        "lat": "44.4349791",
+        "lon": "25.9596884"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 71636 Ludwigsburg",
+        "lat": "48.8906820",
+        "lon": "9.1535041"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Brașov",
+        "lat": "45.6604804",
+        "lon": "25.5481857"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 02828 Görlitz",
+        "lat": "51.1907819",
+        "lon": "14.9574060"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 66994 Dahn",
+        "lat": "49.1381832",
+        "lon": "7.7950162"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach M Gladbach Kuenkelstr.",
+        "lat": "51.2086287",
+        "lon": "6.4565335"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 49084 Osnabrück",
+        "lat": "52.2582201",
+        "lon": "8.0924793"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 2952BG Alblasserdam",
+        "lat": "51.8564670",
+        "lon": "4.6713584"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 13088 Berlin",
+        "lat": "52.5660157",
+        "lon": "13.4743038"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 25101 Čestlice",
+        "lat": "49.9971159",
+        "lon": "14.5876799"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 1908 Riddes",
+        "lat": "46.1651424",
+        "lon": "7.2100567"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 28199 Bremen",
+        "lat": "53.0640524",
+        "lon": "8.7726068"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 67657 Kaiserslautern",
+        "lat": "49.4510427",
+        "lon": "7.7807863"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 66679 Losheim am See",
+        "lat": "49.5025004",
+        "lon": "6.7566142"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 15900 Praha",
+        "lat": "50.0172381",
+        "lon": "14.3920542"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#491133991",
+        "lat": "53.5251092",
+        "lon": "8.0612423"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 12681 Berlin",
+        "lat": "52.5183643",
+        "lon": "13.5423454"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 06112 Halle (Saale)",
+        "lat": "51.4776620",
+        "lon": "12.0024548"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 8910 Affoltern am Albis",
+        "lat": "47.2717514",
+        "lon": "8.4407596"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 4845 Regau",
+        "lat": "47.9546057",
+        "lon": "13.7277082"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 08001 Prešov",
+        "lat": "48.9901766",
+        "lon": "21.2594017"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 42285 Wuppertal",
+        "lat": "51.2450539",
+        "lon": "7.1900246"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 504 62 Borås",
+        "lat": "57.7165201",
+        "lon": "12.8867461"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#759547515",
+        "lat": "59.3788570",
+        "lon": "17.9571819"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#829121409",
+        "lat": "49.6541230",
+        "lon": "8.3575445"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Oradea",
+        "lat": "47.0447421",
+        "lon": "21.9007061"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 33104 Paderborn",
+        "lat": "51.7322293",
+        "lon": "8.7177068"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Cluj-Napoca",
+        "lat": "46.7889415",
+        "lon": "23.6290285"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Constanța",
+        "lat": "44.1794240",
+        "lon": "28.5983109"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 01239 Dresden",
+        "lat": "51.0068137",
+        "lon": "13.7849810"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 022529 București",
+        "lat": "44.4794222",
+        "lon": "26.1622342"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 90469 Nürnberg",
+        "lat": "49.4051829",
+        "lon": "11.1130594"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach Timișoara",
+        "lat": "45.7241047",
+        "lon": "21.2826200"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 30916 Isernhagen",
+        "lat": "52.4274124",
+        "lon": "9.8449007"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach 38122 Braunschweig",
+        "lat": "52.2502737",
+        "lon": "10.5119693"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#19263802",
+        "lat": "51.4084366",
+        "lon": "6.7659446"
+    },
+    {
+        "brand": "HOR",
+        "name": "Hornbach OSM#19910502",
+        "lat": "50.1821062",
+        "lon": "15.8014219"
+    },
+    {
         "brand": "HAG",
         "name": "Hagebau OSM#28119683",
         "lat": "53.5821109",
