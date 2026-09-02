@@ -255,6 +255,24 @@
       }
       #streuverlust-box strong { color: var(--red); }
 
+      /* Export-Leiste über der PLZ-Tabelle */
+      .table-export-bar {
+        flex-shrink: 0; display: flex; justify-content: flex-end; align-items: center;
+        gap: 8px; padding: 5px 8px 5px 12px; border-bottom: 1px solid var(--gray-200);
+      }
+      .table-export-bar .row-count {
+        margin-right: auto; font-size: 0.72rem; color: #adb5bd; font-weight: 600;
+        letter-spacing: .03em; white-space: nowrap;
+      }
+      .table-export-btn {
+        display: inline-flex; align-items: center; gap: 5px; cursor: pointer;
+        background: #fff; border: 1px solid var(--gray-300); border-radius: 5px;
+        padding: 3px 9px; font-size: 0.74rem; font-weight: 700; color: var(--gray-700);
+        font-family: inherit; line-height: 1.6; transition: all .15s var(--ease-out);
+      }
+      .table-export-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-bg); }
+      .table-export-btn:active { transform: translateY(1px); }
+
       /* ─── Sidebar-Layout (Phase 2) ─────────────────────────────────── */
       /* Layout-Konzept:
          filter-container = ganze linke Spalte (Filter + Inhalt + Tab-Leiste).
@@ -2486,7 +2504,7 @@
       ];
 
       const applyCompetitorData = (raw, source) => {
-        const brandAlias = { HOR: 'Hornbach', OBI: 'OBI', GLO: 'Globus', HEL: 'Hellweg', TOO: 'Toom', HAG: 'Hagebau' };
+        const brandAlias = { HOR: 'Hornbach', OBI: 'OBI', GLO: 'Globus', HEL: 'Hellweg', TOO: 'Toom', HAG: 'Hagebau', H2B: 'H2B' };
         let entries;
         if (Array.isArray(raw)) {
           entries = raw;
@@ -3729,6 +3747,12 @@
         ? Object.values(this.filteredPLZWerte || {}).reduce((s, v) => s + this.getUmsatzSumForPLZ(v), 0)
         : 0;
 
+      // Für den CSV-Export: exakt die Zeilen, die auch gerendert werden —
+      // gleiche Filterung (00000/Radius), gleiche Sortierung, gleicher Modus.
+      // Zahlen werden roh mitgeschrieben, nicht die formatierten Strings.
+      const exportRows = [];
+      const exportMeta = { isUmsatzMode, lastColLabel: lastColLabel.replace('\n', '-') };
+
       const tbody = document.createElement('tbody');
       const fragment = document.createDocumentFragment();
       const tdBase = 'padding:6px 8px;border-bottom:1px solid #f1f3f5;font-size:0.8rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
@@ -3771,6 +3795,20 @@
           lastColVal = (kennwerte['value_wk_in_percent_0']?.raw?.toFixed(1) ?? '–') + ' %';
         }
 
+        exportRows.push({
+          plz,
+          gemeinde: note === '—' ? '' : note,
+          status:   kennwerte?.isCritical ? 'kritisch' : (kennwerte?.isHZ ? 'HZ' : ''),
+          umsatz:   isUmsatzMode
+            ? this.getUmsatzSumForPLZ(this.filteredPLZWerte?.[plz] || {})
+            : (kennwerte['value_hr_n_umsatz_0']?.raw ?? null),
+          lastCol:  isUmsatzMode
+            ? (totalUmsatz > 0 ? this.getUmsatzSumForPLZ(this.filteredPLZWerte?.[plz] || {}) / totalUmsatz * 100 : null)
+            : (kennwerte['value_wk_in_percent_0']?.raw ?? null),
+          kunden:   this.filteredPLZWerte?.[plz]?.kdErhebung ?? null,
+          bon:      this._bonValue(this.filteredPLZWerte?.[plz]) || null,
+        });
+
         tr.innerHTML = `
           <td style="${tdBase}font-variant-numeric:tabular-nums;font-size:0.78rem;color:#495057;width:${headers[0].width}">${escapeHtml(plz)}</td>
           <td style="${tdBase}color:#6c757d;width:${headers[1].width}">${escapeHtml(note)}</td>
@@ -3784,6 +3822,14 @@
       tbody.appendChild(fragment);
       table.appendChild(tbody);
       scrollWrapper.appendChild(table);
+
+      this._tableExport = { rows: exportRows, meta: exportMeta };
+      const bar = document.createElement('div');
+      bar.className = 'table-export-bar';
+      bar.innerHTML = `<span class="row-count">${exportRows.length} PLZ</span>` +
+        `<button type="button" class="table-export-btn" title="Tabelle als CSV herunterladen">⤓ CSV</button>`;
+      this._on(bar.querySelector('.table-export-btn'), 'click', () => this.exportTableAsCSV());
+      container.appendChild(bar);
       container.appendChild(scrollWrapper);
 
       const footer = document.createElement('div');
@@ -3799,6 +3845,55 @@
           if (row.dataset.plz === this._activePopupPLZ) { this.highlightTableRow(row); break; }
         }
       }
+    }
+
+    // ── CSV-Export der PLZ-Tabelle ─────────────────────────────────────
+    // Exportiert wird der Snapshot aus dem letzten Render — damit stimmt die
+    // Datei immer exakt mit dem überein, was der Anwender gerade sieht
+    // (NL-Filter, Radius, Kategorien, Sortierung, Umsatz- vs. WK-Modus).
+    exportTableAsCSV() {
+      const snap = this._tableExport;
+      if (!snap?.rows?.length) return;
+      const { rows, meta } = snap;
+
+      // Semikolon als Trenner und Komma als Dezimaltrennzeichen: Excel in
+      // deutscher Locale öffnet die Datei sonst als eine einzige Spalte.
+      const SEP = ';';
+      const num = (x, dec = 2) =>
+        (x == null || !Number.isFinite(x)) ? '' : x.toFixed(dec).replace('.', ',');
+      const txt = (x) => {
+        const v = String(x ?? '');
+        // Escaping nach RFC 4180; führendes =,+,-,@ neutralisieren (CSV-Injection)
+        const safe = /^[=+\-@]/.test(v) ? "'" + v : v;
+        return /[";\r\n]/.test(safe) ? '"' + safe.replace(/"/g, '""') + '"' : safe;
+      };
+
+      const header = ['PLZ', 'Gemeinde', 'Status', 'Umsatz (hochgerechnet)', meta.lastColLabel,
+                      'Kunden (Bons)', 'Ø-Bon'];
+      const lines = [header.join(SEP)];
+      for (const r of rows) {
+        lines.push([
+          txt(r.plz), txt(r.gemeinde), txt(r.status),
+          num(r.umsatz, 2), num(r.lastCol, 1), num(r.kunden, 0), num(r.bon, 2),
+        ].join(SEP));
+      }
+
+      const f = this._activeFilter;
+      const stamp = new Date().toISOString().slice(0, 10);
+      const name = ['PLZ-Tabelle', f?.erhID, f?.jahr, f?.nummer, stamp]
+        .filter(Boolean).join('_').replace(/[^\w.\-]+/g, '-') + '.csv';
+
+      // \ufeff = BOM. Ohne das interpretiert Excel die Datei als ANSI und
+      // zerlegt Umlaute in Ã¤/Ã¶/Ã¼.
+      const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement('a');
+      a.href = url; a.download = name; a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      // Revoke verzögert: manche Browser brechen den Download ab, wenn die
+      // Object-URL im selben Tick wieder freigegeben wird.
+      setTimeout(() => { URL.revokeObjectURL(url); a.remove(); }, 1000);
     }
 
     openPopupFromTable(plz) {
@@ -4550,6 +4645,8 @@
         Hellweg:  { color: '#e30613', label: 'HEL', size: 24 },
         Toom:     { color: '#00843d', label: 'TOO', size: 24 },
         Hagebau:  { color: '#e94e1b', label: 'HAG', size: 24 },
+        // Ohne Eintrag greift defaultConfig → grauer Marker mit '???'.
+        H2B:      { color: '#6a3d9a', label: 'H2B', size: 24 },
       };
       const defaultConfig = { color: '#888', label: '???', size: 24 };
 
@@ -7698,7 +7795,7 @@
           <li><strong>☰ Legende</strong> (links unten): Farbskala für die
             aktuelle Heatmap.</li>
           <li><strong>Mitbewerber-Checkbox</strong>: zeigt bekannte Standorte
-            (Hornbach/OBI/Globus/Hellweg/Toom/Hagebau) als 🔨-Marker.</li>
+            (Hornbach/OBI/Globus/Hellweg/Toom/Hagebau/H2B) als 🔨-Marker.</li>
         </ul>
 
         <h4>Tipps für die Praxis</h4>
